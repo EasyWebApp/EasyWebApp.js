@@ -1,10 +1,16 @@
 #EasyWebApp
 
-## 【概述】
+## 【项目概述】
 **EasyWebApp** 是一个基于 **jQuery API** 的**轻量级 SPA（单页应用）引擎**，**网页设计、后端接口、前端组件 充分解耦** —— 只用**原生 HTML** 做模板，对 **JSON 数据**的结构几无硬性要求，完全兼容现有的 **jQuery 插件**。
 
+本引擎与其作者开发的 [**EasyWebUI**](http://git.oschina.net/Tech_Query/EasyWebUI)（Web 前端 UI 框架）的理念一致 ——
+ - **充分利用 HTML 标签、属性 原生的语义、样式、功能，力求 Web 前端代码 表达上的简练、架构上的解耦！**
+ - 学习曲线缓，开发成本低，维护效率高
 
-## 【入门】
+本引擎首个开源稳定版 v1.2 脱胎于一个**移动端网页应用**（微信公众平台）和一个**桌面端网页系统**（某公司开放平台），是一个有较高 **抽象性**、**普适性**的 SPA 引擎，**个人独立开发**、**团队协作开发** 都能轻松胜任~
+
+
+## 【使用入门】
 
 ### 一、加载引擎
 
@@ -46,17 +52,23 @@
 </div>
 ```
 ```javascript
-(function ($) {
+(function (BOM, $) {
 
     $('body > section')
-        .onPageIn(function (iApp, iData, This_Page, Prev_Page) {
+        .onPageRender('page_1.html',  function (iData, Prev_Page) {
             //  iData 是 API 返回的 JSON，格式自定义，默认为 空对象
             if (iData.code > 200)
-                iApp.render(iData.data);
+                return iData.data;
+
+            BOM.alert(iData.message);
+            BOM.history.go(-1);
         })
         .WebApp();
-})(self.jQuery);
+
+})(self, self.jQuery);
 ```
+上述代码加载的内页 可以是 **HTML 代码片段**（包括 所有可见元素、style 元素），无需重复编码。
+
 #### （二）加载外页（传统刷新）
 ```html
 <form method="POST" action="path/to/api/{uid}"
@@ -71,7 +83,7 @@
 (function ($) {
 
     $('body > section')
-        .on('appExit',  function (iApp, iData, This_URL, Next_URL) {
+        .on('appExit',  function (This_URL, Next_URL, iData) {
             //  若 被触动的元素 是 form，则 iData 为 表单提交所返回的数据
             if (iData.code > 200) {
                 alert(iData.message);
@@ -92,7 +104,7 @@
 (function ($) {
 
     $('body > section')
-        .on('apiCall',  function (iApp, iData, This_URL, API_URL) {
+        .on('apiCall',  function (iApp, This_URL, API_URL, iData) {
             //  iData 为 API 返回的数据
             if (iData.code > 200)
                 alert(iData.message);
@@ -107,7 +119,7 @@
  - 符合 CSS 3 选择器 `ul, ol, dl, *[multiple]:not(input)` 的**数据容器元素**（有 name 属性的），其对应的数据结构是一个**以普通对象为元素的数组**，其子元素（它也可以有子元素）只需有一个，引擎会自动复制这个子元素的作为**数组迭代的模板**
 
 ```html
-<div multiple name="list">
+<div multiple name="list" max="6">
     <img name="avatar" src="path/to/logo.png" />XXX
 </div>
 ```
@@ -118,11 +130,11 @@
 ### 一、jQuery 实例方法
 ```javascript
 $_AppRoot
-    .onPageIn(
+    .onPageRender(
         HTML_Match,    //  二选一，String 或 Regexp，匹配 HTML 文件路径
         JSON_Match,    //  二选一，String 或 Regexp，匹配 JSON API 路径
         Page_Render    //  必选，本引擎加载 HTML、JSON 后，进行错误处理，
-                       //  并传入开发者自定义数据结构中的内容对象，以便引擎正确地渲染页面
+                       //  并返回开发者自定义数据结构中的内容对象，以便引擎正确地渲染页面
                        //  （还可以有 更多自定义的逻辑）
     )
     .WebApp(
@@ -132,14 +144,46 @@ $_AppRoot
     );
 ```
 ### 二、jQuery 自定义事件
- - pageIn 回调参数：jQuery Event 对象、WebApp 实例对象、API 返回的数据、正在渲染的页面对象、刚切换走的页面对象
- - apiCall 回调参数：
- - formSubmit 回调参数：
- - appExit 回调参数：
+本引擎不支持“在 jQuery 插件 初始化时传入各种回调函数”的方式，一切**可编程点**均直接在 **实例化 WebApp** 的元素上触发**自定义 DOM 事件**，开发者只需使用 jQuery 标准的事件监听方法，就可以在其回调函数中调用 **WebApp 实例**的方法。
+
+【事件分类】
+ - [A] 表示 **异步事件**，一般在 事件名所表示的操作 完成时 触发，可在回调内根据 API 返回值，酌情调用 WebApp 实例方法，**手动控制 WebApp 加载页面**
+ - [S] 表示 **同步事件**，一般在 事件名所表示的操作 进行前 触发，可能需要开发者：
+   -  判断是否阻止**事件操作**执行 —— return false
+   -  在自定义数据格式中提取**内容数据**参与渲染 —— return {...}
+
+【事件总表】
+ - [S] **pageRender 事件** 在一个内部页面的模板、数据加载完，准备**用数据渲染模板**时触发。其回调参数如下：
+   -  jQuery Event 对象
+   -  正在渲染的页面对象
+   -  刚切换走的页面对象
+   -  API 返回对象
+ - [A] **apiCall 事件** 在一个 HTTP API 请求结束时触发。其回调参数如下：
+   -  jQuery Event 对象
+   -  WebApp 实例对象
+   -  当前 HTML URL
+   -  API URL
+   -  API 返回对象
+ - [S] **appExit 事件** 在一个外部页面加载（单页应用实例 销毁）前触发。其回调参数如下：
+   -  jQuery Event 对象
+   -  当前 HTML URL
+   -  将加载的外部页面 URL
+   -  事件源元素对应的数据对象（如 id 等 须附加在 URL 后页面才能正常跳转的参数）
+ - [S] **formSubmit 事件** 在一个表单提交并返回数据后触发（此时可能会跳转页面）。其回调参数如下：
+   -  jQuery Event 对象
+   -  当前 HTML URL
+   -  当前 form 实际使用的 action URL
+   -  表单提交 返回数据
+   -  即将跳转到的页面 HTML URL
+   -  即将跳转到的内页 JSON URL
 
 ### 三、WebApp 对象实例方法
+WebApp 支持手动调用 本引擎 **HTML 模板规则**（上文【使用入门】第三大节）对应的 JavaScript 实例方法 ——
 ```javascript
-iWebApp.render(Content_Data, List_Limit);
+iWebApp
+    .loadTemplate(Title, HTML_URL, JSON_URL)    //  加载内页
+    .loadJSON(JSON_URL)                         //  调用 API
+    .loadPage(HTML_URL);                        //  加载外页
 ```
 
 
