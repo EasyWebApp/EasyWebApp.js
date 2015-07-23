@@ -2,7 +2,7 @@
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v1.1  (2015-7-22)  Beta
+//      [Version]    v1.1  (2015-7-22)  Stable
 //
 //      [Usage]      A Light-weight WebApp Framework
 //                   based on iQuery (A jQuery Compatible API).
@@ -227,7 +227,7 @@
         this.dataStack.push(iData);
 
         if (iData instanceof Array)
-            List_Value.call($('.List')[0], iData);
+            List_Value.call($('ul, ol, dl, *[multiple]').not('input')[0], iData);
         else
             $('body *[name]').value(function (iName) {
                 var iValue = Data_Value.call(
@@ -369,8 +369,8 @@
                 var iReturn = _This_.domRoot.triggerHandler('appExit', [
                         _This_,
                         $_This.data('json'),
-                        toURL,
-                        _This_.history[_This_.history.lastIndex].URL
+                        _This_.history[_This_.history.lastIndex].HTML,
+                        toURL
                     ]);
                 if (iReturn !== false) {
                     _This_.history.move();
@@ -391,16 +391,16 @@
 
                 if ($_Form.length)  Input_Flush.call(_This_, $_Form);
 
-                $.getJSON(
-                    URL_Merge.call(
+                var API_URL = URL_Merge.call(
                         _This_,
                         _This_.apiRoot + $_This.attr('src'),
                         URL_Args.call(_This_, this, true)
-                    ),
-                    $_This[0].dataset.event  &&  function () {
-                        $_This.trigger( $_This[0].dataset.event );
-                    }
-                );
+                    );
+                $.getJSON(API_URL,  function () {
+                    $_This.trigger('apiCall', [
+                        _This_,  arguments[0],  _This_.history[_This_.history.lastIndex].HTML,  API_URL
+                    ]);
+                });
                 return false;
             }
         );
