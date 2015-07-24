@@ -2,7 +2,7 @@
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v1.1  (2015-7-22)  Stable
+//      [Version]    v1.2  (2015-7-24)  Stable
 //
 //      [Usage]      A Light-weight WebApp Framework
 //                   based on iQuery (A jQuery Compatible API).
@@ -123,11 +123,11 @@
     function Proxy_Trigger(iType, iTitle, iHTML, iJSON) {
         var $_Trigger = $('<button />', {
                 target:    iType,
-                title:     iTitle,
                 style:     'display: none',
                 rel:       'nofollow'
             });
 
+        if (iTitle)  $_Trigger.attr('title', iTitle);
         if (iHTML)  $_Trigger.attr('href', iHTML);
 
         if (typeof iJSON == 'string')
@@ -141,24 +141,17 @@
     }
 
     _Proto_.loadTemplate = function () {
-        var iArgs = $.makeArray(arguments);
-        iArgs.unshift('_self');
-
-        return  Proxy_Trigger.apply(this, iArgs);
-    };
-
-    _Proto_.loadPage = function () {
-        var iArgs = $.makeArray(arguments);
-        iArgs.unshift('_top');
-
-        return  Proxy_Trigger.apply(this, iArgs);
+        return  Proxy_Trigger.apply(
+                this,  Array.prototype.concat.apply(['_self'], arguments)
+            );
     };
 
     _Proto_.loadJSON = function () {
-        var iArgs = $.makeArray(arguments);
-        iArgs.unshift('_blank');
+        return  Proxy_Trigger.call(this, '_blank', null, null, arguments[0]);
+    };
 
-        return  Proxy_Trigger.apply(this, iArgs);
+    _Proto_.loadPage = function () {
+        return  Proxy_Trigger.apply(this, '_top', null, arguments[0]);
     };
 
     /* ----- Auto Navigating ----- */
@@ -189,11 +182,11 @@
         return iURL.join('?');
     }
 
-    function List_Value(iValue, iLimit) {
-        iLimit = iLimit || Infinity;
+    function List_Value(iValue) {
+        iLimit = parseInt( this.attr('max') )  ||  Infinity;
         iLimit = (iValue.length > iLimit) ? iLimit : iValue.length;
 
-        var $_Template = $(this).children().detach().eq(0);
+        var $_Template = this.children().detach().eq(0);
 
         for (var i = 0, $_Clone;  i < iLimit;  i++) {
             $_Clone = $_Template.clone(true).appendTo(this);
@@ -215,34 +208,27 @@
         if (Old_Sum > 0)
             this.dataStack.length -= Old_Sum;
 
-        this.domRoot.trigger('pageIn', [
-            this,  iData,  this.history[this.history.lastIndex],  this.history[this.history.prevIndex]
-        ]);
-    }
-
-    _Proto_.render = function (Page_Data, List_Limit) {
-        var _This_ = this,
-            iData = Page_Data || arguments.callee.caller.arguments[0];
+        iData = this.domRoot.triggerHandler('pageRender', [
+            this.history[this.history.lastIndex],  this.history[this.history.prevIndex],  iData || { }
+        ]) || iData;
 
         this.dataStack.push(iData);
 
+        var _This_ = this,
+            $_List = $('ul, ol, dl, *[multiple]').not('input');
+
         if (iData instanceof Array)
-            List_Value.call($('ul, ol, dl, *[multiple]').not('input')[0], iData);
+            List_Value.call($_List, iData);
         else
             $('body *[name]').value(function (iName) {
-                var iValue = Data_Value.call(
-                        _This_,  iName,  $(this).hasClass('List')
-                    );
+                var $_This = $(this);
+                var iValue = Data_Value.call(_This_,  iName,  $_This.is($_List));
 
                 if (iValue instanceof Array)
-                    List_Value.call(this, iValue, List_Limit);
+                    List_Value.call($_This, iValue);
                 else
                     return iValue;
             });
-
-        this.loading = false;
-
-        return this;
     };
 
     var _Method_ = {
@@ -263,14 +249,16 @@
         $.extend(_Data_[_Data_.length - 1],  iData);
     }
 
-    _Proto_.pageBoot = function (ExitBack) {
+    _Proto_.boot = function () {
+        if (this.history.length)
+            throw 'This WebApp has been booted !';
+
         var _This_ = this,
             iHash = BOM.location.hash.slice(1);
 
         this.loading = true;
         this.history.write();
         Page_Show.call(this, DOM.URL, null);
-        this.loading = false;
 
         $(DOM.body).on('submit',  'form[target][href]',  function (iEvent) {
             if (_This_.loading)  return false;
@@ -288,10 +276,16 @@
                         _This_,  arguments[1],  URL_Args.call(_This_, this)
                     );
             }).post(function (iData) {
-                iData = _This_.domRoot.triggerHandler('formSubmit', [iData]);
-                if (iData === false)  return;
+                var iAttr = $_Form.attr(['action', 'title', 'href', 'src']);
 
-                var iAttr = $_Form.attr(['title', 'href', 'src']);
+                iData = _This_.domRoot.triggerHandler('formSubmit', [
+                    _This_.history[_This_.history.lastIndex].HTML,
+                    iAttr.action,
+                    iData,
+                    iAttr.href,
+                    iAttr.src
+                ]);
+                if (iData === false)  return;
 
                 if (iAttr.src)
                     $.extend(_This_.dataStack[_This_.history.lastIndex + 1], iData);
@@ -323,6 +317,11 @@
                 if ($_Cached) {
                     $_Cached.appendTo(_This_.domRoot).fadeIn();
                     _This_.loading = false;
+                    _This_.domRoot.trigger('pageReady', [
+                        _This_,
+                        _This_.history[_This_.history.lastIndex],
+                        _This_.history[_This_.history.prevIndex]
+                    ]);
                     return false;
                 }
 
@@ -334,6 +333,11 @@
                     if (--DOM_Ready == 0) {
                         Page_Show.call(_This_, iHTML, iData);
                         _This_.loading = false;
+                        _This_.domRoot.trigger('pageReady', [
+                            _This_,
+                            _This_.history[_This_.history.lastIndex],
+                            _This_.history[_This_.history.prevIndex]
+                        ]);
                     }
                 }
 
@@ -355,33 +359,6 @@
             }
         ).on(
             $.browser.mobile ? 'tap' : 'click',
-            '[target="_top"][href]',
-            function () {
-                if (
-                    _This_.loading ||
-                    ((this.tagName.toLowerCase() == 'form')  &&  (! arguments[1]))
-                )
-                    return;
-
-                var $_This = $(this);
-                var toURL = $_This.attr('href');
-
-                var iReturn = _This_.domRoot.triggerHandler('appExit', [
-                        _This_,
-                        $_This.data('json'),
-                        _This_.history[_This_.history.lastIndex].HTML,
-                        toURL
-                    ]);
-                if (iReturn !== false) {
-                    _This_.history.move();
-                    BOM.location.href = URL_Merge.call(
-                        _This_,  toURL,  URL_Args.call(_This_, this)
-                    );
-                }
-                return false;
-            }
-        ).on(
-            $.browser.mobile ? 'tap' : 'click',
             '[target="_blank"][src]',
             function () {
                 if (_This_.loading)  return false;
@@ -398,9 +375,35 @@
                     );
                 $.getJSON(API_URL,  function () {
                     $_This.trigger('apiCall', [
-                        _This_,  arguments[0],  _This_.history[_This_.history.lastIndex].HTML,  API_URL
+                        _This_,  _This_.history[_This_.history.lastIndex].HTML,  API_URL,  arguments[0]
                     ]);
                 });
+                return false;
+            }
+        ).on(
+            $.browser.mobile ? 'tap' : 'click',
+            '[target="_top"][href]',
+            function () {
+                if (
+                    _This_.loading ||
+                    ((this.tagName.toLowerCase() == 'form')  &&  (! arguments[1]))
+                )
+                    return;
+
+                var $_This = $(this);
+                var toURL = $_This.attr('href');
+
+                var iReturn = _This_.domRoot.triggerHandler('appExit', [
+                        _This_.history[_This_.history.lastIndex].HTML,
+                        toURL,
+                        $_This.data('json')
+                    ]);
+                if (iReturn !== false) {
+                    _This_.history.move();
+                    BOM.location.href = URL_Merge.call(
+                        _This_,  toURL,  URL_Args.call(_This_, this)
+                    );
+                }
                 return false;
             }
         );
@@ -417,6 +420,11 @@
                 }
             });
         }
+        this.loading = false;
+        this.domRoot.trigger('pageReady', [
+            this,  this.history[this.history.lastIndex],  this.history[this.history.prevIndex]
+        ]);
+
         return this;
     };
 
@@ -430,12 +438,12 @@
 
         (new WebApp(
             this,  Init_Data,  API_Root,  URL_Change
-        )).pageBoot();
+        )).boot();
 
         return this;
     };
 
-    $.fn.onPageIn = function () {
+    $.fn.onPageRender = function () {
         var iArgs = $.makeArray(arguments);
 
         var iHTML = $.type(iArgs[0]).match(/String|RegExp/) && iArgs.shift();
@@ -443,7 +451,7 @@
         var iCallback = (typeof iArgs[0] == 'function') && iArgs[0];
 
         if (iCallback  &&  (iHTML || iJSON))
-            this.on('pageIn',  function (iEvent, iApp, iData, This_Page, Prev_Page) {
+            this.on('pageRender',  function (iEvent, This_Page, Prev_Page, iData) {
                 var Page_Match = (iHTML && iJSON) ? 2 : 1;
 
                 if (This_Page.HTML && This_Page.HTML.match(iHTML))
@@ -452,7 +460,30 @@
                     Page_Match-- ;
 
                 if (Page_Match === 0)
-                    iCallback.call(this, iApp, iData);
+                    return  iCallback.call(this, iData, Prev_Page);
+            });
+
+        return this;
+    };
+
+    $.fn.onPageReady = function () {
+        var iArgs = $.makeArray(arguments);
+
+        var iHTML = $.type(iArgs[0]).match(/String|RegExp/) && iArgs.shift();
+        var iJSON = $.type(iArgs[0]).match(/String|RegExp/) && iArgs.shift();
+        var iCallback = (typeof iArgs[0] == 'function') && iArgs[0];
+
+        if (iCallback  &&  (iHTML || iJSON))
+            this.on('pageReady',  function (iEvent, iApp, This_Page, Prev_Page) {
+                var Page_Match = (iHTML && iJSON) ? 2 : 1;
+
+                if (This_Page.HTML && This_Page.HTML.match(iHTML))
+                    Page_Match-- ;
+                if (This_Page.JSON && This_Page.JSON.match(iJSON))
+                    Page_Match-- ;
+
+                if (Page_Match === 0)
+                    iCallback.call(this, iApp, Prev_Page);
             });
 
         return this;
