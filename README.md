@@ -137,6 +137,11 @@ $_AppRoot
                        //  并返回开发者自定义数据结构中的内容对象，以便引擎正确地渲染页面
                        //  （还可以有 更多自定义的逻辑）
     )
+    .onPageReady(
+        HTML_Match,    // （同上）
+        JSON_Match,    // （同上）
+        Page_Render    //  必选，本引擎渲染 HTML、JSON 后，执行传统 DOM Ready 回调中的页面逻辑
+    )
     .WebApp(
         Init_Data,                         //  可选，一般为 登录后的会话数据
         'http://cross.domain.api/root',    //  可选，API 服务器 与 静态网页资源服务器 不同时设置
@@ -176,6 +181,11 @@ $_AppRoot
    -  表单提交 返回数据
    -  即将跳转到的页面 HTML URL
    -  即将跳转到的内页 JSON URL
+ - [A] **pageReady 事件** 在一个内部页面渲染完成时触发。其回调参数如下：
+   -  jQuery Event 对象
+   -  WebApp 实例对象
+   -  刚渲染好的页面对象
+   -  刚切换走的页面对象
 
 ### 三、WebApp 对象实例方法
 WebApp 支持手动调用 本引擎 **HTML 模板规则**（上文【使用入门】第三大节）对应的 JavaScript 实例方法 ——
@@ -185,6 +195,9 @@ iWebApp
     .loadJSON(JSON_URL)                         //  调用 API
     .loadPage(HTML_URL);                        //  加载外页
 ```
+
+## 【项目缘起】
+**EasyWebApp** 算是其作者与 产品、设计、后端的各种“撕逼”后，或坚持、或折中的结果。其 **HTML 模板机制** 源于作者早期的一个 PHP 前端项目 [EasyWebTemplate](http://git.oschina.net/Tech_Query/EasyWebTemplate)（基于 **phpQuery**），而其 **事件驱动的 API** 则源于文首提到的开放平台首个版本的**智能表单引擎** JSON_Web.js（强数据格式依赖、不支持不规律的界面设计，未到达开源水准，但会继续吸收其优秀的特性）。虽然前面这些小项目 都有些幼稚，但却又是 **敢于把独立思考成果付诸实践**的有益尝试，若没有这些沉淀，就没有本项目自 2015年6月29日的26天 内即发布**开源稳定版**的成绩~
 
 
 ## 【协作开发】
