@@ -12,6 +12,13 @@
 
 ## 【使用入门】
 
+### 〇、开发流程
+
+ 1. **产品设计师** 做好 **Web 原型**后，**前端工程师** 即可按原型制作页面，与 **视觉设计师**（美工）并行工作
+ 2. 同时，在前端工程师开始制作页面时，综合考虑 原型中页面、功能的划分，与 **后端工程师** 商定好 **数据 API** 的 **URL**、**数据结构**、**字段名**（参考 **RESTful 规范**、下文【数据填充】规范）
+ 3. 用 **HTML、CSS、jQuery 最自然的思维方式** 去制作页面（原来你**前后端分离**模式下怎么写前端程序 现在就怎么写）~
+ 4. 应用本引擎在 HTML、jQuery 上的特性，引擎就会自动把各个页面串接起来，成为一个单页应用~
+
 ### 一、加载引擎
 
 本项目的开发最早基于 [**iQuery**](http://git.oschina.net/Tech_Query/iQuery)（相当于 **jQuery v1.x** 的精简与扩展），若要用 **jQuery 官方版**来驱动本引擎，需要同时加载 iQuery 项目中的 [jQuery+.js](http://git.oschina.net/Tech_Query/iQuery/blob/master/jQuery+.js) 来启用扩展的 jQuery API（一些 jQuery 插件）。
@@ -57,7 +64,7 @@
     $('body > section')
         .onPageRender('page_1.html',  function (iData, Prev_Page) {
             //  iData 是 API 返回的 JSON，格式自定义，默认为 空对象
-            if (iData.code > 200)
+            if (iData.code == 200)
                 return iData.data;
 
             BOM.alert(iData.message);
