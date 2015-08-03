@@ -2,10 +2,14 @@
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v1.2  (2015-7-24)  Stable
+//      [Version]     v1.3  (2015-8-3)  Stable
 //
-//      [Usage]      A Light-weight WebApp Framework
-//                   based on iQuery (A jQuery Compatible API).
+//      [Based on]    iQuery  |  jQuery with jQuery+,
+//
+//                    [ marked.js ]  (for MarkDown rendering)
+//
+//      [Usage]       A Light-weight WebApp Framework
+//                    jQuery Compatible API.
 //
 //
 //              (C)2015    shiy2008@gmail.com
@@ -183,7 +187,7 @@
     }
 
     function List_Value(iValue) {
-        iLimit = parseInt( this.attr('max') )  ||  Infinity;
+        var iLimit = parseInt( this.attr('max') )  ||  Infinity;
         iLimit = (iValue.length > iLimit) ? iLimit : iValue.length;
 
         var $_Template = this.children().detach().eq(0);
@@ -310,10 +314,11 @@
                     iJSON = $_This.attr('src');
 
                 _This_.loading = true;
+
+            /* ----- Load DOM  form  Cache ----- */
                 var $_Cached = _This_.history.write(
                         $_This.attr('title'),  null,  iHTML,  iJSON
                     );
-
                 if ($_Cached) {
                     $_Cached.appendTo(_This_.domRoot).fadeIn();
                     _This_.loading = false;
@@ -325,6 +330,7 @@
                     return false;
                 }
 
+            /* ----- Load DOM  from  Network ----- */
                 var DOM_Ready = iJSON ? 2 : 1;
 
                 function Page_Ready() {
@@ -340,7 +346,7 @@
                         ]);
                     }
                 }
-
+                // --- Load Data from API --- //
                 if (iJSON)
                     $.getJSON(
                         URL_Merge.call(
@@ -350,10 +356,29 @@
                         ),
                         Page_Ready
                     );
-                _This_.domRoot.load(
-                    iHTML + (_This_.domRoot.selector ? (' ' + _This_.domRoot.selector) : ''),
-                    Page_Ready
-                );
+
+                // --- Load DOM from HTML|MarkDown --- //
+                var MarkDown_File = /\.(md|markdown)$/i;
+
+                if (! iHTML.match(MarkDown_File))
+                    _This_.domRoot.load(
+                        iHTML + (_This_.domRoot.selector ? (' ' + _This_.domRoot.selector) : ''),
+                        Page_Ready
+                    );
+                else
+                    $.get(iHTML,  function (iMarkDown) {
+                        if (BOM.marked)
+                            $( BOM.marked(iMarkDown) )
+                                .appendTo( _This_.domRoot.empty() ).fadeIn()
+                                .find('a[href]').each(function () {
+                                    if ( this.href.match(MarkDown_File) )
+                                        this.setAttribute('target', '_self');
+                                });
+                        else
+                            _This_.domRoot.text(iMarkDown);
+
+                        Page_Ready.call(_This_.domRoot[0], iMarkDown);
+                    });
 
                 return false;
             }
@@ -397,12 +422,16 @@
                         _This_.history[_This_.history.lastIndex].HTML,
                         toURL,
                         $_This.data('json')
-                    ]);
+                    ]),
+                    iArgs;
+
                 if (iReturn !== false) {
+                    iArgs = URL_Args.call(_This_, this);
+
+                    if ( $.isPlainObject(iReturn) )  $.extend(iArgs, iReturn);
+
                     _This_.history.move();
-                    BOM.location.href = URL_Merge.call(
-                        _This_,  toURL,  URL_Args.call(_This_, this)
-                    );
+                    BOM.location.href = URL_Merge.call(_This_, toURL, iArgs);
                 }
                 return false;
             }
@@ -446,8 +475,8 @@
     $.fn.onPageRender = function () {
         var iArgs = $.makeArray(arguments);
 
-        var iHTML = $.type(iArgs[0]).match(/String|RegExp/) && iArgs.shift();
-        var iJSON = $.type(iArgs[0]).match(/String|RegExp/) && iArgs.shift();
+        var iHTML = $.type(iArgs[0]).match(/String|RegExp/i) && iArgs.shift();
+        var iJSON = $.type(iArgs[0]).match(/String|RegExp/i) && iArgs.shift();
         var iCallback = (typeof iArgs[0] == 'function') && iArgs[0];
 
         if (iCallback  &&  (iHTML || iJSON))
@@ -469,8 +498,8 @@
     $.fn.onPageReady = function () {
         var iArgs = $.makeArray(arguments);
 
-        var iHTML = $.type(iArgs[0]).match(/String|RegExp/) && iArgs.shift();
-        var iJSON = $.type(iArgs[0]).match(/String|RegExp/) && iArgs.shift();
+        var iHTML = $.type(iArgs[0]).match(/String|RegExp/i) && iArgs.shift();
+        var iJSON = $.type(iArgs[0]).match(/String|RegExp/i) && iArgs.shift();
         var iCallback = (typeof iArgs[0] == 'function') && iArgs[0];
 
         if (iCallback  &&  (iHTML || iJSON))
