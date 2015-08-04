@@ -371,8 +371,9 @@
                             $( BOM.marked(iMarkDown) )
                                 .appendTo( _This_.domRoot.empty() ).fadeIn()
                                 .find('a[href]').each(function () {
-                                    if ( this.href.match(MarkDown_File) )
-                                        this.setAttribute('target', '_self');
+                                    this.setAttribute(
+                                        'target',  this.href.match(MarkDown_File) ? '_self' : '_top'
+                                    );
                                 });
                         else
                             _This_.domRoot.text(iMarkDown);
@@ -422,11 +423,10 @@
                         _This_.history[_This_.history.lastIndex].HTML,
                         toURL,
                         $_This.data('json')
-                    ]),
-                    iArgs;
+                    ]);
 
                 if (iReturn !== false) {
-                    iArgs = URL_Args.call(_This_, this);
+                    var iArgs = URL_Args.call(_This_, this);
 
                     if ( $.isPlainObject(iReturn) )  $.extend(iArgs, iReturn);
 

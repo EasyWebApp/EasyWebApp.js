@@ -1,0 +1,57 @@
+<!DocType HTML>
+<html lang="zh-CN"><head>
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" /> 
+    <meta http-equiv="Pragma" content="no-cache" /> 
+    <meta http-equiv="Expires" content="0" />
+    <meta charset="UTF-8" />
+
+    <link rel="shortcut icon" type="image/x-icon" href="image/favicon.ico" />
+    <link rel="bookmark" type="image/x-icon" href="image/favicon.ico" />
+    <title>每日资讯</title>
+
+    <link rel="stylesheet" href="http://public.shenma.io/css/EasyWebUI.css" />
+    <link rel="stylesheet" href="css/index.css" />
+
+    <link rel="console" href="console" />
+    <script src="http://public.shenma.io/javascript/EasyImport.js"></script><script>
+        ImportJS('javascript/', [
+            [
+                'http://public.shenma.io/css/EasyWebUI.js',
+                'http://public.shenma.io/javascript/EasyWebApp.js'
+            ],
+            'index.js'
+        ]);
+    </script>
+</head><body class="Mobile No_Select">
+    <h1>
+        <span name="city"></span>小日报
+    </h1>
+    <section id="weather">
+        <p name="now"></p>
+        <p name="suggest"></p>
+        <div name="days" multiple>
+            <div class="Grid-Row">
+                <div class="Grid-Column">
+                    <img name="PicUrl" />
+                </div>
+                <div class="Grid-Column" name="Title"></div>
+            </div>
+        </div>
+    </section>
+    <section class="Card" target="_self" href="english.html" src="daily?type=translation" data-appkey="WeChat_Key">
+        <h2>每日英语</h2>
+        <p>感谢 爱词霸 提供的开放数据</p>
+    </section>
+    <section class="Card" target="_top" href="http://m.tvmao.com/program/playing/">
+        <h2>电视节目</h2>
+        <p>感谢 电视猫 提供的开放数据</p>
+    </section>
+    <section>
+        <h2>开心一刻</h2>
+        <p name="joke"></p>
+        <div class="Tool">
+            <i class="Icon Mail Button" title="分享" href="#share"></i>
+            <i class="Icon Heart Button" title="喜欢"></i>
+        </div>
+    </section>
+</body></html>

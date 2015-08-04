@@ -1,0 +1,94 @@
+/* ---------- 通用样式 ---------- */
+body {
+    background:    white;
+}
+.Grid-Column p.Ellipsis {
+    max-width:    9em;
+}
+
+
+.Full {
+    width:     100%;
+    height:    100%;
+    margin:    0;
+}
+.Full > section:only-of-type {
+    height:        85%;
+    overflow-y:    auto;
+    overflow-x:    hidden  !important;
+}
+.Full > footer:only-of-type {
+    height:    15%;
+}
+.Full > footer > * {
+    -webkit-box-flex:    1;
+    -webkit-flex:        1;
+            flex:        1;
+}
+.Full > footer > .CenterX {
+    -webkit-box-flex:    2;
+    -webkit-flex:        2;
+            flex:        2;
+}
+
+
+.Card {
+    margin:           0.25em  0;
+    border-bottom:    1px  solid  rgb(230, 230, 230);
+    background:       rgb(230, 230, 230);
+}
+.Card .Logo {
+    height:     6em;
+    padding:    0.75em;
+}
+.List > .Card .Logo {
+    width:    6em;
+}
+.Card h3 {
+    margin:       0;
+    padding:      0.5em  0.75em;
+    font-size:    1em;
+}
+.Card p {
+    color:        darkgray;
+    font-size:    0.9em;
+}
+.Card > .Grid-Column:nth-of-type(2) h3,
+.Card > .Grid-Column:nth-of-type(2) p   {
+    padding:    0;
+    margin:     0.25em  0;
+}
+.Card > .Grid-Column:last-child img {
+    display:    inline-block;
+    width:      0.7em;
+}
+
+
+.SubTitle {
+    color:          darkgray;
+    font-weight:    normal;
+    padding:        0.25em  0.1em;
+    margin:         0;
+    display:        block  !important;
+}
+.SubTitle > .Icon {
+    width:     1.5em;
+    height:    1.5em;
+}
+
+
+p.Text {
+    border-top:       1px  solid  darkgray;
+    border-bottom:    1px  solid  darkgray;
+    margin:           0.5em;
+    padding:          0.5em;
+}
+
+
+.Tool .Icon {
+    width:     1.5em;
+    height:    1.5em;
+}
+.Tool {
+    padding:    0  0.25em;
+}

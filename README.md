@@ -23,6 +23,8 @@
 
 本项目的开发最早基于 [**iQuery**](http://git.oschina.net/Tech_Query/iQuery)（相当于 **jQuery v1.x** 的精简与扩展），若要用 **jQuery 官方版**来驱动本引擎，需要同时加载 iQuery 项目中的 [jQuery+.js](http://git.oschina.net/Tech_Query/iQuery/blob/master/jQuery+.js) 来启用扩展的 jQuery API（一些 jQuery 插件）。
 
+本引擎 v1.3 开始支持的 **MarkDown 规范代码渲染** 还需要加载 [**marked.js**](https://github.com/chjj/marked/)（推荐引用 [中国大陆 CDN](http://www.bootcdn.cn/marked/)）。
+
 ### 二、启动引擎
 ```html
 <!DocType HTML>
@@ -202,6 +204,10 @@ iWebApp
     .loadJSON(JSON_URL)                         //  调用 API
     .loadPage(HTML_URL);                        //  加载外页
 ```
+
+## 【演示项目】
+[每日资讯（移动版）](http://easywebapp.oschina.cnpaas.io/demo) 基于 [方倍工作室 API 100](http://www.cnblogs.com/txw1958/p/weixin-api100.html)，支持 **微信公众平台 AppKey**。
+
 
 ## 【项目缘起】
 **EasyWebApp** 算是其作者与 产品、设计、后端的各种“撕逼”后，或坚持、或折中的结果。其 **HTML 模板机制** 源于作者早期的一个 PHP 前端项目 [EasyWebTemplate](http://git.oschina.net/Tech_Query/EasyWebTemplate)（基于 **phpQuery**），而其 **事件驱动的 API** 则源于文首提到的开放平台首个版本的**智能表单引擎** JSON_Web.js（强数据格式依赖、不支持不规律的界面设计，未到达开源水准，但会继续吸收其优秀的特性）。虽然前面这些小项目 都有些幼稚，但却又是 **敢于把独立思考成果付诸实践**的有益尝试，若没有这些沉淀，就没有本项目自 2015年6月29日的26天 内即发布**开源稳定版**的成绩~
