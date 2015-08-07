@@ -73,8 +73,6 @@
                 'http://ip.taobao.com/service/getIpInfo.php?ip=' + arguments[0].ip
             ),
             function () {
-                BOM.iDaily.Error_Check();
-
                 $.extend(User_Data, arguments[0].data);
 
                 $.getJSON(
