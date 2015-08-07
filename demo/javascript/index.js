@@ -56,40 +56,45 @@
     }
 
     $.get(API_Host + 'joke?appkey=' + User_Data.WeChat_AppKey,  function () {
-        Index_Data.joke = eval(arguments[0]).split("\n")[0];
+        Index_Data.joke = arguments[0].split("\n")[0];
 
         if (++Date_Ready == 3)  Main_Logic();
     });
 
     $.get(API_Host + 'history?appkey=' + User_Data.WeChat_AppKey,  function () {
-        Index_Data.history = eval(arguments[0]);
+        Index_Data.history = arguments[0];
 
         if (++Date_Ready == 3)  Main_Logic();
     });
 
     $.getJSON('http://www.telize.com/geoip?callback=?',  function () {
-        $.getJSON('http://int.dpool.sina.com.cn/iplookup/iplookup.php?format=json&ip=' + arguments[0].ip,  function () {
-            BOM.iDaily.Error_Check();
+        $.getJSON(
+            'php/proxy.php?url=' + BOM.encodeURIComponent(
+                'http://int.dpool.sina.com.cn/iplookup/iplookup.php?format=json&ip=' + arguments[0].ip
+            ),
+            function () {
+                BOM.iDaily.Error_Check();
 
-            $.extend(User_Data, arguments[0].data);
+                $.extend(User_Data, arguments[0].data);
 
-            $.getJSON(
-                API_Host + 'weather',
-                {
-                    appkey:    User_Data.WeChat_AppKey,
-                    city:      User_Data.city
-                },
-                function (iWeather) {
-                    $.extend(Index_Data, {
-                        now:        iWeather[1].Title,
-                        suggest:    iWeather[2].Title,
-                        days:       iWeather.slice(3)
-                    });
+                $.getJSON(
+                    API_Host + 'weather',
+                    {
+                        appkey:    User_Data.WeChat_AppKey,
+                        city:      User_Data.city
+                    },
+                    function (iWeather) {
+                        $.extend(Index_Data, {
+                            now:        iWeather[1].Title,
+                            suggest:    iWeather[2].Title,
+                            days:       iWeather.slice(3)
+                        });
 
-                    if (++Date_Ready == 3)  Main_Logic();
-                }
-            );
-        });
+                        if (++Date_Ready == 3)  Main_Logic();
+                    }
+                );
+            }
+        );
     });
 
 /* ---------- 全局功能 ---------- */
