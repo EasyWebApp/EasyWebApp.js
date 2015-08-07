@@ -357,7 +357,9 @@
                     $.getJSON(
                         URL_Merge.call(
                             _This_,
-                            _This_.apiRoot  +  _This_.proxy ? BOM.encodeURIComponent(iJSON) : iJSON,
+                            _This_.apiRoot + (
+                                _This_.proxy ? BOM.encodeURIComponent(iJSON) : iJSON
+                            ),
                             URL_Args.call(_This_, this)
                         ),
                         Page_Ready
@@ -403,7 +405,9 @@
 
                 var API_URL = URL_Merge.call(
                         _This_,
-                        _This_.apiRoot  +  _This_.proxy ? BOM.encodeURIComponent(iJSON) : iJSON,
+                        _This_.apiRoot + (
+                            _This_.proxy ? BOM.encodeURIComponent(iJSON) : iJSON
+                        ),
                         URL_Args.call(_This_, this, true)
                     );
                 $.getJSON(API_URL,  function () {
