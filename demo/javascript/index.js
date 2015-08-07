@@ -55,17 +55,23 @@
         }).WebApp(User_Data, API_Host);
     }
 
-    $.get(API_Host + 'joke?appkey=' + User_Data.WeChat_AppKey,  function () {
-        Index_Data.joke = arguments[0].split("\n")[0];
+    $.get(
+        API_Host  +  BOM.encodeURIComponent('joke?appkey=' + User_Data.WeChat_AppKey),
+        function () {
+            Index_Data.joke = arguments[0].split("\n")[0];
 
-        if (++Date_Ready == 3)  Main_Logic();
-    });
+            if (++Date_Ready == 3)  Main_Logic();
+        }
+    );
 
-    $.get(API_Host + 'history?appkey=' + User_Data.WeChat_AppKey,  function () {
-        Index_Data.history = arguments[0];
+    $.get(
+        API_Host  +  BOM.encodeURIComponent('history?appkey=' + User_Data.WeChat_AppKey),
+        function () {
+            Index_Data.history = arguments[0];
 
-        if (++Date_Ready == 3)  Main_Logic();
-    });
+            if (++Date_Ready == 3)  Main_Logic();
+        }
+    );
 
     $.getJSON('http://www.telize.com/geoip?callback=?',  function () {
         $.getJSON(
@@ -76,11 +82,10 @@
                 $.extend(User_Data, arguments[0].data);
 
                 $.getJSON(
-                    API_Host + 'weather',
-                    {
+                    API_Host  +  BOM.encodeURIComponent('weather?' + $.param({
                         appkey:    User_Data.WeChat_AppKey,
                         city:      User_Data.city.slice(0, 2)
-                    },
+                    })),
                     function (iWeather) {
                         $.extend(Index_Data, {
                             now:        iWeather[1].Title,

@@ -153,7 +153,8 @@ $_AppRoot
     )
     .WebApp(
         Init_Data,                         //  可选，一般为 登录后的会话数据
-        'http://cross.domain.api/root',    //  可选，API 服务器 与 静态网页资源服务器 不同时设置
+        'http://cross.domain.api/root',    //  可选，API 服务器 与 静态网页资源服务器 不同时设置，
+                                               并支持 跨域代理 URL 前缀
         URL_Change                         //  可选，Boolean，控制 地址栏网址 是否改变
     );
 ```
