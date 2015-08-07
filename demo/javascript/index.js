@@ -70,7 +70,7 @@
     $.getJSON('http://www.telize.com/geoip?callback=?',  function () {
         $.getJSON(
             'php/proxy.php?url=' + BOM.encodeURIComponent(
-                'http://int.dpool.sina.com.cn/iplookup/iplookup.php?format=json&ip=' + arguments[0].ip
+                'http://ip.taobao.com/service/getIpInfo.php?ip=' + arguments[0].ip
             ),
             function () {
                 BOM.iDaily.Error_Check();
@@ -81,7 +81,7 @@
                     API_Host + 'weather',
                     {
                         appkey:    User_Data.WeChat_AppKey,
-                        city:      User_Data.city
+                        city:      User_Data.city.slice(0, 2)
                     },
                     function (iWeather) {
                         $.extend(Index_Data, {
