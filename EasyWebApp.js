@@ -2,7 +2,7 @@
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]     v1.3  (2015-8-3)  Stable
+//      [Version]     v1.3.5  (2015-8-7)  Stable
 //
 //      [Based on]    iQuery  |  jQuery with jQuery+,
 //
@@ -88,13 +88,19 @@
         if (! ($_Root instanceof $))
             $_Root = $($_Root);
 
+        var Split_Index = API_Root  &&  (API_Root.match(/(\w+:)?\/\//) || [ ]).index;
+        if (Split_Index)
+            API_Root = API_Root.slice(0, Split_Index)  +
+                BOM.encodeURIComponent( API_Root.slice(Split_Index) );
+
         $.extend(this, {
             domRoot:      $_Root,
             dataStack:    [ Init_Data ],
             apiRoot:      API_Root || '',
             urlChange:    URL_Change,
             history:      new xHistory($_Root),
-            loading:      false
+            loading:      false,
+            proxy:        !! Split_Index
         });
 
         var Data_Stack = this.dataStack;
@@ -351,7 +357,7 @@
                     $.getJSON(
                         URL_Merge.call(
                             _This_,
-                            _This_.apiRoot + iJSON,
+                            _This_.apiRoot  +  _This_.proxy ? BOM.encodeURIComponent(iJSON) : iJSON,
                             URL_Args.call(_This_, this)
                         ),
                         Page_Ready
@@ -390,13 +396,14 @@
                 if (_This_.loading)  return false;
 
                 var $_This = $(this);
-                var $_Form = $_This.parents('form').eq(0);
+                var $_Form = $_This.parents('form').eq(0),
+                    iJSON = $_This.attr('src');
 
                 if ($_Form.length)  Input_Flush.call(_This_, $_Form);
 
                 var API_URL = URL_Merge.call(
                         _This_,
-                        _This_.apiRoot + $_This.attr('src'),
+                        _This_.apiRoot  +  _This_.proxy ? BOM.encodeURIComponent(iJSON) : iJSON,
                         URL_Args.call(_This_, this, true)
                     );
                 $.getJSON(API_URL,  function () {

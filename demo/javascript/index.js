@@ -29,7 +29,7 @@
     };
 
 /* ---------- 数据 API ---------- */
-    var API_Host = 'http://apix.sinaapp.com/',
+    var API_Host = 'php/proxy.php?url=http://apix.sinaapp.com/',
         Date_Ready = 0,
         User_Data = {
             WeChat_AppKey:    URL_Args.wechat_appkey || BOM.prompt('微信公众平台 AppKey') || 'trialuser'
@@ -68,7 +68,7 @@
     });
 
     $.getJSON('http://www.telize.com/geoip?callback=?',  function () {
-        $.getJSON('http://ip.taobao.com/service/getIpInfo.php?ip=' + arguments[0].ip,  function () {
+        $.getJSON('http://int.dpool.sina.com.cn/iplookup/iplookup.php?format=json&ip=' + arguments[0].ip,  function () {
             BOM.iDaily.Error_Check();
 
             $.extend(User_Data, arguments[0].data);
@@ -77,7 +77,7 @@
                 API_Host + 'weather',
                 {
                     appkey:    User_Data.WeChat_AppKey,
-                    city:      User_Data.city.slice(0, 2)
+                    city:      User_Data.city
                 },
                 function (iWeather) {
                     $.extend(Index_Data, {
