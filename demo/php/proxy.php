@@ -29,7 +29,10 @@ class EasyHTTPClient {
     public function post($_URL, $_Data) {
         return  $this->request('POST', $_URL, $_Data);
     }
-    public static function fileHeader() {
+}
+
+class EasyHTTPServer {
+    private function requestHeaders() {
         $_Header = array();
 
         foreach ($http_response_header  as  $n => $_Str) {
@@ -44,6 +47,24 @@ class EasyHTTPClient {
         }
         return $_Header;
     }
+    private function requestIPAddress() {
+        if (! empty( $_SERVER['HTTP_CLIENT_IP'] )) {
+            return $_SERVER['HTTP_CLIENT_IP'];
+        }
+        //  To check IP is passed from a Proxy Server
+        if (! empty( $_SERVER['HTTP_X_FORWARDED_FOR'] )) {
+            return $_SERVER['HTTP_X_FORWARDED_FOR'];
+        }
+
+        return $_SERVER['REMOTE_ADDR'];
+    }
+    public function __get($_Name) {
+        switch ($_Name) {
+            case 'requestHeaders':      return $this->requestHeaders();
+            case 'requestIPAddress':    return $this->requestIPAddress();
+        }
+        return null;
+    }
 }
 
 // ----------------------------------------
@@ -52,8 +73,10 @@ class EasyHTTPClient {
 //
 // ----------------------------------------
 
+$_HTTP_Server = new EasyHTTPServer();
+
 if ($_SERVER['REQUEST_METHOD'] == 'OPTION') {
-    $_HTTP_Header = EasyHTTPClient::fileHeader();
+    $_HTTP_Header = $_HTTP_Server->requestHeaders;
 
     header('Access-Control-Allow-Origin: '.(
         isset( $_HTTP_Header['Origin'] )  ?  $_HTTP_Header['Origin']  :  '*'
@@ -95,7 +118,7 @@ if (isset( $_GET['url'] )) {
 
 $_User_Info = json_decode(
     $_HTTP_Client->get(
-        'http://ip.taobao.com/service/getIpInfo.php?ip='.$_SERVER['REMOTE_ADDR']
+        'http://ip.taobao.com/service/getIpInfo.php?ip='.$_HTTP_Server->requestIPAddress
     ),
     true
 );
