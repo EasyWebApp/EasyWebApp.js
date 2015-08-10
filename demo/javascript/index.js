@@ -44,9 +44,22 @@
             //  激活 EasyWebUI 对老版现代浏览器 Flex 布局的修复
             $('.Flex-Box').addClass('Flex-Box');
 
-            if ($.fileName(This_Page.HTML) == 'index.html')
-                return Index_Data;
+            switch ( $.fileName(This_Page.HTML) ) {
+                case '':                ;
+                case 'index.html':      return Index_Data;
+                case 'history.html':    {
+                    var iTimeLine = iData.split("\n");
 
+                    for (var i = 0;  i < iTimeLine.length;  i++) {
+                        iTimeLine[i] = $.split(iTimeLine[i], /\s+/, 2, ' ');
+                        iTimeLine[i] = {
+                            year:     iTimeLine[i][0],
+                            event:    iTimeLine[i][1]
+                        };
+                    }
+                    return iTimeLine;
+                }
+            }
             return iData;
 
         }).on('pageReady',  function () {
@@ -63,18 +76,7 @@
         function () {
             Index_Data.joke = arguments[0].split("\n")[0];
 
-            if (++Date_Ready == 3)  Main_Logic();
-        }
-    );
-
-    $.get(
-        Proxy_API + BOM.encodeURIComponent(
-            API_Host + 'history?appkey=' + User_Data.WeChat_AppKey
-        ),
-        function () {
-            Index_Data.history = arguments[0];
-
-            if (++Date_Ready == 3)  Main_Logic();
+            if (++Date_Ready == 2)  Main_Logic();
         }
     );
 
@@ -95,7 +97,7 @@
                     days:       iWeather.slice(3)
                 });
 
-                if (++Date_Ready == 3)  Main_Logic();
+                if (++Date_Ready == 2)  Main_Logic();
             }
         );
     });
