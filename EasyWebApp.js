@@ -2,7 +2,7 @@
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]     v1.3.5  (2015-8-7)  Stable
+//      [Version]     v1.3.5  (2015-8-10)  Stable
 //
 //      [Based on]    iQuery  |  jQuery with jQuery+,
 //
@@ -339,18 +339,22 @@
             /* ----- Load DOM  from  Network ----- */
                 var DOM_Ready = iJSON ? 2 : 1;
 
-                function Page_Ready() {
-                    if ( $.isPlainObject(arguments[0]) )
-                        iData = arguments[0];
-                    if (--DOM_Ready == 0) {
-                        Page_Show.call(_This_, iHTML, iData);
-                        _This_.loading = false;
-                        _This_.domRoot.trigger('pageReady', [
-                            _This_,
-                            _This_.history[_This_.history.lastIndex],
-                            _This_.history[_This_.history.prevIndex]
-                        ]);
-                    }
+                function Page_Ready(_Data_) {
+                    if (
+                        $.isPlainObject(_Data_) ||
+                        ($.trim(_Data_)[0] != '<')
+                    )
+                        iData = _Data_;
+
+                    if (--DOM_Ready != 0)  return;
+
+                    Page_Show.call(_This_, iHTML, iData);
+                    _This_.loading = false;
+                    _This_.domRoot.trigger('pageReady', [
+                        _This_,
+                        _This_.history[_This_.history.lastIndex],
+                        _This_.history[_This_.history.prevIndex]
+                    ]);
                 }
                 // --- Load Data from API --- //
                 if (iJSON)
