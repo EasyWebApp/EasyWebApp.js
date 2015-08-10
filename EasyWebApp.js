@@ -341,7 +341,8 @@
 
                 function Page_Ready(_Data_) {
                     if (
-                        $.isPlainObject(_Data_) ||
+                        $.isPlainObject(_Data_)  ||
+                        (_Data_ instanceof Array)  ||
                         ($.trim(_Data_)[0] != '<')
                     )
                         iData = _Data_;

@@ -59,6 +59,7 @@
                     }
                     return iTimeLine;
                 }
+                case 'english.html':    return iData[0];
             }
             return iData;
 
