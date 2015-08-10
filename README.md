@@ -207,7 +207,7 @@ iWebApp
 ```
 
 ## 【演示项目】
-[每日资讯（移动版）](http://easywebapp.oschina.cnpaas.io/demo) 基于 [方倍工作室 API 100](http://www.cnblogs.com/txw1958/p/weixin-api100.html)，支持 **微信公众平台 AppKey**。
+[每日资讯（移动版）](http://easywebapp.oschina.cnpaas.io/demo) 基于 [方倍工作室 API 100](http://www.cnblogs.com/txw1958/p/weixin-api100.html)，支持 **微信公众平台 AppKey**（URL 形如 `/demo/index.html?wechat_appkey=xxx`）。
 
 
 ## 【项目缘起】

@@ -29,10 +29,11 @@
     };
 
 /* ---------- 数据 API ---------- */
-    var API_Host = 'php/proxy.php?url=http://apix.sinaapp.com/',
+    var Proxy_API = 'php/proxy.php?url=',
+        API_Host = 'http://apix.sinaapp.com/',
         Date_Ready = 0,
         User_Data = {
-            WeChat_AppKey:    URL_Args.wechat_appkey || BOM.prompt('微信公众平台 AppKey') || 'trialuser'
+            WeChat_AppKey:    URL_Args.wechat_appkey || 'trialuser'
         },
         Index_Data = { };
 
@@ -52,11 +53,13 @@
 
             BOM.iShadowCover.close();
 
-        }).WebApp(User_Data, API_Host);
+        }).WebApp(User_Data,  Proxy_API + API_Host);
     }
 
     $.get(
-        API_Host  +  BOM.encodeURIComponent('joke?appkey=' + User_Data.WeChat_AppKey),
+        Proxy_API + BOM.encodeURIComponent(
+            API_Host + 'joke?appkey=' + User_Data.WeChat_AppKey
+        ),
         function () {
             Index_Data.joke = arguments[0].split("\n")[0];
 
@@ -65,7 +68,9 @@
     );
 
     $.get(
-        API_Host  +  BOM.encodeURIComponent('history?appkey=' + User_Data.WeChat_AppKey),
+        Proxy_API + BOM.encodeURIComponent(
+            API_Host + 'history?appkey=' + User_Data.WeChat_AppKey
+        ),
         function () {
             Index_Data.history = arguments[0];
 
@@ -73,29 +78,24 @@
         }
     );
 
-    $.getJSON('http://www.telize.com/geoip?callback=?',  function () {
+    $.getJSON('php/proxy.php',  function () {
+        BOM.iDaily.Error_Check();
+
+        $.extend(User_Data, arguments[0].data);
+
         $.getJSON(
-            'php/proxy.php?url=' + BOM.encodeURIComponent(
-                'http://ip.taobao.com/service/getIpInfo.php?ip=' + arguments[0].ip
-            ),
-            function () {
-                $.extend(User_Data, arguments[0].data);
+            Proxy_API  +  BOM.encodeURIComponent(API_Host + 'weather?' + $.param({
+                appkey:    User_Data.WeChat_AppKey,
+                city:      User_Data.city.replace(/(市|自治|特别).*/, '')
+            })),
+            function (iWeather) {
+                $.extend(Index_Data, {
+                    now:        iWeather[1].Title,
+                    suggest:    iWeather[2].Title,
+                    days:       iWeather.slice(3)
+                });
 
-                $.getJSON(
-                    API_Host  +  BOM.encodeURIComponent('weather?' + $.param({
-                        appkey:    User_Data.WeChat_AppKey,
-                        city:      User_Data.city.slice(0, 2)
-                    })),
-                    function (iWeather) {
-                        $.extend(Index_Data, {
-                            now:        iWeather[1].Title,
-                            suggest:    iWeather[2].Title,
-                            days:       iWeather.slice(3)
-                        });
-
-                        if (++Date_Ready == 3)  Main_Logic();
-                    }
-                );
+                if (++Date_Ready == 3)  Main_Logic();
             }
         );
     });

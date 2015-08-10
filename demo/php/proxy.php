@@ -73,11 +73,32 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTION') {
 header('Access-Control-Allow-Origin: *');
 
 $_HTTP_Client = new EasyHTTPClient();
-$_URL = $_GET['url'];
 
-switch ( $_SERVER['REQUEST_METHOD'] ) {
-    case 'GET':
-        echo  $_HTTP_Client->get($_URL);    break;
-    case 'POST':
-        echo  $_HTTP_Client->post($_URL, $_POST);
+if (isset( $_GET['url'] )) {
+    $_URL = $_GET['url'];
+
+    switch ( $_SERVER['REQUEST_METHOD'] ) {
+        case 'GET':
+            echo  $_HTTP_Client->get($_URL);    break;
+        case 'POST':
+            echo  $_HTTP_Client->post($_URL, $_POST);
+    }
+    exit;
 }
+
+
+// ----------------------------------------
+//
+//    User Information
+//
+// ----------------------------------------
+
+$_User_Info = json_decode(
+    $_HTTP_Client->get(
+        'http://ip.taobao.com/service/getIpInfo.php?ip='.$_SERVER['REMOTE_ADDR']
+    ),
+    true
+);
+$_User_Info['code'] = 200;
+
+echo json_encode($_User_Info);
