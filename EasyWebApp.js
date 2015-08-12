@@ -2,7 +2,7 @@
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]     v1.3.5  (2015-8-10)  Stable
+//      [Version]     v1.4.5  (2015-8-11)  Stable
 //
 //      [Based on]    iQuery  |  jQuery with jQuery+,
 //
@@ -165,12 +165,11 @@
     };
 
     /* ----- Auto Navigating ----- */
-    function URL_Args(DOM_Link, Need_Event) {
+    function URL_Args(DOM_Link) {
         var iArgs = { };
 
         for (var iName in DOM_Link.dataset)
-            if ((! Need_Event) || (iName != 'event'))
-                iArgs[iName] = Data_Value.call(this, DOM_Link.dataset[iName]);
+            iArgs[iName] = Data_Value.call(this, DOM_Link.dataset[iName]);
 
         return iArgs;
     }
@@ -214,9 +213,7 @@
             this.dataStack.push(null);
 
         var Old_Sum = this.dataStack.length - 1 - this.history.lastIndex;
-
-        if (Old_Sum > 0)
-            this.dataStack.length -= Old_Sum;
+        if (Old_Sum > 0)  this.dataStack.length -= Old_Sum;
 
         iData = this.domRoot.triggerHandler('pageRender', [
             this.history[this.history.lastIndex],  this.history[this.history.prevIndex],  iData || { }
@@ -225,7 +222,7 @@
         this.dataStack.push(iData);
 
         var _This_ = this,
-            $_List = $('ul, ol, dl, *[multiple]').not('input');
+            $_List = $('ul, ol, dl, tbody, *[multiple]').not('input');
 
         if (iData instanceof Array)
             List_Value.call($_List, iData);
@@ -259,16 +256,11 @@
         $.extend(_Data_[_Data_.length - 1],  iData);
     }
 
-    _Proto_.boot = function () {
-        if (this.history.length)
-            throw 'This WebApp has been booted !';
-
-        var _This_ = this,
-            iHash = BOM.location.hash.slice(1);
-
-        this.loading = true;
+    function App_Init() {
         this.history.write();
-        Page_Show.call(this, DOM.URL, null);
+        Page_Show.call(this, DOM.URL, arguments[0]);
+
+        var _This_ = this;
 
         $(DOM.body).on('submit',  'form[target][href]',  function (iEvent) {
             if (_This_.loading)  return false;
@@ -453,6 +445,8 @@
             }
         );
 
+        var iHash = BOM.location.hash.slice(1);
+
         if (iHash) {
             var iHash_RE = RegExp('\\/?' + iHash + '\\.\\w+$', 'i');
 
@@ -469,6 +463,47 @@
         this.domRoot.trigger('pageReady', [
             this,  this.history[this.history.lastIndex],  this.history[this.history.prevIndex]
         ]);
+
+        return this;
+    }
+
+    _Proto_.boot = function () {
+        if (this.history.length)  throw 'This WebApp has been booted !';
+
+        this.loading = true;
+
+        var $_Link = $('head link[src]');
+
+        //  No Content Data in First Page
+        if (! $_Link.length)
+            return App_Init.call(this);
+
+        //  Loading Content Data before First Page rendering
+        var _This_ = this,  Data_Ready = $_Link.length;
+
+        $_Link.each(function () {
+            var iJSON = $(this).attr('src'),  iData = { };
+
+            iJSON = URL_Merge.call(
+                _This_,
+                _This_.apiRoot + (
+                    _This_.proxy ? BOM.encodeURIComponent(iJSON) : iJSON
+                ),
+                URL_Args.call(_This_, this)
+            );
+            $.getJSON(iJSON,  function () {
+                var _Data_ = _This_.domRoot.triggerHandler('apiCall', [
+                        _This_,
+                        _This_.history[_This_.history.lastIndex].HTML,
+                        iJSON,
+                        arguments[0]
+                    ]);
+
+                if (_Data_)  $.extend(iData, _Data_);
+
+                if (--Data_Ready == 0)  App_Init.call(_This_, iData);
+            });
+        });
 
         return this;
     };

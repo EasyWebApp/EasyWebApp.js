@@ -6,16 +6,16 @@
 
 /* ---------- 通用模块 ---------- */
     BOM.iDaily = {
-        Error_Check:    function (iError) {
-            iError = iError || arguments.callee.caller.arguments[0];
-            if (iError.code == 200) return;
+        Error_Check:    function (iResponse) {
+            iResponse = iResponse || arguments.callee.caller.arguments[0];
+            if (iResponse.code == 200)  return iResponse;
 
             BOM.alert([
-                iError.message,
+                iResponse.message,
                 "（出错信息已上报，我们的程序猿已垂死病中惊坐起……）"
             ].join("\n\n"));
 
-            throw Error(iError.message);
+            throw Error(iResponse.message);
         },
         Load_Cover:    function () {
             BOM.showModalDialog($("<h1>今天，世界又是新的……</h1>"), {
@@ -30,23 +30,37 @@
 
 /* ---------- 数据 API ---------- */
     var Proxy_API = 'php/proxy.php?url=',
-        API_Host = 'http://apix.sinaapp.com/',
-        Date_Ready = 0,
-        User_Data = {
-            WeChat_AppKey:    URL_Args.wechat_appkey || 'trialuser'
-        },
-        Index_Data = { };
+        API_Host = 'http://apix.sinaapp.com/';
 
-    function Main_Logic() {
-        $_Body.on('pageRender',  function (iEvent, This_Page, Prev_Page, iData) {
+
+    $.getJSON('php/proxy.php',  function () {
+
+        var User_Data = $.extend(BOM.iDaily.Error_Check().data, {
+                WeChat_AppKey:    URL_Args.wechat_appkey || 'trialuser',
+                city:             arguments[0].data.city.replace(/(市|自治|特别).*/, '')
+            });
+
+        $_Body.on('apiCall',  function () {
+
+            var iData = arguments[4];
+
+            switch ( $.fileName(arguments[3]) ) {
+                case 'joke':       return {
+                    joke:    iData.split("\n")[0]
+                };
+                case 'weather':    return {
+                    now:        iData[1].Title,
+                    suggest:    iData[2].Title,
+                    days:       iData.slice(3)
+                };
+            }
+        }).on('pageRender',  function (iEvent, This_Page, Prev_Page, iData) {
 
             BOM.iDaily.Load_Cover();
             //  激活 EasyWebUI 对老版现代浏览器 Flex 布局的修复
             $('.Flex-Box').addClass('Flex-Box');
 
             switch ( $.fileName(This_Page.HTML) ) {
-                case '':                ;
-                case 'index.html':      return Index_Data;
                 case 'history.html':    {
                     var iTimeLine = iData.split("\n");
 
@@ -68,39 +82,6 @@
             BOM.iShadowCover.close();
 
         }).WebApp(User_Data,  Proxy_API + API_Host);
-    }
-
-    $.get(
-        Proxy_API + BOM.encodeURIComponent(
-            API_Host + 'joke?appkey=' + User_Data.WeChat_AppKey
-        ),
-        function () {
-            Index_Data.joke = arguments[0].split("\n")[0];
-
-            if (++Date_Ready == 2)  Main_Logic();
-        }
-    );
-
-    $.getJSON('php/proxy.php',  function () {
-        BOM.iDaily.Error_Check();
-
-        $.extend(User_Data, arguments[0].data);
-
-        $.getJSON(
-            Proxy_API  +  BOM.encodeURIComponent(API_Host + 'weather?' + $.param({
-                appkey:    User_Data.WeChat_AppKey,
-                city:      User_Data.city.replace(/(市|自治|特别).*/, '')
-            })),
-            function (iWeather) {
-                $.extend(Index_Data, {
-                    now:        iWeather[1].Title,
-                    suggest:    iWeather[2].Title,
-                    days:       iWeather.slice(3)
-                });
-
-                if (++Date_Ready == 2)  Main_Logic();
-            }
-        );
     });
 
 /* ---------- 全局功能 ---------- */
