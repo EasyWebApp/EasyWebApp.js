@@ -2,7 +2,7 @@
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]     v1.4.5  (2015-8-11)  Stable
+//      [Version]     v1.5  (2015-8-13)  Stable
 //
 //      [Based on]    iQuery  |  jQuery with jQuery+,
 //
@@ -222,7 +222,7 @@
         this.dataStack.push(iData);
 
         var _This_ = this,
-            $_List = $('ul, ol, dl, tbody, *[multiple]').not('input');
+            $_List = this.domRoot.find('ul, ol, dl, tbody, *[multiple]').not('input');
 
         if (iData instanceof Array)
             List_Value.call($_List, iData);
@@ -396,7 +396,8 @@
 
                 var $_This = $(this);
                 var $_Form = $_This.parents('form').eq(0),
-                    iJSON = $_This.attr('src');
+                    iJSON = $_This.attr('src'),
+                    iMethod = ($_This.attr('method') || 'Get').toLowerCase();
 
                 if ($_Form.length)  Input_Flush.call(_This_, $_Form);
 
@@ -405,13 +406,24 @@
                         _This_.apiRoot + (
                             _This_.proxy ? BOM.encodeURIComponent(iJSON) : iJSON
                         ),
-                        URL_Args.call(_This_, this, true)
+                        iMethod.match(/get|delete/)  &&  URL_Args.call(_This_, this, true)
                     );
-                $.getJSON(API_URL,  function () {
+                function Data_Ready() {
                     $_This.trigger('apiCall', [
                         _This_,  _This_.history[_This_.history.lastIndex].HTML,  API_URL,  arguments[0]
                     ]);
-                });
+                }
+                switch (iMethod) {
+                    case 'get':       ;
+                    case 'delete':
+                        $[iMethod](API_URL, Data_Ready);    break;
+                    case 'post':      ;
+                    case 'put':
+                        $[iMethod](
+                            API_URL,  URL_Args.call(_This_, this),  Data_Ready
+                        );
+                }
+
                 return false;
             }
         ).on(
@@ -445,6 +457,7 @@
             }
         );
 
+        /* ----- URL Hash Navigation ----- */
         var iHash = BOM.location.hash.slice(1);
 
         if (iHash) {
@@ -463,6 +476,15 @@
         this.domRoot.trigger('pageReady', [
             this,  this.history[this.history.lastIndex],  this.history[this.history.prevIndex]
         ]);
+
+        /* ----- HTML Prefetch ----- */
+        $('body *[target][href]').each(function () {
+            $('<link />', {
+                rel:     $.browser.modern ? 'prefetch' : 'next',
+                href:    $(this).attr('href')
+            })
+                .appendTo(DOM.head);
+        });
 
         return this;
     }
