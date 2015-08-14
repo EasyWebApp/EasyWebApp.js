@@ -2,7 +2,7 @@
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]     v1.5  (2015-8-13)  Stable
+//      [Version]     v1.5  (2015-8-14)  Stable
 //
 //      [Based on]    iQuery  |  jQuery with jQuery+,
 //
@@ -174,14 +174,14 @@
         return iArgs;
     }
 
-    function URL_Merge(iURL, iArgs) {
+    function URL_Merge(iURL, iArgs, iData) {
         var _This_ = this;
         iURL = iURL.split('?');
 
         iURL[0] = decodeURIComponent(iURL[0]).replace(
             /\{([^\}]+)\}/g,
             function () {
-                return  Data_Value.call(_This_, arguments[1]);
+                return  iData[arguments[1]] || Data_Value.call(_This_, arguments[1]);
             }
         );
         iURL[1] = $.param($.extend(
@@ -208,7 +208,20 @@
         }
     }
 
+    var $_Body = $(DOM.body);
+
     function Page_Show(iURL, iData) {
+        /* ----- HTML Prefetch ----- */
+        (this.history.lastIndex ? this.domRoot : $_Body).find('*[target][href]')
+            .each(function () {
+                $('<link />', {
+                    rel:     $.browser.modern ? 'prefetch' : 'next',
+                    href:    $(this).attr('href')
+                })
+                    .appendTo(DOM.head);
+            });
+
+        /* ----- Data Stack Change ----- */
         if (this.dataStack.length < this.history.length)
             this.dataStack.push(null);
 
@@ -221,18 +234,21 @@
 
         this.dataStack.push(iData);
 
+        /* ----- Data Render ----- */
         var _This_ = this,
             $_List = this.domRoot.find('ul, ol, dl, tbody, *[multiple]').not('input');
 
         if (iData instanceof Array)
             List_Value.call($_List, iData);
         else
-            $('body *[name]').value(function (iName) {
+            $_Body.find('*[name]').value(function (iName) {
                 var $_This = $(this);
                 var iValue = Data_Value.call(_This_,  iName,  $_This.is($_List));
 
                 if (iValue instanceof Array)
                     List_Value.call($_This, iValue);
+                else if ( $.isPlainObject(iValue) )
+                    $_This.data('json', iValue).value(iValue);
                 else
                     return iValue;
             });
@@ -257,12 +273,11 @@
     }
 
     function App_Init() {
-        this.history.write();
         Page_Show.call(this, DOM.URL, arguments[0]);
 
         var _This_ = this;
 
-        $(DOM.body).on('submit',  'form[target][href]',  function (iEvent) {
+        $_Body.on('submit',  'form[target][href]',  function (iEvent) {
             if (_This_.loading)  return false;
 
             iEvent.preventDefault();
@@ -308,14 +323,13 @@
 
                 var $_This = $(this);
                 var iData = $_This.data('json'),
-                    iHTML = $_This.attr('href'),
-                    iJSON = $_This.attr('src');
+                    iPage = $_This.attr(['title', 'href', 'src']);
 
                 _This_.loading = true;
 
             /* ----- Load DOM  form  Cache ----- */
                 var $_Cached = _This_.history.write(
-                        $_This.attr('title'),  null,  iHTML,  iJSON
+                        iPage.title,  null,  iPage.href,  iPage.src
                     );
                 if ($_Cached) {
                     $_Cached.appendTo(_This_.domRoot).fadeIn();
@@ -329,7 +343,7 @@
                 }
 
             /* ----- Load DOM  from  Network ----- */
-                var DOM_Ready = iJSON ? 2 : 1;
+                var DOM_Ready = iPage.src ? 2 : 1;
 
                 function Page_Ready(_Data_) {
                     if (
@@ -341,7 +355,7 @@
 
                     if (--DOM_Ready != 0)  return;
 
-                    Page_Show.call(_This_, iHTML, iData);
+                    Page_Show.call(_This_, iPage.href, iData);
                     _This_.loading = false;
                     _This_.domRoot.trigger('pageReady', [
                         _This_,
@@ -350,14 +364,15 @@
                     ]);
                 }
                 // --- Load Data from API --- //
-                if (iJSON)
+                if (iPage.src)
                     $.getJSON(
                         URL_Merge.call(
                             _This_,
                             _This_.apiRoot + (
-                                _This_.proxy ? BOM.encodeURIComponent(iJSON) : iJSON
+                                _This_.proxy ? BOM.encodeURIComponent(iPage.src) : iPage.src
                             ),
-                            URL_Args.call(_This_, this)
+                            URL_Args.call(_This_, this),
+                            iData
                         ),
                         Page_Ready
                     );
@@ -365,13 +380,13 @@
                 // --- Load DOM from HTML|MarkDown --- //
                 var MarkDown_File = /\.(md|markdown)$/i;
 
-                if (! iHTML.match(MarkDown_File))
+                if (! iPage.href.match(MarkDown_File))
                     _This_.domRoot.load(
-                        iHTML + (_This_.domRoot.selector ? (' ' + _This_.domRoot.selector) : ''),
+                        iPage.href + (_This_.domRoot.selector ? (' ' + _This_.domRoot.selector) : ''),
                         Page_Ready
                     );
                 else
-                    $.get(iHTML,  function (iMarkDown) {
+                    $.get(iPage.href,  function (iMarkDown) {
                         if (BOM.marked)
                             $( BOM.marked(iMarkDown) )
                                 .appendTo( _This_.domRoot.empty() ).fadeIn()
@@ -396,6 +411,7 @@
 
                 var $_This = $(this);
                 var $_Form = $_This.parents('form').eq(0),
+                    iData = $_This.data('json'),
                     iJSON = $_This.attr('src'),
                     iMethod = ($_This.attr('method') || 'Get').toLowerCase();
 
@@ -406,7 +422,8 @@
                         _This_.apiRoot + (
                             _This_.proxy ? BOM.encodeURIComponent(iJSON) : iJSON
                         ),
-                        iMethod.match(/get|delete/)  &&  URL_Args.call(_This_, this, true)
+                        iMethod.match(/get|delete/)  &&  URL_Args.call(_This_, this, true),
+                        iData
                     );
                 function Data_Ready() {
                     $_This.trigger('apiCall', [
@@ -437,7 +454,8 @@
                     return;
 
                 var $_This = $(this);
-                var toURL = $_This.attr('href');
+                var toURL = $_This.attr('href'),
+                    iData = $_This.data('json');
 
                 var iReturn = _This_.domRoot.triggerHandler('appExit', [
                         _This_.history[_This_.history.lastIndex].HTML,
@@ -451,7 +469,7 @@
                     if ( $.isPlainObject(iReturn) )  $.extend(iArgs, iReturn);
 
                     _This_.history.move();
-                    BOM.location.href = URL_Merge.call(_This_, toURL, iArgs);
+                    BOM.location.href = URL_Merge.call(_This_, toURL, iArgs, iData);
                 }
                 return false;
             }
@@ -463,7 +481,7 @@
         if (iHash) {
             var iHash_RE = RegExp('\\/?' + iHash + '\\.\\w+$', 'i');
 
-            $('body [target][href]').each(function () {
+            $_Body.find('*[target][href]').each(function () {
                 var $_This = $(this);
 
                 if ( $_This.attr('href').match(iHash_RE) ) {
@@ -477,15 +495,6 @@
             this,  this.history[this.history.lastIndex],  this.history[this.history.prevIndex]
         ]);
 
-        /* ----- HTML Prefetch ----- */
-        $('body *[target][href]').each(function () {
-            $('<link />', {
-                rel:     $.browser.modern ? 'prefetch' : 'next',
-                href:    $(this).attr('href')
-            })
-                .appendTo(DOM.head);
-        });
-
         return this;
     }
 
@@ -493,6 +502,7 @@
         if (this.history.length)  throw 'This WebApp has been booted !';
 
         this.loading = true;
+        this.history.write();
 
         var $_Link = $('head link[src]');
 
