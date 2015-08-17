@@ -8,7 +8,7 @@
     BOM.iDaily = {
         Error_Check:    function (iResponse) {
             iResponse = iResponse || arguments.callee.caller.arguments[0];
-            if (iResponse.code == 200)  return iResponse;
+            if (iResponse.code == 200)  return iResponse.data;
 
             BOM.alert([
                 iResponse.message,
@@ -35,7 +35,7 @@
 
     $.getJSON('php/proxy.php',  function () {
 
-        var User_Data = $.extend(BOM.iDaily.Error_Check().data, {
+        var User_Data = $.extend(BOM.iDaily.Error_Check(), {
                 WeChat_AppKey:    URL_Args.wechat_appkey || 'trialuser',
                 city:             arguments[0].data.city.replace(/(市|自治|特别).*/, '')
             });
