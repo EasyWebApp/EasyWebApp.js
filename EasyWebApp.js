@@ -127,7 +127,8 @@
         else
             $_Trigger.data('json', iJSON);
 
-        $_Trigger.appendTo(this.domRoot).click().remove();
+        this.loading = false;
+        $_Trigger.appendTo(this.domRoot).click();
 
         return this;
     }
@@ -175,25 +176,29 @@
 
     var RE_Str_Var = /\{([^\}]+)\}/g;
 
-    function URL_Merge(iURL, iArgs, iData) {
-        var This_App = this;
+    function URL_Merge(iURL, iLink, iData) {
+        iURL = $.split(iURL, '?', 2);
+        iData = iData || { };
 
-        iURL = this.apiRoot + (
-            this.proxy ? BOM.encodeURIComponent(iURL) : iURL
-        );
-        iURL = iURL.split('?');
+        var This_App = this,
+            iMethod = ($(iLink).attr('method') || 'Get').toLowerCase();
 
-        iURL[0] = BOM.decodeURIComponent(iURL[0]).replace(
-            RE_Str_Var,
-            function () {
-                return  iData[arguments[1]] || Data_Value.call(This_App, arguments[1]);
-            }
-        );
-        iURL[1] = $.param($.extend(
-            $.paramJSON( iURL.slice(1).join('?') ),  iArgs
-        ));
+        iURL = [
+            BOM.decodeURIComponent(iURL[0]).replace(
+                RE_Str_Var,
+                function () {
+                    return  iData[arguments[1]] || Data_Value.call(This_App, arguments[1]);
+                }
+            ),
+            $.param($.extend(
+                $.paramJSON(iURL[1]),
+                iMethod.match(/get|delete/)  &&  URL_Args.call(this, iLink)
+            ))
+        ].join('?');
 
-        return iURL.join('?');
+        return  this.apiRoot + (
+                this.proxy ? BOM.encodeURIComponent(iURL) : iURL
+            );
     }
 
     function $_List_Value(iValue) {
@@ -226,10 +231,7 @@
             .each(function () {
                 var iPage = $(this).attr(['target', 'href', 'method', 'src']);
 
-                if (
-                    (iPage.target != '_self')  ||
-                    (! iPage.href)
-                )
+                if ((iPage.target != '_self')  ||  (! iPage.href))
                     return;
 
                 var $_Prefetch = $('<link />', {
@@ -239,13 +241,13 @@
 
                 if (
                     ((! iPage.method)  ||  (iPage.method == 'GET'))  &&
-                    (!  (iPage.src || '').match(RE_Str_Var))  &&
+                    (iPage.src  &&  (! iPage.src.match(RE_Str_Var)))  &&
                     $.isEmptyObject(this.dataset)
                 )
                     $_Prefetch.add(
                         $('<link />', {
                             rel:     Prefetch_Tag,
-                            href:    URL_Merge.call(This_App, iPage.src)
+                            href:    URL_Merge.call(This_App, iPage.src, this)
                         })
                     );
 
@@ -303,6 +305,34 @@
         $.extend(_Data_[_Data_.length - 1],  iData);
     }
 
+    function API_Call($_This, Data_Ready) {
+        var API_URL = URL_Merge.call(this,  $_This.attr('src'),  $_This[0],  $_This.data('json')),
+            This_App = this;
+
+        function AJAX_Ready() {
+            Data_Ready(
+                This_App,
+                This_App.history[This_App.history.lastIndex].HTML,
+                This_App.proxy  ?
+                    BOM.decodeURIComponent( API_URL.slice(This_App.proxy.length) )  :
+                    API_URL,
+                arguments[0]
+            );
+        }
+        var iMethod = ($_This.attr('method') || 'Get').toLowerCase();
+
+        switch (iMethod) {
+            case 'get':       ;
+            case 'delete':
+                $[iMethod](API_URL, AJAX_Ready);    break;
+            case 'post':      ;
+            case 'put':
+                $[iMethod](
+                    API_URL,  URL_Args.call(this, $_This[0]),  AJAX_Ready
+                );
+        }
+    }
+
     function User_Listener() {
         var This_App = this;
 
@@ -318,9 +348,9 @@
             Input_Flush.call(This_App, $_Form);
 
             $_Form.attr('action',  function () {
-                return  URL_Merge.call(
-                        This_App,  arguments[1],  URL_Args.call(This_App, this)
-                    );
+
+                return  URL_Merge.call(This_App, arguments[1], this);
+
             }).post(function (iData) {
                 var iAttr = $_Form.attr(['action', 'title', 'href', 'src']);
 
@@ -351,7 +381,7 @@
                     return;
 
                 var $_This = $(this);
-                var iData = $_This.data('json'),
+                var iData = { },
                     iPage = $_This.attr(['title', 'href', 'src']);
 
                 This_App.loading = true;
@@ -374,7 +404,8 @@
             /* ----- Load DOM  from  Network ----- */
                 var DOM_Ready = iPage.src ? 2 : 1;
 
-                function Page_Ready(_Data_) {
+                function Page_Ready() {
+                    var _Data_ = arguments[0][3];
                     if (
                         $.isPlainObject(_Data_)  ||
                         (_Data_ instanceof Array)  ||
@@ -394,10 +425,7 @@
                 }
                 // --- Load Data from API --- //
                 if (iPage.src)
-                    $.getJSON(
-                        URL_Merge.call(This_App,  iPage.src,  URL_Args.call(This_App, this),  iData),
-                        Page_Ready
-                    );
+                    API_Call.call(This_App, $_This, Page_Ready);
 
                 // --- Load DOM from HTML|MarkDown --- //
                 var MarkDown_File = /\.(md|markdown)$/i;
@@ -432,37 +460,13 @@
                 if (This_App.loading)  return false;
 
                 var $_This = $(this);
-                var $_Form = $_This.parents('form').eq(0),
-                    iData = $_This.data('json'),
-                    iJSON = $_This.attr('src'),
-                    iMethod = ($_This.attr('method') || 'Get').toLowerCase();
+                var $_Form = $_This.parents('form').eq(0);
 
                 if ($_Form.length)  Input_Flush.call(This_App, $_Form);
 
-                var API_URL = URL_Merge.call(
-                        This_App,
-                        iJSON,
-                        iMethod.match(/get|delete/)  &&  URL_Args.call(This_App, this, true),
-                        iData
-                    );
-                function Data_Ready() {
-                    $_This.trigger('apiCall', [
-                        This_App,
-                        This_App.history[This_App.history.lastIndex].HTML,
-                        This_App.proxy  ?  BOM.decodeURI( API_URL.slice(This_App.proxy.length) )  :  API_URL,
-                        arguments[0]
-                    ]);
-                }
-                switch (iMethod) {
-                    case 'get':       ;
-                    case 'delete':
-                        $[iMethod](API_URL, Data_Ready);    break;
-                    case 'post':      ;
-                    case 'put':
-                        $[iMethod](
-                            API_URL,  URL_Args.call(This_App, this),  Data_Ready
-                        );
-                }
+                API_Call.call(This_App,  $_This,  function () {
+                    $_This.trigger('apiCall', arguments[0]);
+                });
 
                 return false;
             }
@@ -492,14 +496,14 @@
                     if ( $.isPlainObject(iReturn) )  $.extend(iArgs, iReturn);
 
                     This_App.history.move();
-                    BOM.location.href = URL_Merge.call(This_App, toURL, iArgs, iData);
+                    BOM.location.href = toURL + '?' + $.param(iArgs);
                 }
                 return false;
             }
         );
     }
 
-    function FontPage_Init() {
+    function FrontPage_Init() {
         Page_Render.call(this, DOM.URL, arguments[0]);
 
         /* ----- URL Hash Navigation ----- */
@@ -536,25 +540,19 @@
 
         //  No Content Data in First Page
         if (! $_Link.length)
-            return FontPage_Init.call(this);
+            return FrontPage_Init.call(this);
 
         //  Loading Content Data before First Page rendering
-        var This_App = this,  Data_Ready = $_Link.length;
+        var This_App = this,  iData = { },  Data_Ready = $_Link.length;
 
-        $_Link.each(function () {
-            var iData = { };
+        for (var i = 0;  i < $_Link.length;  i++)
+            API_Call.call(This_App,  $($_Link[i]),  function () {
+                var _Data_ = This_App.domRoot.triggerHandler('apiCall', arguments[0]);
 
-            This_App.domRoot.on('apiCall',  function () {
-                var iArgs = $.makeArray(arguments);
-                iArgs.shift();
-
-                var _Data_ = This_App.domRoot.triggerHandler('apiCall', iArgs);
                 if (_Data_)  $.extend(iData, _Data_);
 
-                if (--Data_Ready == 0)  FontPage_Init.call(This_App, iData);
+                if (--Data_Ready == 0)  FrontPage_Init.call(This_App, iData);
             });
-            This_App.loadJSON( $(this).attr('src') );
-        });
 
         return this;
     };

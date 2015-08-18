@@ -3,17 +3,25 @@
 ## 【项目概述】
 **EasyWebApp** 是一个基于 **jQuery API** 的**轻量级 SPA（单页应用）引擎**，**网页设计、后端接口、前端组件 充分解耦** —— 只用**原生 HTML** 做模板，对 **JSON 数据**的结构几无硬性要求，完全兼容现有的 **jQuery 插件**。
 
-本引擎与其作者开发的 [**EasyWebUI**](http://git.oschina.net/Tech_Query/EasyWebUI)（Web 前端 UI 框架）的理念一致 ——
- - **充分利用 HTML 标签、属性 原生的语义、样式、功能，力求 Web 前端代码 表达上的简练、架构上的解耦！**
- - 学习曲线缓，开发成本低，维护效率高
+本引擎首个广泛使用的开源稳定版 v1.5 脱胎于 2 个**移动端网页应用**（微信公众平台）和 2 个**桌面端网页系统**（某公司开放平台），是一个有较高 **抽象性**、**普适性**的 SPA 引擎，**个人独立开发**、**团队协作开发** 都能轻松胜任~
 
-本引擎首个开源稳定版 v1.2 脱胎于一个**移动端网页应用**（微信公众平台）和一个**桌面端网页系统**（某公司开放平台），是一个有较高 **抽象性**、**普适性**的 SPA 引擎，**个人独立开发**、**团队协作开发** 都能轻松胜任~
+
+## 【核心理念】
+EasyWebApp 与其作者开发的 [**EasyWebUI**](http://git.oschina.net/Tech_Query/EasyWebUI)（Web 前端 UI 框架）的理念一致 ——
+
+    充分利用 HTML 标签、属性 原生的语义、样式、功能，力求 Web 前端代码 表达上的简练、架构上的解耦！
+
+这使得本引擎 ——
+ - **学习曲线缓**：只会 HTML、CSS 网页制作的人即可开发 SPA（基于 后端开发者 或 **BaaS** 的 HTTP API）
+ - **开发成本低**：原有项目的 HTML/CSS 模板、jQuery 插件 完全不用修改，只需加入一点 HTML 属性、jQuery 事件监听的代码，再清理掉大量由引擎代劳的 HTML、JavaScript 代码
+ - **维护效率高**：基于本引擎的项目代码 主要是 **根据运行时具体事件的相关页面 URL 处理数据**，很少涉及直接操作 DOM、AJAX，每个 HTML、JavaScript 文件也大都只有 100 行左右
 
 
 ## 【使用入门】
 
 ### 〇、开发流程
 
+本节总述 EasyWebApp 建议的 SPA 开发流程，后面三节是本流程具体步骤的示例讲解 ——
  1. **产品设计师** 做好 **Web 原型**后，**前端工程师** 即可按原型制作页面，与 **视觉设计师**（美工）并行工作
  2. 同时，在前端工程师开始制作页面时，综合考虑 原型中页面、功能的划分，与 **后端工程师** 商定好 **数据 API** 的 **URL**、**数据结构**、**字段名**（参考 **RESTful 规范**、下文【数据填充】规范）
  3. 用 **HTML、CSS、jQuery 最自然的思维方式** 去制作页面（原来你**前后端分离**模式下怎么写前端程序 现在就怎么写）~
@@ -31,6 +39,7 @@
 <html><head>
     <meta http-equiv="X-UA-Compatible" content="IE=Edge, Chrome=1" />
     <script src="path/to/iQuery.js"></script>
+    <script src="path/to/marked.js"></script>
     <script src="path/to/EasyWebApp.js"></script>
     <script>
     $(document).ready(function () {
@@ -49,13 +58,23 @@
     </footer>
 </body></html>
 ```
+### 三、数据填充
+本引擎模板 把 **HTML name 属性** 推而广之，应用在任何 HTML 元素上，用作 JSON 数据的“**键值对应**”。仅有很少的 宽松规范 ——
+ - 出现在**同一页面的不同数据不可重名**（如 用户、App、作品 等的名字，不可都用 name 来作为 JSON 键，无论它们 来自哪个 API 或 在数据结构的哪一层）
+ - 符合 CSS 3 选择器 `ul, ol, dl, tbody, *[multiple]:not(input)` 的**数据容器元素**（有 name 属性的），其对应的数据结构是一个**以普通对象为元素的数组**，其子元素（它也可以有子元素）只需有一个，引擎会自动复制这个子元素的作为**数组迭代的模板**
 
-### 三、模板制作
-本引擎的网页模板不采用“自创模板语言”，而直接使用 **原生 HTML** 的常用属性来标记引擎的特性 ——
+```html
+<div multiple name="list" max="6">
+    <img name="avatar" src="path/to/logo.png" />XXX
+</div>
+```
+
+### 四、页面串接
+本引擎的网页模板不采用“自创模板语言”，而直接使用 **原生 HTML 的常用属性** 来标记引擎的特性 ——
 
 #### （一）加载内页（AJAX 无刷新）
 ```html
-<div target="_self" href="path/to/page_1.html"
+<div target="_self" title="New Page" href="path/to/page_1.html"
      src="path/to/data/api/{id}" data-arg_1="data_name_1">
     <img src="path/to/logo.png" />XXX
 </div>
@@ -76,7 +95,7 @@
 
 })(self, self.jQuery);
 ```
-上述代码加载的内页 可以是 **HTML 代码片段**（包括 所有可见元素、style 元素），无需重复编码。
+【注】上述代码加载的内页 可以是 **HTML 代码片段**（包括 所有可见元素、style 元素），无需重复编码。
 
 #### （二）加载外页（传统刷新）
 ```html
@@ -88,6 +107,7 @@
     <input type="submit" />
 </form>
 ```
+【注】上述代码中的 form 元素也可以是任意 HTML 元素，但在本例的情形中为了顺应 form 的习惯，用 `action` 代替了 `src`。
 ```javascript
 (function ($) {
 
@@ -122,17 +142,15 @@
    
 })(self.jQuery);
 ```
-### 四、数据填充
-本引擎模板 把 **HTML name 属性** 推而广之，应用在任何 HTML 元素上，用作 JSON 数据的“**键值对应**”。仅有很少的 宽松规范 ——
- - 出现在**同一页面的不同数据不可重名**（如 用户、App、作品 等的名字，不可都用 name 来作为 JSON 键，无论它们在数据结构的哪一层）
- - 符合 CSS 3 选择器 `ul, ol, dl, *[multiple]:not(input)` 的**数据容器元素**（有 name 属性的），其对应的数据结构是一个**以普通对象为元素的数组**，其子元素（它也可以有子元素）只需有一个，引擎会自动复制这个子元素的作为**数组迭代的模板**
-
+#### （四）首屏渲染
+若首屏渲染时的数据来自 HTTP API，则可复用“调用接口”功能的 HTML 语义，在 `<head />` 中用 `<link />` 声明数据来源即可 ——
 ```html
-<div multiple name="list" max="6">
-    <img name="avatar" src="path/to/logo.png" />XXX
-</div>
+<head>
+    ...
+    <link target="_blank" src="path/to/data/api_0/{id}" data-arg_a="data_name_a" />
+    <link target="_blank" src="path/to/data/api_1/{id}" data-arg_b="data_name_b" />
+</head>
 ```
-
 
 ## 【API 总览】
 
@@ -173,7 +191,7 @@ $_AppRoot
    -  正在渲染的页面对象
    -  刚切换走的页面对象
    -  API 返回对象
- - [A] **apiCall 事件** 在一个 HTTP API 请求结束时触发。其回调参数如下：
+ - [A/S] **apiCall 事件** 在一个 HTTP API 请求结束时触发。其回调参数如下：
    -  jQuery Event 对象
    -  WebApp 实例对象
    -  当前 HTML URL
@@ -198,7 +216,7 @@ $_AppRoot
    -  刚切换走的页面对象
 
 ### 三、WebApp 对象实例方法
-WebApp 支持手动调用 本引擎 **HTML 模板规则**（上文【使用入门】第三大节）对应的 JavaScript 实例方法 ——
+WebApp 支持手动调用 本引擎 **页面串接规则**（上文【使用入门】第四大节）对应的 JavaScript 实例方法 ——
 ```javascript
 iWebApp
     .loadTemplate(Title, HTML_URL, JSON_URL)    //  加载内页

@@ -47,12 +47,12 @@
             switch ( $.fileName(arguments[3]) ) {
                 case 'joke':       return {
                     joke:    iData.split("\n")[0]
-                };
+                }
                 case 'weather':    return {
                     now:        iData[1].Title,
                     suggest:    iData[2].Title,
                     days:       iData.slice(3)
-                };
+                }
             }
         }).on('pageRender',  function (iEvent, This_Page, Prev_Page, iData) {
 
