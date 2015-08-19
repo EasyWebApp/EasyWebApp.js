@@ -2,7 +2,7 @@
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]     v1.5  (2015-8-17)  Stable
+//      [Version]     v1.5  (2015-8-18)  Stable
 //
 //      [Based on]    iQuery  |  jQuery with jQuery+,
 //
@@ -125,7 +125,7 @@
         if (typeof iJSON == 'string')
             $_Trigger.attr('src', iJSON);
         else
-            $_Trigger.data('json', iJSON);
+            $_Trigger.data('EWA_Model', iJSON);
 
         this.loading = false;
         $_Trigger.appendTo(this.domRoot).click();
@@ -165,11 +165,15 @@
         }
     }
 
-    function URL_Args(DOM_Link) {
-        var iArgs = { };
+    function URL_Args() {
+        var iArgs = $.extend({ }, arguments[0].dataset),
+            _Arg_;
 
-        for (var iName in DOM_Link.dataset)
-            iArgs[iName] = Data_Value.call(this, DOM_Link.dataset[iName]);
+        for (var iName in iArgs) {
+            _Arg_ = Data_Value.call(this, iArgs[iName]);
+
+            if (_Arg_ !== undefined)  iArgs[iName] = _Arg_;
+        }
 
         return iArgs;
     }
@@ -210,7 +214,7 @@
         for (var i = 0, $_Clone;  i < iLimit;  i++) {
             $_Clone = $_Template.clone(true).appendTo(this);
 
-            $_Clone.data('json', iValue[i])
+            $_Clone.data('EWA_Model', iValue[i])
                 .find('*').add($_Clone)
                 .filter('*[name]').value(function () {
                     return iValue[i][arguments[0]];
@@ -281,7 +285,7 @@
                 if (iValue instanceof Array)
                     $_List_Value.call($_This, iValue);
                 else if ( $.isPlainObject(iValue) )
-                    $_This.data('json', iValue).value(iValue);
+                    $_This.data('EWA_Model', iValue).value(iValue);
                 else
                     return iValue;
             });
@@ -306,18 +310,18 @@
     }
 
     function API_Call($_This, Data_Ready) {
-        var API_URL = URL_Merge.call(this,  $_This.attr('src'),  $_This[0],  $_This.data('json')),
+        var API_URL = URL_Merge.call(this,  $_This.attr('src'),  $_This[0],  $_This.data('EWA_Model')),
             This_App = this;
 
         function AJAX_Ready() {
-            Data_Ready(
+            Data_Ready([
                 This_App,
                 This_App.history[This_App.history.lastIndex].HTML,
                 This_App.proxy  ?
                     BOM.decodeURIComponent( API_URL.slice(This_App.proxy.length) )  :
                     API_URL,
                 arguments[0]
-            );
+            ]);
         }
         var iMethod = ($_This.attr('method') || 'Get').toLowerCase();
 
@@ -381,7 +385,7 @@
                     return;
 
                 var $_This = $(this);
-                var iData = { },
+                var iData = $_This.data('EWA_Model') || { },
                     iPage = $_This.attr(['title', 'href', 'src']);
 
                 This_App.loading = true;
@@ -405,14 +409,14 @@
                 var DOM_Ready = iPage.src ? 2 : 1;
 
                 function Page_Ready() {
-                    var _Data_ = arguments[0][3];
-                    if (
-                        $.isPlainObject(_Data_)  ||
-                        (_Data_ instanceof Array)  ||
-                        ($.trim(_Data_)[0] != '<')
-                    )
-                        iData = _Data_;
+                    if (arguments[0] instanceof Array) {
+                        var _Data_ = arguments[0][3];
 
+                        if ( $.isPlainObject(_Data_) )
+                            $.extend(iData, _Data_);
+                        else
+                            iData = _Data_;
+                    }
                     if (--DOM_Ready != 0)  return;
 
                     Page_Render.call(This_App, iPage.href, iData);
@@ -468,7 +472,10 @@
                     $_This.trigger('apiCall', arguments[0]);
                 });
 
-                return false;
+                if ( this.type.match(/radio|checkbox/i) )
+                    arguments[0].stopPropagation();
+                else
+                    return false;
             }
         ).on(
             $.browser.mobile ? 'tap' : 'click',
@@ -482,12 +489,12 @@
 
                 var $_This = $(this);
                 var toURL = $_This.attr('href'),
-                    iData = $_This.data('json');
+                    iData = $_This.data('EWA_Model');
 
                 var iReturn = This_App.domRoot.triggerHandler('appExit', [
                         This_App.history[This_App.history.lastIndex].HTML,
                         toURL,
-                        $_This.data('json')
+                        $_This.data('EWA_Model')
                     ]);
 
                 if (iReturn !== false) {
