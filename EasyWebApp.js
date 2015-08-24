@@ -53,7 +53,8 @@
         write:     function (iTitle, iURL, URL_HTML, URL_JSON, API_Method) {
             if (this.length)  this.move();
 
-            this.splice(++this.lastIndex,  this.length);
+            this.prevIndex = this.lastIndex++ ;
+            this.splice(this.lastIndex,  this.length);
 
             var iNew ={
                     title:     iTitle || DOM.title,
