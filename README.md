@@ -224,9 +224,14 @@ iWebApp
 ```
 
 ## 【演示项目】
-[每日资讯（移动版）](http://easywebapp.oschina.cnpaas.io/demo) 基于 [方倍工作室 API 100](http://www.cnblogs.com/txw1958/p/weixin-api100.html)，支持 **微信公众平台 AppKey**（URL 形如 `/demo/index.html?wechat_appkey=xxx`）。
-
-【注】因为 Demo 目前的数据来自第三方接口，且其接口没有开放跨域，所以引擎作者用一个 PHP 脚本做了一层代理，导致 **API 数据响应**较慢，请稍安勿臊~
+### 一、每日资讯（移动版）
+ - 前端页面
+   - 访问网址：[http://easywebapp.oschina.cnpaas.io/demo](http://easywebapp.oschina.cnpaas.io/demo)
+   - 因为前期主要演示本引擎的核心特性，Demo 界面暂无美术设计，仅有 EasyWebUI 框架组件的默认样式
+ - 后端数据
+   - 基于 [方倍工作室 API 100](http://www.cnblogs.com/txw1958/p/weixin-api100.html)，支持 **微信公众平台 AppKey**（URL 形如 `/demo/index.html?wechat_appkey=xxx`）
+   - 因为上述接口没有开放 **前端跨域访问**，所以引擎作者用一个 PHP 脚本做了一层代理，导致 **API 数据响应**较慢，请稍安勿臊
+ - 源码授权：与本项目的开源协议一致 —— **自由使用、自主修改，保留署名、分享改进**
 
 ## 【项目缘起】
 **EasyWebApp** 算是其作者与 产品、设计、后端的各种“撕逼”后，或坚持、或折中的结果。其 **HTML 模板机制** 源于作者早期的一个 PHP 前端项目 [EasyWebTemplate](http://git.oschina.net/Tech_Query/EasyWebTemplate)（基于 **phpQuery**），而其 **事件驱动的 API** 则源于文首提到的开放平台首个版本的**智能表单引擎** JSON_Web.js（强数据格式依赖、不支持不规律的界面设计，未到达开源水准，但会继续吸收其优秀的特性）。虽然前面这些小项目 都有些幼稚，但却又是 **敢于把独立思考成果付诸实践**的有益尝试，若没有这些沉淀，就没有本项目自 2015年6月29日的26天 内即发布**开源稳定版**的成绩~
