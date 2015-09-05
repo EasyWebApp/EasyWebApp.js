@@ -17,6 +17,17 @@ EasyWebApp 与其作者开发的 [**EasyWebUI**](http://git.oschina.net/Tech_Que
  - **维护效率高**：基于本引擎的项目代码 主要是 **根据运行时具体事件的相关页面 URL 处理数据**，很少涉及直接操作 DOM、AJAX，每个 HTML、JavaScript 文件也大都只有 100 行左右
 
 
+## 【演示项目】
+### 一、每日资讯（移动版）
+ - 前端页面
+   - 访问网址：[http://easywebapp.oschina.cnpaas.io/demo](http://easywebapp.oschina.cnpaas.io/demo)
+   - 因为前期主要演示本引擎的核心特性，Demo 界面暂无美术设计，仅有 EasyWebUI 框架组件的默认样式
+ - 后端数据
+   - 基于 [方倍工作室 API 100](http://www.cnblogs.com/txw1958/p/weixin-api100.html)，支持 **微信公众平台 AppKey**（URL 形如 `/demo/index.html?wechat_appkey=xxx`）
+   - 因为上述接口没有开放 **前端跨域访问**，所以引擎作者用一个 PHP 脚本做了一层代理，导致 **API 数据响应**较慢，请稍安勿臊
+ - 源码授权：与本项目的开源协议一致 —— **自由使用、自主修改，保留署名、分享改进**
+
+
 ## 【使用入门】
 
 ### 〇、开发流程
@@ -99,29 +110,26 @@ EasyWebApp 与其作者开发的 [**EasyWebUI**](http://git.oschina.net/Tech_Que
 
 #### （二）加载外页（传统刷新）
 ```html
-<form method="POST" action="path/to/api/{uid}"
-      target="_top" href="path/to/app_1.html" data-arg_2="data_name_2">
-    <input type="hidden" name="uid" />
-    <input type="email" name="email" placeholder="注册电邮" />
-    <input type="password" name="password" placeholder="密码" />
-    <input type="submit" />
-</form>
+<div target="_top" href="path/to/page_2.html" data-arg_1="data_name_1">
+    <img src="path/to/logo.png" />XXX
+</div>
 ```
-【注】上述代码中的 form 元素也可以是任意 HTML 元素，但在本例的情形中为了顺应 form 的习惯，用 `action` 代替了 `src`。
 ```javascript
-(function ($) {
+(function (BOM, $) {
 
     $('body > section')
-        .on('appExit',  function (This_URL, Next_URL, iData) {
+        .on('appExit',  function () {
             //  若 被触动的元素 是 form，则 iData 为 表单提交所返回的数据
+            iData = arguments[3];
+
             if (iData.code > 200) {
                 alert(iData.message);
                 return false;           //   阻止页面刷新、跳转
             }
         })
         .WebApp();
-   
-})(self.jQuery);
+
+})(self, self.jQuery);
 ```
 #### （三）调用接口（纯数据，无页面加载）
 ```html
@@ -133,8 +141,10 @@ EasyWebApp 与其作者开发的 [**EasyWebUI**](http://git.oschina.net/Tech_Que
 (function ($) {
 
     $('body > section')
-        .on('apiCall',  function (iApp, This_URL, API_URL, iData) {
+        .on('apiCall',  function () {
             //  iData 为 API 返回的数据
+            iData = arguments[4];
+
             if (iData.code > 200)
                 alert(iData.message);
         })
@@ -150,6 +160,36 @@ EasyWebApp 与其作者开发的 [**EasyWebUI**](http://git.oschina.net/Tech_Que
     <link target="_blank" src="path/to/data/api_0/{id}" data-arg_a="data_name_a" />
     <link target="_blank" src="path/to/data/api_1/{id}" data-arg_b="data_name_b" />
 </head>
+```
+#### （五）表单提交
+本小节功能的实质 是一个**引擎内置的综合应用**（参见本大节前三小节）—— 表单提交 实际上是一个接口调用，成功返回后，可以继续 加载内外页面~
+```html
+<form method="POST" action="path/to/api/{uid}"
+      target="_self" href="path/to/app_1.html" data-arg_2="data_name_2">
+    <input type="hidden" name="uid" />
+    <input type="email" name="email" placeholder="注册电邮" />
+    <input type="password" name="password" placeholder="密码" />
+    <input type="submit" />
+</form>
+```
+【注】在本例的情形中，为了顺应 form 的习惯，用 `action` 代替了 `src`。
+```javascript
+(function ($) {
+
+    $('body > section')
+        .on('formSubmit',  function () {
+
+            var iData = arguments[3];
+
+            if (iData.code == 200)
+                return iData.data;
+
+            alert(iData.message);
+            return false;
+        })
+        .WebApp();
+   
+})(self.jQuery);
 ```
 
 ## 【API 总览】
@@ -223,15 +263,13 @@ iWebApp
     .loadPage(HTML_URL);                        //  加载外页
 ```
 
-## 【演示项目】
-### 一、每日资讯（移动版）
- - 前端页面
-   - 访问网址：[http://easywebapp.oschina.cnpaas.io/demo](http://easywebapp.oschina.cnpaas.io/demo)
-   - 因为前期主要演示本引擎的核心特性，Demo 界面暂无美术设计，仅有 EasyWebUI 框架组件的默认样式
- - 后端数据
-   - 基于 [方倍工作室 API 100](http://www.cnblogs.com/txw1958/p/weixin-api100.html)，支持 **微信公众平台 AppKey**（URL 形如 `/demo/index.html?wechat_appkey=xxx`）
-   - 因为上述接口没有开放 **前端跨域访问**，所以引擎作者用一个 PHP 脚本做了一层代理，导致 **API 数据响应**较慢，请稍安勿臊
- - 源码授权：与本项目的开源协议一致 —— **自由使用、自主修改，保留署名、分享改进**
+## 【进阶导引】
+EasyWebApp v1.x 的基本模型（对照 MVC）——
+ - 页面模板 —— 数据接口 (View - Model)
+ - 接口数据 —— 操作历史 (Model - View)
+ - 操作事件 —— 业务逻辑 (Controller)
+ - 组件化（依靠 CSS 框架、jQuery 插件，不越俎代庖）
+
 
 ## 【项目缘起】
 **EasyWebApp** 算是其作者与 产品、设计、后端的各种“撕逼”后，或坚持、或折中的结果。其 **HTML 模板机制** 源于作者早期的一个 PHP 前端项目 [EasyWebTemplate](http://git.oschina.net/Tech_Query/EasyWebTemplate)（基于 **phpQuery**），而其 **事件驱动的 API** 则源于文首提到的开放平台首个版本的**智能表单引擎** JSON_Web.js（强数据格式依赖、不支持不规律的界面设计，未到达开源水准，但会继续吸收其优秀的特性）。虽然前面这些小项目 都有些幼稚，但却又是 **敢于把独立思考成果付诸实践**的有益尝试，若没有这些沉淀，就没有本项目自 2015年6月29日的26天 内即发布**开源稳定版**的成绩~

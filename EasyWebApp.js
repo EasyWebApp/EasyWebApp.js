@@ -2,7 +2,7 @@
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]     v1.6  (2015-8-20)  Stable
+//      [Version]     v1.6  (2015-9-5)  Stable
 //
 //      [Based on]    iQuery  |  jQuery with jQuery+,
 //
@@ -133,6 +133,8 @@
             if (! _Data_[_Data_.length - 1])
                 _Data_[_Data_.length - 1] = { };
             $.extend(_Data_[_Data_.length - 1],  iData);
+
+            return arguments[0];
         }
     });
 
@@ -209,7 +211,7 @@
         return iArgs;
     }
 
-    var RE_Str_Var = /\{([^\}]+)\}/g;
+    var RE_Str_Var = /\{(.+?)\}/g;
 
     function URL_Merge(iURL, iLink, iData) {
         iURL = $.split(iURL, '?', 2);
@@ -351,39 +353,6 @@
     function User_Listener() {
         var This_App = this;
 
-        $_Body.on('submit',  'form[target][href]',  function (iEvent) {
-            if (This_App.loading)  return false;
-
-            iEvent.preventDefault();
-            iEvent.stopPropagation();
-
-            var $_Form = $(this);
-
-            This_App.dataStack.flush($_Form);
-
-            $_Form.attr('action',  function () {
-
-                return  URL_Merge.call(This_App, arguments[1], this);
-
-            }).ajaxSubmit(function (iData) {
-                var iAttr = $_Form.attr(['action', 'title', 'href']);
-
-                iData = This_App.domRoot.triggerHandler('formSubmit', [
-                    This_App.history[This_App.history.lastIndex].HTML,
-                    iAttr.action,
-                    iData,
-                    iAttr.href
-                ]);
-                if (iData === false)  return;
-
-                switch (this.target) {
-                    case '_top':      This_App.loadPage(iAttr.href);    break;
-                    case '_blank':    This_App.loadJSON(iData);         break;
-                    case '_self':     This_App.loadTemplate(iAttr.title, iAttr.href, iData);
-                }
-            }).trigger('submit');
-        });
-
         $_Body.on(Response_Event,  '[target="_self"][href]',  function () {
             var iTagName = this.tagName.toLowerCase();
             if (
@@ -515,6 +484,37 @@
                 BOM.location.href = toURL + '?' + $.param(iArgs);
             }
             return false;
+        });
+
+        $_Body.on('submit',  'form[target]',  function (iEvent) {
+            if (This_App.loading)  return false;
+
+            iEvent.preventDefault();
+            iEvent.stopPropagation();
+
+            var $_Form = This_App.dataStack.flush( $(this) );
+
+            $_Form.attr('action',  function () {
+
+                return  URL_Merge.call(This_App, arguments[1], this);
+
+            }).ajaxSubmit(function (iData) {
+                var iAttr = $_Form.attr(['action', 'title', 'href', 'src']);
+
+                iData = This_App.domRoot.triggerHandler('formSubmit', [
+                    This_App.history[This_App.history.lastIndex].HTML,
+                    iAttr.action,
+                    iData,
+                    iAttr.href
+                ]);
+                if (iData === false)  return;
+
+                switch (this.target) {
+                    case '_top':      return  This_App.loadPage(iAttr.href);
+                    case '_blank':    return  This_App.loadJSON(iAttr.src || iData);
+                    case '_self':     This_App.loadTemplate(iAttr.title,  iAttr.href,  iAttr.src || iData);
+                }
+            }).trigger('submit');
         });
     }
 
