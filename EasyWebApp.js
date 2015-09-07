@@ -2,7 +2,7 @@
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]     v1.6  (2015-9-5)  Stable
+//      [Version]     v1.6.5  (2015-9-7)  Stable
 //
 //      [Based on]    iQuery  |  jQuery with jQuery+,
 //
@@ -76,7 +76,7 @@
             for (var i = 0;  i < this.lastIndex;  i++)
                 if (
                     ((iNew.time - this[i].time) < 60000)  &&
-                    iNew.method.match(/Get|Delete/i)  &&
+                    (! (iNew.method + this[i].method).match(/Post|Put/i))  &&
                     (iNew.title == this[i].title)  &&
                     (iNew.URL == this[i].URL)  &&
                     (iNew.HTML == this[i].HTML)  &&
@@ -162,20 +162,32 @@
     };
 
     /* ----- Manual Navigation ----- */
-    function Proxy_Trigger(iType, iTitle, iHTML, iJSON) {
-        var $_Trigger = $('<button />', {
+    function Proxy_Trigger(iType, iAttribute, iArgument) {
+        if (typeof iAttribute == 'string')
+            iAttribute = (iType == '_blank') ? {
+                src:    iAttribute
+            } : {
+                href:    iAttribute
+            }
+        else if ( $.isPlainObject(iAttribute.src) ) {
+            var iJSON = iAttribute.src;
+            delete iAttribute.src;
+        }
+
+        var $_Trigger = $('<button />', $.extend({
                 target:    iType,
                 style:     'display: none',
                 rel:       'nofollow'
-            });
+            }, iAttribute));
 
-        if (iTitle)  $_Trigger.attr('title', iTitle);
-        if (iHTML)  $_Trigger.attr('href', iHTML);
-
-        if (typeof iJSON == 'string')
-            $_Trigger.attr('src', iJSON);
-        else
-            $_Trigger.data('EWA_Model', iJSON);
+        if ( $.isPlainObject(iArgument) ) {
+            for (var iName in iArgument) {
+                iArgument['data-' + iName] = iArgument[iName];
+                delete iArgument[iName];
+            }
+            $_Trigger.attr(iArgument);
+        }
+        if (iJSON)  $_Trigger.data('EWA_Model', iJSON);
 
         this.loading = false;
         $_Trigger.appendTo(this.domRoot).click();
@@ -183,17 +195,17 @@
         return this;
     }
 
+    var _Concat_ = Array.prototype.concat;
+
     $.extend(WebApp.prototype, {
         loadTemplate:    function () {
-            return  Proxy_Trigger.apply(
-                    this,  Array.prototype.concat.apply(['_self'], arguments)
-                );
+            return  Proxy_Trigger.apply(this,  _Concat_.apply(['_self'], arguments));
         },
         loadJSON:        function () {
-            return  Proxy_Trigger.call(this, '_blank', null, null, arguments[0]);
+            return  Proxy_Trigger.apply(this,  _Concat_.apply(['_blank'], arguments));
         },
         loadPage:        function () {
-            return  Proxy_Trigger.apply(this, '_top', null, arguments[0]);
+            return  Proxy_Trigger.apply(this,  _Concat_.apply(['_top'], arguments));
         }
     });
 
@@ -258,7 +270,7 @@
     var $_Body = $(DOM.body),
         Prefetch_Tag = $.browser.modern ? 'prefetch' : 'next';
 
-    function Page_Render(iURL, iData) {
+    function Page_Render($_Source, iData) {
         /* ----- HTML Prefetch ----- */
         $('head link[rel="' + Prefetch_Tag + '"]').remove();
 
@@ -292,13 +304,14 @@
             });
 
         /* ----- Data Stack Change ----- */
-        iData = this.dataStack.pushStack(
+        iData = this.dataStack.pushStack( $.extend(
+            $_Source  &&  $_Source.data('EWA_Model'),
             this.domRoot.triggerHandler('pageRender', [
                 this.history[this.history.lastIndex],
                 this.history[this.history.prevIndex],
                 iData || { }
             ]) || iData
-        );
+        ) );
 
         /* ----- Data Render ----- */
         var This_App = this,
@@ -350,21 +363,28 @@
 
     var Response_Event = ($.browser.mobile ? 'tap' : 'click') + ' change';
 
+    function Event_Filter() {
+        var iTagName = this.tagName.toLowerCase(),
+            iEvent = arguments.callee.caller.arguments[0];
+
+        switch (iEvent.type) {
+            case 'click':     ;
+            case 'tap':       return  iTagName.match(/form|input|textarea|select/);
+            case 'change':    return  (this !== iEvent.target);
+        }
+        if (iTagName != 'a')  iEvent.preventDefault();
+            
+        return This_App.loading;
+    }
+
     function User_Listener() {
         var This_App = this;
 
         $_Body.on(Response_Event,  '[target="_self"][href]',  function () {
-            var iTagName = this.tagName.toLowerCase();
-            if (
-                This_App.loading  ||
-                (iTagName.match(/input|textarea|select/) && arguments[0].type.match(/click|tap/i))  ||
-                ((iTagName == 'form')  &&  (! arguments[1]))
-            )
-                return;
+            if ( Event_Filter.call(this) )  return;
 
             var $_This = $(this);
-            var iData = $_This.data('EWA_Model') || { },
-                iPage = $_This.attr(['title', 'href', 'method', 'src']);
+            var iPage = $_This.attr(['title', 'href', 'method', 'src']);
 
             This_App.loading = true;
 
@@ -384,20 +404,14 @@
             }
 
         /* ----- Load DOM  from  Network ----- */
-            var DOM_Ready = iPage.src ? 2 : 1;
+            var iData,  DOM_Ready = iPage.src ? 2 : 1;
 
             function Page_Ready() {
-                if (arguments[0] instanceof Array) {
-                    var _Data_ = arguments[0][3];
+                iData = (arguments[0] instanceof Array)  &&  arguments[0][3];
 
-                    if ( $.isPlainObject(_Data_) )
-                        $.extend(iData, _Data_);
-                    else
-                        iData = _Data_;
-                }
                 if (--DOM_Ready != 0)  return;
 
-                Page_Render.call(This_App, iPage.href, iData);
+                Page_Render.call(This_App, $_This, iData);
                 This_App.loading = false;
                 This_App.domRoot.trigger('pageReady', [
                     This_App,
@@ -435,13 +449,7 @@
 
             return false;
         }).on(Response_Event,  '[target="_blank"][src]',  function () {
-            if (
-                This_App.loading || (
-                    this.tagName.match(/input|textarea|select/i) &&
-                    arguments[0].type.match(/click|tap/i)
-                )
-            )
-                return false;
+            if ( Event_Filter.call(this) )  return;
 
             var $_This = $(this);
             var $_Form = $_This.parents('form').eq(0);
@@ -457,13 +465,7 @@
             else
                 return false;
         }).on(Response_Event,  '[target="_top"][href]',  function () {
-            var iTagName = this.tagName.toLowerCase();
-            if (
-                This_App.loading  ||
-                (iTagName.match(/input|textarea|select/) && arguments[0].type.match(/click|tap/i))  ||
-                ((iTagName == 'form')  &&  (! arguments[1]))
-            )
-                return;
+            if ( Event_Filter.call(this) )  return;
 
             var $_This = $(this);
             var toURL = $_This.attr('href'),
@@ -499,27 +501,30 @@
                 return  URL_Merge.call(This_App, arguments[1], this);
 
             }).ajaxSubmit(function (iData) {
-                var iAttr = $_Form.attr(['action', 'title', 'href', 'src']);
+                var iAttr = $_Form.attr(['action', 'title', 'href', 'method', 'src']);
 
                 iData = This_App.domRoot.triggerHandler('formSubmit', [
                     This_App.history[This_App.history.lastIndex].HTML,
                     iAttr.action,
                     iData,
                     iAttr.href
-                ]);
+                ]) || iData;
+
                 if (iData === false)  return;
+
+                iData = {src:  iAttr.src || iData};
 
                 switch (this.target) {
                     case '_top':      return  This_App.loadPage(iAttr.href);
-                    case '_blank':    return  This_App.loadJSON(iAttr.src || iData);
-                    case '_self':     This_App.loadTemplate(iAttr.title,  iAttr.href,  iAttr.src || iData);
+                    case '_blank':    return  This_App.loadJSON(iData);
+                    case '_self':     This_App.loadTemplate( $.extend(iAttr, iData) );
                 }
             }).trigger('submit');
         });
     }
 
     function FrontPage_Init() {
-        Page_Render.call(this, DOM.URL, arguments[0]);
+        Page_Render.call(this, null, arguments[0]);
 
         /* ----- URL Hash Navigation ----- */
         var iHash = BOM.location.hash.slice(1);
@@ -531,7 +536,7 @@
                 var $_This = $(this);
 
                 if ( $_This.attr('href').match(iHash_RE) ) {
-                    $_This.trigger('click', [true]);
+                    $_This[(this.tagName.toLowerCase() != 'form') ? 'click' : 'submit']();
                     return false;
                 }
             });

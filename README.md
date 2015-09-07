@@ -28,6 +28,21 @@ EasyWebApp 与其作者开发的 [**EasyWebUI**](http://git.oschina.net/Tech_Que
  - 源码授权：与本项目的开源协议一致 —— **自由使用、自主修改，保留署名、分享改进**
 
 
+## 【版本历史】
+ - v1.6.5 Stable —— 2015年9月7日   WebApp 对象“手动控制”实例方法 参数写法与 HTML 属性统一（也支持 缺省简写形式）
+ - v1.6   Stable —— 2015年8月20日  **第一代数据堆栈** 独立为一个对象
+ - v1.5.5 Stable —— 2015年8月18日
+   - 支持 **RESTful API** 的 Post、Delete、Put 方法
+   - 支持 **模板文件 预加载**
+   - 支持 数据模型 嵌套一层对象
+ - v1.4.5 Stable —— 2015年8月11日  集成 **首屏渲染数据**的 API 调用
+ - v1.3.5 Stable —— 2015年8月10日  支持 **API URL 访问代理**、API 返回 纯文本数据
+ - v1.3   Stable —— 2015年8月3日   支持 **MarkDown 模板渲染**，并发布 首个演示程序
+ - v1.2   Stable —— 2015年7月24日  首个**开源稳定版**，**第一代 API** 形态已稳定
+ - v1.1   Beta   —— 2015年7月22日  首个开源版本，基本模式、架构已成形
+
+---
+
 ## 【使用入门】
 
 ### 〇、开发流程
@@ -258,9 +273,16 @@ $_AppRoot
 WebApp 支持手动调用 本引擎 **页面串接规则**（上文【使用入门】第四大节）对应的 JavaScript 实例方法 ——
 ```javascript
 iWebApp
-    .loadTemplate(Title, HTML_URL, JSON_URL)    //  加载内页
-    .loadJSON(JSON_URL)                         //  调用 API
-    .loadPage(HTML_URL);                        //  加载外页
+    .loadTemplate({                //  加载内页（参数简写形式 见下文）
+        title:     "局部刷新",
+        href:      HTML_URL,
+        method:    'POST',
+        src:       JSON_URL,
+    }, {
+        arg_1:    'arg_1_name'
+    })
+    .loadJSON(JSON_URL)            //  调用 API（参数详写形式 见上文）
+    .loadPage(HTML_URL);           //  加载外页（参数详写形式 见上文）
 ```
 
 ## 【进阶导引】
@@ -273,8 +295,3 @@ EasyWebApp v1.x 的基本模型（对照 MVC）——
 
 ## 【项目缘起】
 **EasyWebApp** 算是其作者与 产品、设计、后端的各种“撕逼”后，或坚持、或折中的结果。其 **HTML 模板机制** 源于作者早期的一个 PHP 前端项目 [EasyWebTemplate](http://git.oschina.net/Tech_Query/EasyWebTemplate)（基于 **phpQuery**），而其 **事件驱动的 API** 则源于文首提到的开放平台首个版本的**智能表单引擎** JSON_Web.js（强数据格式依赖、不支持不规律的界面设计，未到达开源水准，但会继续吸收其优秀的特性）。虽然前面这些小项目 都有些幼稚，但却又是 **敢于把独立思考成果付诸实践**的有益尝试，若没有这些沉淀，就没有本项目自 2015年6月29日的26天 内即发布**开源稳定版**的成绩~
-
-
-## 【协作开发】
-
-本项目提炼于其发起人的**日常开发实战**，其本人会**持续更新**，同时欢迎广大 **Web 开发爱好者**在 **OSChina 社区**与其交流、提交 **Pull Request**！~

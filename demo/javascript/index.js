@@ -73,7 +73,10 @@
                     }
                     return iTimeLine;
                 }
-                case 'english.html':    return iData[0];
+                case 'english.html':    {
+                    iData[0].Description = iData[0].Description.replace(/↵/g, "\n<br />\n");
+                    return iData[0];
+                }
             }
             return iData;
 
@@ -87,10 +90,22 @@
 /* ---------- 全局功能 ---------- */
     $_Body.on('ScriptLoad', BOM.iDaily.Load_Cover)
         .on($.browser.mobile ? 'tap' : 'click',  '.Button[href^="#"]',  function () {
-            var iTips = {text: '',  image: ''};
+            var iUA = BOM.navigator.userAgent,
+                iTips = {text: '',  image: ''};
 
             switch ( $(this).attr('href').slice(1) ) {
                 case 'share':     {
+                    if ($.browser.mobile && iUA.match(/UC|QQ/)) {
+                        var iNativeShare = new BOM.nativeShare('nativeShare', {
+                                url:          DOM.URL,
+                                title:        DOM.title,
+                                desc:         $('head meta[name="description"]').attr('content'),
+                                img:          'http://i-2.shouji56.com/2015/6/18/5a2f2dd1-ee6f-487e-a722-443c205ec44b.png',
+                                img_title:    DOM.title,
+                                from:         DOM.title
+                            });
+                        return;
+                    }
                     iTips.text = "分享到 朋友圈、QQ 好友";
                     iTips.image = 'Tips_Share.png';
                 }  break;

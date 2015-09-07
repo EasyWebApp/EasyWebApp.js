@@ -10,15 +10,17 @@
     <title>每日资讯</title>
 
     <link rel="stylesheet" href="http://public.shenma.io/css/EasyWebUI.css" />
+    <link rel="stylesheet" href="http://blog.wangjunfeng.com/demo/native_share/nativeShare.css" />
     <link rel="stylesheet" href="css/index.css" />
 
     <link rel="console" href="console" />
     <script src="http://public.shenma.io/javascript/EasyImport.js"></script><script>
         ImportJS('javascript/', [
-            [
-                'http://public.shenma.io/css/EasyWebUI.js',
-                'http://public.shenma.io/javascript/EasyWebApp.js'
-            ],
+            {
+                'http://public.shenma.io/css/EasyWebUI.js':                        true,
+                'http://public.shenma.io/javascript/EasyWebApp.js':                true,
+                'http://blog.wangjunfeng.com/demo/native_share/nativeShare.js':    $.browser.mobile
+            },
             'index.js'
         ]);
     </script>
