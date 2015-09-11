@@ -45,7 +45,7 @@
         push:      Array.prototype.push,
         slice:     Array.prototype.slice,
         move:      function (iState) {
-            var $_Page = this.root.children().not('[rel="nofollow"]:hidden').detach();
+            var $_Page = this.root.children().detach();
 
             if ((! iState)  ||  ((iState.DOM_Index + 2) == this.length))
                 this[this.length - 1].$_Page = $_Page;
@@ -162,6 +162,8 @@
     };
 
     /* ----- Manual Navigation ----- */
+    var $_Body = $(DOM.body);
+
     function Proxy_Trigger(iType, iAttribute, iArgument) {
         if (typeof iAttribute == 'string')
             iAttribute = (iType == '_blank') ? {
@@ -190,7 +192,7 @@
         if (iJSON)  $_Trigger.data('EWA_Model', iJSON);
 
         this.loading = false;
-        $_Trigger.appendTo(this.domRoot).click();
+        $_Trigger.appendTo($_Body).click();
 
         return this;
     }
@@ -265,8 +267,7 @@
         }
     }
 
-    var $_Body = $(DOM.body),
-        Prefetch_Tag = $.browser.modern ? 'prefetch' : 'next';
+    var Prefetch_Tag = $.browser.modern ? 'prefetch' : 'next';
 
     function Page_Render($_Source, iData) {
         /* ----- HTML Prefetch ----- */
@@ -304,13 +305,14 @@
         /* ----- Data Stack Change ----- */
         iData = $.extend(true,  $_Source && $_Source.data('EWA_Model'),  iData);
 
-        iData = this.dataStack.pushStack( 
-            this.domRoot.triggerHandler('pageRender', [
+        var iReturn = this.domRoot.triggerHandler('pageRender', [
                 this.history[this.history.lastIndex],
                 this.history[this.history.prevIndex],
                 iData
-            ]) || iData
-        );
+            ]);
+        iData = this.dataStack.pushStack(iReturn || iData);
+
+        if (iReturn === false)  return;
 
         /* ----- Data Render ----- */
         var This_App = this,
@@ -331,6 +333,17 @@
                     return iValue;
             });
     };
+
+    function Page_Ready() {
+        $_Body.find('button[target]:hidden').remove();
+
+        this.loading = false;
+        this.domRoot.trigger('pageReady', [
+            this,  this.history[this.history.lastIndex],  this.history[this.history.prevIndex]
+        ]);
+
+        return this;
+    }
 
     function API_Call($_This, Data_Ready) {
         var API_URL = URL_Merge.call(this,  $_This.attr('src'),  $_This[0]),
@@ -359,7 +372,6 @@
                 );
         }
     }
-
     var Response_Event = ($.browser.mobile ? 'tap' : 'click') + ' change';
 
     function Event_Filter() {
@@ -394,58 +406,48 @@
                 );
             if ($_Cached) {
                 $_Cached.appendTo(This_App.domRoot).fadeIn();
-                This_App.loading = false;
-                This_App.domRoot.trigger('pageReady', [
-                    This_App,
-                    This_App.history[This_App.history.lastIndex],
-                    This_App.history[This_App.history.prevIndex]
-                ]);
-                return;
+                return Page_Ready.call(This_App);
             }
 
         /* ----- Load DOM  from  Network ----- */
-            var iData,  DOM_Ready = iPage.src ? 2 : 1;
+            var iData,  Load_Stage = iPage.src ? 2 : 1;
 
-            function Page_Ready() {
+            function Page_Load() {
                 iData = (arguments[0] instanceof Array)  &&  arguments[0][3];
 
-                if (--DOM_Ready != 0)  return;
+                if (--Load_Stage != 0)  return;
 
                 Page_Render.call(This_App, $_This, iData);
-                This_App.loading = false;
-                This_App.domRoot.trigger('pageReady', [
-                    This_App,
-                    This_App.history[This_App.history.lastIndex],
-                    This_App.history[This_App.history.prevIndex]
-                ]);
+                Page_Ready.call(This_App);
             }
             // --- Load Data from API --- //
             if (iPage.src)
-                API_Call.call(This_App, $_This, Page_Ready);
+                API_Call.call(This_App, $_This, Page_Load);
 
             // --- Load DOM from HTML|MarkDown --- //
             var MarkDown_File = /\.(md|markdown)$/i;
 
-            if (! iPage.href.match(MarkDown_File))
+            if (! iPage.href.match(MarkDown_File)) {
                 This_App.domRoot.load(
                     iPage.href + (This_App.domRoot.selector ? (' ' + This_App.domRoot.selector) : ''),
-                    Page_Ready
+                    Page_Load
                 );
-            else
-                $.get(iPage.href,  function (iMarkDown) {
-                    if (BOM.marked)
-                        $( BOM.marked(iMarkDown) )
-                            .appendTo( This_App.domRoot.empty() ).fadeIn()
-                            .find('a[href]').each(function () {
-                                this.setAttribute(
-                                    'target',  this.href.match(MarkDown_File) ? '_self' : '_top'
-                                );
-                            });
-                    else
-                        This_App.domRoot.text(iMarkDown);
+                return;
+            }
+            $.get(iPage.href,  function (iMarkDown) {
+                if (BOM.marked)
+                    $( BOM.marked(iMarkDown) )
+                        .appendTo( This_App.domRoot.empty() ).fadeIn()
+                        .find('a[href]').each(function () {
+                            this.setAttribute(
+                                'target',  this.href.match(MarkDown_File) ? '_self' : '_top'
+                            );
+                        });
+                else
+                    This_App.domRoot.text(iMarkDown);
 
-                    Page_Ready.call(This_App.domRoot[0], iMarkDown);
-                });
+                Page_Load.call(This_App.domRoot[0], iMarkDown);
+            });
         }).on(Response_Event,  '[target="_blank"][src]',  function () {
 
             if ( Event_Filter.call(this) )  return;
@@ -531,12 +533,7 @@
                 }
             });
         }
-        this.loading = false;
-        this.domRoot.trigger('pageReady', [
-            this,  this.history[this.history.lastIndex],  this.history[this.history.prevIndex]
-        ]);
-
-        return this;
+        return Page_Ready.call(this);
     }
 
     WebApp.prototype.boot = function () {

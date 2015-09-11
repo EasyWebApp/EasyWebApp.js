@@ -1,0 +1,37 @@
+<style>
+    section.Grid-Row > .Grid-Column {
+        padding:    0.25em;
+    }
+</style>
+<div class="Full">
+    <header>
+        <h2>今日热点新闻</h2>
+    </header>
+    <section multiple>
+        <section class="Item-Box visible">
+            <div class="Grid-Row CenterY" target="_top" href="">
+                <div class="Grid-Column Column_1-3 CenterX">
+                    <img class="Logo" name="img" />
+                </div>
+                <div class="Grid-Column Column_1-2">
+                    <h3 name="title"></h3>
+                    <p name="description" class="Ellipsis"></p>
+                    <p><span name="fromname"></span> <span name="time"></span></p>
+                </div>
+                <div class="Grid-Column Column_1-6 CenterX">
+                    <i class="Icon Eye" />
+                    <p name="count"></p>
+                </div>
+            </div>
+        </section>
+    </section>
+    <footer class="Flex-Box Row CenterY">
+        <div class="Column_1-5">
+            <i class="Icon Return Round Button" title="返回" href="#return"></i>
+        </div>
+        <div class="Column_3-5 CenterX">
+        </div>
+        <div class="Column_1-5">
+        </div>
+    </footer>
+</div>
