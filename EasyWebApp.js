@@ -2,7 +2,7 @@
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]     v1.6.5  (2015-9-7)  Stable
+//      [Version]     v1.7  (2015-9-11)  Stable
 //
 //      [Based on]    iQuery  |  jQuery with jQuery+,
 //
@@ -144,18 +144,18 @@
             $_Root = $($_Root);
 
         var Split_Index = API_Root  &&  (API_Root.match(/(\w+:)?\/\//) || [ ]).index;
-        if (Split_Index) {
-            var Proxy_URL = API_Root.slice(0, Split_Index);
-            API_Root = Proxy_URL + BOM.encodeURIComponent( API_Root.slice(Split_Index) );
-        }
+        API_Root = Split_Index ? [
+            API_Root.slice(Split_Index),
+            API_Root.slice(0, Split_Index)
+        ] : [API_Root];
 
         $.extend(this, {
             domRoot:      $_Root,
-            apiRoot:      API_Root || '',
+            apiRoot:      API_Root[0] || '',
             urlChange:    URL_Change,
             history:      new xHistory($_Root),
             loading:      false,
-            proxy:        Proxy_URL
+            proxy:        API_Root[1] || ''
         });
         this.dataStack = new DataStack(this.history);
         this.dataStack.pushStack(Init_Data);
@@ -210,44 +210,42 @@
     });
 
     /* ----- Auto Navigation ----- */
-    function URL_Args() {
-        var iArgs = $.extend({ }, arguments[0].dataset),
-            _Arg_;
+    function URL_Args(iLink) {
+        var This_App = this,  iData = $(iLink).data('EWA_Model');
 
-        for (var iName in iArgs) {
-            _Arg_ = this.dataStack.value( iArgs[iName] );
+        return  $.map(iLink.dataset,  function (iName) {
+            var _Arg_ = iData[iName] || This_App.dataStack.value(iName);
 
-            if (_Arg_ !== undefined)  iArgs[iName] = _Arg_;
-        }
-
-        return iArgs;
+            return  (_Arg_ !== undefined)  ?  _Arg_  :  iName;
+        });
     }
-
     var RE_Str_Var = /\{(.+?)\}/g;
 
-    function URL_Merge(iURL, iLink, iData) {
+    function URL_Merge(iURL, $_Link) {
         iURL = $.split(iURL, '?', 2);
-        iData = iData || { };
+        $_Link = $($_Link);
 
         var This_App = this,
-            iMethod = ($(iLink).attr('method') || 'Get').toLowerCase();
+            iMethod = ($_Link.attr('method') || 'Get').toLowerCase(),
+            iData = $_Link.data('EWA_Model') || { };
 
         iURL = [
-            BOM.decodeURIComponent(iURL[0]).replace(
-                RE_Str_Var,
-                function () {
-                    return  iData[arguments[1]] || This_App.dataStack.value(arguments[1]);
-                }
-            ),
+            BOM.decodeURIComponent(iURL[0]).replace(RE_Str_Var,  function () {
+                return  iData[arguments[1]] || This_App.dataStack.value(arguments[1]);
+            }),
             $.param($.extend(
                 $.paramJSON(iURL[1]),
-                iMethod.match(/get|delete/)  &&  URL_Args.call(this, iLink)
+                iMethod.match(/get|delete/)  &&  URL_Args.call(this, $_Link[0])
             ))
         ].join('?');
 
-        return  this.apiRoot + (
-                this.proxy ? BOM.encodeURIComponent(iURL) : iURL
-            );
+        iURL = (
+            iURL.match(/^(\w+:)?\/\/[\w\d]+/) ? '' : this.apiRoot
+        ) + iURL;
+
+        return  this.proxy + (
+            this.proxy ? BOM.encodeURIComponent(iURL) : iURL
+        );
     }
 
     function $_List_Value(iValue) {
@@ -304,14 +302,15 @@
             });
 
         /* ----- Data Stack Change ----- */
-        iData = this.dataStack.pushStack( $.extend(
-            $_Source  &&  $_Source.data('EWA_Model'),
+        iData = $.extend(true,  $_Source && $_Source.data('EWA_Model'),  iData);
+
+        iData = this.dataStack.pushStack( 
             this.domRoot.triggerHandler('pageRender', [
                 this.history[this.history.lastIndex],
                 this.history[this.history.prevIndex],
-                iData || { }
+                iData
             ]) || iData
-        ) );
+        );
 
         /* ----- Data Render ----- */
         var This_App = this,
@@ -334,7 +333,7 @@
     };
 
     function API_Call($_This, Data_Ready) {
-        var API_URL = URL_Merge.call(this,  $_This.attr('src'),  $_This[0],  $_This.data('EWA_Model')),
+        var API_URL = URL_Merge.call(this,  $_This.attr('src'),  $_This[0]),
             This_App = this;
 
         function AJAX_Ready() {
@@ -381,6 +380,7 @@
         var This_App = this;
 
         $_Body.on(Response_Event,  '[target="_self"][href]',  function () {
+
             if ( Event_Filter.call(this) )  return;
 
             var $_This = $(this);
@@ -388,7 +388,7 @@
 
             This_App.loading = true;
 
-        /* ----- Load DOM  form  Cache ----- */
+        /* ----- Load DOM  from  Cache ----- */
             var $_Cached = This_App.history.write(
                     iPage.title,  null,  iPage.href,  iPage.src,  iPage.method
                 );
@@ -400,7 +400,7 @@
                     This_App.history[This_App.history.lastIndex],
                     This_App.history[This_App.history.prevIndex]
                 ]);
-                return false;
+                return;
             }
 
         /* ----- Load DOM  from  Network ----- */
@@ -446,9 +446,8 @@
 
                     Page_Ready.call(This_App.domRoot[0], iMarkDown);
                 });
-
-            return false;
         }).on(Response_Event,  '[target="_blank"][src]',  function () {
+
             if ( Event_Filter.call(this) )  return;
 
             var $_This = $(this);
@@ -459,40 +458,29 @@
             API_Call.call(This_App,  $_This,  function () {
                 $_This.trigger('apiCall', arguments[0]);
             });
-
-            if ( this.type.match(/radio|checkbox/i) )
-                arguments[0].stopPropagation();
-            else
-                return false;
         }).on(Response_Event,  '[target="_top"][href]',  function () {
+
             if ( Event_Filter.call(this) )  return;
 
             var $_This = $(this);
-            var toURL = $_This.attr('href'),
-                iData = $_This.data('EWA_Model');
+            var toURL = $_This.attr('href'),  iData = $_This.data('EWA_Model');
 
             var iReturn = This_App.domRoot.triggerHandler('appExit', [
                     This_App.history[This_App.history.lastIndex].HTML,
                     toURL,
-                    $_This.data('EWA_Model')
+                    iData
                 ]);
 
-            if (iReturn !== false) {
-                var iArgs = URL_Args.call(This_App, this);
+            if (iReturn === false)  return;
 
-                if ( $.isPlainObject(iReturn) )  $.extend(iArgs, iReturn);
-
-                This_App.history.move();
-                BOM.location.href = toURL + '?' + $.param(iArgs);
-            }
-            return false;
+            This_App.history.move();
+            BOM.sessionStorage.EWA_Model = $.isPlainObject(iReturn) ? iReturn : iData;
+            BOM.location.href = toURL  +  '?'  +  $.param( URL_Args.call(This_App, this) );
         });
 
-        $_Body.on('submit',  'form[target]',  function (iEvent) {
-            if (This_App.loading)  return false;
+        $_Body.on('submit',  'form[target]',  function () {
 
-            iEvent.preventDefault();
-            iEvent.stopPropagation();
+            if (This_App.loading)  return false;
 
             var $_Form = This_App.dataStack.flush( $(this) );
 
@@ -520,6 +508,8 @@
                     case '_self':     This_App.loadTemplate( $.extend(iAttr, iData) );
                 }
             }).trigger('submit');
+
+            return false;
         });
     }
 
@@ -581,7 +571,11 @@
     $.fn.WebApp = function () {
         var iArgs = $.makeArray(arguments);
 
-        var Init_Data = $.isPlainObject(iArgs[0]) && iArgs.shift();
+        var Init_Data = $.extend(
+                BOM.sessionStorage.EWA_Model,
+                $.paramJSON(),
+                $.isPlainObject(iArgs[0])  &&  iArgs.shift()
+            );
         var API_Root = (typeof iArgs[0] == 'string') && iArgs.shift();
         var URL_Change = (typeof iArgs[0] == 'boolean') && iArgs[0];
 

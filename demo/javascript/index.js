@@ -18,19 +18,20 @@
             throw Error(iResponse.message);
         },
         Load_Cover:    function () {
-            BOM.showModalDialog($("<h1>今天，世界又是新的……</h1>"), {
-                ' ': {
-                    background:    'rgb(53, 52, 57)  !important',
-                    color:         'white'
-                }
-            });
+            var iDialog = BOM.showModalDialog($("<h1>今天，<br />世界又是新的……</h1>"), {
+                    ' ': {
+                        background:    'rgb(53, 52, 57)  !important',
+                        color:         'white'
+                    }
+                });
             $('body > .Cover').find('h1').cssAnimate('fadeIn', 2000, true);
+
+            return iDialog;
         }
     };
 
 /* ---------- 数据 API ---------- */
-    var Proxy_API = 'php/proxy.php?url=',
-        API_Host = 'http://apix.sinaapp.com/';
+    var Proxy_API = 'php/proxy.php?url=';
 
 
     $.getJSON('php/proxy.php',  function () {
@@ -38,7 +39,8 @@
         var User_Data = $.extend(BOM.iDaily.Error_Check(), {
                 WeChat_AppKey:    URL_Args.wechat_appkey || 'trialuser',
                 city:             arguments[0].data.city.replace(/(市|自治|特别).*/, '')
-            });
+            }),
+            Load_Cover;
 
         $_Body.on('apiCall',  function () {
 
@@ -56,75 +58,78 @@
             }
         }).on('pageRender',  function (iEvent, This_Page, Prev_Page, iData) {
 
-            BOM.iDaily.Load_Cover();
+            Load_Cover = BOM.iDaily.Load_Cover();
             //  激活 EasyWebUI 对老版现代浏览器 Flex 布局的修复
             $('.Flex-Box').addClass('Flex-Box');
 
-            switch ( $.fileName(This_Page.HTML) ) {
-                case 'history.html':    {
-                    var iTimeLine = iData.split("\n");
+            switch ( $.fileName(This_Page.HTML).split('.')[0] ) {
+                case 'news':       {
+                    iData = iData.tngou;
 
-                    for (var i = 0;  i < iTimeLine.length;  i++) {
-                        iTimeLine[i] = $.split(iTimeLine[i], /\s+/, 2, ' ');
-                        iTimeLine[i] = {
-                            year:     iTimeLine[i][0],
-                            event:    iTimeLine[i][1]
-                        };
-                    }
-                    return iTimeLine;
+                    for (var i = 0;  i < iData.length;  i++)
+                        iData[i].time = (new Date(iData[i].time)).toLocaleString();
+
+                    break;
                 }
-                case 'english.html':    {
-                    iData[0].Description = iData[0].Description.replace(/↵/g, "\n<br />\n");
-                    return iData[0];
+                case 'history':    {
+                    iData = $.map(iData.split("\n"),  function (_Item_) {
+                        _Item_ = $.split(_Item_, /\s+/, 2, ' ');
+                        return {
+                            year:     _Item_[0],
+                            event:    _Item_[1]
+                        };
+                    });
+                    break;
+                }
+                case 'english':    {
+                    iData = iData[0];
+                    iData.Description = iData.Description.replace(/↵/g, "\n<br />\n");
                 }
             }
             return iData;
 
         }).on('pageReady',  function () {
 
-            BOM.iShadowCover.close();
+            Load_Cover.close();
 
-        }).WebApp(User_Data,  Proxy_API + API_Host);
+        }).WebApp(User_Data,  Proxy_API + 'http://apix.sinaapp.com/');
     });
 
 /* ---------- 全局功能 ---------- */
     $_Body.on('ScriptLoad', BOM.iDaily.Load_Cover)
         .on($.browser.mobile ? 'tap' : 'click',  '.Button[href^="#"]',  function () {
             var iUA = BOM.navigator.userAgent,
-                iTips = {text: '',  image: ''};
+                iHTML,  iTips = {text: '',  image: ''};
 
             switch ( $(this).attr('href').slice(1) ) {
                 case 'share':     {
-                    if ($.browser.mobile && iUA.match(/UC|QQ/)) {
-                        var iNativeShare = new BOM.nativeShare('nativeShare', {
-                                url:          DOM.URL,
-                                title:        DOM.title,
-                                desc:         $('head meta[name="description"]').attr('content'),
-                                img:          'http://i-2.shouji56.com/2015/6/18/5a2f2dd1-ee6f-487e-a722-443c205ec44b.png',
-                                img_title:    DOM.title,
-                                from:         DOM.title
-                            });
-                        return;
+                    if ($.browser.mobile && iUA.match(/UC|QQ/))
+                        iHTML = [
+                            '<h3>原生分享</h3>',
+                            '<div id="nativeShare" />'
+                        ];
+                    else {
+                        iTips.text = "分享到 朋友圈、QQ 好友";
+                        iTips.image = 'Tips_Share.png';
                     }
-                    iTips.text = "分享到 朋友圈、QQ 好友";
-                    iTips.image = 'Tips_Share.png';
-                }  break;
+                    break;
+                }
                 case 'store':     {
                     iTips.text = "添加到 微信收藏夹";
                     iTips.image = 'Tips_Store.png';
-                }  break;
+                    break;
+                }
                 case 'return':    {
                     BOM.history.back();
                     return;
                 }
             }
-
-            var iHTML = [
-                    "<h3>点击右上角的“...”功能菜单<br />",
-                    iTips.text,  '</h3>',
-                    '<img src="image/icon/Arrow_Up.png" />',
-                    '<img class="Logo" src="image/',  iTips.image,  '" />'
-                ];
+            iHTML = iHTML || [
+                "<h3>点击右上角的“...”功能菜单<br />",
+                iTips.text,  '</h3>',
+                '<img src="image/icon/Arrow_Up.png" />',
+                '<img class="Logo" src="image/',  iTips.image,  '" />'
+            ];
             BOM.showModalDialog($(iHTML.join('')), {
                 ' ': {
                     background:    'rgb(53, 52, 57)  !important',
@@ -155,6 +160,14 @@
                     'border-radius':     '5px',
                     'vertical-align':    'middle'
                 }
+            });
+            new nativeShare('nativeShare', {
+                url:          DOM.URL,
+                title:        DOM.title,
+                desc:         $('head meta[name="description"]').attr('content'),
+                img:          'http://i-2.shouji56.com/2015/6/18/5a2f2dd1-ee6f-487e-a722-443c205ec44b.png',
+                img_title:    DOM.title,
+                from:         DOM.title
             });
         });
 

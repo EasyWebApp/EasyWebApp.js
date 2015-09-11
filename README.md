@@ -23,12 +23,14 @@ EasyWebApp 与其作者开发的 [**EasyWebUI**](http://git.oschina.net/Tech_Que
    - 访问网址：[http://easywebapp.oschina.cnpaas.io/demo](http://easywebapp.oschina.cnpaas.io/demo)
    - 因为前期主要演示本引擎的核心特性，Demo 界面暂无美术设计，仅有 EasyWebUI 框架组件的默认样式
  - 后端数据
-   - 基于 [方倍工作室 API 100](http://www.cnblogs.com/txw1958/p/weixin-api100.html)，支持 **微信公众平台 AppKey**（URL 形如 `/demo/index.html?wechat_appkey=xxx`）
+   - 主要基于 [方倍工作室 API 100](http://www.cnblogs.com/txw1958/p/weixin-api100.html)，支持 **微信公众平台 AppKey**（URL 形如 `/demo/index.html?wechat_appkey=xxx`）
+   - 还引用了 **淘宝网 IP 地理信息**、[**天狗云平台**](http://www.tngou.net) 的开放 API
    - 因为上述接口没有开放 **前端跨域访问**，所以引擎作者用一个 PHP 脚本做了一层代理，导致 **API 数据响应**较慢，请稍安勿臊
  - 源码授权：与本项目的开源协议一致 —— **自由使用、自主修改，保留署名、分享改进**
 
 
 ## 【版本历史】
+ - v1.7   Stable —— 2015年9月11日  数据在每个 WebApp 实例内外的流转链 更顺畅
  - v1.6.5 Stable —— 2015年9月7日   WebApp 对象“手动控制”实例方法 参数写法与 HTML 属性统一（也支持 缺省简写形式）
  - v1.6   Stable —— 2015年8月20日  **第一代数据堆栈** 独立为一个对象
  - v1.5.5 Stable —— 2015年8月18日
@@ -176,6 +178,8 @@ EasyWebApp 与其作者开发的 [**EasyWebUI**](http://git.oschina.net/Tech_Que
     <link target="_blank" src="path/to/data/api_1/{id}" data-arg_b="data_name_b" />
 </head>
 ```
+此外，因为 前一个 **WebApp 实例**（加载外页、整页刷新 跳转到当前实例）的 **SPA 关键元素的数据子集**、本页 URL query 参数 会被首先压入当前 SPA 的数据栈，所以它们也会参与到首屏渲染。
+
 #### （五）表单提交
 本小节功能的实质 是一个**引擎内置的综合应用**（参见本大节前三小节）—— 表单提交 实际上是一个接口调用，成功返回后，可以继续 加载内外页面~
 ```html

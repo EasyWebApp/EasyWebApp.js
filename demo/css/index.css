@@ -22,13 +22,15 @@ p {
     height:    100%;
     margin:    0;
 }
+.Full > header:only-of-type {
+    height:    10%
+}
 .Full > section:only-of-type {
-    height:        70%;
+    height:        75%;
     overflow-y:    auto;
     overflow-x:    hidden  !important;
 }
-.Full > header:only-of-type,
-.Full > footer:only-of-type  {
+.Full > footer:only-of-type {
     height:    15%;
 }
 .Full > footer > * {
