@@ -2,7 +2,7 @@
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]     v1.7  (2015-9-11)  Stable
+//      [Version]     v1.7.5  (2015-9-14)  Stable
 //
 //      [Based on]    iQuery  |  jQuery with jQuery+,
 //
@@ -213,7 +213,7 @@
 
     /* ----- Auto Navigation ----- */
     function URL_Args(iLink) {
-        var This_App = this,  iData = $(iLink).data('EWA_Model');
+        var This_App = this,  iData = $(iLink).data('EWA_Model') || { };
 
         return  $.map(iLink.dataset,  function (iName) {
             var _Arg_ = iData[iName] || This_App.dataStack.value(iName);
@@ -350,14 +350,19 @@
             This_App = this;
 
         function AJAX_Ready() {
-            Data_Ready([
-                This_App,
-                This_App.history[This_App.history.lastIndex].HTML,
-                This_App.proxy  ?
-                    BOM.decodeURIComponent( API_URL.slice(This_App.proxy.length) )  :
-                    API_URL,
-                arguments[0]
-            ]);
+            if (! Data_Ready)  return;
+
+            Data_Ready.call(
+                this,
+                This_App.domRoot.triggerHandler('apiCall', [
+                    This_App,
+                    This_App.history[This_App.history.lastIndex].HTML,
+                    This_App.proxy  ?
+                        BOM.decodeURIComponent( API_URL.slice(This_App.proxy.length) )  :
+                        API_URL,
+                    arguments[0]
+                ]) || arguments[0]
+            );
         }
         var iMethod = ($_This.attr('method') || 'Get').toLowerCase();
 
@@ -380,10 +385,13 @@
 
         switch (iEvent.type) {
             case 'click':     ;
-            case 'tap':       return  iTagName.match(/form|input|textarea|select/);
+            case 'tap':       {
+                if (iTagName == 'a')  iEvent.preventDefault();
+
+                return  iTagName.match(/form|input|textarea|select/);
+            }
             case 'change':    return  (this !== iEvent.target);
         }
-        if (iTagName != 'a')  iEvent.preventDefault();
             
         return This_App.loading;
     }
@@ -397,6 +405,13 @@
 
             var $_This = $(this);
             var iPage = $_This.attr(['title', 'href', 'method', 'src']);
+
+            var iReturn = $_This.triggerHandler('pageLoad', [
+                    This_App.history[This_App.history.lastIndex],
+                    This_App.history[This_App.history.prevIndex]
+                ]);
+
+            if (iReturn === false)  return;
 
             This_App.loading = true;
 
@@ -413,7 +428,7 @@
             var iData,  Load_Stage = iPage.src ? 2 : 1;
 
             function Page_Load() {
-                iData = (arguments[0] instanceof Array)  &&  arguments[0][3];
+                iData = (! (this instanceof Element))  &&  arguments[0];
 
                 if (--Load_Stage != 0)  return;
 
@@ -457,9 +472,8 @@
 
             if ($_Form.length)  This_App.dataStack.flush($_Form);
 
-            API_Call.call(This_App,  $_This,  function () {
-                $_This.trigger('apiCall', arguments[0]);
-            });
+            API_Call.call(This_App, $_This);
+
         }).on(Response_Event,  '[target="_top"][href]',  function () {
 
             if ( Event_Filter.call(this) )  return;
@@ -554,9 +568,7 @@
 
         for (var i = 0;  i < $_Link.length;  i++)
             API_Call.call(This_App,  $($_Link[i]),  function () {
-                var _Data_ = This_App.domRoot.triggerHandler('apiCall', arguments[0]);
-
-                if (_Data_)  $.extend(iData, _Data_);
+                $.extend(iData, arguments[0]);
 
                 if (--Data_Ready == 0)  FrontPage_Init.call(This_App, iData);
             });

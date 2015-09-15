@@ -39,8 +39,9 @@
         var User_Data = $.extend(BOM.iDaily.Error_Check(), {
                 WeChat_AppKey:    URL_Args.wechat_appkey || 'trialuser',
                 city:             arguments[0].data.city.replace(/(市|自治|特别).*/, '')
-            }),
-            Load_Cover;
+            });
+
+        $_Body.on('pageLoad', BOM.iDaily.Load_Cover).on('pageReady', BOM.ModalWindow.clear);
 
         $_Body.on('apiCall',  function () {
 
@@ -55,10 +56,17 @@
                     suggest:    iData[2].Title,
                     days:       iData.slice(3)
                 }
+                case 'history':
+                    return  $.map(iData.split("\n"),  function (_Item_) {
+                        _Item_ = $.split(_Item_, /\s+/, 2, ' ');
+                        return {
+                            year:     _Item_[0],
+                            event:    _Item_[1]
+                        };
+                    });
             }
         }).on('pageRender',  function (iEvent, This_Page, Prev_Page, iData) {
 
-            Load_Cover = BOM.iDaily.Load_Cover();
             //  激活 EasyWebUI 对老版现代浏览器 Flex 布局的修复
             $('.Flex-Box').addClass('Flex-Box');
 
@@ -67,18 +75,11 @@
                     iData = iData.tngou;
 
                     for (var i = 0;  i < iData.length;  i++)
-                        iData[i].time = (new Date(iData[i].time)).toLocaleString();
+                        $.extend(iData[i], {
+                            time:    (new Date(iData[i].time)).toLocaleString(),
+                            img:     'http://tnfs.tngou.net/img' + iData[i].img
+                        });
 
-                    break;
-                }
-                case 'history':    {
-                    iData = $.map(iData.split("\n"),  function (_Item_) {
-                        _Item_ = $.split(_Item_, /\s+/, 2, ' ');
-                        return {
-                            year:     _Item_[0],
-                            event:    _Item_[1]
-                        };
-                    });
                     break;
                 }
                 case 'english':    {
@@ -87,10 +88,6 @@
                 }
             }
             return iData;
-
-        }).on('pageReady',  function () {
-
-            Load_Cover.close();
 
         }).WebApp(User_Data,  Proxy_API + 'http://apix.sinaapp.com/');
     });
