@@ -2,7 +2,7 @@
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]     v1.7.5  (2015-9-14)  Stable
+//      [Version]     v1.7.5  (2015-9-16)  Stable
 //
 //      [Based on]    iQuery  |  jQuery with jQuery+,
 //
@@ -28,12 +28,12 @@
 
         $_Window.on('popstate',  function () {
             var iState = arguments[0].state;
+            var iHistory = _This_[ (iState || { }).DOM_Index ];
 
-            if ((! iState) || $.isEmptyObject(iState))
-                return false;
+            if (! iHistory)  return;
 
             _This_.move(iState);
-            _This_[iState.DOM_Index].$_Page.appendTo($_Root).fadeIn();
+            iHistory.$_Page.appendTo($_Root).fadeIn();
 
             $_Window.trigger('pageChange',  [iState.DOM_Index - _This_.lastIndex]);
             _This_.prevIndex = _This_.lastIndex;
@@ -197,18 +197,17 @@
         return this;
     }
 
-    var _Concat_ = Array.prototype.concat;
+    var _Concat_ = Array.prototype.concat,
+        Target_Method = {
+            _top:      'loadPage',
+            _blank:    'loadJSON',
+            _self:     'loadTemplate'
+        };
 
-    $.extend(WebApp.prototype, {
-        loadTemplate:    function () {
-            return  Proxy_Trigger.apply(this,  _Concat_.apply(['_self'], arguments));
-        },
-        loadJSON:        function () {
-            return  Proxy_Trigger.apply(this,  _Concat_.apply(['_blank'], arguments));
-        },
-        loadPage:        function () {
-            return  Proxy_Trigger.apply(this,  _Concat_.apply(['_top'], arguments));
-        }
+    $.each(Target_Method,  function (iTarget) {
+        WebApp.prototype[ arguments[1] ] = function () {
+            return  Proxy_Trigger.apply(this,  _Concat_.apply([iTarget], arguments));
+        };
     });
 
     /* ----- Auto Navigation ----- */
@@ -490,7 +489,9 @@
             if (iReturn === false)  return;
 
             This_App.history.move();
-            BOM.sessionStorage.EWA_Model = $.isPlainObject(iReturn) ? iReturn : iData;
+            BOM.sessionStorage.EWA_Model = BOM.JSON.stringify(
+                $.isPlainObject(iReturn) ? iReturn : iData
+            );
             BOM.location.href = toURL  +  '?'  +  $.param( URL_Args.call(This_App, this) );
         });
 
@@ -516,13 +517,10 @@
 
                 if (iData === false)  return;
 
-                iData = {src:  iAttr.src || iData};
+                if (! iAttr.src)  iAttr.src = iData;
 
-                switch (this.target) {
-                    case '_top':      return  This_App.loadPage(iAttr.href);
-                    case '_blank':    return  This_App.loadJSON(iData);
-                    case '_self':     This_App.loadTemplate( $.extend(iAttr, iData) );
-                }
+                This_App[ Target_Method[this.target] ](iAttr);
+
             }).trigger('submit');
 
             return false;
@@ -581,7 +579,7 @@
         var iArgs = $.makeArray(arguments);
 
         var Init_Data = $.extend(
-                BOM.sessionStorage.EWA_Model,
+                $.parseJSON( BOM.sessionStorage.EWA_Model ),
                 $.paramJSON(),
                 $.isPlainObject(iArgs[0])  &&  iArgs.shift()
             );
