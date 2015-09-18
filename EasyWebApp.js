@@ -2,7 +2,7 @@
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]     v1.7.5  (2015-9-16)  Stable
+//      [Version]     v1.7.5  (2015-9-18)  Stable
 //
 //      [Based on]    iQuery  |  jQuery with jQuery+,
 //
@@ -485,7 +485,6 @@
                     toURL,
                     iData
                 ]);
-
             if (iReturn === false)  return;
 
             This_App.history.move();
@@ -495,7 +494,7 @@
             BOM.location.href = toURL  +  '?'  +  $.param( URL_Args.call(This_App, this) );
         });
 
-        $_Body.on('submit',  'form[target]',  function () {
+        $_Body.on('submit',  'form:visible',  function () {
 
             if (This_App.loading)  return false;
 
@@ -506,21 +505,20 @@
                 return  URL_Merge.call(This_App, arguments[1], this);
 
             }).ajaxSubmit(function (iData) {
+
                 var iAttr = $_Form.attr(['action', 'title', 'href', 'method', 'src']);
 
-                iData = This_App.domRoot.triggerHandler('formSubmit', [
-                    This_App.history[This_App.history.lastIndex].HTML,
-                    iAttr.action,
-                    iData,
-                    iAttr.href
-                ]) || iData;
+                var iReturn = This_App.domRoot.triggerHandler('formSubmit', [
+                        This_App.history[This_App.history.lastIndex].HTML,
+                        iAttr.action,
+                        iData,
+                        iAttr.href
+                    ]);
+                if ((iReturn !== false)  ||  iAttr.target) {
+                    if (! iAttr.src)  iAttr.src = iReturn || iData;
 
-                if (iData === false)  return;
-
-                if (! iAttr.src)  iAttr.src = iData;
-
-                This_App[ Target_Method[this.target] ](iAttr);
-
+                    This_App[ Target_Method[this.target] ](iAttr);
+                }
             }).trigger('submit');
 
             return false;
@@ -579,7 +577,7 @@
         var iArgs = $.makeArray(arguments);
 
         var Init_Data = $.extend(
-                $.parseJSON( BOM.sessionStorage.EWA_Model ),
+                $.parseJSON(BOM.sessionStorage.EWA_Model || '{ }'),
                 $.paramJSON(),
                 $.isPlainObject(iArgs[0])  &&  iArgs.shift()
             );

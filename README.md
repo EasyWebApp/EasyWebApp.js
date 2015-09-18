@@ -88,18 +88,27 @@ EasyWebApp 与其作者开发的 [**EasyWebUI**](http://git.oschina.net/Tech_Que
 </body></html>
 ```
 ### 三、数据填充
-本引擎模板 把 **HTML name 属性** 推而广之，应用在任何 HTML 元素上，用作 JSON 数据的“**键值对应**”。仅有很少的 宽松规范 ——
+本引擎模板 把 **HTML name 属性** 推而广之，应用在任何 HTML 元素上，用作 JSON 数据的“**键值对应**”，自动填充**数据容器元素**的 `innerHTML`、`value`、`src`、`href` 乃至 `background-image`，仅有很少的 宽松规范 ——
+
  - 出现在**同一页面的不同数据不可重名**（如 用户、App、作品 等的名字，不可都用 name 来作为 JSON 键，无论它们 来自哪个 API 或 在数据结构的哪一层）
- - 符合 CSS 3 选择器 `ul, ol, dl, tbody, *[multiple]:not(input)` 的**数据容器元素**（有 name 属性的），其对应的数据结构是一个**以普通对象为元素的数组**，其子元素（它也可以有子元素）只需有一个，引擎会自动复制这个子元素的作为**数组迭代的模板**
+ - 符合 CSS 3 选择器 `ul, ol, dl, tbody, *[multiple]:not(input)` 的数据容器元素（有 name 属性的），其对应的数据结构是一个**以普通对象为元素的数组**，其子元素（它也可以有子元素）只需有一个，引擎会自动复制这个子元素的作为**数组迭代的模板**
+ - 数据值 若是 **URL**，它会被优先填在 `<img src="" />`、`<a href="" />` 中，其次会尝试设为 **枝节点元素**（有子元素的）的 background-image，最后才会被赋给 **叶节点元素**（无子元素的）的 innerHTML
 
 ```html
 <div multiple name="list" max="6">
-    <img name="avatar" src="path/to/logo.png" />XXX
+    <img name="avatar" />XXX
 </div>
 ```
 
 ### 四、页面串接
 本引擎的网页模板不采用“自创模板语言”，而直接使用 **原生 HTML 的常用属性** 来标记引擎的特性 ——
+
+#### （〇）链接元素（重要概念）
+**SPA 链接元素** 是指 —— **不限于 `<a />` 的 HTML 可见元素**，在添加 **SPA 专用属性**后，将由 SPA 引擎响应 用户操作，执行 SPA 页面切换、接口调用、整页刷新 等程序逻辑，起到 传统网页中 `<a />` 的作用。
+
+因此，直接用普通元素作为链接 ——
+ - 优点：简化 DOM 树结构、绕开 `<a />` 在部分老版移动浏览器上禁用默认事件行为无效的 Bug
+ - 缺点：链接指向的外部页面无法被搜索引擎收录
 
 #### （一）加载内页（AJAX 无刷新）
 ```html
@@ -137,7 +146,7 @@ EasyWebApp 与其作者开发的 [**EasyWebUI**](http://git.oschina.net/Tech_Que
 
     $('body > section')
         .on('appExit',  function () {
-            //  若 被触动的元素 是 form，则 iData 为 表单提交所返回的数据
+            //  若 SPA 链接元素 是 form，则 iData 为 表单提交所返回的数据
             iData = arguments[3];
 
             if (iData.code > 200) {
@@ -179,20 +188,21 @@ EasyWebApp 与其作者开发的 [**EasyWebUI**](http://git.oschina.net/Tech_Que
     <link target="_blank" src="path/to/data/api_1/{id}" data-arg_b="data_name_b" />
 </head>
 ```
-此外，因为 前一个 **WebApp 实例**（加载外页、整页刷新 跳转到当前实例）的 **SPA 关键元素的数据子集**、本页 URL query 参数 会被首先压入当前 SPA 的数据栈，所以它们也会参与到首屏渲染。
+此外，因为 前一个 **WebApp 实例**（加载外页、整页刷新 跳转到当前实例）的 **SPA 链接元素的数据子集**、本页 URL query 参数 会被首先压入当前 SPA 的数据栈，所以它们也会参与到首屏渲染。
 
 #### （五）表单提交
-本小节功能的实质 是一个**引擎内置的综合应用**（参见本大节前三小节）—— 表单提交 实际上是一个接口调用，成功返回后，可以继续 加载内外页面~
+SPA 中所有**可见表单** 均会被本引擎用 **AJAX 提交**接管，用户在表单内填写的数据、表单提交返回的数据 都会被压入引擎的数据栈。
+
+同时，上述表单的源码标签上也可使用 **SPA 链接元素**的属性，用以在表单提交后继续 加载内外页面（但 表单提交的 Method 与 接口调用的不可不同）~
 ```html
 <form method="POST" action="path/to/api/{uid}"
-      target="_self" href="path/to/app_1.html" data-arg_2="data_name_2">
+      target="_top" href="path/to/app_1.html" data-arg_2="data_name_2">
     <input type="hidden" name="uid" />
     <input type="email" name="email" placeholder="注册电邮" />
     <input type="password" name="password" placeholder="密码" />
     <input type="submit" />
 </form>
 ```
-【注】在本例的情形中，为了顺应 form 的习惯，用 `action` 代替了 `src`。
 ```javascript
 (function ($) {
 
@@ -201,11 +211,8 @@ EasyWebApp 与其作者开发的 [**EasyWebUI**](http://git.oschina.net/Tech_Que
 
             var iData = arguments[3];
 
-            if (iData.code == 200)
-                return iData.data;
-
-            alert(iData.message);
-            return false;
+            alert( iData.message );
+            return  (iData.code == 200)  &&  iData;
         })
         .WebApp();
    
@@ -265,7 +272,7 @@ $_AppRoot
    -  jQuery Event 对象
    -  当前 HTML URL
    -  将加载的外部页面 URL
-   -  事件源元素对应的数据对象（如 id 等 须附加在 URL 后页面才能正常跳转的参数）
+   -  SPA 链接元素对应的数据对象（如 id 等 须附加在 URL 后页面才能正常跳转的参数）
  - [S] **formSubmit 事件** 在一个表单提交并返回数据后触发（此时可能会跳转页面）。其回调参数如下：
    -  jQuery Event 对象
    -  当前 HTML URL
