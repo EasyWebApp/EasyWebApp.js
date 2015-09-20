@@ -3,7 +3,7 @@
 //                >>>  EasyLibs.php  <<<
 //
 //
-//      [Version]    v0.9  (2015-9-18)  Alpha
+//      [Version]    v0.9  (2015-9-20)  Beta
 //
 //      [Usage]      A Light-weight PHP Class Library
 //                   without PHP Extensions.
@@ -20,7 +20,7 @@
 
 class EasySQLite {
     private static $statement = array(
-        'select'  =>  array('select', 'from', 'where', 'order', 'limit', 'offset')
+        'select'  =>  array('select', 'from', 'where', 'order by', 'limit', 'offset')
     );
     private static function queryString($_SQL_Array) {
         $_SQL = array();
@@ -46,7 +46,9 @@ class EasySQLite {
         }
     }
     public function query($_SQL_Array) {
-        return  $this->dataBase->query( self::queryString( $_SQL_Array ) )->fetchAll();
+        $_Query = $this->dataBase->query( self::queryString( $_SQL_Array ) );
+
+        return  $_Query ? $_Query->fetchAll() : array();
     }
     public function existTable($_Table_Name) {
         return  !! $this->dataBase->exec(
@@ -157,16 +159,16 @@ class EasyHTTPClient {
     public function __construct() {
         $this->cacheBase = new EasySQLite('cache/http_cache');
 
-        $this->cacheBase->createTable('Default', array(
+        $this->cacheBase->createTable('Request', array(
             'CID'     =>  'Integer Primary Key',
             'URL'     =>  'Text not Null',
             'Type'    =>  "Text default 'text/plain'",
-            'Expire'  =>  "Text default datetime('now', 'unixepoch', 'localtime') + 86400"
+            'Expire'  =>  'Text default '.(time() + 86400)
         ));
     }
 
     private function cachePath($_URL) {
-        $_Path = realpath( 'cache/'.parse_url($_URL, PHP_URL_PATH) );
+        $_Path = 'cache'.parse_url($_URL, PHP_URL_PATH);
 
         $_Dir = pathinfo($_Path, PATHINFO_DIRNAME);
         if (! file_exists($_Dir))  mkdir($_Dir);
@@ -178,8 +180,9 @@ class EasyHTTPClient {
     }
     private function deleteCache() {
         $_Cache = $this->cacheBase->query(array(
-            'select'     =>  '*',
-            'from'       =>  'Default',
+            'select'     =>  'URL, Expire',
+            'from'       =>  'Request',
+            'where'      =>  'Expire < '.time(),
             'order by'   =>  'Expire',
             'limit'      =>  1
         ));
@@ -188,18 +191,19 @@ class EasyHTTPClient {
         return  unlink( $this->cachePath( $_Cache[0]['URL'] ) );
     }
     private function getCache($_URL) {
-        $_Data = file_get_contents( $this->cachePath($_URL) );
+        $_Path = $this->cachePath($_URL);
+        $_Data = file_exists($_Path) ? file_get_contents($_Path) : false;
 
         if ($_Data === false)  return false;
 
         $_Cache = $this->cacheBase->query(array(
-            'select'  =>  '*',
-            'from'    =>  'Default',
+            'select'  =>  'CID, URL, Type',
+            'from'    =>  'Request',
             'where'   =>  "URL='{$_URL}'"
         ));
         if (count( $_Cache )) {
-            $this->cacheBase->update('Default', "CID={$_Cache[0]['CID']}", array(
-                'Expire'  =>  "datetime('now', 'unixepoch', 'localtime') + 86400"
+            $this->cacheBase->update('Request', "CID={$_Cache[0]['CID']}", array(
+                'Expire'  =>  time() + 86400
             ));
             header('Content-Type', $_Cache[0]['Type']);
         }
@@ -210,11 +214,10 @@ class EasyHTTPClient {
 
         if ($_Length === false)  return false;
 
-        $this->cacheBase->insert('Default', array(
+        $this->cacheBase->insert('Request', array(
             'URL'     =>  $_URL,
             'Type'    =>  $_Type,
-            'Expire'  =>  $_Cache_Second ?
-                "datetime('now', 'unixepoch', 'localtime') + {$_Cache_Second}"  :  null
+            'Expire'  =>  $_Cache_Second  ?  (time() + $_Cache_Second)  :  null
         ));
         $this->deleteCache();
     }
@@ -233,7 +236,7 @@ class EasyHTTPClient {
         }
         return $_Header;
     }
-    private function request($_Method, $_URL, $_Data, $_Cache_Second) {
+    private function request($_Method,  $_URL,  $_Data,  $_Cache_Second = 0) {
         $_Response = array(
             'Cache'   =>  $_Cache_Second  &&  (($_Method == 'GET')  ||  ($_Method == 'DELETE')),
             'Data'    =>  '',
@@ -245,7 +248,7 @@ class EasyHTTPClient {
             $_Response['Data'] = file_get_contents($_URL, false, stream_context_create(array(
                 'http' => array(
                     'method'  => $_Method,
-                    'content' => http_build_query($_Data)
+                    'content' => http_build_query($_Data ? $_Data : array())
                 )
             )));
             $_Response['Header'] = $this->responseHeaders( $http_response_header );
@@ -254,7 +257,7 @@ class EasyHTTPClient {
                     $_URL,
                     $_Response['Header']['Content-Type'],
                     $_Response['Data'],
-                    func_get_arg(3)
+                    $_Cache_Second
                 );
         }
 
@@ -269,14 +272,14 @@ class EasyHTTPClient {
         ));
         return get_headers($_URL, 1);
     }
-    public function get($_URL,  $_Data = array(),  $_Cache_Second = null) {
-        return  $this->request('GET', $_URL, $_Data, $_Cache_Second);
+    public function get($_URL,  $_Cache_Second = 0) {
+        return  $this->request('GET', $_URL, null, $_Cache_Second);
     }
     public function post($_URL,  $_Data = array()) {
         return  $this->request('POST', $_URL, $_Data);
     }
-    public function delete($_URL,  $_Data = array(),  $_Cache_Second = null) {
-        return  $this->request('DELETE', $_URL, $_Data, $_Cache_Second);
+    public function delete($_URL,  $_Cache_Second = 0) {
+        return  $this->request('DELETE', $_URL, null, $_Cache_Second);
     }
     public function put($_URL,  $_Data = array()) {
         return  $this->request('PUT', $_URL, $_Data);
