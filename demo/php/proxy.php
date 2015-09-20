@@ -9,10 +9,9 @@ require('EasyLibs.php');
 // ----------------------------------------
 
 $_HTTP_Server = new EasyHTTPServer();
+$_HTTP_Header = $_HTTP_Server->requestHeaders;
 
-if ($_SERVER['REQUEST_METHOD'] == 'OPTION') {
-    $_HTTP_Header = $_HTTP_Server->requestHeaders;
-
+if ($_HTTP_Header['Request-Method'] == 'OPTION') {
     header('Access-Control-Allow-Origin: '.(
         isset( $_HTTP_Header['Origin'] )  ?  $_HTTP_Header['Origin']  :  '*'
     ));
@@ -32,14 +31,22 @@ header('Access-Control-Allow-Origin: *');
 
 $_HTTP_Client = new EasyHTTPClient();
 
+if (isset( $_GET['cache_clear'] )) {
+    $_HTTP_Client->clearCache();
+    exit;
+}
 if (isset( $_GET['url'] )) {
     $_URL = $_GET['url'];
 
-    switch ( $_SERVER['REQUEST_METHOD'] ) {
+    switch ( $_HTTP_Header['Request-Method'] ) {
         case 'GET':
-            echo  $_HTTP_Client->get($_URL);    break;
+            echo  $_HTTP_Client->get($_URL, $_GET['second_out']);    break;
         case 'POST':
-            echo  $_HTTP_Client->post($_URL, $_POST);
+            echo  $_HTTP_Client->post($_URL, $_POST);    break;
+        case 'DELETE':
+            echo  $_HTTP_Client->delete($_URL, $_GET['second_out']);    break;
+        case 'PUT':
+            echo  $_HTTP_Client->put($_URL, $_POST);
     }
     exit;
 }

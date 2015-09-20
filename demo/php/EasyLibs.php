@@ -1,5 +1,4 @@
 <?php
-
 //
 //                >>>  EasyLibs.php  <<<
 //
@@ -116,7 +115,7 @@ class EasySQLite {
 class EasyHTTPServer {
     private static function getallheaders() {
         $_Header = array();
-        $_Special = array('CONTENT_TYPE', 'CONTENT_LENGTH', 'REMOTE_ADDR');
+        $_Special = array('CONTENT_TYPE', 'CONTENT_LENGTH', 'REMOTE_ADDR', 'REQUEST_METHOD');
 
         foreach ($_SERVER  as  $_Key => $_Value) {
             if (substr($_Key, 0, 5) == 'HTTP_') {
@@ -167,7 +166,12 @@ class EasyHTTPClient {
     }
 
     private function cachePath($_URL) {
-        return  realpath( 'cache/'.parse_url($_URL, PHP_URL_PATH) );
+        $_Path = realpath( 'cache/'.parse_url($_URL, PHP_URL_PATH) );
+
+        $_Dir = pathinfo($_Path, PATHINFO_DIRNAME);
+        if (! file_exists($_Dir))  mkdir($_Dir);
+
+        return $_Path;
     }
     private function clearCache() {
         return rmdir('cache');

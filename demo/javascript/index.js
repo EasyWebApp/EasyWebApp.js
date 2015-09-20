@@ -31,7 +31,7 @@
     };
 
 /* ---------- 数据 API ---------- */
-    var Proxy_API = 'php/proxy.php?url=';
+    var Proxy_API = 'php/proxy.php?second_out=86400&url=';
 
 
     $.getJSON('php/proxy.php',  function () {
@@ -77,9 +77,10 @@
                     for (var i = 0;  i < iData.length;  i++)
                         $.extend(iData[i], {
                             time:    (new Date(iData[i].time)).toLocaleString(),
-                            img:     'http://tnfs.tngou.net/img' + iData[i].img
+                            img:     Proxy_API + BOM.encodeURIComponent(
+                                'http://tnfs.tngou.net/img' + iData[i].img
+                            )
                         });
-
                     break;
                 }
                 case 'english':    {
