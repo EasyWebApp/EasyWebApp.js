@@ -2,7 +2,7 @@
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]     v1.7.5  (2015-9-18)  Stable
+//      [Version]     v1.8  (2015-9-23)  Stable
 //
 //      [Based on]    iQuery  |  jQuery with jQuery+,
 //
@@ -264,10 +264,26 @@
                     return iValue[i][arguments[0]];
                 });
         }
+        return this;
     }
 
-    var Prefetch_Tag = $.browser.modern ? 'prefetch' : 'next';
+    var Prefetch_Tag = $.browser.modern ? 'prefetch' : 'next',
+        $_Data_Box;
 
+    function Load_Process($_Loaded_Area) {
+        if (! $_Loaded_Area)
+            $_Data_Box = $_Body.find('*[name]');
+        else if ($_Data_Box && $_Data_Box.length)
+            $_Data_Box = $_Data_Box.not( $_Loaded_Area.find('*[name]') );
+        else  return;
+
+        $.shadowCover.clear();
+        $_Data_Box.sameParents().eq(0).shadowCover('<h1>Data Loading...</h1>', {
+            ' h1':    {
+                color:    'white'
+            }
+        });
+    }
     function Page_Render($_Source, iData) {
         /* ----- HTML Prefetch ----- */
         $('head link[rel="' + Prefetch_Tag + '"]').remove();
@@ -317,24 +333,26 @@
         var This_App = this,
             $_List = this.domRoot.find('ul, ol, dl, tbody, *[multiple]').not('input');
 
-        if (iData instanceof Array)
-            $_List_Value.call($_List, iData);
-        else
-            $_Body.find('*[name]').value(function (iName) {
-                var $_This = $(this);
-                var iValue = This_App.dataStack.value(iName, $_This.is($_List));
+        Load_Process(
+            (iData instanceof Array)  ?
+                $_List_Value.call($_List, iData)
+            :
+                $_Body.value(function (iName) {
+                    var $_This = $(this);
+                    var iValue = This_App.dataStack.value(iName, $_This.is($_List));
 
-                if (iValue instanceof Array)
-                    $_List_Value.call($_This, iValue);
-                else if ( $.isPlainObject(iValue) )
-                    $_This.data('EWA_Model', iValue).value(iValue);
-                else
-                    return iValue;
-            });
+                    if (iValue instanceof Array)
+                        $_List_Value.call($_This, iValue);
+                    else if ( $.isPlainObject(iValue) )
+                        $_This.data('EWA_Model', iValue).value(iValue);
+                    else
+                        return iValue;
+                })
+        );
     };
-
     function Page_Ready() {
         $_Body.find('button[target]:hidden').remove();
+        $.shadowCover.clear();
 
         this.loading = false;
         this.domRoot.trigger('pageReady', [
@@ -427,7 +445,10 @@
             var iData,  Load_Stage = iPage.src ? 2 : 1;
 
             function Page_Load() {
-                iData = (! (this instanceof Element))  &&  arguments[0];
+                if (this instanceof Element)
+                    Load_Process();
+                else
+                    iData = arguments[0];
 
                 if (--Load_Stage != 0)  return;
 
@@ -478,7 +499,8 @@
             if ( Event_Filter.call(this) )  return;
 
             var $_This = $(this);
-            var toURL = $_This.attr('href'),  iData = $_This.data('EWA_Model');
+            var toURL = $_This.attr('href'),
+                iData = $_This.data('EWA_Model') || { };
 
             var iReturn = This_App.domRoot.triggerHandler('appExit', [
                     This_App.history[This_App.history.lastIndex].HTML,
@@ -506,15 +528,15 @@
 
             }).ajaxSubmit(function (iData) {
 
-                var iAttr = $_Form.attr(['action', 'title', 'href', 'method', 'src']);
+                var iAttr = $_Form.attr(['title', 'href', 'method', 'src']);
 
                 var iReturn = This_App.domRoot.triggerHandler('formSubmit', [
                         This_App.history[This_App.history.lastIndex].HTML,
-                        iAttr.action,
+                        this.action,
                         iData,
                         iAttr.href
                     ]);
-                if ((iReturn !== false)  ||  iAttr.target) {
+                if ((iReturn !== false)  &&  this.target) {
                     if (! iAttr.src)  iAttr.src = iReturn || iData;
 
                     This_App[ Target_Method[this.target] ](iAttr);
@@ -560,6 +582,8 @@
             return FrontPage_Init.call(this);
 
         //  Loading Content Data before First Page rendering
+        Load_Process();
+
         var This_App = this,  iData = { },  Data_Ready = $_Link.length;
 
         for (var i = 0;  i < $_Link.length;  i++)

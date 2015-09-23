@@ -30,7 +30,8 @@ EasyWebApp 与其作者开发的 [**EasyWebUI**](http://git.oschina.net/Tech_Que
 
 
 ## 【版本历史】
- - v1.7.5 Stable —— 2015年9月14日  新增 **pageLoad 同步事件**，会在用户触发内页跳转时产生；所有的接口调用点 都可用 **apiCall 同步事件**来 Hook
+ - v1.8   Stable —— 2015年9月23日  基于 $.fn.shadowCover() 插件实现 页面数据并行加载的逐步展现
+ - v1.7.5 Stable —— 2015年9月18日  新增 **pageLoad 同步事件**，会在用户触发内页跳转时产生；所有的接口调用点 都可用 **apiCall 同步事件**来 Hook
  - v1.7   Stable —— 2015年9月11日  数据在每个 WebApp 实例内外的流转链 更顺畅
  - v1.6.5 Stable —— 2015年9月7日   WebApp 对象“手动控制”实例方法 参数写法与 HTML 属性统一（也支持 缺省简写形式）
  - v1.6   Stable —— 2015年8月20日  **第一代数据堆栈** 独立为一个对象
