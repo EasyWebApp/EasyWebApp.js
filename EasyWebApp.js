@@ -2,7 +2,7 @@
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]     v1.8  (2015-9-23)  Stable
+//      [Version]     v1.8.5  (2015-9-24)  Stable
 //
 //      [Based on]    iQuery  |  jQuery with jQuery+,
 //
@@ -394,6 +394,25 @@
                 );
         }
     }
+    function Multiple_API(iRender) {
+        var $_Link = $('head link[src]');
+
+        if (! $_Link.length)  return iRender.call(this);
+
+        Load_Process();
+
+        var This_App = this,  iData = { },  Data_Ready = $_Link.length;
+
+        for (var i = 0;  i < $_Link.length;  i++)
+            API_Call.call(This_App,  $($_Link[i]),  function () {
+                $.extend(iData, arguments[0]);
+
+                if (--Data_Ready == 0) {
+                    iRender.call(This_App, iData);
+                    $_Link.remove();
+                }
+            });
+    }
     var Response_Event = ($.browser.mobile ? 'tap' : 'click') + ' change';
 
     function Event_Filter() {
@@ -445,10 +464,7 @@
             var iData,  Load_Stage = iPage.src ? 2 : 1;
 
             function Page_Load() {
-                if (this instanceof Element)
-                    Load_Process();
-                else
-                    iData = arguments[0];
+                if (arguments[0])  iData = arguments[0];
 
                 if (--Load_Stage != 0)  return;
 
@@ -460,29 +476,46 @@
                 API_Call.call(This_App, $_This, Page_Load);
 
             // --- Load DOM from HTML|MarkDown --- //
-            var MarkDown_File = /\.(md|markdown)$/i;
+            var MarkDown_File = /\.(md|markdown)$/i,
+                iSelector = This_App.domRoot.selector;
 
-            if (! iPage.href.match(MarkDown_File)) {
-                This_App.domRoot.load(
-                    iPage.href + (This_App.domRoot.selector ? (' ' + This_App.domRoot.selector) : ''),
-                    Page_Load
-                );
-                return;
-            }
-            $.get(iPage.href,  function (iMarkDown) {
-                if (BOM.marked)
-                    $( BOM.marked(iMarkDown) )
-                        .appendTo( This_App.domRoot.empty() ).fadeIn()
-                        .find('a[href]').each(function () {
-                            this.setAttribute(
-                                'target',  this.href.match(MarkDown_File) ? '_self' : '_top'
-                            );
-                        });
-                else
-                    This_App.domRoot.text(iMarkDown);
+            $.get(iPage.href,  (! iPage.href.match(MarkDown_File)) ?
+                function (iHTML) {
+                    if (typeof iHTML != 'string')  return;
 
-                Page_Load.call(This_App.domRoot[0], iMarkDown);
-            });
+                    var not_Fragment = iHTML.match(/<\s*(html|head|body)(\s|>)/i),
+                        no_Link = (! iHTML.match(/<\s*link(\s|>)/i));
+
+                    if ((! not_Fragment)  &&  no_Link) {
+                        $(iHTML).appendTo( This_App.domRoot ).fadeIn();
+                        return  Multiple_API.call(This_App, Page_Load);
+                    }
+                    $_Body.sandBox(
+                        iHTML,
+                        ((iSelector && no_Link) ? iSelector : 'body > *')  +  ', head link[src]',
+                        function ($_Content) {
+                            $_Content.filter('link').appendTo('head');
+                            This_App.domRoot.append( $_Content.not('link').fadeIn() );
+
+                            Multiple_API.call(This_App, Page_Load);
+                        }
+                    );
+                } :
+                function (iMarkDown) {
+                    if (BOM.marked)
+                        $( BOM.marked(iMarkDown) )
+                            .appendTo( This_App.domRoot.empty() ).fadeIn()
+                            .find('a[href]').each(function () {
+                                this.setAttribute(
+                                    'target',  this.href.match(MarkDown_File) ? '_self' : '_top'
+                                );
+                            });
+                    else
+                        This_App.domRoot.text(iMarkDown);
+
+                    Page_Ready.call(This_App);
+                }
+            );
         }).on(Response_Event,  '[target="_blank"][src]',  function () {
 
             if ( Event_Filter.call(this) )  return;
@@ -547,51 +580,33 @@
         });
     }
 
-    function FrontPage_Init() {
-        Page_Render.call(this, null, arguments[0]);
-
-        /* ----- URL Hash Navigation ----- */
-        var iHash = BOM.location.hash.slice(1);
-
-        if (iHash) {
-            var iHash_RE = RegExp('\\/?' + iHash + '\\.\\w+$', 'i');
-
-            $_Body.find('*[target][href]').each(function () {
-                var $_This = $(this);
-
-                if ( $_This.attr('href').match(iHash_RE) ) {
-                    $_This[(this.tagName.toLowerCase() != 'form') ? 'click' : 'submit']();
-                    return false;
-                }
-            });
-        }
-        return Page_Ready.call(this);
-    }
-
     WebApp.prototype.boot = function () {
         if (this.history.length)  throw 'This WebApp has been booted !';
 
         this.loading = true;
         this.history.write();
+
         User_Listener.call(this);
+        Multiple_API.call(this,  function () {
+            Page_Render.call(this, null, arguments[0]);
 
-        var $_Link = $('head link[src]');
+            /* ----- URL Hash Navigation ----- */
+            var iHash = BOM.location.hash.slice(1);
 
-        //  No Content Data in First Page
-        if (! $_Link.length)
-            return FrontPage_Init.call(this);
+            if (iHash) {
+                var iHash_RE = RegExp('\\/?' + iHash + '\\.\\w+$', 'i');
 
-        //  Loading Content Data before First Page rendering
-        Load_Process();
+                $_Body.find('*[target][href]').each(function () {
+                    var $_This = $(this);
 
-        var This_App = this,  iData = { },  Data_Ready = $_Link.length;
-
-        for (var i = 0;  i < $_Link.length;  i++)
-            API_Call.call(This_App,  $($_Link[i]),  function () {
-                $.extend(iData, arguments[0]);
-
-                if (--Data_Ready == 0)  FrontPage_Init.call(This_App, iData);
-            });
+                    if ( $_This.attr('href').match(iHash_RE) ) {
+                        $_This[(this.tagName.toLowerCase() != 'form') ? 'click' : 'submit']();
+                        return false;
+                    }
+                });
+            }
+            Page_Ready.call(this);
+        });
 
         return this;
     };
