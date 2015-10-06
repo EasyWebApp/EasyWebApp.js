@@ -41,8 +41,6 @@
                 city:             arguments[0].data.city.replace(/(市|自治|特别).*/, '')
             });
 
-        $_Body.on('pageLoad', BOM.iDaily.Load_Cover).on('pageReady', BOM.ModalWindow.clear);
-
         $_Body.on('apiCall',  function () {
 
             var iData = arguments[4];
