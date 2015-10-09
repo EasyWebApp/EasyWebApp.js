@@ -2,7 +2,7 @@
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]     v2.0  (2015-10-7)  Beta
+//      [Version]     v2.0  (2015-10-8)  Beta
 //
 //      [Based on]    iQuery  |  jQuery with jQuery+,
 //
@@ -36,15 +36,12 @@
     }
 
     InnerPage.prototype.valueOf = function () {
-        return  $.extend({ }, this);
-    };
-
-    InnerPage.prototype.toString = function () {
         return {
-            title:    this.title,
-            URL:      this.URL,
-            HTML:     this.HTML,
-            JSON:     this.JSON
+            title:     this.title,
+            URL:       this.URL,
+            HTML:      this.HTML,
+            method:    this.method,
+            JSON:      this.JSON
         };
     };
 

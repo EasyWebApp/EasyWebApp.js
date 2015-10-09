@@ -136,15 +136,14 @@ class EasyHTTPServer {
     public $requestIPAddress;
 
     private function requestIPA() {
-        if (! empty( $this->requestHeaders['Client-Ip'] )) {
+        if (! empty( $this->requestHeaders['Client-Ip'] ))
             return $this->requestHeaders['Client-Ip'];
-        }
-        //  To check IP is passed from a Proxy Server
-        if (! empty( $this->requestHeaders['X-Forwarded-For'] )) {
-            return $this->requestHeaders['X-Forwarded-For'];
-        }
 
-        return $this->requestHeaders['Remote-Address'];
+        //  To check IP is passed from a Proxy Server
+        if (! empty( $this->requestHeaders['X-Forwarded-For'] ))
+            return $this->requestHeaders['X-Forwarded-For'];
+
+        return $this->requestHeaders['Remote-Addr'];
     }
 
     public function __construct() {
