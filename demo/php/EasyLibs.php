@@ -3,14 +3,112 @@
 //                >>>  EasyLibs.php  <<<
 //
 //
-//      [Version]    v0.9  (2015-9-20)  Beta
+//      [Version]     v1.2  (2015-10-10)  Beta
 //
-//      [Usage]      A Light-weight PHP Class Library
-//                   without PHP Extensions.
+//      [Based on]    PHP v5.3+
+//
+//      [Usage]       A Light-weight PHP Class Library
+//                    without PHP Extensions.
 //
 //
 //            (C)2015    shiy2008@gmail.com
 //
+
+// -----------------------------------
+//
+//    File System Node Object  v0.3
+//
+// -----------------------------------
+
+abstract class FS_Node {
+    public $type;
+    public $URI;
+
+    abstract protected function create($_Access_Auth);
+    abstract public function delete();
+    abstract public function copyTo($_Target);
+
+    public function moveTo($_URI) {
+        return  rename($this->URI, $_URI);
+    }
+
+    static protected function realPath($_Path) {
+        $_Path = realpath($_Path);
+        return  (substr($_Path, -1) == DIRECTORY_SEPARATOR)  ?  substr($_Path, 0, -1) : $_Path;
+    }
+
+    public function __construct($_URI, $_Access_Auth = 0777) {
+        $this->URI = self::realPath($_URI);
+
+        $this->type = is_dir($this->URI) ? 0 : 1;
+
+        if (! file_exists($this->URI))
+            $this->create($_Access_Auth);
+    }
+}
+class FS_Directory extends FS_Node {
+    protected function create($_Access_Auth) {
+        return  mkdir($this->URI, $_Access_Auth, true);
+    }
+    public function traverse() {
+        $_Args = func_get_args();
+
+        if (! ($_Args[0] instanceof Closure)) {
+            $_Mode = $_Args[0];
+            $_Callback = $_Args[0];
+        } else
+            $_Callback = $_Args[0];
+
+        foreach (
+            new RecursiveIteratorIterator(
+                new RecursiveDirectoryIterator( $this->URI ),  isset($_Mode) ? $_Mode : 0
+            ) as
+            $_Name => $_File
+        )
+            if (($_Name != '.')  &&  ($_Name != '..'))
+                if (call_user_func($_Callback, $_Name, $_File)  ===  null)
+                    break;
+    }
+    public function delete() {
+        $this->traverse(2,  function ($_Name, $_File) {
+            $_URI = $_File->getRealPath();
+            //  Let SplFileObject release the file,
+            //  so that Internal Functions can use it.
+            $_File = null;
+
+            return  is_file($_URI) ? unlink($_URI) : rmdir($_URI);
+        });
+
+        return rmdir($this->URI);
+    }
+    public function copyTo($_Target) {
+        $_Target = self::realPath($_Target);
+
+        $this->traverse(2,  function ($_Name, $_File) use ($_Target) {
+            $_Name = $_Target.DIRECTORY_SEPARATOR.$_Name;
+            $_URI = $_File->getRealPath();
+            $_File = null;
+
+            if ( is_dir($_URI) )
+                return  mkdir($_Name, 0777, true);
+
+            if (! file_exists($_Name))
+                mkdir(dirname($_Name), 0777, true);
+            copy($_URI, $_Name);
+        });
+    }
+}
+class FS_File extends FS_Node {
+    protected function create($_Access_Auth) {
+        return  file_put_contents($this->URI, '');
+    }
+    public function delete() {
+        return unlink($this->URI);
+    }
+    public function copyTo($_Target) {
+        return  copy($this->URI, $_URI);
+    }
+}
 
 // ------------------------------
 //
@@ -152,6 +250,7 @@ class EasyHTTPServer {
         $this->requestIPAddress = $this->requestIPA();
     }
 }
+
 class EasyHTTPClient {
     private $cacheBase;
 
@@ -173,9 +272,6 @@ class EasyHTTPClient {
         if (! file_exists($_Dir))  mkdir($_Dir);
 
         return $_Path;
-    }
-    private function clearCache() {
-        return rmdir('cache');
     }
     private function deleteCache() {
         $_Cache = $this->cacheBase->query(array(
@@ -220,6 +316,11 @@ class EasyHTTPClient {
         ));
         $this->deleteCache();
     }
+    public function clearCache() {
+        $_Dir = new FS_Directory('./cache');
+        return $_Dir->delete();
+    }
+
     private function responseHeaders($_Header_Array) {
         $_Header = array();
 
