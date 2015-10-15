@@ -55,19 +55,19 @@ class FS_Directory extends FS_Node {
 
         if (! ($_Args[0] instanceof Closure)) {
             $_Mode = $_Args[0];
-            $_Callback = $_Args[0];
+            $_Callback = $_Args[1];
         } else
             $_Callback = $_Args[0];
 
         foreach (
             new RecursiveIteratorIterator(
-                new RecursiveDirectoryIterator( $this->URI ),  isset($_Mode) ? $_Mode : 0
+                new RecursiveDirectoryIterator($this->URI, FilesystemIterator::SKIP_DOTS),
+                isset($_Mode) ? $_Mode : 0
             ) as
             $_Name => $_File
         )
-            if (($_Name != '.')  &&  ($_Name != '..'))
-                if (call_user_func($_Callback, $_Name, $_File)  ===  null)
-                    break;
+            if (call_user_func($_Callback, $_Name, $_File)  ===  false)
+                break;
     }
     public function delete() {
         $this->traverse(2,  function ($_Name, $_File) {
