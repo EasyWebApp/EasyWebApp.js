@@ -36,18 +36,30 @@ if (isset( $_GET['cache_clear'] )) {
     exit;
 }
 if (isset( $_GET['url'] )) {
-    $_URL = $_GET['url'];
+    $_URL = $_GET['url'];  $_Header = array();
+    $_Response = null;
+
+    if (!  empty( $_GET['second_out'] ))
+        $_Header['Cache-Control'] = "max-age={$_GET['second_out']}";
 
     switch ( $_HTTP_Header['Request-Method'] ) {
         case 'GET':
-            echo  $_HTTP_Client->get($_URL, $_GET['second_out']);    break;
+            $_Response = $_HTTP_Client->get($_URL, $_Header);    break;
         case 'POST':
-            echo  $_HTTP_Client->post($_URL, $_POST);    break;
+            $_Response = $_HTTP_Client->post($_URL, $_POST, $_Header);    break;
         case 'DELETE':
-            echo  $_HTTP_Client->delete($_URL, $_GET['second_out']);    break;
+            $_Response = $_HTTP_Client->delete($_URL, $_Header);    break;
         case 'PUT':
-            echo  $_HTTP_Client->put($_URL, $_POST);
+            $_Response = $_HTTP_Client->put($_URL, $_POST, $_Header);
     }
+    $_rHeader = $_Response->headers;
+    if (isset( $_rHeader['Location'] ))
+        $_rHeader = array_diff($_rHeader, array(
+            'Location'  =>  $_rHeader['Location']
+        ));
+    $_Response->headers = $_rHeader;
+
+    $_HTTP_Server->send($_Response);
     exit;
 }
 
@@ -57,12 +69,18 @@ if (isset( $_GET['url'] )) {
 //
 // ----------------------------------------
 
-$_User_Info = json_decode(
-    $_HTTP_Client->get(
-        'http://ip.taobao.com/service/getIpInfo.php?ip='.$_HTTP_Server->requestIPAddress
-    ),
-    true
+$_User_Info = $_HTTP_Client->get(
+    'http://ip.taobao.com/service/getIpInfo.php?ip='.'171.221.147.62'//$_HTTP_Server->requestIPAddress
 );
-$_User_Info['code'] = 200;
 
-echo json_encode($_User_Info);
+if ($_User_Info !== false) {
+    $_Data = $_User_Info->dataJSON;
+    $_Data['code'] = 200;
+    $_User_Info->dataJSON = $_Data;
+} else
+    $_User_Info->dataJSON = array(
+        'code'     =>  404,
+        'message'  =>  "您当前的 IP 地址（{$_HTTP_Server->requestIPAddress}）不能确定 您的当前城市……"
+    );
+
+$_HTTP_Server->send( $_User_Info );

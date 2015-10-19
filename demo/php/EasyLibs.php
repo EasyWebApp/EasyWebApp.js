@@ -3,7 +3,7 @@
 //                >>>  EasyLibs.php  <<<
 //
 //
-//      [Version]     v1.2.5  (2015-10-16)  Beta
+//      [Version]     v1.4  (2015-10-19)  Beta
 //
 //      [Based on]    PHP v5.3+
 //
@@ -158,7 +158,7 @@ class EasySQLite {
             self::queryString(array(
                 'select'  =>  'count(*)',
                 'from'    =>  'SQLite_Master',
-                'where'   =>  "type='table' and name='{$_Table_Name}'"
+                'where'   =>  "type = 'table' and name = '{$_Table_Name}'"
             ))
         );
     }
@@ -217,10 +217,54 @@ class EasySQLite {
 }
 // ---------------------------------------------
 //
-//    Simple HTTP Synchronized Request  v0.5.5
+//    Simple HTTP Synchronized Request  v0.7
 //
 // ---------------------------------------------
 
+class HTTP_Response {
+    private static function getFriendlyHeaders($_Header_Array) {
+        $_Header = array();
+
+        foreach ($_Header_Array as $_Str) {
+            $_Item = explode(':', $_Str, 2);
+
+            if (isset( $_Item[1] )) {
+                $_Header[trim( $_Item[0] )] = trim( $_Item[1] );
+                continue;
+            }
+            if ( preg_match('#HTTP/[\d\.]+\s+(\d+)#', $_Str, $_Num) )
+                $_Header['Response-Code'] = intval( $_Num[1] );
+            else
+                $_Header[] = $_Str;
+        }
+        return $_Header;
+    }
+
+    private $headers;
+    public  $data;
+    private $dataJSON;
+
+    public function __construct($_Header, $_Data) {
+        $this->headers = isset($_Header[0]) ? self::getFriendlyHeaders($_Header) : $_Header;
+        $this->data = $_Data;
+        $this->dataJSON = json_decode($_Data, true);
+    }
+    public function __get($_Key) {
+        switch ($_Key) {
+            case 'headers':     return $this->headers;
+            case 'dataJSON':    return $this->dataJSON;
+        }
+    }
+    public function __set($_Key, $_Value) {
+        switch ($_Key) {
+            case 'headers':     $this->headers = $_Value;  break;
+            case 'dataJSON':    {
+                $this->data = json_encode($_Value);
+                $this->dataJSON = $_Value;
+            }
+        }
+    }
+}
 class EasyHTTPServer {
     private static $Request_Header = array(
         'REMOTE_ADDR', 'REQUEST_METHOD', 'CONTENT_TYPE', 'CONTENT_LENGTH'
@@ -256,6 +300,23 @@ class EasyHTTPServer {
         $this->requestHeaders = self::getRequestHeaders();
         $this->requestIPAddress = self::getRequestIPA( $this->requestHeaders );
     }
+
+    public function setHeader($_Head,  $_Value = null) {
+        if (! is_array($_Head))
+            $_Head = array("{$_Head}" => $_Value);
+
+        foreach ($_Head  as  $_Key => $_String)
+            header("{$_Key}: {$_String}");
+    }
+    public function send($_Data,  $_Header = null) {
+        if ($_Data instanceof HTTP_Response) {
+            $_Header = $_Data->headers;
+            $_Data = $_Data->data;
+        }
+        if ($_Header)  $this->setHeader($_Header);
+        echo $_Data;
+        ob_flush() & flush();
+    }
 }
 
 class EasyHTTPClient {
@@ -263,8 +324,8 @@ class EasyHTTPClient {
         $_SQL_DB->createTable('Request', array(
             'CID'     =>  'Integer Primary Key',
             'URL'     =>  'Text not Null',
-            'Type'    =>  "Text default 'text/plain'",
-            'Expire'  =>  'Text default '.(time() + 86400)
+            'Expire'  =>  'Text default '.(time() + 86400),
+            'Header'  =>  'Text'
         ));
         return $_SQL_DB;
     }
@@ -281,46 +342,47 @@ class EasyHTTPClient {
     public function __construct() {
         $this->cacheBase = self::initCacheTable(new EasySQLite('cache/http_cache'));
     }
-    private function deleteCache() {
-        $_Cache = $this->cacheBase->query(array(
-            'select'     =>  'CID, URL, Expire',
-            'from'       =>  'Request',
-            'where'      =>  'Expire < '.time(),
-            'order by'   =>  'Expire',
-            'limit'      =>  1
-        ));
-        if (! count($_Cache))  return false;
-
+    private function deleteCache($_Cache = null) {
+        if (empty( $_Cache )) {
+            $_Cache = $this->cacheBase->query(array(
+                'select'     =>  'CID, URL',
+                'from'       =>  'Request',
+                'where'      =>  'Expire > '.time(),
+                'order by'   =>  'Expire',
+                'limit'      =>  1
+            ));
+            if (! count($_Cache))  return false;
+        }
         $this->cacheBase->delete('Request',  "CID = {$_Cache[0]['CID']}");
         return  self::getCacheFile( $_Cache[0]['URL'] )->delete();
     }
     private function getCache($_URL) {
-        $_Data = self::getCacheFile($_URL)->readAll();
-
-        if ($_Data === false)  return false;
-
         $_Cache = $this->cacheBase->query(array(
-            'select'  =>  'CID, URL, Type',
+            'select'  =>  'CID, Expire, Header',
             'from'    =>  'Request',
-            'where'   =>  "URL='{$_URL}'"
+            'where'   =>  "URL = '{$_URL}'"
         ));
         if (count( $_Cache )) {
-            $this->cacheBase->update('Request', "CID={$_Cache[0]['CID']}", array(
-                'Expire'  =>  time() + 86400
-            ));
-            header('Content-Type', $_Cache[0]['Type']);
+            if ($_Cache[0]['Expire'] > time())
+                return $this->deleteCache($_Cache);
+
+            $_Data = self::getCacheFile($_URL)->readAll();
+            if ($_Data !== false)
+                return  new HTTP_Response(
+                    json_decode($_Cache[0]['Header'], true),  $_Data
+                );
         }
-        return $_Data;
+        return false;
     }
-    private function setCache($_URL, $_Type, $_Data, $_Cache_Second) {
-        $_Length = self::getCacheFile($_URL)->write($_Data);
+    private function setCache($_URL, $_Response, $_Expire) {
+        $_Length = self::getCacheFile($_URL)->write( $_Response->data );
 
         if ($_Length === false)  return false;
 
         $this->cacheBase->insert('Request', array(
             'URL'     =>  $_URL,
-            'Type'    =>  $_Type,
-            'Expire'  =>  $_Cache_Second  ?  (time() + $_Cache_Second)  :  null
+            'Expire'  =>  $_Expire  ?  (time() + $_Expire)  :  null,
+            'Header'  =>  json_encode( $_Response->headers )
         ));
         $this->deleteCache();
     }
@@ -332,23 +394,6 @@ class EasyHTTPClient {
         return @$_Dir->delete();
     }
 
-    private static function getResponseHeaders($_Header_Array) {
-        $_Header = array();
-
-        foreach ($_Header_Array as $_Str) {
-            $_Item = explode(':', $_Str, 2);
-
-            if (isset( $_Item[1] )) {
-                $_Header[trim( $_Item[0] )] = trim( $_Item[1] );
-                continue;
-            }
-            if ( preg_match('#HTTP/[\d\.]+\s+(\d+)#', $_Str, $_Num) )
-                $_Header['Response-Code'] = intval( $_Num[1] );
-            else
-                $_Header[] = $_Str;
-        }
-        return $_Header;
-    }
     private static function setRequestHeaders($_Header_Array) {
         $_Header = array();
 
@@ -357,6 +402,7 @@ class EasyHTTPClient {
 
         if (
             empty( $_Header_Array['Content-Type'] )  &&
+            isset( $_Header_Array['Request-Method'] )  &&
             (strtoupper( $_Header_Array['Request-Method'] )  ==  'POST')
         )
             $_Header[] = 'Content-Type: application/x-www-form-urlencoded';
@@ -364,35 +410,33 @@ class EasyHTTPClient {
         return  join("\r\n", $_Header);
     }
 
-    private function request($_Method,  $_URL,  $_Data,  $_Cache_Second = 0) {
-        $_Response = array(
-            'Cache'   =>  $_Cache_Second  &&  (($_Method == 'GET')  ||  ($_Method == 'DELETE')),
-            'Data'    =>  '',
-            'Header'  =>  ''
-        );
-        if ($_Response['Cache'])  $_Response['Data'] = $this->getCache($_URL);
+    private function request($_Method, $_URL, $_Data, $_Header) {
+        $_Expire = 0;  $_Response = '';
 
-        if (! $_Response['Data']) {
-            $_Response['Data'] = file_get_contents($_URL, false, stream_context_create(array(
+        if (
+            (($_Method == 'GET')  ||  ($_Method == 'DELETE'))  &&
+            isset( $_Header['Cache-Control'] )  &&
+            preg_match('/max-age=(\d+)/i', $_Header['Cache-Control'], $_Expire)
+        )
+            $_Expire = $_Expire[1];
+
+        if ($_Expire)  $_Response = $this->getCache($_URL);
+
+        if (empty( $_Response )) {
+            $_Response = @file_get_contents($_URL, false, stream_context_create(array(
                 'http' => array(
                     'method'   =>  $_Method,
-                    'header'   =>  self::setRequestHeaders(array(
-                        'Request-Method'  =>  $_Method
-                    )),
+                    'header'   =>  self::setRequestHeaders($_Header),
                     'content'  =>  http_build_query($_Data ? $_Data : array())
                 )
             )));
-            $_Response['Header'] = self::getResponseHeaders( $http_response_header );
-            if ($_Response['Cache'])
-                $this->setCache(
-                    $_URL,
-                    $_Response['Header']['Content-Type'],
-                    $_Response['Data'],
-                    $_Cache_Second
-                );
+            if ($_Response !== false) {
+                $_Response = new HTTP_Response($http_response_header, $_Response);
+                if ($_Expire)
+                    $this->setCache($_URL, $_Response, $_Expire);
+            }
         }
-
-        return $_Response['Data'];
+        return $_Response;
     }
 
     public function head($_URL) {
@@ -401,18 +445,18 @@ class EasyHTTPClient {
                 'method' => 'HEAD'
             )
         ));
-        return get_headers($_URL, 1);
+        return  get_headers($_URL, 1);
     }
-    public function get($_URL,  $_Cache_Second = 0) {
-        return  $this->request('GET', $_URL, null, $_Cache_Second);
+    public function get($_URL,  $_Header = array()) {
+        return  $this->request('GET', $_URL, null, $_Header);
     }
-    public function post($_URL,  $_Data = array()) {
-        return  $this->request('POST', $_URL, $_Data);
+    public function post($_URL,  $_Data = array(),  $_Header = array()) {
+        return  $this->request('POST', $_URL, $_Data, $_Header);
     }
-    public function delete($_URL,  $_Cache_Second = 0) {
-        return  $this->request('DELETE', $_URL, null, $_Cache_Second);
+    public function delete($_URL,  $_Header = array()) {
+        return  $this->request('DELETE', $_URL, null, $_Header);
     }
-    public function put($_URL,  $_Data = array()) {
-        return  $this->request('PUT', $_URL, $_Data);
+    public function put($_URL,  $_Data = array(),  $_Header = array()) {
+        return  $this->request('PUT', $_URL, $_Data, $_Header);
     }
 }
