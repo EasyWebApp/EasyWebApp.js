@@ -3,7 +3,7 @@
 //                >>>  EasyLibs.php  <<<
 //
 //
-//      [Version]     v1.4  (2015-10-19)  Beta
+//      [Version]     v1.5  (2015-10-20)  Beta
 //
 //      [Based on]    PHP v5.3+
 //
@@ -118,13 +118,64 @@ class FS_File extends FS_Node {
 
 // ------------------------------
 //
-//    SQLite OOP Wrapper  v0.4
+//    SQLite OOP Wrapper  v0.5
 //
 // ------------------------------
 
+class SQL_Table {
+    private $ownerBase;
+    private $name;
+
+    public function __construct($_DataBase, $_Name) {
+        $this->ownerBase = $_DataBase;
+        $this->name = $_Name;
+    }
+
+    public function insert($_Record) {
+        $_Field_Name = array();  $_Field_Value = array();
+
+        foreach ($_Record  as  $_Name => $_Value)
+            if ($_Value !== null) {
+                $_Field_Name[] = $_Name;
+                $_Field_Value[] = (gettype($_Value) == 'string')  ?
+                    $this->ownerBase->quote($_Value)  :  $_Value;
+            }
+        return  $this->ownerBase->exec(join('', array(
+            "insert into {$this->name} (",
+            join(', ', $_Field_Name),
+            ') values (',
+            join(', ', $_Field_Value),
+            ')'
+        )));
+    }
+    public function update($_Where, $_Data) {
+        $_Set_Data = array();
+
+        foreach ($_Data  as  $_Name => $_Value)
+            $_Set_Data[] = "{$_Name}=".(
+                (gettype($_Value) == 'string')  ?
+                    $this->ownerBase->quote($_Value)  :  $_Value
+            );
+        return  $this->ownerBase->exec(join(' ', array(
+            "update {$this->name} set",
+            join(', ', $_Set_Data),
+            "where {$_Where}"
+        )));
+    }
+    public function delete($_Where) {
+        return  $this->ownerBase->exec(
+            "delete from {$this->name} where {$_Where}"
+        );
+    }
+}
 class EasySQLite {
     private static $statement = array(
         'select'  =>  array('select', 'from', 'where', 'order by', 'limit', 'offset')
+    );
+    private static $allTable = array(
+        'select'  =>  'name, sql',
+        'from'    =>  'SQLite_Master',
+        'where'   =>  "type = 'table'"
     );
     private static function queryString($_SQL_Array) {
         $_SQL = array();
@@ -140,6 +191,8 @@ class EasySQLite {
     }
 
     private $dataBase;
+    private $table = array();
+
     public function __construct($_Base_Name) {
         new FS_Directory( pathinfo($_Base_Name, PATHINFO_DIRNAME) );
         try {
@@ -153,66 +206,43 @@ class EasySQLite {
 
         return  $_Query ? $_Query->fetchAll() : array();
     }
-    public function existTable($_Table_Name) {
-        return  !! $this->dataBase->exec(
-            self::queryString(array(
-                'select'  =>  'count(*)',
-                'from'    =>  'SQLite_Master',
-                'where'   =>  "type = 'table' and name = '{$_Table_Name}'"
-            ))
-        );
+    public function existTable($_Name) {
+        $_Statement = self::$allTable;
+        $_Statement['where'] .= " and name = '{$_Name}'";
+
+        return  !! count( $this->query($_Statement) );
     }
-    public function createTable($_Table_Name, $_Column_Define) {
-        if ($this->existTable( $_Table_Name ))  return;
+    private function addTable($_Name) {
+        return  $this->table[$_Name] = new SQL_Table($this->dataBase, $_Name);
+    }
+    public function __get($_Name) {
+        if (isset( $this->table[$_Name] ))
+            return $this->table[$_Name];
+        elseif ($this->existTable( $_Name ))
+            return $this->addTable($_Name);
+    }
+
+    public function createTable($_Name, $_Column_Define) {
+        if ($this->existTable( $_Name ))  return;
 
         $_Define_Array = array();
 
-        foreach ($_Column_Define  as  $_Name => $_Define)
-            $_Define_Array[] = "{$_Name} {$_Define}";
+        foreach ($_Column_Define  as  $_Key => $_Define)
+            $_Define_Array[] = "{$_Key} {$_Define}";
 
-        return $this->dataBase->exec(
-            "create Table {$_Table_Name} (\n    ".join(",\n    ", $_Define_Array)."\n)"
+        $_Result = $this->dataBase->exec(
+            "create Table {$_Name} (\n    ".join(",\n    ", $_Define_Array)."\n)"
         );
+        return  is_numeric($_Result) ? (!! $this->addTable($_Name)) : false;
     }
-    public function dropTable($_Table_Name) {
-        return  $this->dataBase->exec("drop Table {$_Table_Name}");
-    }
-
-    public function insert($_Table_Name, $_Record) {
-        $_Field_Name = array();  $_Field_Value = array();
-
-        foreach ($_Record  as  $_Name => $_Value)
-            if ($_Value !== null) {
-                $_Field_Name[] = $_Name;
-                $_Field_Value[] = (gettype($_Value) == 'string')  ?
-                    $this->dataBase->quote($_Value)  :  $_Value;
-            }
-        return  $this->dataBase->exec(join('', array(
-            "insert into {$_Table_Name} (",
-            join(', ', $_Field_Name),
-            ') values (',
-            join(', ', $_Field_Value),
-            ')'
-        )));
-    }
-    public function update($_Table_Name, $_Where, $_Data) {
-        $_Set_Data = array();
-
-        foreach ($_Data  as  $_Name => $_Value)
-            $_Set_Data[] = "{$_Name}=".(
-                (gettype($_Value) == 'string')  ?
-                    $this->dataBase->quote($_Value)  :  $_Value
-            );
-        return  $this->dataBase->exec(join(' ', array(
-            "update {$_Table_Name} set",
-            join(', ', $_Set_Data),
-            "where {$_Where}"
-        )));
-    }
-    public function delete($_Table_Name, $_Where) {
-        return  $this->dataBase->exec(
-            "delete from {$_Table_Name} where {$_Where}"
-        );
+    public function dropTable($_Name) {
+        $_Result = $this->dataBase->exec("drop Table {$_Name}");
+        if (is_numeric( $_Result )) {
+            array_diff($this->table, array(
+                "{$_Name}"  =>  $this->table[$_Name]
+            ));
+            return true;
+        }
     }
 }
 // ---------------------------------------------
@@ -314,7 +344,7 @@ class EasyHTTPServer {
             $_Data = $_Data->data;
         }
         if ($_Header)  $this->setHeader($_Header);
-        echo $_Data;
+        echo  is_string($_Data) ? $_Data : json_encode($_Data);
         ob_flush() & flush();
     }
 }
@@ -347,13 +377,13 @@ class EasyHTTPClient {
             $_Cache = $this->cacheBase->query(array(
                 'select'     =>  'CID, URL',
                 'from'       =>  'Request',
-                'where'      =>  'Expire > '.time(),
+                'where'      =>  'Expire < '.time(),
                 'order by'   =>  'Expire',
                 'limit'      =>  1
             ));
             if (! count($_Cache))  return false;
         }
-        $this->cacheBase->delete('Request',  "CID = {$_Cache[0]['CID']}");
+        $this->cacheBase->Request->delete("CID = {$_Cache[0]['CID']}");
         return  self::getCacheFile( $_Cache[0]['URL'] )->delete();
     }
     private function getCache($_URL) {
@@ -363,7 +393,7 @@ class EasyHTTPClient {
             'where'   =>  "URL = '{$_URL}'"
         ));
         if (count( $_Cache )) {
-            if ($_Cache[0]['Expire'] > time())
+            if ($_Cache[0]['Expire'] < time())
                 return $this->deleteCache($_Cache);
 
             $_Data = self::getCacheFile($_URL)->readAll();
@@ -379,7 +409,7 @@ class EasyHTTPClient {
 
         if ($_Length === false)  return false;
 
-        $this->cacheBase->insert('Request', array(
+        $this->cacheBase->Request->insert(array(
             'URL'     =>  $_URL,
             'Expire'  =>  $_Expire  ?  (time() + $_Expire)  :  null,
             'Header'  =>  json_encode( $_Response->headers )

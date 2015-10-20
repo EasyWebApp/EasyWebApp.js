@@ -52,6 +52,7 @@ if (isset( $_GET['url'] )) {
         case 'PUT':
             $_Response = $_HTTP_Client->put($_URL, $_POST, $_Header);
     }
+    //  禁止某些 API 对代理请求的跳转
     $_rHeader = $_Response->headers;
     if (isset( $_rHeader['Location'] ))
         $_rHeader = array_diff($_rHeader, array(
@@ -70,17 +71,25 @@ if (isset( $_GET['url'] )) {
 // ----------------------------------------
 
 $_User_Info = $_HTTP_Client->get(
-    'http://ip.taobao.com/service/getIpInfo.php?ip='.'171.221.147.62'//$_HTTP_Server->requestIPAddress
+    'http://ip.taobao.com/service/getIpInfo.php?ip='.$_HTTP_Server->requestIPAddress
 );
+if ($_User_Info === false) {
+    $_HTTP_Server->send(array(
+        'code'     =>  504,
+        'message'  =>  '网络拥塞，请尝试刷新本页~'
+    ));
+    exit(1);
+}
 
-if ($_User_Info !== false) {
-    $_Data = $_User_Info->dataJSON;
+$_Data = $_User_Info->dataJSON;
+
+if (is_array( $_Data['data'] ))
     $_Data['code'] = 200;
-    $_User_Info->dataJSON = $_Data;
-} else
-    $_User_Info->dataJSON = array(
-        'code'     =>  404,
+else
+    $_Data = array(
+        'code'     =>  416,
         'message'  =>  "您当前的 IP 地址（{$_HTTP_Server->requestIPAddress}）不能确定 您的当前城市……"
     );
+$_User_Info->dataJSON = $_Data;
 
 $_HTTP_Server->send( $_User_Info );
