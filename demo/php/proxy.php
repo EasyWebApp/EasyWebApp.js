@@ -8,41 +8,22 @@ require('EasyLibs.php');
 //
 // ----------------------------------------
 
-$_HTTP_Server = new EasyHTTPServer();
-$_HTTP_Header = $_HTTP_Server->requestHeaders;
-
-if ($_HTTP_Header['Request-Method'] == 'OPTION') {
-    header('Access-Control-Allow-Origin: '.(
-        isset( $_HTTP_Header['Origin'] )  ?  $_HTTP_Header['Origin']  :  '*'
-    ));
-    header('Access-Control-Allow-Methods: '.(
-        isset( $_HTTP_Header['Access-Control-Request-Methods'] )  ?
-            $_HTTP_Header['Access-Control-Request-Methods']  :  'GET,POST'
-    ));
-    header('Access-Control-Allow-Headers: '.(
-        isset( $_HTTP_Header['Access-Control-Request-Headers'] )  ?
-            $_HTTP_Header['Access-Control-Request-Headers']  :  'X-Requested-With'
-    ));
-    echo 'Hello, Cross Domain OPTION !';
-    exit;
-}
-
-header('Access-Control-Allow-Origin: *');
-
-$_HTTP_Client = new EasyHTTPClient();
+$_HTTP_Server = new EasyHTTPServer();  $_HTTP_Client = new EasyHTTPClient();
 
 if (isset( $_GET['cache_clear'] )) {
-    $_HTTP_Client->clearCache();
+    $_HTTP_Client->cache->clear();
     exit;
 }
 if (isset( $_GET['url'] )) {
-    $_URL = $_GET['url'];  $_Header = array();
-    $_Response = null;
+    $_URL = $_GET['url'];
 
-    if (!  empty( $_GET['second_out'] ))
-        $_Header['Cache-Control'] = "max-age={$_GET['second_out']}";
+    $_Header = array_diff_key($_HTTP_Server->requestHeaders, array(
+        'Host'              =>  '',
+        'Referer'           =>  '',
+        'X-Requested-With'  =>  ''
+    ));
 
-    switch ( $_HTTP_Header['Request-Method'] ) {
+    switch ( $_Header['Request-Method'] ) {
         case 'GET':
             $_Response = $_HTTP_Client->get($_URL, $_Header);    break;
         case 'POST':
@@ -50,15 +31,13 @@ if (isset( $_GET['url'] )) {
         case 'DELETE':
             $_Response = $_HTTP_Client->delete($_URL, $_Header);    break;
         case 'PUT':
-            $_Response = $_HTTP_Client->put($_URL, $_POST, $_Header);
+            $_Response = $_HTTP_Client->put($_URL, $_POST, $_Header);   break;
+        default:
+            exit(1);
     }
-    //  禁止某些 API 对代理请求的跳转
-    $_rHeader = $_Response->headers;
-    if (isset( $_rHeader['Location'] ))
-        $_rHeader = array_diff($_rHeader, array(
-            'Location'  =>  $_rHeader['Location']
-        ));
-    $_Response->headers = $_rHeader;
+    $_Header = $_Response->headers;
+    if (isset( $_Header['Location'] ))  unset( $_Header['Location'] );
+    $_Response->headers = $_Header;
 
     $_HTTP_Server->send($_Response);
     exit;

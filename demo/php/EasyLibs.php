@@ -3,7 +3,7 @@
 //                >>>  EasyLibs.php  <<<
 //
 //
-//      [Version]     v1.5  (2015-10-20)  Beta
+//      [Version]     v1.5.5  (2015-10-21)  Beta
 //
 //      [Based on]    PHP v5.3+
 //
@@ -238,20 +238,24 @@ class EasySQLite {
     public function dropTable($_Name) {
         $_Result = $this->dataBase->exec("drop Table {$_Name}");
         if (is_numeric( $_Result )) {
-            array_diff($this->table, array(
-                "{$_Name}"  =>  $this->table[$_Name]
-            ));
+            unset( $this->table[$_Name] );
             return true;
         }
     }
 }
 // ---------------------------------------------
 //
-//    Simple HTTP Synchronized Request  v0.7
+//    Simple HTTP Synchronized Request  v0.7.5
 //
 // ---------------------------------------------
 
 class HTTP_Response {
+    public static $statusCode = array(
+        '200'  =>  'OK',
+        '304'  =>  'Not Modified',
+        '404'  =>  'Not Found',
+        '502'  =>  'Bad Gateway'
+    );
     private static function getFriendlyHeaders($_Header_Array) {
         $_Header = array();
 
@@ -307,10 +311,12 @@ class EasyHTTPServer {
                 $_Key = substr($_Key, 5);
                 $_Take = true;
             }
-            if ($_Take  ||  in_array($_Key, self::$Request_Header))
+            if ($_Take  ||  in_array($_Key, self::$Request_Header)) {
                 $_Header[str_replace(' ', '-', ucwords(
                     strtolower( str_replace('_', ' ', $_Key) )
                 ))] = $_Value;
+                $_Take = false;
+            }
         }
         return $_Header;
     }
@@ -326,17 +332,48 @@ class EasyHTTPServer {
     public $requestHeaders;
     public $requestIPAddress;
 
-    public function __construct() {
-        $this->requestHeaders = self::getRequestHeaders();
-        $this->requestIPAddress = self::getRequestIPA( $this->requestHeaders );
+    private function setStatus($_Code) {
+        return  isset( HTTP_Response::$statusCode[$_Code] )  &&
+            header( "HTTP/1.1 {$_Code} ".HTTP_Response::$statusCode[$_Code] );
     }
-
     public function setHeader($_Head,  $_Value = null) {
         if (! is_array($_Head))
             $_Head = array("{$_Head}" => $_Value);
 
+        if (! isset( $_Head['X-Powered-By'] ))  $_Head['X-Powered-By'] = '';
+        $_Head['X-Powered-By'] .= '; EasyLibs.php/1.5';
+        $_Head['X-Powered-By'] = trim(
+            preg_replace('/;\s*;/', ';', $_Head['X-Powered-By']),  ';'
+        );
+
+        $this->setStatus(
+            isset( $_Head['Response-Code'] )  ?  $_Head['Response-Code']  :  200
+        );
         foreach ($_Head  as  $_Key => $_String)
             header("{$_Key}: {$_String}");
+
+        return $this;
+    }
+
+    public function __construct($_xDomain = false) {
+        $_Header = $this->requestHeaders = self::getRequestHeaders();
+        $this->requestIPAddress = self::getRequestIPA( $this->requestHeaders );
+
+        if (! $_xDomain)  return;
+
+        if ($_Header['Request-Method'] != 'OPTION')  return;
+
+        $this->setHeader(array(
+            'Access-Control-Allow-Origin'   =>
+                isset( $_Header['Origin'] )  ?  $_Header['Origin']  :  '*',
+            'Access-Control-Allow-Methods'  =>
+                isset( $_Header['Access-Control-Request-Methods'] )  ?
+                    $_Header['Access-Control-Request-Methods']  :  'GET,POST',
+            'Access-Control-Allow-Headers'  =>
+                isset( $_Header['Access-Control-Request-Headers'] )  ?
+                    $_Header['Access-Control-Request-Headers']  :  'X-Requested-With'
+        ));
+        exit;
     }
     public function send($_Data,  $_Header = null) {
         if ($_Data instanceof HTTP_Response) {
@@ -349,7 +386,7 @@ class EasyHTTPServer {
     }
 }
 
-class EasyHTTPClient {
+class HTTP_Cache {
     private static function initCacheTable($_SQL_DB) {
         $_SQL_DB->createTable('Request', array(
             'CID'     =>  'Integer Primary Key',
@@ -367,14 +404,14 @@ class EasyHTTPClient {
         return  new FS_File($_Path);
     }
 
-    private $cacheBase;
+    private $dataBase;
 
     public function __construct() {
-        $this->cacheBase = self::initCacheTable(new EasySQLite('cache/http_cache'));
+        $this->dataBase = self::initCacheTable(new EasySQLite('cache/http_cache'));
     }
-    private function deleteCache($_Cache = null) {
+    private function remove($_Cache = null) {
         if (empty( $_Cache )) {
-            $_Cache = $this->cacheBase->query(array(
+            $_Cache = $this->dataBase->query(array(
                 'select'     =>  'CID, URL',
                 'from'       =>  'Request',
                 'where'      =>  'Expire < '.time(),
@@ -383,18 +420,18 @@ class EasyHTTPClient {
             ));
             if (! count($_Cache))  return false;
         }
-        $this->cacheBase->Request->delete("CID = {$_Cache[0]['CID']}");
+        $this->dataBase->Request->delete("CID = {$_Cache[0]['CID']}");
         return  self::getCacheFile( $_Cache[0]['URL'] )->delete();
     }
-    private function getCache($_URL) {
-        $_Cache = $this->cacheBase->query(array(
+    public function get($_URL,  $_Header = null) {
+        $_Cache = $this->dataBase->query(array(
             'select'  =>  'CID, Expire, Header',
             'from'    =>  'Request',
             'where'   =>  "URL = '{$_URL}'"
         ));
         if (count( $_Cache )) {
             if ($_Cache[0]['Expire'] < time())
-                return $this->deleteCache($_Cache);
+                return $this->remove($_Cache);
 
             $_Data = self::getCacheFile($_URL)->readAll();
             if ($_Data !== false)
@@ -404,26 +441,28 @@ class EasyHTTPClient {
         }
         return false;
     }
-    private function setCache($_URL, $_Response, $_Expire) {
+    public function add($_URL, $_Response, $_Expire) {
         $_Length = self::getCacheFile($_URL)->write( $_Response->data );
 
         if ($_Length === false)  return false;
 
-        $this->cacheBase->Request->insert(array(
+        $this->dataBase->Request->insert(array(
             'URL'     =>  $_URL,
             'Expire'  =>  $_Expire  ?  (time() + $_Expire)  :  null,
             'Header'  =>  json_encode( $_Response->headers )
         ));
-        $this->deleteCache();
+        $this->remove();
     }
-    public function clearCache() {
-        $this->cacheBase->dropTable('Request');
-        self::initCacheTable( $this->cacheBase );
+    public function clear() {
+        $this->dataBase->dropTable('Request');
+        self::initCacheTable( $this->dataBase );
 
         $_Dir = new FS_Directory('./cache');
         return @$_Dir->delete();
     }
+}
 
+class EasyHTTPClient {
     private static function setRequestHeaders($_Header_Array) {
         $_Header = array();
 
@@ -440,9 +479,13 @@ class EasyHTTPClient {
         return  join("\r\n", $_Header);
     }
 
-    private function request($_Method, $_URL, $_Data, $_Header) {
-        $_Expire = 0;  $_Response = '';
+    public $cache;
 
+    public function __construct() {
+        $this->cache = new HTTP_Cache();
+    }
+
+    private function request($_Method,  $_URL,  $_Header,  $_Data = array()) {
         if (
             (($_Method == 'GET')  ||  ($_Method == 'DELETE'))  &&
             isset( $_Header['Cache-Control'] )  &&
@@ -450,20 +493,20 @@ class EasyHTTPClient {
         )
             $_Expire = $_Expire[1];
 
-        if ($_Expire)  $_Response = $this->getCache($_URL);
+        if (isset( $_Expire ))  $_Response = $this->cache->get($_URL);
 
         if (empty( $_Response )) {
             $_Response = @file_get_contents($_URL, false, stream_context_create(array(
                 'http' => array(
                     'method'   =>  $_Method,
                     'header'   =>  self::setRequestHeaders($_Header),
-                    'content'  =>  http_build_query($_Data ? $_Data : array())
+                    'content'  =>  http_build_query($_Data)
                 )
             )));
             if ($_Response !== false) {
                 $_Response = new HTTP_Response($http_response_header, $_Response);
-                if ($_Expire)
-                    $this->setCache($_URL, $_Response, $_Expire);
+                if (isset( $_Expire ))
+                    $this->cache->add($_URL, $_Response, $_Expire);
             }
         }
         return $_Response;
@@ -478,15 +521,15 @@ class EasyHTTPClient {
         return  get_headers($_URL, 1);
     }
     public function get($_URL,  $_Header = array()) {
-        return  $this->request('GET', $_URL, null, $_Header);
+        return  $this->request('GET', $_URL, $_Header);
     }
-    public function post($_URL,  $_Data = array(),  $_Header = array()) {
+    public function post($_URL,  $_Data,  $_Header = array()) {
         return  $this->request('POST', $_URL, $_Data, $_Header);
     }
     public function delete($_URL,  $_Header = array()) {
-        return  $this->request('DELETE', $_URL, null, $_Header);
+        return  $this->request('DELETE', $_URL, $_Header);
     }
-    public function put($_URL,  $_Data = array(),  $_Header = array()) {
+    public function put($_URL,  $_Data,  $_Header = array()) {
         return  $this->request('PUT', $_URL, $_Data, $_Header);
     }
 }
