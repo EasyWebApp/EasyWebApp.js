@@ -3,7 +3,7 @@
 //                >>>  EasyLibs.php  <<<
 //
 //
-//      [Version]     v1.5.5  (2015-10-21)  Beta
+//      [Version]     v1.7  (2015-10-22)  Beta
 //
 //      [Based on]    PHP v5.3+
 //
@@ -243,18 +243,59 @@ class EasySQLite {
         }
     }
 }
-// ---------------------------------------------
+// ----------------------------------------
 //
-//    Simple HTTP Synchronized Request  v0.7.5
+//    Simple HTTP Server & Client  v0.9
 //
-// ---------------------------------------------
+// ----------------------------------------
 
 class HTTP_Response {
     public static $statusCode = array(
+        '100'  =>  'Continue',
+        '101'  =>  'Switching Protocols',
         '200'  =>  'OK',
+        '201'  =>  'Created',
+        '202'  =>  'Accepted',
+        '203'  =>  'Non-authoritative Information',
+        '204'  =>  'No Content',
+        '205'  =>  'Reset Content',
+        '206'  =>  'Partial Content',
+        '300'  =>  'Multiple Choices',
+        '301'  =>  'Moved Permanently',
+        '302'  =>  'Found',
+        '303'  =>  'See Other',
         '304'  =>  'Not Modified',
+        '305'  =>  'Use Proxy',
+        '306'  =>  'Unused',
+        '307'  =>  'Temporary Redirect',
+        '400'  =>  'Bad Request',
+        '401'  =>  'Unauthorized',
+        '402'  =>  'Payment Required',
+        '403'  =>  'Forbidden',
         '404'  =>  'Not Found',
-        '502'  =>  'Bad Gateway'
+        '405'  =>  'Method Not Allowed',
+        '406'  =>  'Not Acceptable',
+        '407'  =>  'Proxy Authentication Required',
+        '408'  =>  'Request Timeout',
+        '409'  =>  'Conflict',
+        '410'  =>  'Gone',
+        '411'  =>  'Length Required',
+        '412'  =>  'Precondition Failed',
+        '413'  =>  'Request Entity Too Large',
+        '414'  =>  'Request-url Too Long',
+        '415'  =>  'Unsupported Media Type',
+        '416'  =>  '',
+        '417'  =>  'Expectation Failed',
+        '428'  =>  'Precondition Required',
+        '429'  =>  'Too Many Requests',
+        '431'  =>  'Request Header Fields Too Large',
+        '500'  =>  'Internal Server Error',
+        '501'  =>  'Not Implemented',
+        '502'  =>  'Bad Gateway',
+        '503'  =>  'Service Unavailable',
+        '504'  =>  'Gateway Timeout',
+        '505'  =>  'HTTP Version Not Supported',
+        '511'  =>  'Network Authentication Required'
     );
     private static function getFriendlyHeaders($_Header_Array) {
         $_Header = array();
@@ -299,6 +340,43 @@ class HTTP_Response {
         }
     }
 }
+class HTTP_Cookie {
+    private $cookie = array();
+
+    public function __construct($_Cookie) {
+        if (is_array( $_Cookie ))
+            return  $this->cookie = $_Cookie;
+
+        if (function_exists('http_parse_cookie'))
+            return  $this->cookie = http_parse_cookie($_Cookie);
+
+        $_Cookie = explode(';', $_Cookie, 2);
+
+        foreach ($_Cookie as $_Item) {
+            $_Item = explode('=', $_Item, 2);
+            $this->cookie[trim( $_Item[0] )] = trim( $_Item[1] );
+        }
+    }
+    public function __toString() {
+        if (function_exists('http_build_cookie'))
+            return  http_build_cookie($this->cookie);
+
+        $_Cookie = array();
+
+        foreach ($this->cookie  as  $_Key => $_Value)
+            $_Cookie[] = "{$_Key}={$_Value}";
+
+        return  join('; ', $_Cookie);
+    }
+
+    public function get($_Name) {
+        if (isset( $this->cookie[$_Name] ))  return $this->cookie[$_Name];
+    }
+    public function set($_Name, $_Value) {
+        $this->cookie[$_Name] = $_Value;
+    }
+}
+
 class EasyHTTPServer {
     private static $Request_Header = array(
         'REMOTE_ADDR', 'REQUEST_METHOD', 'CONTENT_TYPE', 'CONTENT_LENGTH'
@@ -331,24 +409,36 @@ class EasyHTTPServer {
 
     public $requestHeaders;
     public $requestIPAddress;
+    public $requestCookie;
 
     private function setStatus($_Code) {
-        return  isset( HTTP_Response::$statusCode[$_Code] )  &&
-            header( "HTTP/1.1 {$_Code} ".HTTP_Response::$statusCode[$_Code] );
+        $_Message = isset( HTTP_Response::$statusCode[$_Code] )  ?
+            HTTP_Response::$statusCode[$_Code]  :  '';
+
+        header("HTTP/1.1 {$_Code} {$_Message}");
+
+        if ($_Code == 429)
+            header('Retry-After: '.func_get_arg(1));
     }
+
     public function setHeader($_Head,  $_Value = null) {
         if (! is_array($_Head))
             $_Head = array("{$_Head}" => $_Value);
 
-        if (! isset( $_Head['X-Powered-By'] ))  $_Head['X-Powered-By'] = '';
-        $_Head['X-Powered-By'] .= '; EasyLibs.php/1.5';
-        $_Head['X-Powered-By'] = trim(
-            preg_replace('/;\s*;/', ';', $_Head['X-Powered-By']),  ';'
-        );
-
-        $this->setStatus(
-            isset( $_Head['Response-Code'] )  ?  $_Head['Response-Code']  :  200
-        );
+        if (! isset( $_Head['X-Powered-By'] ))
+            $_Head['X-Powered-By'] = '';
+        if (stripos($_Head['X-Powered-By'], 'EasyLibs')  ===  false) {
+            $_Head['X-Powered-By'] .= '; EasyLibs.php/1.5';
+            $_Head['X-Powered-By'] = trim(
+                preg_replace('/;\s*;/', ';', $_Head['X-Powered-By']),  ';'
+            );
+        }
+        if (isset( $_Head['WWW-Authenticate'] ))
+            $this->setStatus(401);
+        else
+            $this->setStatus(
+                isset( $_Head['Response-Code'] )  ?  $_Head['Response-Code']  :  200
+            );
         foreach ($_Head  as  $_Key => $_String)
             header("{$_Key}: {$_String}");
 
@@ -358,6 +448,7 @@ class EasyHTTPServer {
     public function __construct($_xDomain = false) {
         $_Header = $this->requestHeaders = self::getRequestHeaders();
         $this->requestIPAddress = self::getRequestIPA( $this->requestHeaders );
+        $this->requestCookie = new HTTP_Cookie( $_Header['Cookie'] );
 
         if (! $_xDomain)  return;
 
@@ -375,6 +466,26 @@ class EasyHTTPServer {
         ));
         exit;
     }
+
+    public function setCookie($_Key,  $_Value = null) {
+        if (! is_array($_Key))
+            $_Key = array("{$_Key}" => $_Value);
+
+        $this->setHeader('Set-Cookie',  new HTTP_Cookie($_Key));
+    }
+    public function auth($_Tips = 'Auth Needed',  $_Check_Handle) {
+        if (isset( $_SERVER['PHP_AUTH_USER'] )  &&  isset( $_SERVER['PHP_AUTH_PW'] )) {
+            if (false !== call_user_func(
+                $_Check_Handle,  $_SERVER['PHP_AUTH_USER'],  $_SERVER['PHP_AUTH_PW'],  $this
+            ))
+                return;
+            else
+                $this->setStatus(403);
+        } else
+            $this->setHeader('WWW-Authenticate', "Basic realm=\"{$_Tips}\"");
+
+        exit;
+    }
     public function send($_Data,  $_Header = null) {
         if ($_Data instanceof HTTP_Response) {
             $_Header = $_Data->headers;
@@ -383,6 +494,25 @@ class EasyHTTPServer {
         if ($_Header)  $this->setHeader($_Header);
         echo  is_string($_Data) ? $_Data : json_encode($_Data);
         ob_flush() & flush();
+    }
+
+    public function redirect($_URL,  $_Second = 0,  $_Tips = '') {
+        if ($_Second)
+            $this->send($_Tips, array(
+                'Refresh'  =>  "{$_Second}; url={$_URL}"
+            ));
+        else
+            $this->setHeader('Location', $_URL);
+
+        exit;
+    }
+    public function download($_File) {
+        $this->send((new FS_File($_File))->readAll(),  array(
+            'Content-Type'               =>  'application/octet-stream',
+            'Content-Disposition'        =>  'attachment; filename="'.basename($_File).'"',
+            'Content-Transfer-Encoding'  =>  'binary'
+        ));
+        exit;
     }
 }
 
