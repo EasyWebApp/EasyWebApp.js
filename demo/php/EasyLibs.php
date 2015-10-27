@@ -3,7 +3,7 @@
 //                >>>  EasyLibs.php  <<<
 //
 //
-//      [Version]     v1.7  (2015-10-22)  Beta
+//      [Version]     v1.6  (2015-10-27)  Beta
 //
 //      [Based on]    PHP v5.3+
 //
@@ -44,6 +44,9 @@ abstract class FS_Node {
         if (! file_exists($_URI))  $this->create($_Access_Auth);
 
         $this->URI = self::realPath($_URI);
+    }
+    public function __toString() {
+        return $this->URI;
     }
 }
 class FS_Directory extends FS_Node {
@@ -194,7 +197,8 @@ class EasySQLite {
     private $table = array();
 
     public function __construct($_Base_Name) {
-        new FS_Directory( pathinfo($_Base_Name, PATHINFO_DIRNAME) );
+        if (! ($_Base_Name instanceof FS_Directory))
+            new FS_Directory( pathinfo($_Base_Name, PATHINFO_DIRNAME) );
         try {
             $this->dataBase = new PDO("sqlite:{$_Base_Name}.db");
         } catch (PDOException $_Error) {
@@ -245,7 +249,7 @@ class EasySQLite {
 }
 // ----------------------------------------
 //
-//    Simple HTTP Server & Client  v0.9
+//    Simple HTTP Server & Client  v0.8
 //
 // ----------------------------------------
 
@@ -516,82 +520,6 @@ class EasyHTTPServer {
     }
 }
 
-class HTTP_Cache {
-    private static function initCacheTable($_SQL_DB) {
-        $_SQL_DB->createTable('Request', array(
-            'CID'     =>  'Integer Primary Key',
-            'URL'     =>  'Text not Null',
-            'Expire'  =>  'Text default '.(time() + 86400),
-            'Header'  =>  'Text'
-        ));
-        return $_SQL_DB;
-    }
-    private static function getCacheFile($_URL) {
-        $_Path = 'cache'.parse_url($_URL, PHP_URL_PATH);
-
-        new FS_Directory(pathinfo($_Path, PATHINFO_DIRNAME));
-
-        return  new FS_File($_Path);
-    }
-
-    private $dataBase;
-
-    public function __construct() {
-        $this->dataBase = self::initCacheTable(new EasySQLite('cache/http_cache'));
-    }
-    private function remove($_Cache = null) {
-        if (empty( $_Cache )) {
-            $_Cache = $this->dataBase->query(array(
-                'select'     =>  'CID, URL',
-                'from'       =>  'Request',
-                'where'      =>  'Expire < '.time(),
-                'order by'   =>  'Expire',
-                'limit'      =>  1
-            ));
-            if (! count($_Cache))  return false;
-        }
-        $this->dataBase->Request->delete("CID = {$_Cache[0]['CID']}");
-        return  self::getCacheFile( $_Cache[0]['URL'] )->delete();
-    }
-    public function get($_URL,  $_Header = null) {
-        $_Cache = $this->dataBase->query(array(
-            'select'  =>  'CID, Expire, Header',
-            'from'    =>  'Request',
-            'where'   =>  "URL = '{$_URL}'"
-        ));
-        if (count( $_Cache )) {
-            if ($_Cache[0]['Expire'] < time())
-                return $this->remove($_Cache);
-
-            $_Data = self::getCacheFile($_URL)->readAll();
-            if ($_Data !== false)
-                return  new HTTP_Response(
-                    json_decode($_Cache[0]['Header'], true),  $_Data
-                );
-        }
-        return false;
-    }
-    public function add($_URL, $_Response, $_Expire) {
-        $_Length = self::getCacheFile($_URL)->write( $_Response->data );
-
-        if ($_Length === false)  return false;
-
-        $this->dataBase->Request->insert(array(
-            'URL'     =>  $_URL,
-            'Expire'  =>  $_Expire  ?  (time() + $_Expire)  :  null,
-            'Header'  =>  json_encode( $_Response->headers )
-        ));
-        $this->remove();
-    }
-    public function clear() {
-        $this->dataBase->dropTable('Request');
-        self::initCacheTable( $this->dataBase );
-
-        $_Dir = new FS_Directory('./cache');
-        return @$_Dir->delete();
-    }
-}
-
 class EasyHTTPClient {
     private static function setRequestHeaders($_Header_Array) {
         $_Header = array();
@@ -609,37 +537,16 @@ class EasyHTTPClient {
         return  join("\r\n", $_Header);
     }
 
-    public $cache;
-
-    public function __construct() {
-        $this->cache = new HTTP_Cache();
-    }
-
     private function request($_Method,  $_URL,  $_Header,  $_Data = array()) {
-        if (
-            (($_Method == 'GET')  ||  ($_Method == 'DELETE'))  &&
-            isset( $_Header['Cache-Control'] )  &&
-            preg_match('/max-age=(\d+)/i', $_Header['Cache-Control'], $_Expire)
-        )
-            $_Expire = $_Expire[1];
-
-        if (isset( $_Expire ))  $_Response = $this->cache->get($_URL);
-
-        if (empty( $_Response )) {
-            $_Response = @file_get_contents($_URL, false, stream_context_create(array(
-                'http' => array(
-                    'method'   =>  $_Method,
-                    'header'   =>  self::setRequestHeaders($_Header),
-                    'content'  =>  http_build_query($_Data)
-                )
-            )));
-            if ($_Response !== false) {
-                $_Response = new HTTP_Response($http_response_header, $_Response);
-                if (isset( $_Expire ))
-                    $this->cache->add($_URL, $_Response, $_Expire);
-            }
-        }
-        return $_Response;
+        $_Response = @file_get_contents($_URL, false, stream_context_create(array(
+            'http' => array(
+                'method'   =>  $_Method,
+                'header'   =>  self::setRequestHeaders($_Header),
+                'content'  =>  http_build_query($_Data)
+            )
+        )));
+        return  ($_Response !== false)  ?
+            new HTTP_Response($http_response_header, $_Response)  :  $_Response;
     }
 
     public function head($_URL) {
