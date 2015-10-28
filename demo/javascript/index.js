@@ -31,7 +31,7 @@
     };
 
 /* ---------- 数据 API ---------- */
-    var Proxy_API = 'php/proxy.php?second_out=86400&url=';
+    var Proxy_API = 'php/proxy.php?second_out=10800&url=';
 
 
     $.getJSON('php/proxy.php',  function () {
@@ -43,17 +43,18 @@
 
         $_Body.on('apiCall',  function () {
 
-            var iData = arguments[4];
+            var iData = arguments[4],
+                iFile = $.fileName( arguments[3].replace('/?', '?') );
 
-            switch ( $.fileName(arguments[3]) ) {
+            switch (iFile) {
                 case 'joke':       return {
                     joke:    iData.split("\n")[0]
-                }
+                };
                 case 'weather':    return {
                     now:        iData[1].Title,
                     suggest:    iData[2].Title,
                     days:       iData.slice(3)
-                }
+                };
                 case 'history':
                     return  $.map(iData.split("\n"),  function (_Item_) {
                         _Item_ = $.split(_Item_, /\s+/, 2, ' ');

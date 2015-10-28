@@ -3,7 +3,7 @@
 //                >>>  EasyLibs.php  <<<
 //
 //
-//      [Version]     v1.6  (2015-10-27)  Beta
+//      [Version]     v1.6  (2015-10-28)  Beta
 //
 //      [Based on]    PHP v5.3+
 //
@@ -319,8 +319,8 @@ class HTTP_Response {
         return $_Header;
     }
 
-    private $headers;
-    public  $data;
+    public  $headers;
+    private $data;
     private $dataJSON;
 
     public function __construct($_Header, $_Data) {
@@ -329,14 +329,15 @@ class HTTP_Response {
         $this->dataJSON = json_decode($_Data, true);
     }
     public function __get($_Key) {
-        switch ($_Key) {
-            case 'headers':     return $this->headers;
-            case 'dataJSON':    return $this->dataJSON;
-        }
+        return $this->{$_Key};
     }
     public function __set($_Key, $_Value) {
         switch ($_Key) {
-            case 'headers':     $this->headers = $_Value;  break;
+            case 'data':        {
+                $this->data = $_Value;
+                $this->dataJSON = json_decode($_Value, true);
+                break;
+            }
             case 'dataJSON':    {
                 $this->data = json_encode($_Value);
                 $this->dataJSON = $_Value;

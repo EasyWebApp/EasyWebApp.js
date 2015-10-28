@@ -2,13 +2,13 @@
 
 require('EasyLibs.php');
 
-// ------------------------------
+// -----------------------------------
 //
-//    HTTP Proxy Cache  v0.2
+//    HTTP Cross Domain Proxy  v0.4
 //
-// ------------------------------
+// -----------------------------------
 
-class ProxyCache {
+class Proxy_Cache {
     private static function initCacheTable($_SQL_DB) {
         $_SQL_DB->createTable('Response', array(
             'RID'     =>  'Integer Primary Key',
@@ -28,8 +28,9 @@ class ProxyCache {
     }
 
     private function getCacheFile($_URL) {
-        $_Path = $this->cacheRoot.parse_url($_URL, PHP_URL_PATH);
-
+        $_Path = $this->cacheRoot.rtrim(
+            parse_url($_URL, PHP_URL_PATH),  '/'
+        );
         new FS_Directory( pathinfo($_Path, PATHINFO_DIRNAME) );
 
         return  new FS_File($_Path);
@@ -85,93 +86,145 @@ class ProxyCache {
     }
 }
 
-// -------------------------
-//
-//    Cross Domain Proxy
-//
-// -------------------------
+class XDomainProxy {
+    public  $server;
+    public  $cache;
+    private $client;
 
-$_HTTP_Server = new EasyHTTPServer();  $_HTTP_Client = new EasyHTTPClient();
-$_Proxy_Cache = new ProxyCache('cache/http_cache');
+    private $URL;
+    private $cacheSecond;
+    private $callback = array(
+        'GET'     =>  array(),
+        'POST'    =>  array(),
+        'DELETE'  =>  array(),
+        'PUT'     =>  array()
+    );
+    private $failback;
 
-if (isset( $_GET['cache_clear'] )) {
-    $_Proxy_Cache->clear();
-    exit;
-}
+    public function __construct() {
+        $this->server = new EasyHTTPServer();
+        $this->cache = new Proxy_Cache('cache/http_cache');
+        $this->client = new EasyHTTPClient();
+    }
+    public function open($_URL,  $_Cache_Second = 0) {
+        $this->URL = $_URL;
+        $this->cacheSecond = $_Cache_Second;
+    }
 
-if (isset( $_GET['url'] )) {
-    $_URL = $_GET['url'];
+    public function onLoad($_Method, $_URL, $_Callback) {
+        $this->callback[ strtoupper($_Method) ][$_URL] = $_Callback;
 
-    $_Time_Out = isset( $_GET['second_out'] )  ?  $_GET['second_out']  :  0;
-    $_Time_Out = is_numeric($_Time_Out) ? $_Time_Out : 0;
+        return $this;
+    }
+    public function onError($_Callback) {
+        $this->failback = $_Callback;
 
-    if ($_Time_Out > 0)
-        $_Response = $_Proxy_Cache->get($_URL);
+        return $this;
+    }
 
-    if (empty( $_Response )) {
-        $_Header = array_diff_key($_HTTP_Server->requestHeaders, array(
+    private function callBack($_Method, $_Response) {
+        if (empty( $_Response ))
+            return  call_user_func($this->failback, $this->URL);
+
+        foreach ($this->callback[$_Method]  as  $_URL => $_Callback) {
+            if (stripos($this->URL, $_URL)  ===  false)  continue;
+
+            $_Return = call_user_func(
+                $_Callback,
+                $_Response->dataJSON ? $_Response->dataJSON : $_Response->data,
+                $_Response->headers
+            );
+            if (isset( $_Return['header'] ))
+                $_Response->headers = $_Return['header'];
+            if (isset( $_Return['data'] ))
+                if (is_array( $_Return['data'] ))
+                    $_Response->dataJSON = $_Return['data'];
+                else
+                    $_Response->data = $_Return['data'];
+        }
+        if (
+            ($this->cacheSecond > 0)  &&
+            (($_Method == 'GET')  ||  ($_Method == 'DELETE'))
+        )
+            $this->cache->add($this->URL, $_Response, $this->cacheSecond);
+
+        return $_Response;
+    }
+    private function request() {
+        $_Header = array_diff_key($this->server->requestHeaders, array(
             'Host'              =>  '',
             'Referer'           =>  '',
             'X-Requested-With'  =>  ''
         ));
+        $_Header['Host'] = parse_url($this->URL, PHP_URL_HOST);
+        $_Header['Accept-Encoding'] = 'plain';
+
         $_Method = $_Header['Request-Method'];
 
         switch ($_Method) {
             case 'GET':
-                $_Response = $_HTTP_Client->get($_URL, $_Header);    break;
+                $_Response = $this->client->get($this->URL, $_Header);    break;
             case 'POST':
-                $_Response = $_HTTP_Client->post($_URL, $_POST, $_Header);    break;
+                $_Response = $this->client->post($this->URL, $_POST, $_Header);    break;
             case 'DELETE':
-                $_Response = $_HTTP_Client->delete($_URL, $_Header);    break;
+                $_Response = $this->client->delete($this->URL, $_Header);    break;
             case 'PUT':
-                $_Response = $_HTTP_Client->put($_URL, $_POST, $_Header);   break;
+                $_Response = $this->client->put($this->URL, $_POST, $_Header);   break;
             default:
-                exit(1);
+                return;
         }
-
-        if (isset( $_Response->headers['Location'] )) {
-            $_Header = $_Response->headers;
-
-            unset( $_Header['Location'] );
-            $_Header['Response-Code'] = 200;
-
-            $_Response->headers = $_Header;
-        }
-        if (
-            ($_Time_Out > 0)  &&
-            (($_Method == 'GET')  ||  ($_Method == 'DELETE'))
-        )
-            $_Proxy_Cache->add($_URL, $_Response, $_Time_Out);
+        return  $this->callBack($_Method, $_Response);
     }
-    $_HTTP_Server->send($_Response);
+    public function send() {
+        if ($this->cacheSecond > 0)
+            $_Response = $this->cache->get( $this->URL );
+
+        if (empty( $_Response )) 
+            $_Response = $this->request();
+
+        $this->server->send($_Response);
+    }
+}
+// ----------------------------------------
+//
+//    App Main Logic
+//
+// ----------------------------------------
+
+$_XDomain_Proxy = new XDomainProxy();
+
+
+if (isset( $_GET['cache_clear'] )) {
+    $_XDomain_Proxy->cache->clear();
     exit;
 }
-// ----------------------------------------
-//
-//    User Information
-//
-// ----------------------------------------
 
-$_User_Info = $_HTTP_Client->get(
-    'http://ip.taobao.com/service/getIpInfo.php?ip='.$_HTTP_Server->requestIPAddress
-);
-if ($_User_Info === false) {
-    $_HTTP_Server->send(array(
-        'code'     =>  504,
-        'message'  =>  '网络拥塞，请尝试刷新本页~'
-    ));
-    exit(1);
+if (empty( $_GET['url'] )) {
+    $_URL = 'http://ip.taobao.com/service/getIpInfo.php?ip='.'171.221.147.62';//$_XDomain_Proxy->server->requestIPAddress
+    $_Time_Out = 86400;
+} else {
+    $_URL = $_GET['url'];
+    $_Time_Out = isset( $_GET['second_out'] )  ?  $_GET['second_out']  :  0;
 }
 
-$_Data = $_User_Info->dataJSON;
+$_XDomain_Proxy->open($_URL,  is_numeric($_Time_Out) ? $_Time_Out : 0);
 
-if (is_array( $_Data['data'] ))
-    $_Data['code'] = 200;
-else
-    $_Data = array(
-        'code'     =>  416,
-        'message'  =>  "您当前的 IP 地址（{$_HTTP_Server->requestIPAddress}）不能确定 您的当前城市……"
+$_XDomain_Proxy->onLoad('Get',  'http://ip.taobao.com',  function ($_Data) {
+    if (is_array( $_Data['data'] ))
+        $_Data['code'] = 200;
+    else
+        $_Data = array(
+            'code'     =>  416,
+            'message'  =>  "您当前的 IP 地址（{$_XDomain_Proxy->server->requestIPAddress}）不能确定 您的当前城市……"
+        );
+    return array(
+        'data'  =>  $_Data
     );
-$_User_Info->dataJSON = $_Data;
-
-$_HTTP_Server->send( $_User_Info );
+})->onError(function () {
+    return array(
+        'data'  =>  array(
+            'code'     =>  504,
+            'message'  =>  '网络拥塞，请尝试刷新本页~'
+        )
+    );
+})->send();
