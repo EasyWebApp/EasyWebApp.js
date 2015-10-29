@@ -3,7 +3,7 @@
 //                >>>  EasyLibs.php  <<<
 //
 //
-//      [Version]     v1.6  (2015-10-28)  Beta
+//      [Version]     v1.6  (2015-10-29)  Beta
 //
 //      [Based on]    PHP v5.3+
 //
@@ -171,7 +171,7 @@ class SQL_Table {
         );
     }
 }
-class EasySQLite {
+class SQLite {
     private static $statement = array(
         'select'  =>  array('select', 'from', 'where', 'order by', 'limit', 'offset')
     );
@@ -382,7 +382,19 @@ class HTTP_Cookie {
     }
 }
 
-class EasyHTTPServer {
+switch ( $_SERVER['REQUEST_METHOD'] ) {
+    case 'DELETE':    {
+        global $_DELETE;
+        parse_str(file_get_contents('php://input'), $_DELETE);
+        break;
+    }
+    case 'PUT':       {
+        global $_PUT;
+        parse_str(file_get_contents('php://input'), $_PUT);
+    }
+}
+
+class HTTPServer {
     private static $Request_Header = array(
         'REMOTE_ADDR', 'REQUEST_METHOD', 'CONTENT_TYPE', 'CONTENT_LENGTH'
     );
@@ -433,17 +445,19 @@ class EasyHTTPServer {
         if (! isset( $_Head['X-Powered-By'] ))
             $_Head['X-Powered-By'] = '';
         if (stripos($_Head['X-Powered-By'], 'EasyLibs')  ===  false) {
-            $_Head['X-Powered-By'] .= '; EasyLibs.php/1.5';
+            $_Head['X-Powered-By'] .= '; EasyLibs.php/1.6';
             $_Head['X-Powered-By'] = trim(
                 preg_replace('/;\s*;/', ';', $_Head['X-Powered-By']),  ';'
             );
         }
         if (isset( $_Head['WWW-Authenticate'] ))
             $this->setStatus(401);
-        else
+        else {
             $this->setStatus(
                 isset( $_Head['Response-Code'] )  ?  $_Head['Response-Code']  :  200
             );
+            unset( $_Head['Response-Code'] );
+        }
         foreach ($_Head  as  $_Key => $_String)
             header("{$_Key}: {$_String}");
 
@@ -453,7 +467,8 @@ class EasyHTTPServer {
     public function __construct($_xDomain = false) {
         $_Header = $this->requestHeaders = self::getRequestHeaders();
         $this->requestIPAddress = self::getRequestIPA( $this->requestHeaders );
-        $this->requestCookie = new HTTP_Cookie( $_Header['Cookie'] );
+        if (isset( $_Header['Cookie'] ))
+            $this->requestCookie = new HTTP_Cookie( $_Header['Cookie'] );
 
         if (! $_xDomain)  return;
 
@@ -478,6 +493,7 @@ class EasyHTTPServer {
 
         $this->setHeader('Set-Cookie',  new HTTP_Cookie($_Key));
     }
+    //  ToDo --- http://php.net/manual/zh/features.http-auth.php
     public function auth($_Tips = 'Auth Needed',  $_Check_Handle) {
         if (isset( $_SERVER['PHP_AUTH_USER'] )  &&  isset( $_SERVER['PHP_AUTH_PW'] )) {
             if (false !== call_user_func(
@@ -512,16 +528,17 @@ class EasyHTTPServer {
         exit;
     }
     public function download($_File) {
-        $this->send((new FS_File($_File))->readAll(),  array(
+        $this->setHeader(array(
             'Content-Type'               =>  'application/octet-stream',
             'Content-Disposition'        =>  'attachment; filename="'.basename($_File).'"',
             'Content-Transfer-Encoding'  =>  'binary'
         ));
+        readfile($_File);
         exit;
     }
 }
 
-class EasyHTTPClient {
+class HTTPClient {
     private static function setRequestHeaders($_Header_Array) {
         $_Header = array();
 
@@ -561,6 +578,7 @@ class EasyHTTPClient {
     public function get($_URL,  $_Header = array()) {
         return  $this->request('GET', $_URL, $_Header);
     }
+    //  ToDo --- http://php.net/manual/zh/features.file-upload.post-method.php
     public function post($_URL,  $_Data,  $_Header = array()) {
         return  $this->request('POST', $_URL, $_Data, $_Header);
     }

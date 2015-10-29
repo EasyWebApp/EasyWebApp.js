@@ -1,6 +1,6 @@
 <?php
 
-require('EasyLibs.php');
+require_once('EasyLibs.php');
 
 // -----------------------------------
 //
@@ -24,7 +24,7 @@ class Proxy_Cache {
 
     public function __construct($_Path) {
         $this->cacheRoot = new FS_Directory( pathinfo($_Path, PATHINFO_DIRNAME) );
-        $this->dataBase = self::initCacheTable(new EasySQLite($_Path));
+        $this->dataBase = self::initCacheTable(new SQLite($_Path));
     }
 
     private function getCacheFile($_URL) {
@@ -102,9 +102,9 @@ class XDomainProxy {
     private $failback;
 
     public function __construct() {
-        $this->server = new EasyHTTPServer();
+        $this->server = new HTTPServer();
         $this->cache = new Proxy_Cache('cache/http_cache');
-        $this->client = new EasyHTTPClient();
+        $this->client = new HTTPClient();
     }
     public function open($_URL,  $_Cache_Second = 0) {
         $this->URL = $_URL;
@@ -200,7 +200,7 @@ if (isset( $_GET['cache_clear'] )) {
 }
 
 if (empty( $_GET['url'] )) {
-    $_URL = 'http://ip.taobao.com/service/getIpInfo.php?ip='.'171.221.147.62';//$_XDomain_Proxy->server->requestIPAddress
+    $_URL = 'http://ip.taobao.com/service/getIpInfo.php?ip='.$_XDomain_Proxy->server->requestIPAddress;
     $_Time_Out = 86400;
 } else {
     $_URL = $_GET['url'];
