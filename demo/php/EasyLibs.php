@@ -3,7 +3,7 @@
 //                >>>  EasyLibs.php  <<<
 //
 //
-//      [Version]     v1.6  (2015-10-29)  Beta
+//      [Version]     v1.8  (2015-10-30)  Beta
 //
 //      [Based on]    PHP v5.3+
 //
@@ -16,43 +16,69 @@
 
 // -----------------------------------
 //
-//    File System Node Object  v0.3
+//    File System Node Object  v0.4
 //
 // -----------------------------------
 
-abstract class FS_Node {
-    public $type;
+class FS_File extends SplFileObject {
+    private $accessMode;
     public $URI;
 
-    abstract protected function create($_Access_Auth);
-    abstract public function delete();
-    abstract public function copyTo($_Target);
+    public function __construct($_File_Name,  $_Mode = 'a+') {
+        parent::__construct($_File_Name, $_Mode);
 
-    public function moveTo($_URI) {
-        return  rename($this->URI, $_URI);
+        $this->accessMode = $_Mode;
+        $this->URI = $this->getRealPath();
     }
+    public function readAll() {
+        return  $this->fread( $this->getSize() );
+    }
+    public function write($_Data) {
+        return $this->fwrite($_Data);
+    }
+    public function delete() {
+        $_URI = $this->URI;
+        unset($this);
+        return unlink($_URI);
+    }
+    public function copyTo($_Target) {
+        $_Mode = $this->accessMode;
+        $_URI = $this->URI;
 
-    static protected function realPath($_Path) {
+        unset($this);
+        copy($_URI, $_Target);
+
+        return  new self($_URI, $_Mode);
+    }
+    public function moveTo($_Target) {
+        $_Mode = $this->accessMode;
+        $_URI = $this->URI;
+
+        unset($this);
+        rename($_URI, $_Target);
+
+        return  new self($_Target, $_Mode);
+    }
+}
+class FS_Directory extends SplFileInfo {
+    private static function realPath($_Path) {
         $_Path = realpath($_Path);
         return  (substr($_Path, -1) == DIRECTORY_SEPARATOR)  ?  substr($_Path, 0, -1) : $_Path;
     }
 
-    public function __construct($_URI, $_Access_Auth = 0777) {
-        $this->URI = $_URI;
-        $this->type = is_dir($_URI) ? 0 : 1;
+    private $accessMode;
+    public $URI;
 
-        if (! file_exists($_URI))  $this->create($_Access_Auth);
+    public function __construct($_Dir_Name,  $_Mode = 0777) {
+        if (! file_exists( $_Dir_Name ))
+            mkdir($_Dir_Name, $_Mode, true);
 
-        $this->URI = self::realPath($_URI);
+        parent::__construct( $_Dir_Name );
+
+        $this->accessMode = $_Mode;
+        $this->URI = $this->getRealPath();
     }
-    public function __toString() {
-        return $this->URI;
-    }
-}
-class FS_Directory extends FS_Node {
-    protected function create($_Access_Auth) {
-        return  mkdir($this->URI, $_Access_Auth, true);
-    }
+
     public function traverse() {
         $_Args = func_get_args();
 
@@ -68,29 +94,38 @@ class FS_Directory extends FS_Node {
                 isset($_Mode) ? $_Mode : 0
             ) as
             $_Name => $_File
-        )
-            if (call_user_func($_Callback, $_Name, $_File)  ===  false)
+        ) {
+            $_File->setFileClass('FS_File');
+
+            if (false === call_user_func(
+                $_Callback,  $_Name,  $_File->openFile('a+')
+            ))
                 break;
+        }
+        return $this;
     }
     public function delete() {
-        $this->traverse(2,  function ($_Name, $_File) {
-            $_URI = $_File->getRealPath();
+        $_URI = $this->traverse(2,  function ($_Name, $_File) {
+            $_URI = $_File->URI;
             //  Let SplFileObject release the file,
             //  so that Internal Functions can use it.
-            $_File = null;
+            unset($_File);
 
             is_file($_URI) ? unlink($_URI) : rmdir($_URI);
-        });
+        })->URI;
 
-        return rmdir($this->URI);
+        unset($this);
+        return rmdir($_URI);
     }
     public function copyTo($_Target) {
+        if (! file_exists($_Target))  mkdir($_Target, 0777, true);
+
         $_Target = self::realPath($_Target);
 
-        $this->traverse(2,  function ($_Name, $_File) use ($_Target) {
+        return  $this->traverse(2,  function ($_Name, $_File) use ($_Target) {
             $_Name = $_Target.DIRECTORY_SEPARATOR.$_Name;
-            $_URI = $_File->getRealPath();
-            $_File = null;
+            $_URI = $_File->URI;
+            unset($_File);
 
             if ( is_dir($_URI) )
                 return  mkdir($_Name, 0777, true);
@@ -100,25 +135,16 @@ class FS_Directory extends FS_Node {
             copy($_URI, $_Name);
         });
     }
-}
-class FS_File extends FS_Node {
-    public function readAll() {
-        return  file_get_contents($this->URI);
-    }
-    public function write($_Data) {
-        return  file_put_contents($this->URI, $_Data);
-    }
-    protected function create($_Access_Auth) {
-        return  $this->write('');
-    }
-    public function delete() {
-        return  unlink($this->URI);
-    }
-    public function copyTo($_Target) {
-        return  copy($this->URI, $_URI);
-    }
-}
+    public function moveTo($_Target) {
+        $_Mode = $this->accessMode;
+        $_URI = $this->URI;
 
+        unset($this);
+        rename($_URI, $_Target);
+
+        return  new self($_Target, $_Mode);
+    }
+}
 // ------------------------------
 //
 //    SQLite OOP Wrapper  v0.5
@@ -249,7 +275,7 @@ class SQLite {
 }
 // ----------------------------------------
 //
-//    Simple HTTP Server & Client  v0.8
+//    Simple HTTP Server & Client  v0.9
 //
 // ----------------------------------------
 
@@ -325,8 +351,14 @@ class HTTP_Response {
 
     public function __construct($_Header, $_Data) {
         $this->headers = isset($_Header[0]) ? self::getFriendlyHeaders($_Header) : $_Header;
-        $this->data = $_Data;
-        $this->dataJSON = json_decode($_Data, true);
+
+        if (is_string( $_Data )) {
+            $this->data = $_Data;
+            $this->dataJSON = json_decode($_Data, true);
+        } else {
+            $this->data = json_encode($_Data);
+            $this->dataJSON = $_Data;
+        }
     }
     public function __get($_Key) {
         return $this->{$_Key};
@@ -382,18 +414,6 @@ class HTTP_Cookie {
     }
 }
 
-switch ( $_SERVER['REQUEST_METHOD'] ) {
-    case 'DELETE':    {
-        global $_DELETE;
-        parse_str(file_get_contents('php://input'), $_DELETE);
-        break;
-    }
-    case 'PUT':       {
-        global $_PUT;
-        parse_str(file_get_contents('php://input'), $_PUT);
-    }
-}
-
 class HTTPServer {
     private static $Request_Header = array(
         'REMOTE_ADDR', 'REQUEST_METHOD', 'CONTENT_TYPE', 'CONTENT_LENGTH'
@@ -422,6 +442,22 @@ class HTTPServer {
         foreach (self::$IPA_Header as $_Key)
             if (! empty( $_Header[$_Key] ))
                 return $_Header[$_Key];
+    }
+
+    private static function getRequestArgs($_Method) {
+        if ($_Method == 'GET')  return $_GET;
+        if ($_Method == 'POST')  return $_POST;
+
+        parse_str(file_get_contents('php://input'), $_Args);
+
+        if ($_Method == 'DELETE') {
+            global $_DELETE;
+            $_DELETE = $_Args;
+        } elseif ($_Method == 'PUT') {
+            global $_PUT;
+            $_PUT = $_Args;
+        }
+        return $_Args;
     }
 
     public $requestHeaders;
@@ -507,6 +543,15 @@ class HTTPServer {
 
         exit;
     }
+    public function download($_File) {
+        $this->setHeader(array(
+            'Content-Type'               =>  'application/octet-stream',
+            'Content-Disposition'        =>  'attachment; filename="'.basename($_File).'"',
+            'Content-Transfer-Encoding'  =>  'binary'
+        ));
+        readfile($_File);
+        exit;
+    }
     public function send($_Data,  $_Header = null) {
         if ($_Data instanceof HTTP_Response) {
             $_Header = $_Data->headers;
@@ -516,7 +561,6 @@ class HTTPServer {
         echo  is_string($_Data) ? $_Data : json_encode($_Data);
         ob_flush() & flush();
     }
-
     public function redirect($_URL,  $_Second = 0,  $_Tips = '') {
         if ($_Second)
             $this->send($_Tips, array(
@@ -527,14 +571,21 @@ class HTTPServer {
 
         exit;
     }
-    public function download($_File) {
-        $this->setHeader(array(
-            'Content-Type'               =>  'application/octet-stream',
-            'Content-Disposition'        =>  'attachment; filename="'.basename($_File).'"',
-            'Content-Transfer-Encoding'  =>  'binary'
-        ));
-        readfile($_File);
-        exit;
+
+    public function on($_Method, $_Path, $_Callback) {
+        $_rMethod = $this->requestHeader['Request-Method'];
+        $_rPath = $_SERVER['PATH_INFO'];
+        if (
+            ($_rMethod == strtoupper($_Method))  &&
+            (stripos($_rPath, $_Path)  !==  false)
+        ) {
+            $_Return = call_user_func(
+                $_Callback,  $_rPath,  self::getRequestArgs($_rMethod)
+            );
+            if (is_array( $_Return ))
+                $this->send($_Return['data'], $_Return['header']);
+        }
+        return $this;
     }
 }
 
