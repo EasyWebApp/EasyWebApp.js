@@ -2,7 +2,7 @@
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]     v2.0  (2015-10-8)  Beta
+//      [Version]     v2.1  (2015-11-6)  Beta
 //
 //      [Based on]    iQuery  |  jQuery with jQuery+,
 //
@@ -200,56 +200,6 @@
         this.dataStack.pushStack(Init_Data);
     }
 
-    /* ----- Manual Navigation ----- */
-    var $_Body = $(DOM.body);
-
-    function Proxy_Trigger(iType, iAttribute, iArgument) {
-        if (typeof iAttribute == 'string')
-            iAttribute = (iType == '_blank') ? {
-                src:    iAttribute
-            } : {
-                href:    iAttribute
-            }
-        else if ( $.isPlainObject(iAttribute.src) ) {
-            var iJSON = iAttribute.src;
-            delete iAttribute.src;
-        }
-
-        var $_Trigger = $('<button />', $.extend({
-                target:    iType,
-                style:     'display: none',
-                rel:       'nofollow'
-            }, iAttribute));
-
-        if ( $.isPlainObject(iArgument) ) {
-            for (var iName in iArgument) {
-                iArgument['data-' + iName] = iArgument[iName];
-                delete iArgument[iName];
-            }
-            $_Trigger.attr(iArgument);
-        }
-        if (iJSON)  $_Trigger.data('EWA_Model', iJSON);
-
-        this.loading = false;
-        $_Trigger.appendTo($_Body).click();
-
-        return this;
-    }
-
-    var _Concat_ = Array.prototype.concat,
-        Target_Method = {
-            _top:      'loadPage',
-            _blank:    'loadJSON',
-            _self:     'loadTemplate'
-        };
-
-    $.each(Target_Method,  function (iTarget) {
-        WebApp.prototype[ arguments[1] ] = function () {
-            return  Proxy_Trigger.apply(this,  _Concat_.apply([iTarget], arguments));
-        };
-    });
-
-    /* ----- Auto Navigation ----- */
     var RE_Str_Var = /\{(.+?)\}/g;
 
     WebApp.prototype.makeURL = function (iURL, iData, iArgs) {
@@ -278,11 +228,11 @@
 
 /* ---------- [object PageLink] ---------- */
 
-    var Prefetch_Tag = $.browser.modern ? 'prefetch' : 'next';
-
-    function PageLink(This_App, Link_DOM) {
+    function PageLink(This_App, Link_DOM, iArgument, iData) {
         this.app = This_App;
-        this.$_DOM = $(Link_DOM);
+        this.$_DOM = $.isPlainObject(Link_DOM) ?
+            this.createDOM(Link_DOM, iArgument, iData)  :
+            $(Link_DOM);
 
         $.extend(this, this.$_DOM.attr([
             'target', 'title', 'alt', 'href', 'method', 'src'
@@ -290,42 +240,30 @@
         this.method = (this.method || 'Get').toLowerCase();
         this.data = this.$_DOM.data('EWA_Model') || { };
 
-        if ((this.target != '_self')  ||  (! this.href))
-            return;
-
-        /* ----- HTML Prefetch ----- */
-        var $_Prefetch = $('<link />', {
-                rel:     Prefetch_Tag,
-                href:    this.href
-            });
-
-        if (
-            this.method.match(/Get/i)  &&
-            (this.src  &&  (! this.src.match(RE_Str_Var)))  &&
-            $.isEmptyObject( this.$_DOM[0].dataset )
-        )
-            $_Prefetch.add(
-                $('<link />', {
-                    rel:     Prefetch_Tag,
-                    href:    this.getURL()
-                })
-            );
-
-        $_Prefetch.appendTo(DOM.head);
+        if ((this.target == '_self')  &&  this.href)
+            this.prefetch();
     }
 
+    var Prefetch_Tag = $.browser.modern ? 'prefetch' : 'next';
+
     $.extend(PageLink.prototype, {
-        valueOf:    function () {
-            return {
-                target:    this.target,
-                title:     this.title,
-                alt:       this.alt,
-                href:      this.href,
-                method:    this.method,
-                src:       this.src
-            };
+        createDOM:    function (iAttribute, iArgument, iData) {
+            if ( $.isPlainObject(iArgument) )
+                for (var iName in iArgument) {
+                    iArgument['data-' + iName] = iArgument[iName];
+                    delete iArgument[iName];
+                }
+            var $_Link = $('<button />', $.extend({
+                style:    'display: none',
+                rel:      'nofollow'
+            }, iAttribute, iArgument));
+
+            if ((iData instanceof Array)  ||  $.isPlainObject(iData))
+                $_Link.data('EWA_Model', iData);
+
+            return $_Link;
         },
-        getArgs:    function () {
+        getArgs:      function () {
             var This_App = this.app,  iData = this.data;
 
             return  $.map(this.$_DOM[0].dataset,  function (iName) {
@@ -334,32 +272,120 @@
                 return  (_Arg_ !== undefined)  ?  _Arg_  :  iName;
             });
         },
-        getURL:     function () {
+        getURL:       function () {
             return  this.app.makeURL(
                 this.src,
                 this.data,
                 this.method.match(/Get|Delete/i)  &&  this.getArgs()
             );
+        },
+        prefetch:     function () {
+            var $_Prefetch = $('<link />', {
+                    rel:     Prefetch_Tag,
+                    href:    this.href
+                });
+
+            if (
+                this.method.match(/Get/i)  &&
+                (this.src  &&  (! this.src.match(RE_Str_Var)))  &&
+                $.isEmptyObject( this.$_DOM[0].dataset )
+            )
+                $_Prefetch.add(
+                    $('<link />', {
+                        rel:     Prefetch_Tag,
+                        href:    this.getURL()
+                    })
+                );
+
+            $_Prefetch.appendTo(DOM.head);
+        },
+        valueOf:      function () {
+            return {
+                target:    this.target,
+                title:     this.title,
+                alt:       this.alt,
+                href:      this.href,
+                method:    this.method,
+                src:       this.src
+            };
+        }
+    });
+    /* ----- Manual Navigation ----- */
+
+    var $_Body = $(DOM.body);
+
+    function Proxy_Trigger(iType, iAttribute, iArgument) {
+        if (typeof iAttribute == 'string')
+            iAttribute = (iType == '_blank') ? {
+                src:    iAttribute
+            } : {
+                href:    iAttribute
+            }
+        else if ( $.isPlainObject(iAttribute.src) ) {
+            var iJSON = iAttribute.src;
+            delete iAttribute.src;
+        }
+
+        this.loading = false;
+        (new PageLink(this, iAttribute, iArgument, iJSON))
+            .$_DOM.appendTo($_Body).click();
+
+        return this;
+    }
+
+    var _Concat_ = Array.prototype.concat,
+        Target_Method = {
+            _top:      'loadPage',
+            _blank:    'loadJSON',
+            _self:     'loadTemplate'
+        };
+
+    $.each(Target_Method,  function (iTarget) {
+        WebApp.prototype[ arguments[1] ] = function () {
+            return  Proxy_Trigger.apply(this,  _Concat_.apply([iTarget], arguments));
+        };
+    });
+
+/* ---------- [object ListView] ---------- */
+
+    function ListView($_Root, iData) {
+        this.$_Root = $_Root;
+        this.$_Template = $_Root.children().eq(0).clone(true);
+        this.data = iData || [ ];
+    }
+    $.extend(ListView.prototype, {
+        renderLine:    function (iValue) {
+            var $_Clone = this.$_Template.clone(true);
+
+            return  $_Clone.data('EWA_Model', iValue)
+                .find('*').add($_Clone)
+                .filter('*[name]').value(function () {
+                    return iValue[arguments[0]];
+                });
+        },
+        render:        function () {
+            var iLimit = parseInt( this.$_Root.attr('max') )  ||  Infinity;
+            iLimit = (this.data.length > iLimit) ? iLimit : this.data.length;
+
+            for (var i = 0;  i < iLimit;  i++)
+                this.renderLine( this.data[i] ).appendTo( this.$_Root );
+        },
+        insert:        function (iData, Index) {
+            Index = Index || 0;
+
+            this.data.splice(Index, 0, iData);
+            this.$_Root.eq(Index).before( this.renderLine(iData) );
+        },
+        delete:        function (Index) {
+            Index = parseInt(Index);
+            if (isNaN( Index ))  return;
+
+            this.data.splice(Index, 1);
+            this.$_Root.eq(Index).remove();
         }
     });
 
-    function $_List_Value(iValue) {
-        var iLimit = parseInt( this.attr('max') )  ||  Infinity;
-        iLimit = (iValue.length > iLimit) ? iLimit : iValue.length;
-
-        var $_Template = this.children().detach().eq(0);
-
-        for (var i = 0, $_Clone;  i < iLimit;  i++) {
-            $_Clone = $_Template.clone(true).appendTo(this);
-
-            $_Clone.data('EWA_Model', iValue[i])
-                .find('*').add($_Clone)
-                .filter('*[name]').value(function () {
-                    return iValue[i][arguments[0]];
-                });
-        }
-        return this;
-    }
+    /* ----- Auto Navigation ----- */
 
     var $_Data_Box;
 
@@ -395,22 +421,23 @@
         /* ----- Data Render ----- */
         var $_List = This_App.domRoot.find('ul, ol, dl, tbody, *[multiple]').not('input');
 
-        Load_Process(
-            (iData instanceof Array)  ?
-                $_List_Value.call($_List, iData)
-            :
+        if (iData instanceof Array) {
+            (new ListView($_List, iData)).render();
+            Load_Process($_List);
+        } else
+            Load_Process(
                 $_Body.value(function (iName) {
                     var $_This = $(this);
                     var iValue = This_App.dataStack.value(iName, $_This.is($_List));
 
                     if (iValue instanceof Array)
-                        $_List_Value.call($_This, iValue);
+                        (new ListView($_This, iValue)).render();
                     else if ( $.isPlainObject(iValue) )
                         $_This.data('EWA_Model', iValue).value(iValue);
                     else
                         return iValue;
                 })
-        );
+            );
         return this;
     };
 

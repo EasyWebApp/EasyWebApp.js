@@ -209,7 +209,7 @@ if (empty( $_GET['url'] )) {
 
 $_XDomain_Proxy->open($_URL,  is_numeric($_Time_Out) ? $_Time_Out : 0);
 
-$_XDomain_Proxy->onLoad('Get',  'http://ip.taobao.com',  function ($_Data) {
+$_XDomain_Proxy->onLoad('Get',  'http://ip.taobao.com',  function ($_Data) use ($_XDomain_Proxy) {
     if (is_array( $_Data['data'] ))
         $_Data['code'] = 200;
     else
