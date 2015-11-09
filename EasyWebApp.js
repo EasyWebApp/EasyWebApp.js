@@ -2,7 +2,7 @@
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]     v2.1  (2015-11-6)  Beta
+//      [Version]     v2.1  (2015-11-9)  Beta
 //
 //      [Based on]    iQuery  |  jQuery with jQuery+,
 //
@@ -31,7 +31,8 @@
             HTML:        DOM.URL,
             method:      'Get',
             JSON:        '',
-            time:        $.now()
+            time:        $.now(),
+            link:        [ ]
         }, Page_Info);
     }
 
@@ -239,12 +240,13 @@
         ]));
         this.method = (this.method || 'Get').toLowerCase();
         this.data = this.$_DOM.data('EWA_Model') || { };
-
-        if ((this.target == '_self')  &&  this.href)
-            this.prefetch();
     }
 
     var Prefetch_Tag = $.browser.modern ? 'prefetch' : 'next';
+
+    PageLink.prefetchClear = function () {
+        $('head link[rel="' + Prefetch_Tag + '"]').remove();
+    };
 
     $.extend(PageLink.prototype, {
         createDOM:    function (iAttribute, iArgument, iData) {
@@ -280,24 +282,27 @@
             );
         },
         prefetch:     function () {
-            var $_Prefetch = $('<link />', {
-                    rel:     Prefetch_Tag,
-                    href:    this.href
-                });
-
-            if (
-                this.method.match(/Get/i)  &&
-                (this.src  &&  (! this.src.match(RE_Str_Var)))  &&
-                $.isEmptyObject( this.$_DOM[0].dataset )
-            )
-                $_Prefetch.add(
-                    $('<link />', {
+            if ((this.target == '_self')  &&  this.href) {
+                var $_Prefetch = $('<link />', {
                         rel:     Prefetch_Tag,
-                        href:    this.getURL()
-                    })
-                );
+                        href:    this.href
+                    });
 
-            $_Prefetch.appendTo(DOM.head);
+                if (
+                    this.method.match(/Get/i)  &&
+                    (this.src  &&  (! this.src.match(RE_Str_Var)))  &&
+                    $.isEmptyObject( this.$_DOM[0].dataset )
+                )
+                    $_Prefetch.add(
+                        $('<link />', {
+                            rel:     Prefetch_Tag,
+                            href:    this.getURL()
+                        })
+                    );
+
+                $_Prefetch.appendTo(DOM.head);
+            }
+            return this;
         },
         valueOf:      function () {
             return {
@@ -353,22 +358,29 @@
         this.$_Template = $_Root.children().eq(0).clone(true);
         this.data = iData || [ ];
     }
+    ListView.listSelector = 'ul, ol, dl, tbody, *[multiple]';
+
     $.extend(ListView.prototype, {
         renderLine:    function (iValue) {
             var $_Clone = this.$_Template.clone(true);
 
-            return  $_Clone.data('EWA_Model', iValue)
+            $_Clone.data('EWA_Model', iValue)
                 .find('*').add($_Clone)
                 .filter('*[name]').value(function () {
                     return iValue[arguments[0]];
                 });
+            return $_Clone;
         },
         render:        function () {
             var iLimit = parseInt( this.$_Root.attr('max') )  ||  Infinity;
             iLimit = (this.data.length > iLimit) ? iLimit : this.data.length;
 
+            var $_List = $();
+
             for (var i = 0;  i < iLimit;  i++)
-                this.renderLine( this.data[i] ).appendTo( this.$_Root );
+                $_List.add( this.renderLine( this.data[i] ) );
+
+            $_List.appendTo( this.$_Root.empty() );
         },
         insert:        function (iData, Index) {
             Index = Index || 0;
@@ -419,7 +431,7 @@
         if (iReturn === false)  return this;
 
         /* ----- Data Render ----- */
-        var $_List = This_App.domRoot.find('ul, ol, dl, tbody, *[multiple]').not('input');
+        var $_List = This_App.domRoot.find( ListView.listSelector ).not('input');
 
         if (iData instanceof Array) {
             (new ListView($_List, iData)).render();
@@ -447,12 +459,14 @@
 
         var This_App = this.ownerApp;
 
-        $('head link[rel="' + Prefetch_Tag + '"]').remove();
+        PageLink.prefetchClear();
 
-        (This_App.history.lastIndex ? This_App.domRoot : $_Body).find('*[target][href]')
-            .each(function () {
-                new PageLink(This_App, this);
-            });
+        var $_Link = (This_App.history.lastIndex ? This_App.domRoot : $_Body).find('*[target]');
+
+        for (var i = 0;  i < $_Link.length;  i++) {
+            this.link.push(
+                (new PageLink(This_App, $_Link[i])).prefetch()
+            );
 
         This_App.loading = false;
         This_App.domRoot.trigger('pageReady', [
@@ -462,6 +476,12 @@
         ]);
 
         return this;
+    };
+
+    WebApp.prototype.loadModule = function (iLink) {
+        var This_Page = this.history.write(iLink);
+
+        This_Page.render(iLink.$_DOM, iLink.src).onReady();
     };
 
     function API_Call(iLink, Data_Ready) {
@@ -502,8 +522,8 @@
 
         var This_App = this,  iData = { },  Data_Ready = $_Link.length;
 
-        $_Link.each(function () {
-            API_Call.call(This_App,  new PageLink(This_App, this),  function () {
+        for (var i = 0;  i < $_Link.length;  i++)
+            API_Call.call(This_App,  new PageLink(This_App, $_Link[i]),  function () {
                 $.extend(iData, arguments[0]);
 
                 if (--Data_Ready > 0)  return;
@@ -511,7 +531,6 @@
                 iRender.call(This_App, iData);
                 $_Link.remove();
             });
-        });
     }
     var Response_Event = ($.browser.mobile ? 'tap' : 'click') + ' change';
 
@@ -654,7 +673,7 @@
 
             }).ajaxSubmit(function (iData) {
 
-                var iLink = (new PageLink(This_App, $_Form)).valueOf();
+                var iLink = new PageLink(This_App, $_Form);
 
                 var iReturn = This_App.domRoot.triggerHandler('formSubmit', [
                         This_App.history.last().HTML,
@@ -662,11 +681,14 @@
                         iData,
                         iLink.href
                     ]);
-                if ((iReturn !== false)  &&  this.target) {
-                    if (! iLink.src)  iLink.src = iReturn || iData;
+                if ((iReturn === false)  ||  (! this.target))  return;
 
-                    This_App[ Target_Method[this.target] ](iLink);
-                }
+                iLink.src = iLink.src || iReturn || iData;
+
+                This_App[
+                    Target_Method[this.target] || 'loadModule'
+                ](iLink);
+
             }).trigger('submit');
 
             return false;
