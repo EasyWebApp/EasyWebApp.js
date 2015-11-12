@@ -30,22 +30,25 @@ EasyWebApp 与其作者开发的 [**EasyWebUI**](http://git.oschina.net/Tech_Que
 
 
 ## 【版本历史】
- - v2.1   Beta   —— 2015年11月9日  独立出 **ListView 对象**，便于实现 局部刷新；强化 **PageLink 对象**，利于进一步重构 面向过程的代码
- - v2.0   Beta   —— 2015年10月7日  引擎内部实现重构 —— **WebApp 对象实现** 独立为 InnerPage、InnerHistory、DataStack、PageLink 四大内部对象
- - v1.8.5 Stable —— 2015年9月24日  SPA 内页也支持用 `<link />` 声明**多数据源**，且所有多数据源页面都支持**数据渲染区域遮罩层**
- - v1.7.5 Stable —— 2015年9月18日  新增 **pageLoad 同步事件**，会在用户触发内页跳转时产生；所有的接口调用点 都可用 **apiCall 同步事件**来 Hook
- - v1.7   Stable —— 2015年9月11日  数据在每个 WebApp 实例内外的流转链 更顺畅
- - v1.6.5 Stable —— 2015年9月7日   WebApp 对象“手动控制”实例方法 参数写法与 HTML 属性统一（也支持 缺省简写形式）
- - v1.6   Stable —— 2015年8月20日  **第一代数据堆栈** 独立为一个对象
+ - v2.1   Stable —— 2015年11月12日
+   - 把 用户操作事件的监听与分发 独立为一个“实例无关”的底层公共模块
+   - 将 页面加载、切换、渲染的核心逻辑 融入 **PageLink 对象**
+   - 独立出 **ListView 对象**，便于实现 局部刷新
+ - v2.0   Beta   —— 2015年10月7日   引擎内部实现重构 —— **WebApp 对象实现** 独立为 InnerPage、InnerHistory、DataStack、PageLink 四大内部对象
+ - v1.8.5 Stable —— 2015年9月24日   SPA 内页也支持用 `<link />` 声明**多数据源**，且所有多数据源页面都支持**数据渲染区域遮罩层**
+ - v1.7.5 Stable —— 2015年9月18日   新增 **pageLoad 同步事件**，会在用户触发内页跳转时产生；所有的接口调用点 都可用 **apiCall 同步事件**来 Hook
+ - v1.7   Stable —— 2015年9月11日   数据在每个 WebApp 实例内外的流转链 更顺畅
+ - v1.6.5 Stable —— 2015年9月7日    WebApp 对象“手动控制”实例方法 参数写法与 HTML 属性统一（也支持 缺省简写形式）
+ - v1.6   Stable —— 2015年8月20日   **第一代数据堆栈** 独立为一个对象
  - v1.5.5 Stable —— 2015年8月18日
    - 支持 **RESTful API** 的 Post、Delete、Put 方法
    - 支持 **模板文件 预加载**
    - 支持 数据模型 嵌套一层对象
- - v1.4.5 Stable —— 2015年8月11日  集成 **首屏渲染数据**的 API 调用
- - v1.3.5 Stable —— 2015年8月10日  支持 **API URL 访问代理**、API 返回 纯文本数据
- - v1.3   Stable —— 2015年8月3日   支持 **MarkDown 模板渲染**，并发布 首个演示程序
- - v1.2   Stable —— 2015年7月24日  首个**开源稳定版**，**第一代 API** 形态已稳定
- - v1.1   Beta   —— 2015年7月22日  首个开源版本，基本模式、架构已成形
+ - v1.4.5 Stable —— 2015年8月11日   集成 **首屏渲染数据**的 API 调用
+ - v1.3.5 Stable —— 2015年8月10日   支持 **API URL 访问代理**、API 返回 纯文本数据
+ - v1.3   Stable —— 2015年8月3日    支持 **MarkDown 模板渲染**，并发布 首个演示程序
+ - v1.2   Stable —— 2015年7月24日   首个**开源稳定版**，**第一代 API** 形态已稳定
+ - v1.1   Beta   —— 2015年7月22日   首个开源版本，基本模式、架构已成形
 
 ---
 
@@ -298,11 +301,11 @@ iWebApp
         title:     "局部刷新",
         href:      HTML_URL,
         method:    'POST',
-        src:       JSON_URL,
+        src:       API_URL,
     }, {
         arg_1:    'arg_1_name'
     })
-    .loadJSON(JSON_URL)            //  调用 API（参数详写形式 见上文）
+    .loadData(API_URL)            //  调用 API（参数详写形式 见上文）
     .loadPage(HTML_URL);           //  加载外页（参数详写形式 见上文）
 ```
 

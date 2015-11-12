@@ -2,7 +2,7 @@
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]     v2.1  (2015-11-9)  Beta
+//      [Version]     v2.1  (2015-11-12)  Beta
 //
 //      [Based on]    iQuery  |  jQuery with jQuery+,
 //
@@ -234,6 +234,7 @@
         this.$_DOM = $.isPlainObject(Link_DOM) ?
             this.createDOM(Link_DOM, iArgument, iData)  :
             $(Link_DOM);
+        this.$_DOM.data('EWA_PageLink', this);
 
         $.extend(this, this.$_DOM.attr([
             'target', 'title', 'alt', 'href', 'method', 'src'
@@ -315,7 +316,157 @@
             };
         }
     });
-    /* ----- Manual Navigation ----- */
+
+    function API_Call(iLink, Data_Ready) {
+        var This_App = this,  API_URL = iLink.getURL();
+
+        function AJAX_Ready() {
+            if (! Data_Ready)  return;
+
+            Data_Ready.call(
+                this,
+                This_App.domRoot.triggerHandler('apiCall', [
+                    This_App,
+                    This_App.history.last().HTML,
+                    This_App.proxy  ?
+                        BOM.decodeURIComponent( API_URL.slice(This_App.proxy.length) )  :
+                        API_URL,
+                    arguments[0]
+                ]) || arguments[0]
+            );
+        }
+        switch (iLink.method) {
+            case 'get':       ;
+            case 'delete':
+                $[iLink.method](API_URL, AJAX_Ready);    break;
+            case 'post':      ;
+            case 'put':
+                $[iLink.method](
+                    API_URL,  iLink.getArgs(),  AJAX_Ready
+                );
+        }
+    }
+    function Multiple_API(iRender) {
+        var $_Link = $('head link[src]');
+
+        if (! $_Link.length)  return iRender.call(this);
+
+        Load_Process();
+
+        var This_App = this,  iData = { },  Data_Ready = $_Link.length;
+
+        for (var i = 0;  i < $_Link.length;  i++)
+            API_Call.call(This_App,  new PageLink(This_App, $_Link[i]),  function () {
+                $.extend(iData, arguments[0]);
+
+                if (--Data_Ready > 0)  return;
+
+                iRender.call(This_App, iData);
+                $_Link.remove();
+            });
+    }
+
+    $.extend(PageLink.prototype, {
+        loadTemplate:    function () {
+            var This_App = this.app;
+
+            var iReturn = This_App.domRoot.triggerHandler('pageLoad', [
+                    This_App.history.last(),
+                    This_App.history.prev()
+                ]);
+            if (iReturn === false)  return;
+
+            This_App.loading = true;
+
+        /* ----- Load DOM  from  Cache ----- */
+            var This_Page = This_App.history.write(this);
+            var $_Cached = This_App.history.cache();
+
+            if ($_Cached) {
+                $_Cached.appendTo(This_App.domRoot).fadeIn();
+                return This_Page.onReady();
+            }
+
+        /* ----- Load DOM  from  Network ----- */
+            var iData,  Load_Stage = this.src ? 2 : 1;
+
+            function Page_Load() {
+                if (arguments[0])  iData = arguments[0];
+
+                if (--Load_Stage != 0)  return;
+
+                This_Page.render(this.$_DOM, iData).onReady();
+            }
+            // --- Load Data from API --- //
+            if (this.src)
+                API_Call.call(This_App, this, Page_Load);
+
+            // --- Load DOM from HTML|MarkDown --- //
+            var MarkDown_File = /\.(md|markdown)$/i;
+
+            $.get(this.href,  (! this.href.match(MarkDown_File)) ?
+                function (iHTML) {
+                    if (typeof iHTML != 'string')  return;
+
+                    var not_Fragment = iHTML.match(/<\s*(html|head|body)(\s|>)/i),
+                        no_Link = (! iHTML.match(/<\s*link(\s|>)/i)),
+                        iSelector = This_App.domRoot.selector;
+
+                    if ((! not_Fragment)  &&  no_Link) {
+                        $(iHTML).appendTo( This_App.domRoot ).fadeIn();
+                        return  Multiple_API.call(This_App, Page_Load);
+                    }
+                    $_Body.sandBox(
+                        iHTML,
+                        ((iSelector && no_Link) ? iSelector : 'body > *')  +  ', head link[src]',
+                        function ($_Content) {
+                            $_Content.filter('link').appendTo('head');
+                            This_App.domRoot.append( $_Content.not('link').fadeIn() );
+
+                            Multiple_API.call(This_App, Page_Load);
+                        }
+                    );
+                } :
+                function (iMarkDown) {
+                    if (typeof BOM.marked == 'function')
+                        $( BOM.marked(iMarkDown) )
+                            .appendTo( This_App.domRoot.empty() ).fadeIn()
+                            .find('a[href]').each(function () {
+                                this.setAttribute(
+                                    'target',  this.href.match(MarkDown_File) ? '_self' : '_top'
+                                );
+                            });
+                    else
+                        This_App.domRoot.text(iMarkDown);
+
+                    This_Page.onReady();
+                }
+            );
+        },
+        loadData:        function () {
+            var $_Form = $(this.$_DOM).parents('form').eq(0);
+            if ($_Form.length)
+                This_App.dataStack.flush($_Form);
+
+            API_Call.call(this.app, this);
+        },
+        loadPage:        function () {
+            var iReturn = this.app.domRoot.triggerHandler('appExit', [
+                    this.app.history.last().HTML,
+                    this.href,
+                    this.data
+                ]);
+            if (iReturn === false)  return;
+
+            this.app.history.move();
+            BOM.sessionStorage.EWA_Model = BOM.JSON.stringify(
+                $.isPlainObject(iReturn) ? iReturn : this.data
+            );
+            BOM.location.href = this.href  +  '?'  +  $.param( this.getArgs() );
+        }
+    });
+
+/* ---------- Manual Navigation ---------- */
 
     var $_Body = $(DOM.body);
 
@@ -325,7 +476,7 @@
                 src:    iAttribute
             } : {
                 href:    iAttribute
-            }
+            };
         else if ( $.isPlainObject(iAttribute.src) ) {
             var iJSON = iAttribute.src;
             delete iAttribute.src;
@@ -341,7 +492,7 @@
     var _Concat_ = Array.prototype.concat,
         Target_Method = {
             _top:      'loadPage',
-            _blank:    'loadJSON',
+            _blank:    'loadData',
             _self:     'loadTemplate'
         };
 
@@ -397,7 +548,7 @@
         }
     });
 
-    /* ----- Auto Navigation ----- */
+/* ---------- Auto Navigation ---------- */
 
     var $_Data_Box;
 
@@ -463,7 +614,7 @@
 
         var $_Link = (This_App.history.lastIndex ? This_App.domRoot : $_Body).find('*[target]');
 
-        for (var i = 0;  i < $_Link.length;  i++) {
+        for (var i = 0;  i < $_Link.length;  i++)
             this.link.push(
                 (new PageLink(This_App, $_Link[i])).prefetch()
             );
@@ -484,57 +635,9 @@
         This_Page.render(iLink.$_DOM, iLink.src).onReady();
     };
 
-    function API_Call(iLink, Data_Ready) {
-        var This_App = this,  API_URL = iLink.getURL();
+/* ---------- User Event Switcher ---------- */
 
-        function AJAX_Ready() {
-            if (! Data_Ready)  return;
-
-            Data_Ready.call(
-                this,
-                This_App.domRoot.triggerHandler('apiCall', [
-                    This_App,
-                    This_App.history.last().HTML,
-                    This_App.proxy  ?
-                        BOM.decodeURIComponent( API_URL.slice(This_App.proxy.length) )  :
-                        API_URL,
-                    arguments[0]
-                ]) || arguments[0]
-            );
-        }
-        switch (iLink.method) {
-            case 'get':       ;
-            case 'delete':
-                $[iLink.method](API_URL, AJAX_Ready);    break;
-            case 'post':      ;
-            case 'put':
-                $[iLink.method](
-                    API_URL,  iLink.getArgs(),  AJAX_Ready
-                );
-        }
-    }
-    function Multiple_API(iRender) {
-        var $_Link = $('head link[src]');
-
-        if (! $_Link.length)  return iRender.call(this);
-
-        Load_Process();
-
-        var This_App = this,  iData = { },  Data_Ready = $_Link.length;
-
-        for (var i = 0;  i < $_Link.length;  i++)
-            API_Call.call(This_App,  new PageLink(This_App, $_Link[i]),  function () {
-                $.extend(iData, arguments[0]);
-
-                if (--Data_Ready > 0)  return;
-
-                iRender.call(This_App, iData);
-                $_Link.remove();
-            });
-    }
-    var Response_Event = ($.browser.mobile ? 'tap' : 'click') + ' change';
-
-    function Event_Filter(This_App) {
+    function Event_Filter() {
         var iTagName = this.tagName.toLowerCase(),
             iEvent = arguments.callee.caller.arguments[0];
 
@@ -547,122 +650,41 @@
             }
             case 'change':    return  (this !== iEvent.target);
         }
-        return This_App.loading;
     }
 
-    function User_Listener() {
-        var This_App = this;
+    $_Body.on(
+        ($.browser.mobile ? 'tap' : 'click') + ' change',
+        '*[target]',
+        function () {
+            if ( Event_Filter.call(this) )  return;
 
-        $_Body.on(Response_Event,  '[target="_self"][href]',  function () {
+            var iLink = $(this).data('EWA_PageLink');
 
-            if ( Event_Filter.call(this, This_App) )  return;
-
-            var iLink = new PageLink(This_App, this);
-
-            var iReturn = This_App.domRoot.triggerHandler('pageLoad', [
-                    This_App.history.last(),
-                    This_App.history.prev()
-                ]);
-            if (iReturn === false)  return;
-
-            This_App.loading = true;
-
-        /* ----- Load DOM  from  Cache ----- */
-            var This_Page = This_App.history.write(iLink);
-            var $_Cached = This_App.history.cache();
-
-            if ($_Cached) {
-                $_Cached.appendTo(This_App.domRoot).fadeIn();
-                return This_Page.onReady();
-            }
-
-        /* ----- Load DOM  from  Network ----- */
-            var iData,  Load_Stage = iLink.src ? 2 : 1;
-
-            function Page_Load() {
-                if (arguments[0])  iData = arguments[0];
-
-                if (--Load_Stage != 0)  return;
-
-                This_Page.render(iLink.$_DOM, iData).onReady();
-            }
-            // --- Load Data from API --- //
-            if (iLink.src)
-                API_Call.call(This_App, iLink, Page_Load);
-
-            // --- Load DOM from HTML|MarkDown --- //
-            var MarkDown_File = /\.(md|markdown)$/i,
-                iSelector = This_App.domRoot.selector;
-
-            $.get(iLink.href,  (! iLink.href.match(MarkDown_File)) ?
-                function (iHTML) {
-                    if (typeof iHTML != 'string')  return;
-
-                    var not_Fragment = iHTML.match(/<\s*(html|head|body)(\s|>)/i),
-                        no_Link = (! iHTML.match(/<\s*link(\s|>)/i));
-
-                    if ((! not_Fragment)  &&  no_Link) {
-                        $(iHTML).appendTo( This_App.domRoot ).fadeIn();
-                        return  Multiple_API.call(This_App, Page_Load);
-                    }
-                    $_Body.sandBox(
-                        iHTML,
-                        ((iSelector && no_Link) ? iSelector : 'body > *')  +  ', head link[src]',
-                        function ($_Content) {
-                            $_Content.filter('link').appendTo('head');
-                            This_App.domRoot.append( $_Content.not('link').fadeIn() );
-
-                            Multiple_API.call(This_App, Page_Load);
-                        }
-                    );
-                } :
-                function (iMarkDown) {
-                    if (BOM.marked)
-                        $( BOM.marked(iMarkDown) )
-                            .appendTo( This_App.domRoot.empty() ).fadeIn()
-                            .find('a[href]').each(function () {
-                                this.setAttribute(
-                                    'target',  this.href.match(MarkDown_File) ? '_self' : '_top'
-                                );
-                            });
-                    else
-                        This_App.domRoot.text(iMarkDown);
-
-                    This_Page.onReady();
+            switch (iLink.target) {
+                case '_self':     {
+                    if (iLink.href)  iLink.loadTemplate();
+                    break;
                 }
-            );
-        }).on(Response_Event,  '[target="_blank"][src]',  function () {
+                case '_blank':    {
+                    if (iLink.src)  iLink.loadData();
+                    break;
+                }
+                case '_top':      {
+                    if (iLink.href)  iLink.loadPage();
+                    break;
+                }
+            }
+        }
+    );
+    WebApp.prototype.boot = function () {
+        if (this.history.length)  throw 'This WebApp has been booted !';
 
-            if ( Event_Filter.call(this, This_App) )  return;
+        this.loading = true;
 
-            var $_Form = $(this).parents('form').eq(0);
-            if ($_Form.length)
-                This_App.dataStack.flush($_Form);
+        var This_App = this,
+            This_Page = this.history.write();
 
-            API_Call.call(This_App,  new PageLink(This_App, this));
-
-        }).on(Response_Event,  '[target="_top"][href]',  function () {
-
-            if ( Event_Filter.call(this, This_App) )  return;
-
-            var iLink = new PageLink(This_App, this);
-
-            var iReturn = This_App.domRoot.triggerHandler('appExit', [
-                    This_App.history.last().HTML,
-                    iLink.href,
-                    iLink.data
-                ]);
-            if (iReturn === false)  return;
-
-            This_App.history.move();
-            BOM.sessionStorage.EWA_Model = BOM.JSON.stringify(
-                $.isPlainObject(iReturn) ? iReturn : iLink.data
-            );
-            BOM.location.href = iLink.href  +  '?'  +  $.param( iLink.getArgs() );
-        });
-
-        $_Body.on('submit',  'form:visible',  function () {
-
+        this.domRoot.on('submit',  'form:visible',  function () {
             if (This_App.loading)  return false;
 
             var $_Form = This_App.dataStack.flush( $(this) );
@@ -693,15 +715,7 @@
 
             return false;
         });
-    }
 
-    WebApp.prototype.boot = function () {
-        if (this.history.length)  throw 'This WebApp has been booted !';
-
-        this.loading = true;
-        var This_Page = this.history.write();
-
-        User_Listener.call(this);
         Multiple_API.call(this,  function () {
             This_Page.render(null, arguments[0]);
 
