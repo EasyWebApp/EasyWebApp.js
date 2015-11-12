@@ -3,7 +3,7 @@
 //                >>>  EasyLibs.php  <<<
 //
 //
-//      [Version]     v1.8  (2015-10-30)  Beta
+//      [Version]     v1.9  (2015-11-6)  Beta
 //
 //      [Based on]    PHP v5.3+
 //
@@ -31,7 +31,7 @@ class FS_File extends SplFileObject {
         $this->URI = $this->getRealPath();
     }
     public function readAll() {
-        return  $this->fread( $this->getSize() );
+        return  file_get_contents( $this->URI );
     }
     public function write($_Data) {
         return $this->fwrite($_Data);
@@ -147,7 +147,7 @@ class FS_Directory extends SplFileInfo {
 }
 // ------------------------------
 //
-//    SQLite OOP Wrapper  v0.5
+//    SQLite OOP Wrapper  v0.6
 //
 // ------------------------------
 
@@ -160,6 +160,16 @@ class SQL_Table {
         $this->name = $_Name;
     }
 
+    public function rename($_Name) {
+        return  $this->ownerBase->exec(
+            "alter table {$this->name} rename to {$_Name}"
+        );
+    }
+    public function addColumn($_Name, $_Define) {
+        return  $this->ownerBase->exec(
+            "alter table {$this->name} add column {$_Name} {$_Define}"
+        );
+    }
     public function insert($_Record) {
         $_Field_Name = array();  $_Field_Value = array();
 
@@ -439,11 +449,13 @@ class HTTPServer {
     private static $IPA_Header = array('Client-Ip', 'X-Forwarded-For', 'Remote-Addr');
 
     private static function getRequestIPA($_Header) {
-        foreach (self::$IPA_Header as $_Key)
-            if (! empty( $_Header[$_Key] ))
-                return $_Header[$_Key];
-    }
+        foreach (self::$IPA_Header as $_Key) {
+            if (empty( $_Header[$_Key] ))  continue;
 
+            $_IPA = explode(',', $_Header[$_Key]);
+            return  trim( $_IPA[0] );
+        }
+    }
     private static function getRequestArgs($_Method) {
         if ($_Method == 'GET')  return $_GET;
         if ($_Method == 'POST')  return $_POST;

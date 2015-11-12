@@ -185,11 +185,75 @@ class XDomainProxy {
         $this->server->send($_Response);
     }
 }
-// ----------------------------------------
+
+// ------------------------------
+//
+//    IP Address Data Base
+//
+// ------------------------------
+
+class IPA_DB {
+    private static function initCacheTable($_SQL_DB) {
+        $_SQL_DB->createTable('IPA', array(
+            'AID'  =>  'Integer Primary Key',
+            'IPA'  =>  'Text not Null',
+            'Geo'  =>  'Text'
+        ));
+        return $_SQL_DB;
+    }
+
+    private $httpClient;
+    private $dataBase;
+
+    public function __construct() {
+        $this->httpClient = new HTTPClient();
+        $this->dataBase = self::initCacheTable(new SQLite('cache/http_cache'));
+    }
+    public function clear() {
+        $this->dataBase->dropTable('IPA');
+        self::initCacheTable( $this->dataBase );
+    }
+
+    public function getGeoInfo($_IPA) {
+        $_Cache = $this->dataBase->query(array(
+            'select'  =>  'Geo',
+            'from'    =>  'IPA',
+            'where'   =>  "IPA = '{$_IPA}'"
+        ));
+        if ( count($_Cache) )  return $_Cache[0]['Geo'];
+
+        $_Geo = $this->httpClient->get("http://ip.taobao.com/service/getIpInfo.php?ip={$_IPA}");
+
+        if ($_Geo === false)
+            return json_encode(array(
+                'code'     =>  504,
+                'message'  =>  '网络拥塞，请尝试刷新本页~'
+            ));
+
+        $_Data = $_Geo->dataJSON;
+
+        if (is_array( $_Data['data'] ))
+            $_Data['code'] = 200;
+        else
+            $_Data = array(
+                'code'     =>  416,
+                'message'  =>  "您当前的 IP 地址（{$_IPA}）不能确定 您的当前城市……"
+            );
+        $_Geo->dataJSON = $_Data;
+
+        $this->dataBase->IPA->insert(array(
+            'IPA'  =>  $_IPA,
+            'Geo'  =>  $_Geo->data
+        ));
+        return $_Geo;
+    }
+}
+
+// --------------------
 //
 //    App Main Logic
 //
-// ----------------------------------------
+// --------------------
 
 $_XDomain_Proxy = new XDomainProxy();
 
@@ -200,31 +264,15 @@ if (isset( $_GET['cache_clear'] )) {
 }
 
 if (empty( $_GET['url'] )) {
-    $_URL = 'http://ip.taobao.com/service/getIpInfo.php?ip='.$_XDomain_Proxy->server->requestIPAddress;
-    $_Time_Out = 86400;
-} else {
-    $_URL = $_GET['url'];
-    $_Time_Out = isset( $_GET['second_out'] )  ?  $_GET['second_out']  :  0;
+    $_IPA_DB = new IPA_DB();
+    $_XDomain_Proxy->server->send(
+        $_IPA_DB->getGeoInfo( $_XDomain_Proxy->server->requestIPAddress )
+    );
+    exit;
 }
 
-$_XDomain_Proxy->open($_URL,  is_numeric($_Time_Out) ? $_Time_Out : 0);
+$_Time_Out = isset( $_GET['second_out'] )  ?  $_GET['second_out']  :  0;
 
-$_XDomain_Proxy->onLoad('Get',  'http://ip.taobao.com',  function ($_Data) use ($_XDomain_Proxy) {
-    if (is_array( $_Data['data'] ))
-        $_Data['code'] = 200;
-    else
-        $_Data = array(
-            'code'     =>  416,
-            'message'  =>  "您当前的 IP 地址（{$_XDomain_Proxy->server->requestIPAddress}）不能确定 您的当前城市……"
-        );
-    return array(
-        'data'  =>  $_Data
-    );
-})->onError(function () {
-    return array(
-        'data'  =>  array(
-            'code'     =>  504,
-            'message'  =>  '网络拥塞，请尝试刷新本页~'
-        )
-    );
-})->send();
+$_XDomain_Proxy
+    ->open($_GET['url'],  is_numeric($_Time_Out) ? $_Time_Out : 0)
+    ->send();
