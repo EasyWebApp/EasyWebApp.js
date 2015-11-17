@@ -375,74 +375,29 @@
             });
     }
 
-    function Load_Template(iLink, Page_Load) {
-        var MarkDown_File = /\.(md|markdown)$/i,
-            This_App = this;
-
-        $.get(iLink.href,  (! iLink.href.match(MarkDown_File)) ?
-            function (iHTML) {
-                if (typeof iHTML != 'string')  return;
-
-                var not_Fragment = iHTML.match(/<\s*(html|head|body)(\s|>)/i),
-                    no_Link = (! iHTML.match(/<\s*link(\s|>)/i)),
-                    iSelector = This_App.domRoot.selector;
-
-                if ((! not_Fragment)  &&  no_Link) {
-                    $(iHTML).appendTo( This_App.domRoot ).fadeIn();
-                    return  Multiple_API.call(This_App, Page_Load);
-                }
-                $_Body.sandBox(
-                    iHTML,
-                    ((iSelector && no_Link) ? iSelector : 'body > *')  +  ', head link[src]',
-                    function ($_Content) {
-                        $_Content.filter('link').appendTo('head');
-                        This_App.domRoot.append( $_Content.not('link').fadeIn() );
-
-                        Multiple_API.call(This_App, Page_Load);
-                    }
-                );
-            } :
-            function (iMarkDown) {
-                if (typeof BOM.marked == 'function')
-                    $( BOM.marked(iMarkDown) )
-                        .appendTo( This_App.domRoot.empty() ).fadeIn()
-                        .find('a[href]').each(function () {
-                            this.setAttribute(
-                                'target',  this.href.match(MarkDown_File) ? '_self' : '_top'
-                            );
-                        });
-                else
-                    This_App.domRoot.text(iMarkDown);
-
-                This_Page.onReady();
-            }
-        );
-    }
     $.extend(PageLink.prototype, {
         loadTemplate:    function () {
-            var iReturn = this.app.domRoot.triggerHandler('pageLoad', [
-                    this.app.history.last(),
-                    this.app.history.prev()
+            var This_App = this.app;
+
+            var iReturn = This_App.domRoot.triggerHandler('pageLoad', [
+                    This_App.history.last(),
+                    This_App.history.prev()
                 ]);
             if (iReturn === false)  return;
 
-            this.app.loading = true;
-
-            var This_Page = this.app.history.write(this);
+            This_App.loading = true;
 
         /* ----- Load DOM  from  Cache ----- */
-            var $_Cached = this.app.history.cache(),
-                Whole_Page = (this.target == '_self');
-            var $_Target = Whole_Page  ?  this.app.domRoot  :  $('[name="' + this.target + '"]')[0];
+            var This_Page = This_App.history.write(this);
+            var $_Cached = This_App.history.cache();
 
             if ($_Cached) {
-                $_Cached.appendTo($_Target).fadeIn();
+                $_Cached.appendTo(This_App.domRoot).fadeIn();
                 return This_Page.onReady();
             }
 
         /* ----- Load DOM  from  Network ----- */
-            var iData,
-                Load_Stage = (this.src && Whole_Page)  ?  2  :  1;
+            var iData,  Load_Stage = this.src ? 2 : 1;
 
             function Page_Load() {
                 if (arguments[0])  iData = arguments[0];
@@ -451,10 +406,51 @@
 
                 This_Page.render(this.$_DOM, iData).onReady();
             }
+            // --- Load Data from API --- //
+            if (this.src)
+                API_Call.call(This_App, this, Page_Load);
 
-            if (this.src)  API_Call.call(this.app, this, Page_Load);
+            // --- Load DOM from HTML|MarkDown --- //
+            var MarkDown_File = /\.(md|markdown)$/i;
 
-            if (Whole_Page)  Load_Template.call(this.app, this, Page_Load);
+            $.get(this.href,  (! this.href.match(MarkDown_File)) ?
+                function (iHTML) {
+                    if (typeof iHTML != 'string')  return;
+
+                    var not_Fragment = iHTML.match(/<\s*(html|head|body)(\s|>)/i),
+                        no_Link = (! iHTML.match(/<\s*link(\s|>)/i)),
+                        iSelector = This_App.domRoot.selector;
+
+                    if ((! not_Fragment)  &&  no_Link) {
+                        $(iHTML).appendTo( This_App.domRoot ).fadeIn();
+                        return  Multiple_API.call(This_App, Page_Load);
+                    }
+                    $_Body.sandBox(
+                        iHTML,
+                        ((iSelector && no_Link) ? iSelector : 'body > *')  +  ', head link[src]',
+                        function ($_Content) {
+                            $_Content.filter('link').appendTo('head');
+                            This_App.domRoot.append( $_Content.not('link').fadeIn() );
+
+                            Multiple_API.call(This_App, Page_Load);
+                        }
+                    );
+                } :
+                function (iMarkDown) {
+                    if (typeof BOM.marked == 'function')
+                        $( BOM.marked(iMarkDown) )
+                            .appendTo( This_App.domRoot.empty() ).fadeIn()
+                            .find('a[href]').each(function () {
+                                this.setAttribute(
+                                    'target',  this.href.match(MarkDown_File) ? '_self' : '_top'
+                                );
+                            });
+                    else
+                        This_App.domRoot.text(iMarkDown);
+
+                    This_Page.onReady();
+                }
+            );
         },
         loadData:        function () {
             var $_Form = $(this.$_DOM).parents('form').eq(0);
@@ -686,7 +682,6 @@
                     if (iLink.href)  iLink.loadPage();
                     break;
                 }
-                default:          iLink.loadTemplate();
             }
         }
     );
