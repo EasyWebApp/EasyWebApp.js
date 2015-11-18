@@ -1,0 +1,65 @@
+<!DocType HTML>
+<html lang="zh-CN"><head>
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" /> 
+    <meta http-equiv="Pragma" content="no-cache" /> 
+    <meta http-equiv="Expires" content="0" />
+    <meta charset="UTF-8" />
+
+    <link rel="shortcut icon" type="image/x-icon" href="image/favicon.ico" />
+    <link rel="bookmark" type="image/x-icon" href="image/favicon.ico" />
+    <title>管理系统</title>
+
+    <link rel="stylesheet" href="css/EasyWebUI.css" />
+    <link rel="stylesheet" href="css/index.css" />
+
+    <link rel="console" href="console" />
+    <script src="javascript/EasyImport.js"></script><script>
+        ImportJS([
+            {
+                '../css/EasyWebUI.js':    true,
+                'EasyWebApp.js':          true
+            }/*,
+            'index.js'*/
+        ],  function () {
+            $('#Main_View').on('pageRender',  function (iEvent, This_Page, Prev_Page, iData) {
+                switch ( $.fileName(This_Page.HTML).split('.')[0] ) {
+                    case 'image':    return {
+                        content_type:    iData
+                    };
+                }
+            }).WebApp({ }, 'http://www.tngou.net');
+        });
+    </script>
+</head><body class="No_Select Grid-Row">
+    <ul id="Main_Nav" class="Grid-Column Column_1-6">
+        <li class="Head">管理系统</li>
+        <li>新闻审核</li>
+        <li target="_self" href="html/image.html" src="/tnfs/api/classify" data-callback="?">
+            热图审核
+        </li>
+        <li>健康知识</li>
+    </ul>
+    <div class="Grid-Column">
+        <div id="User_Bar" class="Grid-Row CenterY">
+            <form class="Grid-Column CenterX">
+                <input type="text" placeholder="全文搜索" />
+            </form>
+            <div class="Grid-Column">
+                <div class="DropDown Head">
+                    <span name="user">test_32</span>
+                    <ul class="DropDown Body">
+                        <li>账号设置</li>
+                        <li class="Red">退出系统</li>
+                        <li class="Separator"></li>
+                        <li>帮助</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div id="Main_View">
+            <h1 class="CenterX">
+                欢迎使用由 EasyWebApp v2 驱动的管理系统！
+            </h1>
+        </div>
+    </div>
+</body></html>

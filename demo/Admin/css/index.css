@@ -1,0 +1,43 @@
+/* ---------- 通用样式 ---------- */
+
+
+
+#Main_Nav {
+    list-style:    none;
+    padding:       0;
+    background:    rgb(40, 40, 40);
+    color:         lightgray;
+}
+#Main_Nav li {
+    padding:        1em;
+    border-left:    0.3em  solid  transparent;
+}
+#Main_Nav li:hover {
+    border-color:    rgb(100, 150, 240);
+    background:      rgba(100, 150, 240, 0.5);
+    color:           white;
+}
+#Main_Nav li.Head {
+    font-weight:    bold;
+    text-align:     center;
+}
+#Main_Nav li.Head:hover {
+    border-color:    transparent;
+    background:      transparent;
+}
+
+
+#User_Bar {
+    box-shadow:    0.3em  0.2em  1em  gray;
+}
+#User_Bar > .Grid-Column {
+    padding:    0.5em;
+}
+#User_Bar .DropDown.Body > li {
+    padding:    0.5em  1em;
+}
+
+
+#Main_View {
+    padding:    1em  1em  0;
+}

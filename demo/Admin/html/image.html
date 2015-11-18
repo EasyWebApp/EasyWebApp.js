@@ -1,0 +1,42 @@
+<!--<link target="_blank" src="/tnfs/api/classify" data-callback="?" />-->
+<style>
+    [multiple] label {
+        margin:     0.25em  0.5em;
+        padding:    0.5em;
+    }
+    [multiple] label:hover {
+        opacity:    0.7;
+    }
+</style>
+<form target="content" method="GET" action="/tnfs/api/list?callback=?">
+    <div class="Grid-Row">
+        <div class="Grid-Column Column_1-6">
+            内容分类：
+        </div>
+        <div class="Grid-Column" multiple name="content_type">
+            <label class="Item-Box Blue_O" name="title">
+                <input type="radio" name="id" />
+            </label>
+        </div>
+    </div>
+    <input type="submit" />
+</form>
+
+<table>
+    <thead><tr>
+        <th>缩略图</th><th>标题</th><th>访问数</th><th>评论数</th><th>收藏数</th><th>发布时间</th>
+    </tr></thead>
+    <tbody name="content">
+        <tr target="_self" href="html/image_detail.html"
+            src="/tnfs/api/show" data-id="id" data-callback="?">
+            <td>
+                <img name="img" />
+            </td>
+            <td name="title"></td>
+            <td name="count"></td>
+            <td name="rcount"></td>
+            <td name="fcount"></td>
+            <td name="time"></td>
+        </tr>
+    </tbody>
+</table>
