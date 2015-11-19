@@ -18,23 +18,15 @@
             {
                 '../css/EasyWebUI.js':    true,
                 'EasyWebApp.js':          true
-            }/*,
-            'index.js'*/
-        ],  function () {
-            $('#Main_View').on('pageRender',  function (iEvent, This_Page, Prev_Page, iData) {
-                switch ( $.fileName(This_Page.HTML).split('.')[0] ) {
-                    case 'image':    return {
-                        content_type:    iData
-                    };
-                }
-            }).WebApp({ }, 'http://www.tngou.net');
-        });
+            },
+            'index.js'
+        ]);
     </script>
 </head><body class="No_Select Grid-Row">
     <ul id="Main_Nav" class="Grid-Column Column_1-6">
         <li class="Head">管理系统</li>
         <li>新闻审核</li>
-        <li target="_self" href="html/image.html" src="/tnfs/api/classify" data-callback="?">
+        <li target="_self" href="html/image.html" src="/tnfs/api/classify?callback=?">
             热图审核
         </li>
         <li>健康知识</li>
