@@ -4,14 +4,18 @@
 
     function Image_Proxy(iValue) {
         return  Proxy_API + BOM.encodeURIComponent(
-            'http://tnfs.tngou.net/img'  +  (iValue.img || iValue.src)
+            'http://tnfs.tngou.net/img' + iValue
         );
     }
 
     $('#Main_View').on('pageRender',  function (iEvent, This_Page, Prev_Page, iData) {
-        switch ( $.fileName(This_Page.HTML).split('.')[0] ) {
-            case 'image':      {
-                if ($.fileName(Prev_Page.HTML) == 'index.html')
+        var _TP_ = $.fileName(This_Page.HTML),
+            _PP_ = $.fileName(Prev_Page.HTML);
+
+        switch ( _TP_.split('.')[0] ) {
+            case 'news':         ;
+            case 'image':        {
+                if ((! _PP_)  ||  (_PP_ != _TP_))
                     return {
                         content_type:    iData
                     };
@@ -24,12 +28,16 @@
                     return iValue;
                 });
             }
-            case 'gallery':
+            case 'news_text':    ;
+            case 'gallery':      {
+                var Image_Key = iData.list[0].src ? 'src' : 'img';
+
                 return  $.map(iData.list,  function (iValue) {
-                    iValue.src = Image_Proxy(iValue.src);
+                    iValue[Image_Key] = Image_Proxy( iValue[Image_Key] );
 
                     return iValue;
                 });
+            }
         }
     }).WebApp({ }, 'http://www.tngou.net');
 

@@ -2,7 +2,7 @@
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]     v2.1  (2015-11-15)  Beta
+//      [Version]     v2.2  (2015-11-20)  Alpha
 //
 //      [Based on]    iQuery  |  jQuery with jQuery+,
 //
@@ -368,6 +368,23 @@
         }
     });
 
+    function Load_Process($_Loaded_Area) {
+        if (! $_Loaded_Area)
+            $_Data_Box = $_Body.find('*[name]');
+        else if ($_Data_Box && $_Data_Box.length)
+            $_Data_Box = $_Data_Box.not( $_Loaded_Area.find('*[name]') );
+        else  return;
+
+        if (! $.shadowCover)  return;
+
+        $.shadowCover.clear();
+        $_Data_Box.sameParents().eq(0).shadowCover('<h1>Data Loading...</h1>', {
+            ' h1':    {
+                color:    'white'
+            }
+        });
+    }
+
     function Multiple_API(iRender) {
         var $_Link = $('head link[src]');
 
@@ -574,20 +591,6 @@
 
     var $_Data_Box;
 
-    function Load_Process($_Loaded_Area) {
-        if (! $_Loaded_Area)
-            $_Data_Box = $_Body.find('*[name]');
-        else if ($_Data_Box && $_Data_Box.length)
-            $_Data_Box = $_Data_Box.not( $_Loaded_Area.find('*[name]') );
-        else  return;
-
-        $.shadowCover.clear();
-        $_Data_Box.sameParents().eq(0).shadowCover('<h1>Data Loading...</h1>', {
-            ' h1':    {
-                color:    'white'
-            }
-        });
-    }
     InnerPage.prototype.render = function ($_Source, iData) {
         var This_App = this.ownerApp;
 
@@ -676,9 +679,11 @@
         switch (iEvent.type) {
             case 'click':     ;
             case 'tap':       {
-                if (iTagName == 'a')  iEvent.preventDefault();
-
-                return  iTagName.match(/form|input|textarea|select/);
+                if (iTagName == 'a') {
+                    iEvent.preventDefault();
+                    iEvent.stopPropagation();
+                }
+                return  ('a|form|input|textarea|select'.indexOf(iTagName) > -1);
             }
             case 'change':    return  (this !== iEvent.target);
         }
@@ -721,7 +726,7 @@
                 }, null, arguments[0])
             );
 
-        this.domRoot.on('submit',  'form:visible',  function () {
+        $_Body.on('submit',  'form:visible',  function () {
             if (This_App.loading)  return false;
 
             var $_Form = This_App.dataStack.flush( $(this) );

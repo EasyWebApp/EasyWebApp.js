@@ -1669,7 +1669,7 @@
 
 
 /* ----- DOM UI Data Operator ----- */
-    var RE_URL = /^(\w+:)?\/\/[\u0033-\u007e\uff61-\uffef]+$/;
+    var RE_URL = /^(\w+:)?\/\/[^\s]+$/;
 
     function Value_Operator(iValue, iResource) {
         var $_This = $(this),
@@ -2043,7 +2043,7 @@
         $.extend(this, DOM.createEventObject());
 
         if (! iEvent)  return;
-        
+
         $.extend(this, {
             type:               iEvent.type,
             target:             iEvent.srcElement,
