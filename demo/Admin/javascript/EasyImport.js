@@ -2,7 +2,7 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v1.0  (2015-11-12)  Stable
+//      [Version]    v1.0  (2015-11-20)  Stable
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.
@@ -2949,12 +2949,17 @@
             var iMethod = ($_Form.attr('method') || 'Get').toLowerCase();
 
             if ( this.checkValidity() )  switch (iMethod) {
-                case 'get':       ;
-                case 'delete':
-                    $[iMethod](this.action + $.param($_Form.serializeArray()),  AJAX_Ready);    break;
                 case 'post':      ;
                 case 'put':
-                    $[iMethod](this.action, this, AJAX_Ready);
+                    $[iMethod](this.action, this, AJAX_Ready);    break;
+                case 'get':       ;
+                case 'delete':
+                    $[iMethod](
+                        this.action  +
+                            (this.action.match(/\w+=[^&]+/) ? '&' : '')  +
+                            $.param( $_Form.serializeArray() ),
+                        AJAX_Ready
+                    );
             } else
                 $_Button.prop('disabled', false);
         });

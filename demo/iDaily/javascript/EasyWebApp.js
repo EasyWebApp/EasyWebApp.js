@@ -2,7 +2,7 @@
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]     v2.2  (2015-11-20)  Alpha
+//      [Version]     v2.2  (2015-11-24)  Stable
 //
 //      [Based on]    iQuery  |  jQuery with jQuery+,
 //
@@ -79,15 +79,15 @@
             if ($.isPlainObject( arguments[0] ))
                 var iState = arguments[0];
             else
-                var iLink = arguments[0];
+                var $_Target = arguments[0];
 
-            var $_Page = iLink.getTarget().children().detach();
+            var $_Page = ($_Target || this.root).children().detach();
 
             if ((! iState)  ||  ((iState.DOM_Index + 2) == this.length))
                 this[this.length - 1].$_Page = $_Page;
         },
         write:     function (iLink) {
-            if (this.length)  this.move(iLink);
+            if (this.length)  this.move( arguments[1] );
 
             this.prevIndex = this.lastIndex++ ;
             this.splice(this.lastIndex,  this.length);
@@ -248,14 +248,15 @@
         this.$_DOM.data('EWA_PageLink', this);
 
         $.extend(this, this.$_DOM.attr([
-            'target', 'title', 'alt', 'href', 'method', 'src'
+            'target', 'title', 'alt', 'href', 'method', 'src', 'action'
         ]));
         this.href = this.href || this.app.history.last().HTML;
         this.method = (this.method || 'Get').toLowerCase();
         this.data = this.$_DOM.data('EWA_Model') || { };
     }
 
-    var Prefetch_Tag = $.browser.modern ? 'prefetch' : 'next';
+    var Prefetch_Tag = $.browser.modern ? 'prefetch' : 'next',
+        $_Body = $(DOM.body);
 
     PageLink.prefetchClear = function () {
         $('head link[rel="' + Prefetch_Tag + '"]').remove();
@@ -269,9 +270,9 @@
                     delete iArgument[iName];
                 }
             var $_Link = $('<button />', $.extend({
-                style:    'display: none',
-                rel:      'nofollow'
-            }, iAttribute, iArgument));
+                    style:    'display: none',
+                    rel:      'nofollow'
+                }, iAttribute, iArgument)).appendTo($_Body);
 
             if ((iData instanceof Array)  ||  $.isPlainObject(iData))
                 $_Link.data('EWA_Model', iData);
@@ -367,7 +368,6 @@
             }
         }
     });
-
     function Load_Process($_Loaded_Area) {
         if (! $_Loaded_Area)
             $_Data_Box = $_Body.find('*[name]');
@@ -458,12 +458,12 @@
 
             this.app.loading = true;
 
-            var This_Page = this.app.history.write(this);
+            var $_Target = this.getTarget();
+            var This_Page = this.app.history.write(this, $_Target);
 
         /* ----- Load DOM  from  Cache ----- */
             var $_Cached = this.app.history.cache(),
-                Whole_Page = (this.target == '_self'),
-                $_Target = this.getTarget();
+                Whole_Page = (this.target == '_self');
 
             if ($_Cached) {
                 $_Cached.appendTo($_Target).fadeIn();
@@ -472,7 +472,7 @@
 
         /* ----- Load DOM  from  Network ----- */
             var iData,
-                Load_Stage = (this.src && Whole_Page)  ?  2  :  1;
+                Load_Stage = Whole_Page  ?  2  :  1;
 
             function Page_Load() {
                 if (arguments[0])  iData = arguments[0];
@@ -504,39 +504,26 @@
 
 /* ---------- Manual Navigation ---------- */
 
-    var $_Body = $(DOM.body);
-
-    function Proxy_Trigger(iType, iAttribute, iArgument) {
-        if (typeof iAttribute == 'string')
-            iAttribute = (iType == '_blank') ? {
-                src:    iAttribute
-            } : {
-                href:    iAttribute
+    WebApp.prototype.loadLink = function (iAttribute, iArgument, iData) {
+        if (typeof iAttribute == 'string') {
+            iAttribute = {
+                target:    'self',
+                href:      iAttribute,
+                src:       iArgument,
             };
-        else if ( $.isPlainObject(iAttribute.src) ) {
-            var iJSON = iAttribute.src;
-            delete iAttribute.src;
+            iArgument = iData;
+            iData = arguments[3];
         }
 
         this.loading = false;
-        (new PageLink(this, iAttribute.valueOf(), iArgument, iJSON))
-            .$_DOM.appendTo($_Body).click();
+        (
+            (iAttribute instanceof PageLink)  ?  iAttribute  :  (
+                new PageLink(this, iAttribute, iArgument, iData)
+            )
+        ).$_DOM.click();
 
         return this;
-    }
-
-    var _Concat_ = Array.prototype.concat,
-        Target_Method = {
-            _top:      'loadPage',
-            _blank:    'loadData',
-            _self:     'loadTemplate'
-        };
-
-    $.each(Target_Method,  function (iTarget) {
-        WebApp.prototype[ arguments[1] ] = function () {
-            return  Proxy_Trigger.apply(this,  _Concat_.apply([iTarget], arguments));
-        };
-    });
+    };
 
 /* ---------- [object ListView] ---------- */
 
@@ -546,6 +533,8 @@
         this.data = iData || [ ];
     }
     ListView.listSelector = 'ul, ol, dl, tbody, *[multiple]';
+
+    var _Concat_ = Array.prototype.concat;
 
     $.extend(ListView.prototype, {
         renderLine:    function (iValue) {
@@ -664,12 +653,6 @@
         return this;
     };
 
-    WebApp.prototype.loadModule = function (iLink) {
-        var This_Page = this.history.write(iLink);
-
-        This_Page.render(iLink.$_DOM, iLink.src).onReady();
-    };
-
 /* ---------- User Event Switcher ---------- */
 
     function Event_Filter() {
@@ -719,40 +702,32 @@
 
         this.loading = true;
 
-        var This_App = this,
-            This_Page = this.history.write(
-                new PageLink(this, {
-                    target:    ''
-                }, null, arguments[0])
-            );
+        var This_Link = new PageLink(this,  {target: ''},  null,  arguments[0]);
+
+        var This_Page = this.history.write(This_Link, This_Link.getTarget()),
+            This_App = this;
 
         $_Body.on('submit',  'form:visible',  function () {
             if (This_App.loading)  return false;
 
-            var $_Form = This_App.dataStack.flush( $(this) );
-
-            $_Form.attr('action',  function () {
+            This_App.dataStack.flush( $(this) ).attr('action',  function () {
 
                 return  This_App.makeURL(arguments[1]);
 
             }).ajaxSubmit(function (iData) {
 
-                var iLink = new PageLink(This_App, $_Form);
-
                 var iReturn = This_App.domRoot.triggerHandler('formSubmit', [
                         This_App.history.last().HTML,
                         this.action,
                         iData,
-                        iLink.href
+                        this.href
                     ]);
-                if ((iReturn === false)  ||  (! this.target))  return;
-
-                iLink.src = iLink.src || iReturn || iData;
-
-                This_App[
-                    Target_Method[this.target] || 'loadTemplate'
-                ](iLink);
-
+                if ((iReturn !== false)  &&  this.target)
+                    This_App.loadLink(
+                        (new PageLink(This_App, this)).valueOf(),
+                        null,
+                        iReturn || iData
+                    );
             }).trigger('submit');
 
             return false;

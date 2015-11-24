@@ -8,7 +8,7 @@
  *    and can be used in the Web UI development of
  *    Any Platform.
  *
- *    [Version]    v1.0  (2015-10-14)
+ *    [Version]    v1.0  (2015-11-23)
  *
  *    [Require]    CSS 2.1  (Best Effect with CSS 3),
  *
@@ -105,6 +105,11 @@ table tr {
 }
 table th, table td {
     padding:    0.5em;
+}
+@media (max-width: 1280px) {
+    table td {
+        max-width:    30em;
+    }
 }
 table th {
     white-space:    nowrap;
@@ -218,6 +223,12 @@ textarea:focus,               textarea:hover {
     border-color:    rgb(14, 144, 210);
     box-shadow:      inset  0  1px  1px  rgba(0, 0, 0, 0.075),
                      0  0  8px  rgba(14, 144, 210, 0.6);
+}
+input:-moz-placeholder,
+input::-moz-placeholder,
+input::-webkit-input-placeholder,
+input:-ms-input-placeholder {
+    text-overflow:    ellipsis;
 }
 /* --- Search Bar --- */
 input.Search, input[type="search"] {
@@ -918,14 +929,13 @@ img.UserLogo {
 
 /* ---------- Tab Control ---------- */
 .Tab > label {
+    display:          inline-block;
     margin-bottom:    -1px;
     padding:          0.5em  1em;
     line-height:      2.3em;
     text-align:       center;
     background:       white;
     color:            rgb(118, 118, 119);
-    border:           1px  solid  rgb(215, 215, 218);
-    box-shadow:       1px  2px  3px  rgb(118, 118, 119);
     cursor:           pointer;
 }
 .Tab > label.active {
@@ -936,10 +946,11 @@ img.UserLogo {
 }
 .Tab > .Body,
 .Tab > div,    .Tab > section  {
-    padding:          1em;
-    overflow:         hidden;
-    background:       rgb(230, 230, 230);
-    border-radius:    0  5px  5px  5px;
+    padding:             1em;
+    overflow:            hidden;
+    background-color:    rgb(230, 230, 230);
+    border-radius:       0  5px  5px  5px;
+    height:              100%;
 }
 .Tab > input[type="radio"],
 .Tab > input[type="radio"] + * {
@@ -970,7 +981,7 @@ img.UserLogo {
     padding:          1.5em;
     border:           1px  solid  lightgray;
     border-radius:    0;
-    box-shadow:       none;
+    box-shadow:       1px  2px  3px  rgb(118, 118, 119);
     background:       white;
 }
 /* ----- Monitor Mode ----- */
@@ -998,6 +1009,26 @@ img.UserLogo {
 .Tab.Monitor > .Body,
 .Tab.Monitor > div,    .Tab.Monitor > section  {
     background:    white;
+}
+/* ----- Point Mode ----- */
+.Tab.Point {
+    position:    relative;
+}
+.Tab.Point > label {
+    border-radius:    50%;
+    padding:          0.3em;
+    position:         relative;
+    z-index:          1;
+}
+.Tab.Point.Number > label {
+    padding:    0  0.8em;
+}
+.Tab.Point > .Body,
+.Tab.Point > div,    .Tab.Point > section  {
+    background-color:    transparent;
+    background-size:     cover;
+    position:            relative;
+    z-index:             0;
 }
 
 
@@ -1076,14 +1107,14 @@ img.UserLogo {
          -o-transform:    scale(-1，1);
     -webkit-transform:    scale(-1，1);
             transform:    scale(-1，1);
-            filter:       FlipH(); 
+            filter:       FlipH();
 }
 .Flip-X {
        -moz-transform:    scale(1，-1);
          -o-transform:    scale(1，-1);
     -webkit-transform:    scale(1，-1);
             transform:    scale(1，-1);
-            filter:       FlipV(); 
+            filter:       FlipV();
 }
 .Reflect {
     -webkit-box-reflect:    below  0px  -webkit-gradient(
@@ -1132,6 +1163,23 @@ img.UserLogo {
 }
 /* ----- Responsive Design ----- */
 @media (max-width:  540px) {
+    html {
+        scrollbar-face-color:          transparent;
+        scrollbar-shadow-color:        transparent;
+        scrollbar-highlight-color:     transparent;
+        scrollbar-3dlight-color:       transparent;
+        scrollbar-darkshadow-color:    transparent;
+        scrollbar-track-color:         transparent;
+        scrollbar-arrow-color:         transparent;
+    }
+    ::-webkit-scrollbar {
+        display:    none;
+    }
+    @-moz-document url-prefix("http://"), url-prefix("https://") {
+        scrollbar, thumb, scrollbarbutton {
+            display:    none  !important;
+        }
+    }
     .No_Mobile {
         display:    none  !important;
     }

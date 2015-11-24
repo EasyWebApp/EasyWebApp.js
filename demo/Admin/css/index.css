@@ -1,5 +1,7 @@
 /* ---------- 通用样式 ---------- */
-
+body {
+    overflow:    hidden;
+}
 
 
 #Main_Nav {
@@ -30,6 +32,7 @@
 
 #User_Bar {
     box-shadow:    0.3em  0.2em  1em  gray;
+    height:        6%;
 }
 #User_Bar > .Grid-Column {
     padding:    0.5em;
@@ -40,7 +43,9 @@
 
 
 #Main_View {
-    padding:    1em  1em  0;
+    padding:     1em  1em  0;
+    height:      95.4%;
+    overflow:    auto;
 }
 [multiple] label {
     margin:     0.25em  0.5em;

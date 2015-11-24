@@ -1,9 +1,9 @@
-#EasyWebApp
+# EasyWebApp
 
 ## 【项目概述】
 **EasyWebApp** 是一个基于 **jQuery API** 的**轻量级 SPA（单页应用）引擎**，**网页设计、后端接口、前端组件 充分解耦** —— 只用**原生 HTML** 做模板，对 **JSON 数据**的结构几无硬性要求，完全兼容现有的 **jQuery 插件**。
 
-本引擎首个广泛使用的开源稳定版 v1.8.5 脱胎于 2 个**移动端网页应用**（微信公众平台）和 2 个**桌面端网页系统**（某公司开放平台），是一个有较高 **抽象性**、**普适性**的 SPA 引擎，**个人独立开发**、**团队协作开发** 都能轻松胜任~
+本引擎广泛使用的最新开源稳定版 v2.2 脱胎于 2 个**移动端网页应用**（微信公众平台）和 2 个**桌面端网页系统**（某公司开放平台），是一个有较高 **抽象性**、**普适性**的 SPA 引擎，**个人独立开发**、**团队协作开发** 都能轻松胜任~
 
 
 ## 【核心理念】
@@ -18,25 +18,39 @@ EasyWebApp 与其作者开发的 [**EasyWebUI**](http://git.oschina.net/Tech_Que
 
 
 ## 【演示项目】
+
+演示源码的授权协议与本项目的**开源协议**一致 —— **自由使用、自主修改，保留署名、分享改进**！
+
 ### 一、每日资讯（移动版）
  - 前端页面
-   - 访问网址：[http://easywebapp.oschina.cnpaas.io/demo](http://easywebapp.oschina.cnpaas.io/demo)
+   - 访问网址：http://easywebapp.oschina.cnpaas.io/demo/iDaily
    - 因为前期主要演示本引擎的核心特性，Demo 界面暂无美术设计，仅有 EasyWebUI 框架组件的默认样式
  - 后端数据
    - 主要基于 [方倍工作室 API 100](http://www.cnblogs.com/txw1958/p/weixin-api100.html)，支持 **微信公众平台 AppKey**（URL 形如 `/demo/index.html?wechat_appkey=xxx`）
    - 还引用了 **淘宝网 IP 地理信息**、[**天狗云平台**](http://www.tngou.net) 的开放 API
    - 因为上述接口没有开放 **前端跨域访问**，所以引擎作者用一个 PHP 脚本做了一层代理，导致 **API 数据响应**较慢，请稍安勿臊
- - 源码授权：与本项目的开源协议一致 —— **自由使用、自主修改，保留署名、分享改进**
+
+### 二、后台管理系统
+ - 前端页面
+   - 访问网址：http://easywebapp.oschina.cnpaas.io/demo/Admin
+ - 后端数据
+   - 主要基于 [**天狗云平台**](http://www.tngou.net) 的开放 API
 
 
 ## 【版本历史】
+ - v2.2   Stable —— 2015年11月24日  引擎内部实现 **OOP 重构**（第二阶段）
+   - 重构 PageLink、ListView、InnerPage，实现**局部刷新**
+   - WebApp 对象“手动控制”实例方法 整合为一个 loadLink 方法
  - v2.1   Stable —— 2015年11月12日
    - 把 用户操作事件的监听与分发 独立为一个“实例无关”的底层公共模块
-   - 将 页面加载、切换、渲染的核心逻辑 融入 **PageLink 对象**
+   - 将 页面加载、切换的核心逻辑 融入 **PageLink 对象**
    - 独立出 **ListView 对象**，便于实现 局部刷新
- - v2.0   Beta   —— 2015年10月7日   引擎内部实现重构 —— **WebApp 对象实现** 独立为 InnerPage、InnerHistory、DataStack、PageLink 四大内部对象
+ - v2.0   Beta   —— 2015年10月7日   引擎内部实现 **OOP 重构**（第一阶段）
+   - **WebApp 对象实现** 独立为 InnerPage、InnerHistory、DataStack、PageLink 四大内部对象
  - v1.8.5 Stable —— 2015年9月24日   SPA 内页也支持用 `<link />` 声明**多数据源**，且所有多数据源页面都支持**数据渲染区域遮罩层**
- - v1.7.5 Stable —— 2015年9月18日   新增 **pageLoad 同步事件**，会在用户触发内页跳转时产生；所有的接口调用点 都可用 **apiCall 同步事件**来 Hook
+ - v1.7.5 Stable —— 2015年9月18日
+   - 新增 **pageLoad 同步事件**，会在用户触发内页跳转时产生
+   - 所有的接口调用点 都可用 **apiCall 同步事件**来 Hook
  - v1.7   Stable —— 2015年9月11日   数据在每个 WebApp 实例内外的流转链 更顺畅
  - v1.6.5 Stable —— 2015年9月7日    WebApp 对象“手动控制”实例方法 参数写法与 HTML 属性统一（也支持 缺省简写形式）
  - v1.6   Stable —— 2015年8月20日   **第一代数据堆栈** 独立为一个对象
@@ -182,7 +196,7 @@ EasyWebApp 与其作者开发的 [**EasyWebUI**](http://git.oschina.net/Tech_Que
                 alert(iData.message);
         })
         .WebApp();
-   
+
 })(self.jQuery);
 ```
 #### （四）首屏渲染
@@ -223,7 +237,7 @@ SPA 中所有**可见表单** 均会被本引擎用 **AJAX 提交**接管，用�
             return  (iData.code == 200)  &&  iData;
         })
         .WebApp();
-   
+
 })(self.jQuery);
 ```
 
@@ -296,21 +310,26 @@ $_AppRoot
 ### 三、WebApp 对象实例方法
 WebApp 支持手动调用 本引擎 **页面串接规则**（上文【使用入门】第四大节）对应的 JavaScript 实例方法 ——
 ```javascript
-iWebApp
-    .loadTemplate({                //  加载内页（参数简写形式 见下文）
-        title:     "局部刷新",
-        href:      HTML_URL,
-        method:    'POST',
-        src:       API_URL,
-    }, {
-        arg_1:    'arg_1_name'
-    })
-    .loadData(API_URL)            //  调用 API（参数详写形式 见上文）
-    .loadPage(HTML_URL);           //  加载外页（参数详写形式 见上文）
+//  完整参数写法
+
+iWebApp.loadLink({
+    title:     "局部刷新",
+    href:      HTML_URL,
+    method:    'POST',
+    src:       API_URL,
+}, {
+    arg_1:    'arg_1_name'
+});
+
+//  参数简写形式（只能用于加载内页）
+
+iWebApp.loadLink('path/to/template.html', 'path/to/api', {
+    arg_1:    'arg_1_name'
+});
 ```
 
 ## 【进阶导引】
-EasyWebApp v1.x 的基本模型（对照 MVC 模式）——
+EasyWebApp v2.x 的基本模型（对照 MVC 模式）——
  - 页面模板 —— 数据接口 (View - Model)
  - 接口数据 —— 操作历史 (Model - View)
  - 操作事件 —— 业务逻辑 (Controller)
