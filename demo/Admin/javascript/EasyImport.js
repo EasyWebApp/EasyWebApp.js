@@ -2,7 +2,7 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v1.0  (2015-11-20)  Stable
+//      [Version]    v1.0  (2015-12-3)  Stable
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.
@@ -282,13 +282,13 @@
                     return  this.extend([ ], arguments[0]);
                 },
             inArray:          function () {
-                return  Array.prototype.indexOf.call(arguments[0], arguments[1]);
+                return  Array.prototype.indexOf.call(arguments[1], arguments[0]);
             },
             unique:           function (iArray) {
                 var iResult = [ ];
 
                 for (var i = iArray.length - 1;  i > -1 ;  i--)
-                    if (this.inArray(iArray, iArray[i]) == i)
+                    if (this.inArray(iArray[i], iArray) == i)
                         iResult.push( iArray[i] );
                 iResult.reverse();
 
@@ -355,12 +355,16 @@
     _Object_.type = function (iVar) {
         var iType = typeof iVar;
 
-        iType = (iType == 'object') ? (
-                (iVar && iVar.constructor.name) ||
-                Object.prototype.toString.call(iVar).match(/\[object\s+([^\]]+)\]/i)[1]
-            ) : (
-                iType[0].toUpperCase() + iType.slice(1)
-            );
+        try {
+            iType = (iType == 'object') ? (
+                    (iVar && iVar.constructor.name) ||
+                    Object.prototype.toString.call(iVar).match(/\[object\s+([^\]]+)\]/i)[1]
+                ) : (
+                    iType[0].toUpperCase() + iType.slice(1)
+                );
+        } catch (iError) {
+            return 'Window';
+        }
 
         if (! iVar)  switch (true) {
             case (isNaN(iVar)  &&  (iVar !== iVar)):    return 'NaN';
@@ -674,9 +678,9 @@
                 var iTimer = _DOM_.operate('Data', [BOM], '_timer_');
                 return  (this.now() - iTimer[arguments[0]]) / 1000;
             },
-            guid:       function () {
+            uuid:       function () {
                 return  [
-                        (arguments[0] || 'guid'),  '_',
+                        (arguments[0] || 'uuid'),  '_',
                         this.now().toString(16),
                         Math.random().toString(16).slice(2)
                     ].join('');
@@ -693,11 +697,11 @@
             iReturn;
 
         _Object_.each(iHandler,  function () {
-            var _Return_;
+            var This_Handler = arguments[1],  _Return_;
 
-            if (this)
-                _Return_ = this.apply(This_DOM, Handler_Args);
-            else if (this === false)
+            if (This_Handler)
+                _Return_ = This_Handler.apply(This_DOM, Handler_Args);
+            else if (This_Handler === false)
                 _Return_ = false;
             else
                 return;
@@ -712,21 +716,6 @@
             iEvent.stopPropagation();
         }
     }
-
-/* ---------- DOM Traversal ---------- */
-    function _Parents_() {
-        var _GUID_ = _Time_.guid('parent');
-
-        for (var i = 0;  i < this.length;  i++)
-            Object_Seek.call(this[i],  'parentNode',  function () {
-                _DOM_.operate('Attribute',  [this],  _GUID_,  function (_Index_, iTimes) {
-                    return  iTimes ? (parseInt(iTimes) + 1) : 1
-                });
-            });
-
-        return _GUID_;
-    }
-
 
 /* ---------- DOM Constructor ---------- */
     function DOM_Create(TagName, AttrList) {
@@ -1039,6 +1028,10 @@
             return  (arguments[0] || BOM.location.pathname)
                     .split('?')[0].split('/').slice(-1)[0];
         },
+        filePath:         function () {
+            return  $.split(arguments[0] || BOM.location.href,  '?',  2)[0]
+                    .split('/').slice(0, -1).join('/');
+        },
         data:             function (iElement, iName, iValue) {
             return  _DOM_.operate('Data', [iElement], iName, iValue);
         },
@@ -1108,7 +1101,17 @@
         jquery:             '1.9.1',
         iquery:             '1.0',
         pushStack:          function () {
-            var $_New = $(arguments[0]);
+            var $_New = Array.prototype.sort.call($(arguments[0]),  function (A, B) {
+                    var $_A = Object_Seek.call(A, 'parentNode').reverse(),
+                        $_B = Object_Seek.call(B, 'parentNode').reverse();
+
+                    for (var i = 0;  i < $_A.length;  i++)
+                        if ($_A[i] !== $_B[i])
+                            return (
+                                Object_Seek.call($_A[i], 'previousElementSibling').length  -
+                                Object_Seek.call($_B[i], 'previousElementSibling').length
+                            );
+                });
             $_New.prevObject = this;
             return $_New;
         },
@@ -1122,13 +1125,13 @@
             var iType = $.type(iTarget);
             switch (true) {
                 case (iType == 'String'):
-                    return  $.inArray($(iTarget), this[0]);
-                case (iType in Type_Info.DOM.set):    {
+                    return  $.inArray(this[0], $(iTarget));
+                case ((iType in Type_Info.DOM.set)  &&  (!! iTarget.length)):    {
                     iTarget = iTarget[0];
                     iType = $.type(iTarget);
                 }
                 case (iType in Type_Info.DOM.element):
-                    return  $.inArray(this, iTarget);
+                    return  $.inArray(iTarget, this);
             }
             return -1;
         },
@@ -1139,11 +1142,12 @@
             return  $.each(this, arguments[0]);
         },
         is:                 function (iSelector) {
-            if (! this[0])  return;
+            if ((! this[0])  ||  ($.type(this[0]) in Type_Info.DOM.root))
+                return;
 
             if (! this[0].parentNode)  $('<div />')[0].appendChild( this[0] );
 
-            return  ($.inArray($(iSelector, this[0].parentNode),  this[0])  >  -1);
+            return  ($.inArray(this[0],  $(iSelector, this[0].parentNode))  >  -1);
         },
         filter:             function (iSelector) {
             var $_Result = [ ];
@@ -1159,7 +1163,7 @@
                 $_Result = [ ];
 
             for (var i = 0;  i < this.length;  i++)
-                if ($.inArray($_Not, this[i]) < 0)
+                if ($.inArray(this[i], $_Not) < 0)
                     $_Result.push(this[i]);
 
             return this.pushStack($_Result);
@@ -1182,45 +1186,55 @@
             return  _DOM_.operate('Data', this, arguments[0], arguments[1]);
         },
         addBack:            function () {
-            var _GUID_ = $.guid();
-
-            var $_Result = $(
-                    Array_Concat(this, this.prevObject)
-                ).attr('iquery', _GUID_);
-
-            return  this.pushStack(
-                    $('*[iquery="' + _GUID_ + '"]').removeAttr('iquery')
-                );
+            return  this.pushStack( Array_Concat(this, this.prevObject) );
         },
         parent:             function () {
             var $_Result = [ ];
 
             for (var i = 0;  i < this.length;  i++)
-                if ($.inArray($_Result, this[i].parentNode) == -1)
+                if ($.inArray(this[i].parentNode, $_Result) == -1)
                     $_Result.push( this[i].parentNode );
 
-            if (arguments[0])  $_Result = $($_Result).filter(arguments[0]);
-
-            return this.pushStack($_Result);
+            return this.pushStack(
+                arguments[0]  ?  $($_Result).filter(arguments[0])  :  $_Result
+            );
         },
         parents:            function () {
-            var _GUID_ = _Parents_.call(this);
-            var $_Result = $('*[' + _GUID_ + ']').removeAttr(_GUID_);
+            var $_Result = [ ];
 
-            if (arguments[0])  $_Result = $_Result.filter(arguments[0]);
+            for (var i = 0;  i < this.length;  i++)
+                $_Result = $_Result.concat( Object_Seek.call(this[i], 'parentNode') );
 
-            return  this.pushStack( Array.prototype.reverse.call($_Result) );
+            $_Result = $( $.unique($_Result) );
+
+            return this.pushStack(Array.prototype.reverse.call(
+                arguments[0]  ?  $_Result.filter(arguments[0])  :  $_Result
+            ));
         },
         sameParents:        function () {
-            var _GUID_ = _Parents_.call(this);
-            var iTimes = $(DOM.documentElement).attr(_GUID_);
+            if (this.length < 2)  return this.parents();
 
-            var $_Result = $(['*[', _GUID_, '="', iTimes, '"]'].join(''))
-                    .removeAttr(_GUID_);
+            var iMin = Object_Seek.call(this[0], 'parentNode'),  iPrev;
 
-            if (arguments[0])  $_Result = $_Result.filter(arguments[0]);
+            for (var i = 1, iLast;  i < this.length;  i++) {
+                iLast = Object_Seek.call(this[i], 'parentNode');
+                if (iLast.length < iMin.length) {
+                    iPrev = iMin;
+                    iMin = iLast;
+                }
+            }
+            iPrev = iPrev || iLast;
 
-            return  this.pushStack( Array.prototype.reverse.call($_Result) );
+            var iDiff = iPrev.length - iMin.length,  $_Result = [ ];
+
+            for (var i = 0;  i < iMin.length;  i++)
+                if (iMin[i]  ===  iPrev[i + iDiff]) {
+                    $_Result = iMin.slice(i);
+                    break;
+                }
+            return this.pushStack(
+                arguments[0]  ?  $($_Result).filter(arguments[0])  :  $_Result
+            );
         },
         parentsUntil:       function () {
             return  this.parents().not(
@@ -1233,9 +1247,9 @@
             for (var i = 0;  i < this.length;  i++)
                 $_Result = Array_Concat($_Result, this[i].children);
 
-            if (arguments[0])  $_Result = $($_Result).filter(arguments[0]);
-
-            return this.pushStack($_Result);
+            return this.pushStack(
+                arguments[0]  ?  $($_Result).filter(arguments[0])  :  $_Result
+            );
         },
         contents:           function () {
             var $_Result = [ ],
@@ -1263,9 +1277,9 @@
                 );
             $_Result = $.unique($_Result);
 
-            if (arguments[0])  $_Result = $($_Result).filter(arguments[0]);
-
-            return this.pushStack($_Result);
+            return this.pushStack(
+                arguments[0]  ?  $($_Result).filter(arguments[0])  :  $_Result
+            );
         },
         prevAll:            function () {
             var $_Result = [ ];
@@ -1276,16 +1290,16 @@
                 );
             $_Result = $.unique($_Result).reverse();
 
-            if (arguments[0])  $_Result = $($_Result).filter(arguments[0]);
-
-            return this.pushStack($_Result);
+            return this.pushStack(
+                arguments[0]  ?  $($_Result).filter(arguments[0])  :  $_Result
+            );
         },
         siblings:           function () {
             var $_Result = this.prevAll().add( this.nextAll() );
 
-            if (arguments[0])  $_Result = $_Result.filter(arguments[0]);
-
-            return this.pushStack($_Result);
+            return this.pushStack(
+                arguments[0]  ?  $_Result.filter(arguments[0])  :  $_Result
+            );
         },
         find:               function () {
             var $_Result = [ ];
@@ -1395,7 +1409,7 @@
                 old_Class = (old_Class || '').trim().split(/\s+/);
 
                 for (var i = 0;  i < new_Class.length;  i++)
-                    if ($.inArray(old_Class, new_Class[i]) == -1)
+                    if ($.inArray(new_Class[i], old_Class) == -1)
                         old_Class.push( new_Class[i] );
 
                 return  old_Class.join(' ').trim();
@@ -1413,7 +1427,7 @@
                 var new_Class = [ ];
 
                 for (var i = 0;  i < old_Class.length;  i++)
-                    if ($.inArray(iClass, old_Class[i]) == -1)
+                    if ($.inArray(old_Class[i], iClass) == -1)
                         new_Class.push( old_Class[i] );
 
                 return  new_Class.join(' ');
@@ -1487,7 +1501,7 @@
 
                         for (var i = 0, _Return_;  i < $_Patch.length;  i++) {
                             if ($_Patch[i] === this)  break;
-                            if ($.inArray($_Filter, $_Patch[i]) == -1)  continue;
+                            if ($.inArray($_Patch[i], $_Filter) == -1)  continue;
 
                             if (iArgs[1] === null)
                                 iArgs = [ iArgs[0] ].concat( $($_Patch[i]).data('_trigger_') );
@@ -1835,11 +1849,11 @@
     $.fn.cssRule = function (iRule, iCallback) {
         return  this.each(function () {
             var $_This = $(this);
-            var _GUID_ = $_This.data('css') || $.guid();
+            var _UUID_ = $_This.data('css') || $.uuid();
 
-            $(this).attr('data-css', _GUID_);
+            $(this).attr('data-css', _UUID_);
             for (var iSelector in iRule) {
-                iRule['*[data-css="' + _GUID_ + '"]' + iSelector] = iRule[iSelector];
+                iRule['*[data-css="' + _UUID_ + '"]' + iSelector] = iRule[iSelector];
                 delete iRule[iSelector];
             }
 
@@ -1931,6 +1945,23 @@
     Object.defineProperty(Element.prototype, 'nextElementSibling', {
         get:    function () {
             return this.nextSibling;
+        },
+        set:    function () { }
+    });
+
+
+    /* ----- Element Data Set ----- */
+    function DOMStringMap(iElement) {
+        for (var i = 0, iAttr;  i < iElement.attributes.length;  i++) {
+            iAttr = iElement.attributes[i];
+            if (iAttr.nodeName.slice(0, 5) == 'data-')
+                this[ iAttr.nodeName.toCamelCase() ] = iAttr.nodeValue;
+        }
+    }
+
+    Object.defineProperty(Element.prototype, 'dataset', {
+        get:    function () {
+            return  new DOMStringMap(this);
         },
         set:    function () { }
     });
@@ -2259,73 +2290,6 @@
 
 
 
-/* ---------- W3C HTML 5  Shim ---------- */
-(function (BOM, DOM, $) {
-
-    if (! ($.browser.msie < 10))  return;
-
-    /* ----- Element Data Set ----- */
-    function DOMStringMap(iElement) {
-        for (var i = 0, iAttr;  i < iElement.attributes.length;  i++) {
-            iAttr = iElement.attributes[i];
-            if (iAttr.nodeName.slice(0, 5) == 'data-')
-                this[ iAttr.nodeName.toCamelCase() ] = iAttr.nodeValue;
-        }
-    }
-
-    Object.defineProperty(Element.prototype, 'dataset', {
-        get:    function () {
-            return  new DOMStringMap(this);
-        },
-        set:    function () { }
-    });
-
-
-    /* ----- History API ----- */
-    var _State_ = [[null, DOM.title, DOM.URL]],
-        _Pushing_ = false,
-        $_BOM = $(BOM);
-
-    BOM.history.pushState = function (iState, iTitle, iURL) {
-        for (var iKey in iState)
-            if (! $.isData(iState[iKey]))
-                throw ReferenceError("The History State can't be Complex Object !");
-
-        if (typeof iTitle != 'string')
-            throw TypeError("The History State needs a Title String !");
-
-        DOM.title = iTitle;
-        _Pushing_ = true;
-        BOM.location.hash = '_' + (_State_.push(arguments) - 1);
-    };
-
-    BOM.history.replaceState = function () {
-        _State_ = [ ];
-        this.pushState.apply(this, arguments);
-    };
-
-    $_BOM.on('hashchange',  function () {
-        if (_Pushing_) {
-            _Pushing_ = false;
-            return;
-        }
-
-        var iState = _State_[ BOM.location.hash.slice(2) ];
-        if (! iState)  return;
-
-        BOM.history.state = iState[0];
-        DOM.title = iState[1];
-
-        $_BOM.trigger({
-            type:     'popstate',
-            state:    iState[0]
-        });
-    });
-
-})(self, self.document, self.iQuery);
-
-
-
 /* ---------- Complex Events ---------- */
 (function (BOM, DOM, $) {
 
@@ -2437,6 +2401,61 @@
                 $(iEvent.target).trigger((iTime > 300) ? 'press' : 'tap');
         }
     );
+    /* ----- Cross Page Event ----- */
+
+    function CrossPageEvent(iType, iSource) {
+        if (typeof iType == 'string') {
+            this.type = iType;
+            this.target = iSource;
+        } else
+            $.extend(this, iType);
+
+        if (iSource)  $.extend(this, iSource.dataset);
+    }
+
+    CrossPageEvent.prototype.valueOf = function () {
+        var iValue = $.extend({ }, this);
+
+        delete iValue.data;
+        delete iValue.target;
+        delete iValue.valueOf;
+
+        return iValue;
+    };
+
+    var $_BOM = $(BOM);
+
+    $.fn.onReply = function (iType, iData, iCallback) {
+        var iTarget = this[0],  $_Source;
+
+        if ((iTarget === BOM)  ||  ($.type(iTarget) != 'Window'))
+            return this;
+
+        if (arguments.length == 4) {
+            $_Source = $(iData);
+            iData = iCallback;
+            iCallback = arguments[3];
+        }
+
+        var _Event_ = new CrossPageEvent(iType,  ($_Source || { })[0]);
+
+        $_BOM.on('message',  function (iEvent) {
+            var iReturn = new CrossPageEvent(iEvent.data);
+
+            if (
+                (iEvent.source === iTarget)  &&
+                (iReturn.type == iType)  &&
+                $.isEqual(iReturn, _Event_)
+            ) {
+                iCallback.call($_Source ? $_Source[0] : this,  iReturn);
+                $_BOM.off('message', arguments.callee);
+            }
+        });
+
+        iTarget.postMessage(
+            $.extend({data: iData},  _Event_.valueOf()),  '*'
+        );
+    };
 
 })(self, self.document, self.iQuery);
 
@@ -2503,8 +2522,8 @@
 
         var iClass = 'animated ' + iType + (iLoop ? ' infinite' : '');
 
-        this.bind(Animate_End,  function () {
-            $(this).off(Animate_End).removeClass(iClass);
+        this.one(Animate_End,  function () {
+            $(this).removeClass(iClass);
 
             if (iCallback)
                 iCallback.apply(this, arguments);
@@ -2734,7 +2753,7 @@
             var $_Button = $_Form.find(':button').attr('disabled', true),
                 iTarget = $_Form.attr('target');
             if ((! iTarget)  ||  iTarget.match(/^_(top|parent|self|blank)$/i)) {
-                iTarget = $.guid('iframe');
+                iTarget = $.uuid('iframe');
                 $_Form.attr('target', iTarget);
             }
 
@@ -2763,21 +2782,21 @@
                 var iURL = this.responseURL.match(/([^\?=&]+\?|\?)?(\w.+)?/);
                 if (! iURL)  throw 'Illegal URL !';
 
-                var _GUID_ = $.guid(),  iDHR = this;
+                var _UUID_ = $.uuid(),  iDHR = this;
 
-                BOM.DOMHttpRequest.JSONP[_GUID_] = function () {
+                BOM.DOMHttpRequest.JSONP[_UUID_] = function () {
                     if (iDHR.readyState) {
                         iDHR.status = 200;
                         iDHR.readyState = 4;
                         iDHR.onready.apply(iDHR, arguments);
                     }
-                    delete this[_GUID_];
+                    delete this[_UUID_];
                     iDHR.$_DOM.remove();
                 };
                 this.requestData = arguments[0];
                 this.responseURL = iURL[1] + $.param(
                     $.extend({ }, arguments[0], $.paramJSON(
-                        iURL[2].replace(/(\w+)=\?/,  '$1=DOMHttpRequest.JSONP.' + _GUID_)
+                        iURL[2].replace(/(\w+)=\?/,  '$1=DOMHttpRequest.JSONP.' + _UUID_)
                     ))
                 );
                 this.$_DOM = $('<script />', {src:  this.responseURL}).appendTo(DOM.head);
@@ -2972,11 +2991,14 @@
 
 
 
-/* ---------- HTML 5 Form Shim ---------- */
-(function ($) {
+/* ---------- W3C HTML 5  Shim ---------- */
+(function (BOM, DOM, $) {
 
     if (! (($.browser.msie < 10)  ||  $.browser.ios))
         return;
+
+
+    /* ----- Form API ----- */
 
     function Value_Check() {
         var $_This = $(this);
@@ -3017,68 +3039,51 @@
         return true;
     };
 
-})(self.iQuery);
+
+    if (! ($.browser.msie < 10))  return;
 
 
+    /* ----- History API ----- */
 
-/* ---------- Other Extension ---------- */
-(function (BOM, DOM, $) {
+    var _State_ = [[null, DOM.title, DOM.URL]],
+        _Pushing_ = false,
+        $_BOM = $(BOM);
 
-    /* ----- Hash Algorithm (Crypto API Wrapper) ----- */
-    function BufferToString(iBuffer){
-        var iDataView = new DataView(iBuffer),
-            iResult = [ ];
+    BOM.history.pushState = function (iState, iTitle, iURL) {
+        for (var iKey in iState)
+            if (! $.isData(iState[iKey]))
+                throw ReferenceError("The History State can't be Complex Object !");
 
-        for (var i = 0, iTemp;  i < iBuffer.byteLength;  i += 4) {
-            iTemp = iDataView.getUint32(i).toString(16);
-            iResult.push(
-                ((iTemp.length == 8) ? '' : '0') + iTemp
-            );
-        }
-        return iResult.join('');
-    }
+        if (typeof iTitle != 'string')
+            throw TypeError("The History State needs a Title String !");
 
-    $.dataHash = function (iAlgorithm, iData, iCallback, iFailback) {
-        var iCrypto = BOM.crypto || BOM.msCrypto;
-        var iSubtle = iCrypto.subtle || iCrypto.webkitSubtle;
-
-        iAlgorithm = iAlgorithm || 'SHA-512';
-        iFailback = iFailback || iCallback;
-
-        try {
-            iData = iData.split('');
-            for (var i = 0;  i < iData.length;  i++)
-                iData[i] = iData[i].charCodeAt(0);
-
-            var iPromise = iSubtle.digest(
-                    {name:  iAlgorithm},
-                    new Uint8Array(iData)
-                );
-
-            if(typeof iPromise.then == 'function')
-                iPromise.then(
-                    function() {
-                        iCallback.call(this, BufferToString(arguments[0]));
-                    },
-                    iFailback
-                );
-            else
-                iPromise.oncomplete = function(){
-                    iCallback.call(this,  BufferToString( arguments[0].target.result ));
-                };
-        } catch (iError) {
-            iFailback(iError);
-        }
+        DOM.title = iTitle;
+        _Pushing_ = true;
+        BOM.location.hash = '_' + (_State_.push(arguments) - 1);
     };
 
-    /* ----- Page URL of a DOM ----- */
-    $.fn.pagePath = function () {
-        var iURL = (this[0].baseURI || this[0].ownerDocument.URL).split('/');
-
-        if (iURL.length > 3)  iURL.splice(-1, 1, '');
-
-        return iURL.join('/');
+    BOM.history.replaceState = function () {
+        _State_ = [ ];
+        this.pushState.apply(this, arguments);
     };
+
+    $_BOM.on('hashchange',  function () {
+        if (_Pushing_) {
+            _Pushing_ = false;
+            return;
+        }
+
+        var iState = _State_[ BOM.location.hash.slice(2) ];
+        if (! iState)  return;
+
+        BOM.history.state = iState[0];
+        DOM.title = iState[1];
+
+        $_BOM.trigger({
+            type:     'popstate',
+            state:    iState[0]
+        });
+    });
 
 })(self, self.document, self.iQuery);
 
@@ -3572,7 +3577,7 @@
             if (! iLazy)  return;
 
             for (var i = 0;  i < iLazy.length;  i++) {
-                if ($.inArray(Load_List, iLazy[i]) != -1)  continue;
+                if ($.inArray(iLazy[i], Load_List) != -1)  continue;
 
                 iLazy[i].src = iLazy[i].attributes['data-src'].nodeValue;
                 Load_List.push( iLazy[i] );

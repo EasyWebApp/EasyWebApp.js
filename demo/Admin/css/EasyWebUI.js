@@ -126,7 +126,7 @@
     $.fn.addClass = function () {
         _addClass_.apply(this, arguments);
 
-        if (Need_Fix && ($.inArray(arguments[0].split(' '), 'Flex-Box') > -1))
+        if (Need_Fix  &&  ($.inArray('Flex-Box', arguments[0].split(' ')) > -1))
             return  this.each(FlexFix);
 
         return this;
@@ -146,7 +146,7 @@
             iStyle = [ ];
 
         for (var i = 0;  i < iStyleSheet.length;  i++)
-            if ($.inArray(iStyleSheet[i].pseudo, 'before') > -1)
+            if ($.inArray('before', iStyleSheet[i].pseudo) > -1)
                 iStyle.push(iStyleSheet[i].style);
 
         $(this).change(function () {
@@ -173,7 +173,7 @@
 
                 //  Data-List for All Cores
                 var $_List = $('<datalist />', {
-                        id:    $.guid('Range')
+                        id:    $.uuid('Range')
                     });
 
                 $_This.attr('list', $_List[0].id);
@@ -316,17 +316,20 @@
 
     $.fn.iTab = function () {
         return  this.each(function () {
-            var iName = $.guid('iTab'),
+            var iName = $.uuid('iTab'),
                 $_Child = $(this).children();
             var $_Label = $_Child.filter('label'),
                 $_Radio = $_Child.filter('input[type="radio"]').remove();
             var $_Tab = $_Child.not($_Label).not($_Radio);
 
-            $_Label.each(function () {
-                var _GUID_ = $.guid();
+            if (! $_Label.filter('.active').length)
+                $_Label.eq(0).addClass('active');
 
-                $(this).attr('for', _GUID_);
-                var _Radio_ = $('<input type="radio" name="' + iName + '" />').attr('id', _GUID_);
+            $_Label.each(function () {
+                var _UUID_ = $.uuid();
+
+                $(this).attr('for', _UUID_);
+                var _Radio_ = $('<input type="radio" name="' + iName + '" />').attr('id', _UUID_);
                 var _Tab_ = $_Tab.eq(arguments[0]).before(_Radio_);
 
                 if (! $.browser.modern)

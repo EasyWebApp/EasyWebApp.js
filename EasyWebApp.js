@@ -2,9 +2,11 @@
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]     v2.2  (2015-11-24)  Stable
+//      [Version]     v2.2  (2015-12-3)  Stable
 //
 //      [Based on]    iQuery  |  jQuery with jQuery+,
+//
+//                    iQuery+,
 //
 //                    [ marked.js ]  (for MarkDown rendering)
 //
@@ -444,7 +446,7 @@
                 else
                     This_App.domRoot.text(iMarkDown);
 
-                This_Page.onReady();
+                Page_Load.call(This_App);
             }
         );
     }
@@ -471,8 +473,7 @@
             }
 
         /* ----- Load DOM  from  Network ----- */
-            var iData,
-                Load_Stage = Whole_Page  ?  2  :  1;
+            var iData,  Load_Stage = Whole_Page ? 2 : 1;
 
             function Page_Load() {
                 if (arguments[0])  iData = arguments[0];
@@ -525,57 +526,6 @@
         return this;
     };
 
-/* ---------- [object ListView] ---------- */
-
-    function ListView($_Root, iData) {
-        this.$_Root = $_Root;
-        this.$_Template = $_Root.children().eq(0).clone(true);
-        this.data = iData || [ ];
-    }
-    ListView.listSelector = 'ul, ol, dl, tbody, *[multiple]';
-
-    var _Concat_ = Array.prototype.concat;
-
-    $.extend(ListView.prototype, {
-        renderLine:    function (iValue) {
-            var $_Clone = this.$_Template.clone(true);
-
-            $_Clone.data('EWA_Model', iValue)
-                .find('*').add($_Clone)
-                .filter('*[name]').value(function () {
-                    return iValue[arguments[0]];
-                });
-            return $_Clone;
-        },
-        render:        function (iData) {
-            if (iData)
-                this.data = _Concat_.apply(iData, this.data);
-
-            var iLimit = parseInt( this.$_Root.attr('max') )  ||  Infinity;
-            iLimit = (this.data.length > iLimit) ? iLimit : this.data.length;
-
-            var $_List = $();
-
-            for (var i = 0;  i < iLimit;  i++)
-                $_List.add( this.renderLine( this.data[i] ) );
-
-            $_List.appendTo( this.$_Root.empty() );
-        },
-        insert:        function (iData, Index) {
-            Index = Index || 0;
-
-            this.data.splice(Index, 0, iData);
-            this.$_Root.eq(Index).before( this.renderLine(iData) );
-        },
-        delete:        function (Index) {
-            Index = parseInt(Index);
-            if (isNaN( Index ))  return;
-
-            this.data.splice(Index, 1);
-            this.$_Root.eq(Index).remove();
-        }
-    });
-
 /* ---------- Auto Navigation ---------- */
 
     var $_Data_Box;
@@ -600,12 +550,18 @@
             iLink = $_Source && $_Source.data('EWA_PageLink');
         if (iLink  &&  (iLink.target != '_self'))
             $_List = iLink.getTarget().parent();
-        $_List = $_List.find( ListView.listSelector ).not('input');
+        $_List = $_List.find( $.ListView.listSelector ).not('input');
 
         for (var i = 0, $_LV;  i < $_List.length;  i++) {
             $_LV = $_List.eq(i);
-            if (! $_LV.data('EWA_ListView'))
-                $_LV.data('EWA_ListView',  new ListView($_LV));
+            if ( $_LV.data('EWA_ListView') )  continue;
+
+            $_LV.data('EWA_ListView',  $.ListView($_LV,  function ($_Item, iValue) {
+                $_Item.find('*').add($_Item)
+                    .filter('*[name]').value(function () {
+                        return iValue[arguments[0]];
+                    });
+            }));
         }
         /* ----- Data Render ----- */
         if (iData instanceof Array) {

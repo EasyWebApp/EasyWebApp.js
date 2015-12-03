@@ -38,8 +38,9 @@ EasyWebApp 与其作者开发的 [**EasyWebUI**](http://git.oschina.net/Tech_Que
 
 
 ## 【版本历史】
- - v2.2   Stable —— 2015年11月24日  引擎内部实现 **OOP 重构**（第二阶段）
+ - v2.2   Stable —— 2015年12月3日  引擎内部实现 **OOP 重构**（第二阶段）
    - 重构 PageLink、ListView、InnerPage，实现**局部刷新**
+   - ListView 实现独立为一个 jQuery 静态方法，并贡献给 iQuery 项目的 [iQuery+ 插件库](http://git.oschina.net/Tech_Query/iQuery/blob/master/iQuery+.js)
    - WebApp 对象“手动控制”实例方法 整合为一个 loadLink 方法
  - v2.1   Stable —— 2015年11月12日
    - 把 用户操作事件的监听与分发 独立为一个“实例无关”的底层公共模块
@@ -88,6 +89,7 @@ EasyWebApp 与其作者开发的 [**EasyWebUI**](http://git.oschina.net/Tech_Que
 <html><head>
     <meta http-equiv="X-UA-Compatible" content="IE=Edge, Chrome=1" />
     <script src="path/to/iQuery.js"></script>
+    <script src="path/to/iQuery+.js"></script>
     <script src="path/to/marked.js"></script>
     <script src="path/to/EasyWebApp.js"></script>
     <script>
