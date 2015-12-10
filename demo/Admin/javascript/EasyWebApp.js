@@ -2,7 +2,7 @@
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]     v2.2  (2015-12-3)  Stable
+//      [Version]     v2.2  (2015-12-10)  Stable
 //
 //      [Based on]    iQuery  |  jQuery with jQuery+,
 //
@@ -554,18 +554,17 @@
 
         for (var i = 0, $_LV;  i < $_List.length;  i++) {
             $_LV = $_List.eq(i);
-            if ( $_LV.data('EWA_ListView') )  continue;
 
-            $_LV.data('EWA_ListView',  $.ListView($_LV,  function ($_Item, iValue) {
+            $.ListView($_LV,  function ($_Item, iValue) {
                 $_Item.find('*').add($_Item)
                     .filter('*[name]').value(function () {
                         return iValue[arguments[0]];
                     });
-            }));
+            });
         }
         /* ----- Data Render ----- */
         if (iData instanceof Array) {
-            $_List.eq(0).data('EWA_ListView').render(iData);
+            $.ListView( $_List.eq(0) ).render(iData);
             Load_Process($_List);
         } else
             Load_Process(
@@ -574,7 +573,7 @@
                     var iValue = This_App.dataStack.value(iName, $_This.is($_List));
 
                     if (iValue instanceof Array)
-                        $_This.data('EWA_ListView').render(iValue);
+                        $.ListView($_This).render(iValue);
                     else if ( $.isPlainObject(iValue) )
                         $_This.data('EWA_Model', iValue).value(iValue);
                     else

@@ -2,7 +2,7 @@
 //          >>>  iQuery+  <<<
 //
 //
-//    [Version]     v0.4  (2015-12-3)
+//    [Version]     v0.5  (2015-12-10)
 //
 //    [Based on]    jQuery  v1.9+
 //
@@ -13,63 +13,110 @@
 
 (function (BOM, DOM, $) {
 
-/* ---------- ListView Object  v0.2 ---------- */
+/* ---------- ListView Interface  v0.3 ---------- */
 
 //  Thanks "EasyWebApp" Project --- http://git.oschina.net/Tech_Query/EasyWebApp
 
-    function ListView() {
-        var iArgs = $.makeArray(arguments);
+    function ListView($_View, onInsert) {
+        var _Self_ = arguments.callee;
 
-        this.$_View = iArgs.shift();
-        this.$_Template = this.$_View.children().eq(0).clone(true);
-        this.data = (iArgs[0] instanceof Function)  ?  [ ]  :  iArgs.shift();
-        this.onRenderOne = iArgs[0];
+        if (!  (this instanceof _Self_))
+            return  new _Self_($_View, onInsert);
+
+        $_View = $($_View);
+
+        iView = $_View.data('_LVI_');
+        iView = (iView instanceof _Self_)  ?  iView  :  this;
+
+        this.callback = {
+            insert:    [ ],
+            remove:    [ ]
+        };
+        if (onInsert)  iView.on('insert', onInsert);
+
+        if (iView !== this)  return iView;
+
+        this.$_View = $_View.data('_LVI_', this);
+        this.$_Template = $(this.$_View[0].children[0]).addClass('ListView_Item');
+        this.length = 0;
+        this.data = [ ];
+
+//        this.limit = parseInt( this.$_View.attr('max') )  ||  Infinity;
+//        this.limit = (this.data.length > this.limit) ? this.limit : this.data.length;
     }
 
     ListView.listSelector = 'ul, ol, dl, tbody, *[multiple]';
 
-    $.extend(ListView.prototype, {
-        renderOne:     function (iValue) {
-            var $_Clone = this.$_Template.clone(true);
+    function _Callback_($_Item, iValue, Index) {
+        var iCallback = this.callback.insert,  iReturn;
 
-            this.onRenderOne(
-                $_Clone.data('LV_Model', iValue),  iValue
+        for (var i = 0;  i < iCallback.length;  i++)
+            iReturn = iCallback[i].call(
+                this,  $_Item.data('LV_Model', iValue),  iValue,  Index
             );
-            return $_Clone;
+        return iReturn;
+    }
+
+    $.extend(ListView.prototype, {
+        on:         function (iType, iCallback) {
+            if (
+                (typeof iType == 'string')  &&
+                (typeof iCallback == 'function')
+            )
+                this.callback[iType].push(iCallback);
+
+            return this;
         },
-        render:        function (iData) {
-            this.data = iData  ?  [ ].concat.apply(iData, this.data)  :  this.data;
-
-            var iLimit = parseInt( this.$_View.attr('max') )  ||  Infinity;
-            iLimit = (this.data.length > iLimit) ? iLimit : this.data.length;
-
-            var $_List = $();
-
-            for (var i = 0;  i < iLimit;  i++)
-                $_List.add( this.renderOne( this.data[i] ) );
-
-            $_List.prependTo( this.$_View );
+        indexOf:    function () {
+            return  this.$_View.children('.ListView_Item').eq( arguments[0] );
         },
-        insert:        function (iData, Index) {
+        insert:     function (iValue, Index) {
+            iValue = (iValue === undefined)  ?  { }  :  iValue;
             Index = Index || 0;
 
-            this.data.splice(Index, 0, iData);
-            this.$_View.eq(Index).before( this.renderOne(iData) );
+            var $_Clone = this.$_Template.clone(true);
+
+            this.indexOf(Index).before( $_Clone[0] );
+
+            var iReturn = _Callback_.call(this, $_Clone, iValue, Index);
+
+            this.data.splice(
+                Index,  0,  (iReturn === undefined) ? iValue : iReturn
+            );
+
+            this.length++ ;
+
+            return $_Clone;
         },
-        delete:        function (Index) {
+        render:     function (iData, DetachTemplate) {
+            iData = $.likeArray(iData) ? iData : [iData];
+
+            for (var i = 0;  i < iData.length;  i++)
+                this.insert( iData[i] );
+
+            if (DetachTemplate)  this.$_Template.detach();
+
+            return this;
+        },
+        remove:     function (Index) {
             Index = parseInt(Index);
             if (isNaN( Index ))  return;
 
-            this.data.splice(Index, 1);
-            this.$_View.eq(Index).remove();
+            _Callback_.call(
+                this,
+                this.indexOf(Index).remove(),
+                this.data.splice(Index, 1)[0],
+                Index
+            );
+        },
+        valueOf:    function () {
+            var iValue = this.data[Number( arguments[0] )];
+
+            return  (iValue === undefined) ? $.makeArray(this.data) : iValue;
         }
     });
 
-    $.ListView = function ($_View, iData, iRender) {
-        return  new ListView($($_View), iData, iRender);
-    };
-
-    $.ListView.listSelector = ListView.listSelector;
+    $.ListView = ListView;
 
 
 /* ---------- Base64 to Blob  v0.1 ---------- */
