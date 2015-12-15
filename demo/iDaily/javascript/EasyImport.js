@@ -2,7 +2,7 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v1.0  (2015-12-10)  Stable
+//      [Version]    v1.0  (2015-12-15)  Stable
 //
 //                   (Modern & Mobile Edition)
 //
@@ -585,9 +585,10 @@
         var iHandler = (_DOM_.operate('Data', [this], '_event_') || { })[iEvent.type];
         if (! iHandler)  return;
 
-        var This_DOM = this,
-            Handler_Args = [iEvent].concat( _DOM_.operate('Data', [this], '_trigger_') ),
-            iReturn;
+        var Handler_Args = [iEvent].concat(
+                _DOM_.operate('Data', [iEvent.target], '_trigger_')
+            ),
+            This_DOM = this,  iReturn;
 
         _Object_.each(iHandler,  function () {
             var This_Handler = arguments[1],  _Return_;
@@ -772,7 +773,7 @@
     }
 /* ---------- jQuery API ---------- */
 
-    BOM.iQuery = function (Element_Set, iContext) {
+    function iQuery(Element_Set, iContext) {
         /* ----- Global Wrapper ----- */
         var _Self_ = arguments.callee;
 
@@ -797,9 +798,9 @@
                 );
         }
         this.add( Element_Set );
-    };
+    }
 
-    var $ = BOM.iQuery;
+    var $ = BOM.iQuery = iQuery;
     $.fn = $.prototype;
 
     $.fn.add = function (Element_Set) {
@@ -825,12 +826,12 @@
         return this;
     };
 
-    if (typeof BOM.jQuery != 'function') {
-        BOM.jQuery = BOM.iQuery;
-        BOM.$ = $;
-    }
+    if (typeof BOM.jQuery != 'function')
+        BOM.jQuery = BOM.$ = $;
+
 
     /* ----- iQuery Static Method ----- */
+
     _Object_.extend($, _Object_, _Time_, {
         browser:          _Browser_,
         isData:           function () {
@@ -1034,6 +1035,17 @@
                             );
                 });
             $_New.prevObject = this;
+
+            return $_New;
+        },
+        refresh:            function () {
+            if (! this.selector)  return this;
+
+            var $_New = $(this.selector, this.context);
+
+            if (this.prevObject instanceof $)
+                $_New = this.prevObject.pushStack($_New);
+
             return $_New;
         },
         slice:              function () {
@@ -1411,30 +1423,30 @@
         on:                 function (iType, iFilter, iCallback) {
             if (typeof iFilter != 'string')
                 return  this.bind.apply(this, arguments);
-            else
-                return  this.bind(iType, function () {
-                        var iArgs = $.makeArray(arguments);
 
-                        var $_Filter = $(iFilter, this),
-                            $_Target = $(iArgs[0].target),
-                            iReturn;
+            return  this.bind(iType, function () {
+                var iArgs = $.makeArray(arguments);
 
-                        var $_Patch = $_Target.parents();
-                        Array.prototype.unshift.call($_Patch, $_Target[0]);
+                var $_Filter = $(iFilter, this),
+                    $_Target = $(iArgs[0].target),
+                    iReturn;
 
-                        for (var i = 0, _Return_;  i < $_Patch.length;  i++) {
-                            if ($_Patch[i] === this)  break;
-                            if ($.inArray($_Patch[i], $_Filter) == -1)  continue;
+                var $_Path = $_Target.parents();
+                Array.prototype.unshift.call($_Path, $_Target[0]);
 
-                            if (iArgs[1] === null)
-                                iArgs = [ iArgs[0] ].concat( $($_Patch[i]).data('_trigger_') );
-                            _Return_ = iCallback.apply($_Patch[i], iArgs);
-                            if (iReturn !== false)
-                                iReturn = _Return_;
-                        }
+                for (var i = 0, _Return_;  i < $_Path.length;  i++) {
+                    if ($_Path[i] === this)  break;
+                    if ($.inArray($_Path[i], $_Filter) == -1)  continue;
 
-                        return iReturn;
-                    });
+                    if (iArgs[1] === null)
+                        iArgs = [ iArgs[0] ].concat( $($_Path[i]).data('_trigger_') );
+                    _Return_ = iCallback.apply($_Path[i], iArgs);
+                    if (iReturn !== false)
+                        iReturn = _Return_;
+                }
+
+                return iReturn;
+            });
         },
         one:                function () {
             var iArgs = $.makeArray(arguments);
@@ -1897,12 +1909,51 @@
                 swipeTop = Touch_Data.pY - iTouch.pageY,
                 iTime = iEvent.timeStamp - Touch_Data.time;
 
-            if (Math.max(Math.abs(swipeLeft), Math.abs(swipeTop)) > 20)
-                $(iEvent.target).trigger('swipe',  [swipeLeft, swipeTop]);
+            var iShift = Math.sqrt(
+                    Math.pow(swipeLeft, 2)  +  Math.pow(swipeTop, 2)
+                );
+            if (iShift > 20)
+                $(iEvent.target).trigger('swipe', [
+                    swipeLeft,  swipeTop,  iShift
+                ]);
             else
                 $(iEvent.target).trigger((iTime > 300) ? 'press' : 'tap');
         }
     );
+
+    /* ----- Text Input Event ----- */
+
+    $.fn.input = function (iHandler) {
+        this.filter('input, textarea').on('input',  function (iEvent) {
+            iHandler.call(this, iEvent, this.value);
+        });
+
+        this.not('input, textarea').on('paste',  function (iEvent) {
+
+            return  iHandler.call(
+                iEvent.target,
+                iEvent,
+                iEvent.clipboardData.getData('text/plain')
+            );
+        }).keyup(function (iEvent) {
+
+            var iKey = iEvent.which;
+
+            if (
+                (iKey < 48)  ||  (iKey > 105)  ||
+                ((iKey > 90)  &&  (iKey < 96))
+            )
+                return;
+
+            if (iEvent.ctrlKey || iEvent.shiftKey || iEvent.altKey)
+                return;
+
+            iHandler.call(iEvent.target, iEvent, iEvent.target.innerText);
+        });
+
+        return this;
+    };
+
     /* ----- Cross Page Event ----- */
 
     function CrossPageEvent(iType, iSource) {

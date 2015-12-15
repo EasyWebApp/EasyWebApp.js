@@ -689,7 +689,7 @@ form .Flex-Box.Row {
 form .Row > * {
     display:           inline-block;
     vertical-align:    middle;
-    font-size:         13px;
+    font-size:         14px;
 }
 @media (min-width: 400px) {
     form .Row > * {
@@ -1035,6 +1035,7 @@ img.UserLogo {
 }
 .Tab.Point > .Body,
 .Tab.Point > div,    .Tab.Point > section  {
+    border-radius:       0;
     background-color:    transparent;
     background-size:     cover;
     position:            relative;
@@ -1141,6 +1142,7 @@ img.UserLogo {
     background-color:       transparent;
     min-height:             10em;
     min-width:              15em;
+    word-break:             break-all;
 }
 /* ----- Icon ----- */
 .Icon {
