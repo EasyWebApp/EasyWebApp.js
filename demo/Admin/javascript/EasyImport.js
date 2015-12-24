@@ -2,7 +2,7 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v1.0  (2015-12-15)  Stable
+//      [Version]    v1.0  (2015-12-24)  Stable
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.
@@ -958,6 +958,11 @@
             }
             return iString;
         },
+        byteLength:       function () {
+            return  arguments[0].replace(
+                /[^\u0021-\u007e\uff61-\uffef]/g,  'xx'
+            ).length;
+        },
         parseJSON:        BOM.JSON.parseAll,
         parseXML:         function (iString) {
             iString = iString.trim();
@@ -1472,14 +1477,11 @@
             });
         },
         hasClass:           function (iClass) {
-            if (typeof iClass != 'string')  return false;
-
-            iClass = iClass.trim();
-
-            if (! DOM.documentElement.classList)
-                return  ((' ' + this.attr('class') + ' ').indexOf(' ' + iClass + ' ') > -1);
-            else
-                return  this[0].classList.contains(iClass);
+            return (
+                (typeof iClass == 'string')  &&
+                this[0]  &&
+                this[0].classList.contains( iClass.trim() )
+            );
         },
         bind:               function (iType, iCallback) {
             iType = iType.trim().split(/\s+/);
@@ -1699,7 +1701,7 @@
     for (var iName in _inKey_(
         'abort', 'error',
         'keydown', 'keypress', 'keyup',
-        'mousedown', 'mouseup', 'mousemove',
+        'mousedown', 'mouseup', 'mousemove', 'mousewheel',
         'click', 'dblclick', 'scroll',
         'select', 'focus', 'blur', 'change', 'submit', 'reset',
         'tap', 'press', 'swipe'
@@ -1711,7 +1713,7 @@
 
 
 /* ----- DOM UI Data Operator ----- */
-    var RE_URL = /^(\w+:)?\/\/[^\s]+$/;
+    var RE_URL = /^(\w+:)?\/\/[\u0021-\u007e\uff61-\uffef]+$/;
 
     function Value_Operator(iValue) {
         var $_This = $(this),
@@ -1748,7 +1750,7 @@
                     return;
                 }
                 iURL = $_This.css('background-image').match(/^url\(('|")?([^'"]+)('|")?\)/);
-                return  (End_Element && $_This.text())  ||  (iURL && iURL[2]);
+                return  End_Element  ?  $_This.text()  :  (iURL && iURL[2]);
             }
         }
     }
@@ -1901,6 +1903,17 @@
         });
 
         return Pseudo_Rule;
+    };
+
+/* ---------- Range of Selection ---------- */
+
+    $.fn.selection = function (iContent) {
+        var iSelection = (this[0].ownerDocument || this[0]).getSelection();
+
+        if ($.type(this[0]) in Type_Info.DOM.root) {
+            if (iContent === undefined)  return iSelection;
+        } else if ( $.contains(this[0], iSelection.focusNode) )
+            return iSelection;
     };
 
 })(self, self.document);
@@ -2238,6 +2251,37 @@
     });
 
 
+    /* ----- DOM Selection ----- */
+    function Selection(_DOM_) {
+        this._origin_ = _DOM_.selection;
+
+        this.type = this.getRangeAt().text ? 'Range' : 'Caret';
+        this.isCollapsed = true;
+        this.rangeCount = 1;
+
+        this.anchorNode = _DOM_.activeElement;
+        this.anchorOffset = 0;
+        this.focusNode = _DOM_.activeElement;
+        this.focusOffset = 0;
+    }
+
+    $.extend(Selection.prototype, {
+        getRangeAt:            function () {
+            return  this._origin_.createRange();
+        },
+        toString:              function () {
+            return  this.getRangeAt().text;
+        },
+        deleteFromDocument:    function () {
+            if (this.type == 'Range')  this.focusNode.innerText = '';
+        }
+    });
+
+    BOM.getSelection = DOM.getSelection = function () {
+        return  new Selection(this.document || this);
+    };
+
+
     /* ----- XML DOM Parser ----- */
     var IE_DOMParser = (function (MS_Version) {
             for (var i = 0; i < MS_Version.length; i++)  try {
@@ -2387,16 +2431,31 @@
             var iShift = Math.sqrt(
                     Math.pow(swipeLeft, 2)  +  Math.pow(swipeTop, 2)
                 );
-            if (iShift > 20)
-                $(iEvent.target).trigger('swipe', [
-                    swipeLeft,  swipeTop,  iShift
-                ]);
-            else
-                $(iEvent.target).trigger((iTime > 300) ? 'press' : 'tap');
+
+            $(iEvent.target).trigger((iShift < 22)  ?
+                ((iTime > 300) ? 'press' : 'tap')  :  {
+                    type:      'swipe',
+                    pageX:     swipeLeft,
+                    pageY:     swipeTop,
+                    detail:    iShift
+                }
+            );
         }
     );
-
     /* ----- Text Input Event ----- */
+
+    function TypeBack(iHandler, iEvent, iKey) {
+        if (false !== iHandler.call(
+            iEvent.target,  iEvent,  this[iKey]
+        ))
+            return;
+
+        var iValue = this[iKey].split('');
+        iValue.splice(
+            BOM.getSelection().getRangeAt(0).startOffset - 1,  1
+        );
+        this[iKey] = iValue.join('');
+    }
 
     $.fn.input = function (iHandler) {
         this.filter('input, textarea').on(
@@ -2405,7 +2464,7 @@
                 if ((! $.browser.modern)  &&  (iEvent.propertyName != 'value'))
                     return;
 
-                iHandler.call(this, iEvent, this.value);
+                TypeBack.call(this, iHandler, iEvent, 'value');
             }
         );
 
@@ -2431,7 +2490,7 @@
             if (iEvent.ctrlKey || iEvent.shiftKey || iEvent.altKey)
                 return;
 
-            iHandler.call(iEvent.target, iEvent, iEvent.target.innerText);
+            TypeBack.call(iEvent.target, iHandler, iEvent, 'innerText');
         });
 
         return this;
@@ -2446,7 +2505,15 @@
         } else
             $.extend(this, iType);
 
-        if (iSource)  $.extend(this, iSource.dataset);
+        if (! (iSource instanceof Element))  return;
+
+        $.extend(this,  $.map(iSource.dataset,  function (iValue) {
+            if (typeof iValue == 'string')  try {
+                return  $.parseJSON(iValue);
+            } catch (iError) { }
+
+            return iValue;
+        }));
     }
 
     CrossPageEvent.prototype.valueOf = function () {
@@ -2492,6 +2559,17 @@
             $.extend({data: iData},  _Event_.valueOf()),  '*'
         );
     };
+
+    /* ----- Mouse Wheel Event ----- */
+
+    if (! $.browser.ff)  return;
+
+    $_DOM.on('DOMMouseScroll',  function (iEvent) {
+        $(iEvent.target).trigger({
+            type:          'mousewheel',
+            wheelDelta:    -iEvent.detail * 40
+        });
+    });
 
 })(self, self.document, self.iQuery);
 
@@ -2705,7 +2783,7 @@
                 if (! (iXHR.crossDomain || (iXHR.readyState == 4)))  return;
 
                 if (typeof iXHR.onready == 'function')
-                    iXHR.onready.call(iXHR, iXHR.responseAny());
+                    iXHR.onready.call(iXHR, iXHR.responseAny(), 'complete', iXHR);
                 iXHR = null;
             };
             XHR_Open.apply(this,  this.requestArgs = arguments);
@@ -2802,7 +2880,9 @@
                         iDHR.responseText = $_Content.find('body').text();
                         iDHR.status = 200;
                         iDHR.readyState = 4;
-                        iDHR.onready.call($_Form[0],  iDHR.responseAny(),  $_Content);
+                        iDHR.onready.call(
+                            $_Form[0],  iDHR.responseAny(),  $_Content,  iDHR
+                        );
                     } catch (iError) { }
                 });
             }).attr('name', iTarget);
@@ -2824,7 +2904,7 @@
                     if (iDHR.readyState) {
                         iDHR.status = 200;
                         iDHR.readyState = 4;
-                        iDHR.onready.apply(iDHR, arguments);
+                        iDHR.onready.call(iDHR, arguments[0], 'success', iDHR);
                     }
                     delete this[_UUID_];
                     iDHR.$_DOM.remove();
@@ -3065,6 +3145,34 @@
             helpURL:    'https://msdn.microsoft.com/en-us/library/1dk3k160(VS.85).aspx'
         });
     };
+
+    /* ----- DOM Class List ----- */
+
+    function DOMTokenList() {
+        var iClass = arguments[0].getAttribute('class').trim().split(/\s+/);
+
+        $.extend(this, iClass);
+
+        this.length = iClass.length;
+    }
+
+    DOMTokenList.prototype.contains = function (iClass) {
+        if (iClass.match(/\s+/))
+            throw  new DOMException([
+                "Failed to execute 'contains' on 'DOMTokenList': The token provided (",
+                iClass,
+                ") contains HTML space characters, which are not valid in tokens."
+            ].join("'"));
+
+        return  (Array.prototype.indexOf.call(this, iClass) > -1);
+    };
+
+    Object.defineProperty(Element.prototype, 'classList', {
+        get:    function () {
+            return  new DOMTokenList(this);
+        },
+        set:    function () { }
+    });
 
     /* ----- History API ----- */
 

@@ -578,7 +578,7 @@ html.Fixed > body > .Fix-Top {
 /* ----- Item Box ----- */
 .Item-Box {
     display:    inline-block;
-    margin:     0  1%  0.5em;
+    margin:     0  2px  0.5em;
 }
 .Item-Box.visible {
     background:    white;
@@ -1146,11 +1146,12 @@ img.UserLogo {
 }
 /* ----- Icon ----- */
 .Icon {
-    display:       inline-block;
-    font-style:    normal;
-    font-size:     1.5em;
-    width:         2em;
-    height:        2em;
+    display:           inline-block;
+    vertical-align:    middle;
+    font-style:        normal;
+    font-size:         1.5em;
+    width:             2em;
+    height:            2em;
 }
 .Icon:before {
     display:       inline-block;

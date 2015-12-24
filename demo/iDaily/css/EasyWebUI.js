@@ -2,7 +2,7 @@
 //          >>>  EasyWebUI Component Library  <<<
 //
 //
-//      [Version]     v1.2  (2015-12-15)  Stable
+//      [Version]     v1.2  (2015-12-23)  Stable
 //
 //      [Based on]    iQuery v1  or  jQuery (with jQuery+)
 //
@@ -320,7 +320,9 @@
         var $_Label = this.children('label');
         var $_Active = $_Label.filter('.active');
 
-        ($_Active.length ? $_Active : $_Label)[0].click();
+        $_Active = $_Active.length ? $_Active : $_Label;
+
+        if ($_Active.length)  $_Active[0].click();
     }
 
     $.fn.iTab = function () {
@@ -342,56 +344,55 @@
                 }
 
             var $_Child = $_Tab_Box.children();
-            var $_Label = $_Child.filter('label');
 
-            var $_LT = $_Label.eq(0),  Index = 0,
-                $_Tab_Set = $_Child.not($_Label).not(
+            var $_Tab_Set = $_Child.not('label').not(
                     $_Child.filter('input[type="radio"]').remove()
                 );
 
-            $.ListView(this,  'div:visible',  function ($_Tab_Body) {
+            $.ListView(
+                this,
+                [
+                    'div:visible',  'label',  'input[type="radio"]'
+                ],
+                function ($_Tab_Item) {
+                    var _UUID_ = $.uuid();
 
-                var $_This_Label = this.$_View.children('label').eq(Index++),
-                    _UUID_ = $.uuid();
-                if (! $_This_Label.length) {
-                    $_This_Label = $_LT.clone(true).removeClass('active');
-                    $_LT.before( $_This_Label );
+                    $_Tab_Item.filter('label').attr('for', _UUID_);
+
+                    var _Radio_ = $([
+                            '<input type="radio" name=',  iName,  ' id=',  _UUID_,  ' />'
+                        ].join('"'));
+                    var _Tab_ = $_Tab_Item.not('label').before(_Radio_);
+
+                    if (iType == 'Point')
+                        this.$_View.children('label[for]').appendTo(this.$_View);
+
+                    if (! $.browser.modern)
+                        _Radio_.change(function () {
+                            $_Tab_Set.hide();
+                            _Tab_.show();
+                        });
                 }
-                $_This_Label.attr('for', _UUID_);
-
-                var _Radio_ = $([
-                        '<input type="radio" name=',  iName,  ' id=',  _UUID_,  ' />'
-                    ].join('"'));
-                var _Tab_ = $_Tab_Body.after(_Radio_);
-
-                if (! $.browser.modern)
-                    _Radio_.change(function () {
-                        $_Tab_Set.hide();
-                        _Tab_.show();
-                    });
-
-                if (Index == 1)  $_Tab_Body.remove();
-
-            }).on('remove',  function () {
+            ).on('remove',  function () {
                 $([
-                    'label[for=',
-                    $(arguments[0][0].previousElementSibling).remove()[0].id,
+                    '*[id=',
+                    arguments[0].filter('label').attr('for'),
                     ']'
                 ].join('"')).remove();
 
                 Tab_Active.call( this.$_View );
 
+            }).on('afterRender',  function () {
+
+                Tab_Active.call( $_Tab_Box );
+
             }).render(
-                $.map($_Tab_Set,  function () { return 1; }),
-                (iType !== 'Point')
+                $.map($_Tab_Set,  function () { return 1; })
             );
-
-            Tab_Active.call( $_Tab_Box );
-
-        }).swipe(function (iEvent, swipeX, swipeY) {
+        }).swipe(function (iEvent) {
             if (
-                (typeof swipeX != 'number')  ||
-                (Math.abs(swipeY)  >  Math.abs(swipeX))
+                (typeof iEvent.pageX != 'number')  ||
+                (Math.abs(iEvent.pageY)  >  Math.abs(iEvent.pageX))
             )
                 return;
 
@@ -402,9 +403,13 @@
 
             $_Target = $_Path.length ? $_Path.slice(-1) : $_Target;
 
-            var Index = $_Tab_Body.index( $_Target )  +  ((swipeX < 0)  ?  1  :  -1);
-
-            $_Target = $_Tab_Body.eq(Index % $_Tab_Body.length);
+            $_Target = $_Tab_Body.eq(
+                (
+                    $_Tab_Body.index($_Target) + (
+                        (iEvent.pageX < 0)  ?  1  :  -1
+                    )
+                ) % $_Tab_Body.length
+            );
 
             $('label[for="' + $_Target[0].previousElementSibling.id + '"]')[0]
                 .click();

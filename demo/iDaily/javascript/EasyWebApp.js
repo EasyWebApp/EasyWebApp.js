@@ -573,7 +573,7 @@
                     var iValue = This_App.dataStack.value(iName, $_This.is($_List));
 
                     if (iValue instanceof Array)
-                        $.ListView($_This).render(iValue);
+                        $.ListView($_This).clear().render(iValue);
                     else if ( $.isPlainObject(iValue) )
                         $_This.data('EWA_Model', iValue).value(iValue);
                     else
