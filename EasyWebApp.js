@@ -2,7 +2,7 @@
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]     v2.2  (2015-12-10)  Stable
+//      [Version]     v2.2  (2015-12-30)  Stable
 //
 //      [Based on]    iQuery  |  jQuery with jQuery+,
 //
@@ -254,7 +254,6 @@
         ]));
         this.href = this.href || this.app.history.last().HTML;
         this.method = (this.method || 'Get').toLowerCase();
-        this.data = this.$_DOM.data('EWA_Model') || { };
     }
 
     var Prefetch_Tag = $.browser.modern ? 'prefetch' : 'next',
@@ -281,12 +280,17 @@
 
             return $_Link;
         },
+        getData:      function () {
+            this.data = this.$_DOM.data('EWA_Model') ||
+                this.$_DOM.data('LV_Model');
+            return  this.data || { };
+        },
         getTarget:    function () {
             return  (this.target == '_self')  ?
                 this.app.domRoot  :  $('[name="' + this.target + '"]');
         },
         getArgs:      function () {
-            var This_App = this.app,  iData = this.data;
+            var This_App = this.app,  iData = this.getData();
 
             return  $.map(this.$_DOM[0].dataset,  function (iName) {
                 var _Arg_ = iData[iName] || This_App.dataStack.value(iName);
@@ -297,7 +301,7 @@
         getURL:       function () {
             return  this.app.makeURL(
                 this.src || '',
-                this.data,
+                this.getData(),
                 this.method.match(/Get|Delete/i)  &&  this.getArgs()
             );
         },
@@ -491,13 +495,13 @@
             var iReturn = this.app.domRoot.triggerHandler('appExit', [
                     this.app.history.last().HTML,
                     this.href,
-                    this.data
+                    this.getData()
                 ]);
             if (iReturn === false)  return;
 
             this.app.history.move();
             BOM.sessionStorage.EWA_Model = BOM.JSON.stringify(
-                $.isPlainObject(iReturn) ? iReturn : this.data
+                $.isPlainObject(iReturn) ? iReturn : this.getData()
             );
             BOM.location.href = this.href  +  '?'  +  $.param( this.getArgs() );
         }

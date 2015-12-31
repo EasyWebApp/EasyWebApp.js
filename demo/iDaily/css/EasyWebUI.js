@@ -2,7 +2,7 @@
 //          >>>  EasyWebUI Component Library  <<<
 //
 //
-//      [Version]     v1.2  (2015-12-23)  Stable
+//      [Version]     v1.3  (2015-12-28)  Stable
 //
 //      [Based on]    iQuery v1  or  jQuery (with jQuery+)
 //
@@ -123,24 +123,25 @@
     var Need_Fix,
         _addClass_ = $.fn.addClass;
 
-    $.fn.addClass = function () {
-        _addClass_.apply(this, arguments);
+    if (! ($.browser.msie < 10)) {
+        $.fn.addClass = function () {
+            _addClass_.apply(this, arguments);
 
-        if (Need_Fix  &&  ($.inArray('Flex-Box', arguments[0].split(' ')) > -1))
-            return  this.each(FlexFix);
+            if (Need_Fix  &&  ($.inArray('Flex-Box', arguments[0].split(' ')) > -1))
+                return  this.each(FlexFix);
 
-        return this;
-    };
+            return this;
+        };
 
-    $(DOM).ready(function () {
-        Need_Fix = isNaN(
-            parseInt( $('body').css(CSS_Attribute.Prefix + 'flex') )
-        );
-
-        if (Need_Fix)  $('.Flex-Box').each(FlexFix);
-    });
-
+        $(DOM).ready(function () {
+            if (isNaN(
+                parseInt( $('body').css(CSS_Attribute.Prefix + 'flex') )
+            ))
+                $('.Flex-Box').each(FlexFix);
+        });
+    }
 /* ---------- Input Range 补丁  v0.1 ---------- */
+
     function Pseudo_Bind() {
         var iStyleSheet = $.cssPseudo([arguments[0]]),
             iStyle = [ ];
@@ -312,12 +313,12 @@
         });
     };
 
-/* ---------- 标签页 控件  v0.4 ---------- */
+/* ---------- 标签页 控件  v0.5 ---------- */
 
     var Tab_Type = ['Point', 'Button', 'Monitor'];
 
     function Tab_Active() {
-        var $_Label = this.children('label');
+        var $_Label = this.children('label').not(arguments[0]);
         var $_Active = $_Label.filter('.active');
 
         $_Active = $_Active.length ? $_Active : $_Label;
@@ -335,59 +336,71 @@
 
         }).each(function () {
 
-            var $_Tab_Box = $(this),  iName = $.uuid('iTab'),  iType;
+            var $_Tab_Box = $(this),  $_Tab_Head,
+                iName = $.uuid('iTab'),  iType;
 
             for (var i = 0;  i < Tab_Type.length;  i++)
                 if ($_Tab_Box.hasClass( Tab_Type[i] )) {
                     iType = Tab_Type[i];
                     $_Tab_Box.attr('data-tab-type', iType);
                 }
+        /* ----- 成员实例化核心 ----- */
 
-            var $_Child = $_Tab_Box.children();
+            var Label_At = (this.children[0].tagName.toLowerCase() == 'label'),
+                iSelector = ['input[type="radio"]',  'div, section, .Body'];
+            iSelector[Label_At ? 'unshift' : 'push']('label');
 
-            var $_Tab_Set = $_Child.not('label').not(
-                    $_Child.filter('input[type="radio"]').remove()
-                );
+            $.ListView(this,  iSelector,  function ($_Tab_Item) {
+                var _UUID_ = $.uuid();
 
-            $.ListView(
-                this,
-                [
-                    'div:visible',  'label',  'input[type="radio"]'
-                ],
-                function ($_Tab_Item) {
-                    var _UUID_ = $.uuid();
+                var $_Label = $_Tab_Item.filter('label').attr('for', _UUID_),
+                    $_Radio = $([
+                        '<input type="radio" name=',  iName,  ' id=',  _UUID_,  ' />'
+                    ].join('"'));
+                var $_Tab_Body = $_Tab_Item.not($_Label).before($_Radio);
 
-                    $_Tab_Item.filter('label').attr('for', _UUID_);
+                $_Tab_Head = this.$_View.children('label[for]')[
+                    Label_At ? 'prependTo' : 'appendTo'
+                ](this.$_View);
 
-                    var _Radio_ = $([
-                            '<input type="radio" name=',  iName,  ' id=',  _UUID_,  ' />'
-                        ].join('"'));
-                    var _Tab_ = $_Tab_Item.not('label').before(_Radio_);
+                if (! $.browser.modern)
+                    $_Radio.change(function () {
+                        $_Tab_Box.children().not('label, input').hide();
+                        $_Tab_Body.show();
+                    });
+            }).on('remove',  function () {
 
-                    if (iType == 'Point')
-                        this.$_View.children('label[for]').appendTo(this.$_View);
+                var $_Label = arguments[0].filter('label');
 
-                    if (! $.browser.modern)
-                        _Radio_.change(function () {
-                            $_Tab_Set.hide();
-                            _Tab_.show();
-                        });
-                }
-            ).on('remove',  function () {
-                $([
-                    '*[id=',
-                    arguments[0].filter('label').attr('for'),
-                    ']'
-                ].join('"')).remove();
+                $('*[id="' + $_Label.attr('for') + '"]').remove();
 
-                Tab_Active.call( this.$_View );
+                Tab_Active.call(this.$_View, $_Label);
 
             }).on('afterRender',  function () {
 
-                Tab_Active.call( $_Tab_Box );
+                Tab_Active.call( this.$_View );
 
+                if (! this.$_View.hasClass('auto'))  return;
+
+        /* ----- 自动切换模式 ----- */
+
+                var Index = 0,  iPause;
+
+                $.every(2,  function () {
+                    if (iPause  ||  (! $_Tab_Box.hasClass('auto')))
+                        return;
+
+                    Index = (Index < $_Tab_Head.length)  ?  Index  :  0;
+
+                    $_Tab_Head[Index++].click();
+                });
+
+                this.$_View.hover(
+                    function () { iPause = true; },
+                    function () { iPause = false; }
+                );
             }).render(
-                $.map($_Tab_Set,  function () { return 1; })
+                Array( $.ListView(this).length )
             );
         }).swipe(function (iEvent) {
             if (
@@ -395,6 +408,8 @@
                 (Math.abs(iEvent.pageY)  >  Math.abs(iEvent.pageX))
             )
                 return;
+
+        /* ----- 滑动切换模式 ----- */
 
             var $_This = $(this),  $_Target = $(iEvent.target);
 

@@ -588,7 +588,8 @@ html.Fixed > body > .Fix-Top {
                    box-shadow    ease-in-out  .15s;
     padding:       1em;
 }
-.Item-Box.visible:hover {
+.Item-Box.visible:hover,
+.Item-Box.active {
     border-color:    rgb(14, 144, 210);
     box-shadow:      inset  0  1px  1px  rgba(0, 0, 0, 0.075),
                      0  0  8px  rgba(14, 144, 210, 0.6);
@@ -947,11 +948,11 @@ img.UserLogo {
     cursor:           pointer;
 }
 .Tab > label.active {
-    background:     white;
+    background:     white  !important;
     font-weight:    bold;
 }
 .Tab > label:hover {
-    background:    rgb(200, 200, 200);
+    background:    rgb(200, 200, 200)  !important;
 }
 .Tab > .Body,
 .Tab > div,    .Tab > section  {
@@ -1027,6 +1028,7 @@ img.UserLogo {
 .Tab.Point > label {
     border-radius:    50%;
     padding:          0.3em;
+    margin:           0  0.2em;
     position:         relative;
     z-index:          1;
 }
@@ -1038,6 +1040,7 @@ img.UserLogo {
     border-radius:       0;
     background-color:    transparent;
     background-size:     cover;
+    overflow:            hidden;
     position:            relative;
     z-index:             0;
 }
