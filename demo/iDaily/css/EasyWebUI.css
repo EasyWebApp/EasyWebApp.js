@@ -581,12 +581,12 @@ html.Fixed > body > .Fix-Top {
     margin:     0  2px  0.5em;
 }
 .Item-Box.visible {
-    background:    white;
-    border:        1px  solid  rgb(215, 215, 215);
-    box-shadow:    1px  2px  3px  rgb(200, 200, 200);
-    transition:    border-color  ease-in-out  .15s,
-                   box-shadow    ease-in-out  .15s;
-    padding:       1em;
+    background-color:    white;
+    border:              1px  solid  rgb(215, 215, 215);
+    box-shadow:          1px  2px  3px  rgb(200, 200, 200);
+    transition:          border-color  ease-in-out  .15s,
+                         box-shadow    ease-in-out  .15s;
+    padding:             1em;
 }
 .Item-Box.visible:hover,
 .Item-Box.active {
