@@ -4,9 +4,11 @@
 
     function Data_Fix() {
         return  $.map(arguments[0],  function (iValue) {
-            iValue.time = (new Date(iValue.time)).toLocaleString();
+            if (iValue.time)
+                iValue.time = (new Date(iValue.time)).toLocaleString();
 
-            iValue.img = Image_Root + iValue.img;
+            if ( (iValue.img || '').indexOf('http') )
+                iValue.img = Image_Root + iValue.img;
 
             return iValue;
         });

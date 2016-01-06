@@ -2,7 +2,7 @@
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]     v2.2  (2015-12-30)  Stable
+//      [Version]     v2.2  (2016-01-06)  Stable
 //
 //      [Based on]    iQuery  |  jQuery with jQuery+,
 //
@@ -14,7 +14,7 @@
 //                    jQuery Compatible API.
 //
 //
-//              (C)2015    shiy2008@gmail.com
+//              (C)2015-2016    shiy2008@gmail.com
 //
 
 
@@ -359,8 +359,7 @@
                     ]) || arguments[0]
                 );
             }
-            if (! this.src)
-                return  AJAX_Ready.call(this, this.$_DOM.data('EWA_Model'));
+            if (! this.src)  return  AJAX_Ready.call(this, this.getData());
 
             switch (this.method) {
                 case 'get':       ;
@@ -621,10 +620,7 @@
         switch (iEvent.type) {
             case 'click':     ;
             case 'tap':       {
-                if (iTagName == 'a') {
-                    iEvent.preventDefault();
-                    iEvent.stopPropagation();
-                }
+                if (iTagName == 'a')  iEvent.stopPropagation();
                 return  ('a|form|input|textarea|select'.indexOf(iTagName) > -1);
             }
             case 'change':    return  (this !== iEvent.target);

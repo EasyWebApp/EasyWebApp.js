@@ -2,7 +2,7 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v1.0  (2016-01-03)  Stable
+//      [Version]    v1.0  (2016-01-04)  Stable
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.
@@ -204,22 +204,30 @@
             isPlainObject:    function (iValue) {
                 return  iValue && (iValue.constructor === Object);
             },
+            likeArray:        function (iObject) {
+                return (
+                    iObject  &&
+                    (typeof iObject.length == 'number')  &&
+                    (typeof iObject.valueOf() != 'string')
+                );
+            },
             each:             function (Arr_Obj, iEvery) {
-                if (Arr_Obj)
-                    if (typeof Arr_Obj.length == 'number')
-                        for (var i = 0;  i < Arr_Obj.length;  i++)  try {
-                            if (iEvery.call(Arr_Obj[i], i, Arr_Obj[i]) === false)
-                                break;
-                        } catch (iError) {
-                            console.dir( iError.valueOf() );
-                        }
-                    else
-                        for (var iKey in Arr_Obj)  try {
-                            if (iEvery.call(Arr_Obj[iKey], iKey, Arr_Obj[iKey]) === false)
-                                break;
-                        } catch (iError) {
-                            console.dir( iError.valueOf() );
-                        }
+                if (this.likeArray( Arr_Obj ))
+                    for (var i = 0;  i < Arr_Obj.length;  i++)  try {
+                        if (false  ===  iEvery.call(Arr_Obj[i], i, Arr_Obj[i]))
+                            break;
+                    } catch (iError) {
+                        console.dir( iError.valueOf() );
+                    }
+                else
+                    for (var iKey in Arr_Obj)  try {
+                        if (false === iEvery.call(
+                            Arr_Obj[iKey],  iKey,  Arr_Obj[iKey]
+                        ))
+                            break;
+                    } catch (iError) {
+                        console.dir( iError.valueOf() );
+                    }
                 return Arr_Obj;
             },
             extend:           function () {
@@ -245,7 +253,9 @@
 
                             if (iDeep)  try {
                                 if ((iValue instanceof Array)  ||  _Object_.isPlainObject(iValue))
-                                    iTarget[iKey] = arguments.callee.call(this, true, undefined, iValue);
+                                    iTarget[iKey] = arguments.callee.call(
+                                        this,  true,  undefined,  iValue
+                                    );
                             } catch (iError) { }
                         }
                 return iTarget;
@@ -253,7 +263,7 @@
             map:              function (iSource, iCallback) {
                 var iTarget = { },  iArray;
 
-                if (typeof iSource.length == 'number') {
+                if (this.likeArray( iSource )) {
                     iTarget = [ ];
                     iArray = true;
                 }
@@ -272,13 +282,6 @@
                     });
 
                 return iTarget;
-            },
-            likeArray:        function (iObject) {
-                return (
-                    iObject  &&
-                    (typeof iObject.length == 'number')  &&
-                    (typeof iObject.valueOf() != 'string')
-                );
             },
             makeArray:        _Browser_.modern ?
                 function () {
@@ -384,7 +387,9 @@
         )
             return 'Window';
 
-        if (iVar.defaultView || iVar.documentElement)
+        if (iVar.location && (
+            iVar.location  ===  (iVar.defaultView || { }).location
+        ))
             return 'Document';
 
         if (
@@ -817,7 +822,9 @@
 
         return  _Object_.map(iSelector.split(/\s*,\s*/),  function () {
             try {
-                return  _Object_.makeArray( iRoot.querySelectorAll(arguments[0] || '*') );
+                return _Object_.makeArray(
+                    iRoot.querySelectorAll(arguments[0] || '*')
+                );
             } catch (iError) {
                 var _Selector_;
                 for (var _Pseudo_ in iPseudo) {
@@ -833,13 +840,14 @@
                     _Self_(iRoot, _Selector_[1]),
                     function (iDOM) {
                         if ( iPseudo[_Pseudo_].filter(iDOM) )
-                            return  _Selector_[2]  ?  _Self_(iDOM,  '*' + _Selector_[2])  :  iDOM;
+                            return  _Selector_[2]  ?
+                                _Self_(iDOM,  '*' + _Selector_[2])  :  iDOM;
                     }
                 );
             }
         });
     }
-    var DOM_Sort = (_Browser_.msie < 11) ?
+    var DOM_Sort = _Browser_.msie ?
             function (iSet) {
                 var $_Temp = [ ],  $_Result = [ ];
 
@@ -849,12 +857,13 @@
                 }
                 $_Temp.sort();
 
-                for (var i = 0, j = 0;  i < $_Temp.length;  i++) {
-                    if (i  &&  ($_Temp[i].valueOf() == $_Temp[i - 1].valueOf()))
-                        continue;
-
-                    $_Result[j++] = $_Temp[i].DOM;
-                }
+                for (var i = 0, j = 0;  i < $_Temp.length;  i++)
+                    if ((! i)  ||  (
+                        $_Temp[i].valueOf() != $_Temp[i - 1].valueOf()
+                    ) || (
+                        $_Temp[i].DOM.innerHTML  !=  $_Temp[i - 1].DOM.innerHTML
+                    ))
+                        $_Result[j++] = $_Temp[i].DOM;
 
                 return $_Result;
             } :
@@ -1061,8 +1070,8 @@
             };
         }
     });
-    /* ----- iQuery Instance Method ----- */
 
+    /* ----- iQuery Instance Method ----- */
     function DOM_Size(iName) {
         iName = {
             scroll:    'scroll' + iName,
@@ -1126,6 +1135,8 @@
             return this;
         };
     }
+
+    var Array_Reverse = Array.prototype.reverse;
 
     $.fn.extend = $.extend;
 
@@ -1249,16 +1260,16 @@
                 $_Result = $_Result.concat(
                     Object_Seek.call(this[i], 'parentNode').slice(0, -1)
                 );
-            $_Result = $( $.unique($_Result) );
 
-            return this.pushStack(
-                arguments[0]  ?  $_Result.filter(arguments[0])  :  $_Result
-            );
+            return  Array_Reverse.call(this.pushStack(
+                arguments[0]  ?  $($_Result).filter(arguments[0])  :  $_Result
+            ));
         },
         sameParents:        function () {
             if (this.length < 2)  return this.parents();
 
-            var iMin = Object_Seek.call(this[0], 'parentNode'),  iPrev;
+            var iMin = Object_Seek.call(this[0], 'parentNode').slice(0, -1),
+                iPrev;
 
             for (var i = 1, iLast;  i < this.length;  i++) {
                 iLast = Object_Seek.call(this[i], 'parentNode');
@@ -1276,14 +1287,14 @@
                     $_Result = iMin.slice(i);
                     break;
                 }
-            return this.pushStack(
+            return  Array_Reverse.call(this.pushStack(
                 arguments[0]  ?  $($_Result).filter(arguments[0])  :  $_Result
-            );
+            ));
         },
         parentsUntil:       function () {
-            return  this.parents().not(
-                    $(arguments[0]).parents().addBack()
-                );
+            return  Array_Reverse.call(
+                this.parents().not( $(arguments[0]).parents().addBack() )
+            );
         },
         children:           function () {
             var $_Result = [ ];
@@ -1319,7 +1330,6 @@
                 $_Result = $_Result.concat(
                     Object_Seek.call(this[i], 'nextElementSibling')
                 );
-            $_Result = $.unique($_Result);
 
             return this.pushStack(
                 arguments[0]  ?  $($_Result).filter(arguments[0])  :  $_Result
@@ -1332,7 +1342,7 @@
                 $_Result = $_Result.concat(
                     Object_Seek.call(this[i], 'previousElementSibling')
                 );
-            $_Result = $.unique($_Result).reverse();
+            $_Result.reverse();
 
             return this.pushStack(
                 arguments[0]  ?  $($_Result).filter(arguments[0])  :  $_Result
@@ -1351,7 +1361,7 @@
             for (var i = 0;  i < this.length;  i++)
                 $_Result = Array_Concat($_Result,  $(arguments[0], this[i]));
 
-            return  this.pushStack( $.unique($_Result) );
+            return  this.pushStack($_Result);
         },
         detach:             function () {
             for (var i = 0;  i < this.length;  i++)
@@ -1836,7 +1846,12 @@
         //  Event Property
         var iCreate = (typeof iEvent == 'string');
 
-        $.extend.call($,  this,  iCreate ? { } : iEvent,  iProperty);
+        if (! iCreate) {
+            for (var iKey in iEvent)
+                if (typeof iEvent[iKey] != 'function')
+                    this[iKey] = iEvent[iKey];
+        }
+        if ($.isPlainObject( iProperty ))  $.extend(this, iProperty);
 
         this.type = iCreate ? iEvent : this.type;
         this.target = this.target || this.srcElement;
@@ -1881,7 +1896,7 @@
 
     function Proxy_Handler(iEvent, iCallback) {
         iEvent = arguments.callee.caller ?
-            iEvent  :  $.Event(BOM.event || iEvent);
+            iEvent  :  $.Event(iEvent || BOM.event);
 
         var $_Target = $(iEvent.target);
         var iHandler = iCallback ?
@@ -1908,7 +1923,7 @@
     }
 
     function JE_Dispatch(iEvent, iFilter) {
-        iEvent = $.Event(BOM.event || iEvent);
+        iEvent = $.Event(iEvent || BOM.event);
 
         var $_Path = $(iEvent.target).parents().addBack();
         var _Path_ = $.makeArray($_Path);
@@ -2755,6 +2770,7 @@
                 this.open.apply(this, this.requestArgs);
 
                 var iXHR = this;
+
                 $.wait(Wait_Seconds, function () {
                     XD_Request.call(iXHR, iXHR.requestData);
                 });
@@ -3781,7 +3797,8 @@
                     message:    iMessage,
                     url:        iURL,
                     line:       iLine,
-                    column:     iColumn  ||  (BOM.event && BOM.event.errorCharacter)  ||  0
+                    column:
+                        iColumn  ||  (BOM.event && BOM.event.errorCharacter)  ||  0
                 };
 
             if (iError)  iData.stack = String(iError.stack || iError.stacktrace);

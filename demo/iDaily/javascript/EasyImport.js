@@ -2,7 +2,7 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v1.0  (2015-12-31)  Stable
+//      [Version]    v1.0  (2016-01-04)  Stable
 //
 //                   (Modern & Mobile Edition)
 //
@@ -10,7 +10,7 @@
 //                   with IE 8+ compatibility.
 //
 //
-//            (C)2015    shiy2008@gmail.com
+//          (C)2015-2016    shiy2008@gmail.com
 //
 
 
@@ -151,22 +151,30 @@
             isPlainObject:    function (iValue) {
                 return  iValue && (iValue.constructor === Object);
             },
+            likeArray:        function (iObject) {
+                return (
+                    iObject  &&
+                    (typeof iObject.length == 'number')  &&
+                    (typeof iObject.valueOf() != 'string')
+                );
+            },
             each:             function (Arr_Obj, iEvery) {
-                if (Arr_Obj)
-                    if (typeof Arr_Obj.length == 'number')
-                        for (var i = 0;  i < Arr_Obj.length;  i++)  try {
-                            if (iEvery.call(Arr_Obj[i], i, Arr_Obj[i]) === false)
-                                break;
-                        } catch (iError) {
-                            console.dir( iError.valueOf() );
-                        }
-                    else
-                        for (var iKey in Arr_Obj)  try {
-                            if (iEvery.call(Arr_Obj[iKey], iKey, Arr_Obj[iKey]) === false)
-                                break;
-                        } catch (iError) {
-                            console.dir( iError.valueOf() );
-                        }
+                if (this.likeArray( Arr_Obj ))
+                    for (var i = 0;  i < Arr_Obj.length;  i++)  try {
+                        if (false  ===  iEvery.call(Arr_Obj[i], i, Arr_Obj[i]))
+                            break;
+                    } catch (iError) {
+                        console.dir( iError.valueOf() );
+                    }
+                else
+                    for (var iKey in Arr_Obj)  try {
+                        if (false === iEvery.call(
+                            Arr_Obj[iKey],  iKey,  Arr_Obj[iKey]
+                        ))
+                            break;
+                    } catch (iError) {
+                        console.dir( iError.valueOf() );
+                    }
                 return Arr_Obj;
             },
             extend:           function () {
@@ -192,7 +200,9 @@
 
                             if (iDeep)  try {
                                 if ((iValue instanceof Array)  ||  _Object_.isPlainObject(iValue))
-                                    iTarget[iKey] = arguments.callee.call(this, true, undefined, iValue);
+                                    iTarget[iKey] = arguments.callee.call(
+                                        this,  true,  undefined,  iValue
+                                    );
                             } catch (iError) { }
                         }
                 return iTarget;
@@ -200,7 +210,7 @@
             map:              function (iSource, iCallback) {
                 var iTarget = { },  iArray;
 
-                if (typeof iSource.length == 'number') {
+                if (this.likeArray( iSource )) {
                     iTarget = [ ];
                     iArray = true;
                 }
@@ -219,13 +229,6 @@
                     });
 
                 return iTarget;
-            },
-            likeArray:        function (iObject) {
-                return (
-                    iObject  &&
-                    (typeof iObject.length == 'number')  &&
-                    (typeof iObject.valueOf() != 'string')
-                );
             },
             makeArray:        function () {
                 return  Array.apply(null, arguments[0]);
@@ -327,7 +330,9 @@
         )
             return 'Window';
 
-        if (iVar.defaultView || iVar.documentElement)
+        if (iVar.location && (
+            iVar.location  ===  (iVar.defaultView || { }).location
+        ))
             return 'Document';
 
         if (
@@ -637,13 +642,13 @@
                 _DOM_.operate('Attribute', iNew, iKey, iValue);
             });
 
-        if (iNew[0].parentNode)
-            iNew = _Object_.map(iNew,  function (iDOM, _Index_) {
-                iNew[_Index_].parentNode.removeChild(iDOM);
-                return iDOM;
-            });
-
-        return iNew;
+        return  iNew[0].parentNode ?
+            _Object_.map(iNew,  function (iDOM, _Index_) {
+                if (iDOM.nodeType == 1) {
+                    iNew[_Index_].parentNode.removeChild(iDOM);
+                    return iDOM;
+                }
+            }) : iNew;
     }
 
 
@@ -725,7 +730,6 @@
                 }
             }
         };
-
     _Object_.extend(iPseudo, {
         ':hidden':    {
             filter:    function () {
@@ -748,29 +752,68 @@
         var _Self_ = arguments.callee;
 
         return  _Object_.map(iSelector.split(/\s*,\s*/),  function () {
+            var _Selector_;
             try {
-                return  _Object_.makeArray( iRoot.querySelectorAll(arguments[0] || '*') );
+                return _Object_.makeArray(
+                    iRoot.querySelectorAll(arguments[0] || '*')
+                );
             } catch (iError) {
-                var _Selector_;
                 for (var _Pseudo_ in iPseudo) {
                     _Selector_ = arguments[0].match(iPseudo[_Pseudo_].regexp);
                     if (_Selector_)  break;
                 };
+                if (! _Selector_)  return;
+
                 _Selector_[1] = _Selector_[1] || '*';
                 _Selector_[1] += (_Selector_[1].match(/[\s>\+~]\s*$/) ? '*' : '');
 
-                return _Object_.unique(
-                    _Object_.map(
-                        _Self_(iRoot, _Selector_[1]),
-                        function (iDOM) {
-                            if ( iPseudo[_Pseudo_].filter(iDOM) )
-                                return  _Selector_[2]  ?  _Self_(iDOM,  '*' + _Selector_[2])  :  iDOM;
-                        }
-                    )
+                return _Object_.map(
+                    _Self_(iRoot, _Selector_[1]),
+                    function (iDOM) {
+                        if ( iPseudo[_Pseudo_].filter(iDOM) )
+                            return  _Selector_[2]  ?
+                                _Self_(iDOM,  '*' + _Selector_[2])  :  iDOM;
+                    }
                 );
             }
         });
     }
+    var DOM_Sort = _Browser_.msie ?
+            function (iSet) {
+                var $_Temp = [ ],  $_Result = [ ];
+
+                for (var i = 0;  i < iSet.length;  i++) {
+                    $_Temp[i] = new String(iSet[i].sourceIndex);
+                    $_Temp[i].DOM = iSet[i];
+                }
+                $_Temp.sort();
+
+                for (var i = 0, j = 0;  i < $_Temp.length;  i++)
+                    if ((! i)  ||  (
+                        $_Temp[i].valueOf() != $_Temp[i - 1].valueOf()
+                    ) || (
+                        $_Temp[i].DOM.innerHTML  !=  $_Temp[i - 1].DOM.innerHTML
+                    ))
+                        $_Result[j++] = $_Temp[i].DOM;
+
+                return $_Result;
+            } :
+            function (iSet) {
+                iSet.sort(function (A, B) {
+                    return  A.compareDocumentPosition(B) & 2;
+                });
+
+                var $_Result = [ ];
+
+                for (var i = 0, j = 0;  i < iSet.length;  i++) {
+                    if (i  &&  (iSet[i] === iSet[i - 1]))  continue;
+
+                    $_Result[j++] = iSet[i];
+                }
+
+                return $_Result;
+            };
+
 /* ---------- jQuery API ---------- */
 
     function iQuery(Element_Set, iContext) {
@@ -787,44 +830,34 @@
 
         if (! Element_Set) return;
 
-        if (typeof Element_Set == 'string') {
+        var iType = _Object_.type(Element_Set);
+
+        if (iType == 'String') {
             if (Element_Set[0] != '<') {
                 this.context = iContext || DOM;
                 this.selector = Element_Set;
                 Element_Set = DOM_Search(this.context, Element_Set);
+                Element_Set = (Element_Set.length < 2)  ?
+                    Element_Set  :  DOM_Sort(Element_Set);
             } else
                 Element_Set = DOM_Create(
                     Element_Set,  _Object_.isPlainObject(iContext) && iContext
                 );
-        }
-        this.add( Element_Set );
+        } else if (iType in Type_Info.DOM.element)
+            Element_Set = [ Element_Set ];
+
+        if (! _Object_.likeArray(Element_Set))
+            return;
+
+        _Object_.extend(this, Element_Set, {
+            length:     Element_Set.length,
+            context:    (Element_Set.length == 1)  ?
+                Element_Set[0].ownerDocument  :  this.context
+        });
     }
 
     var $ = BOM.iQuery = iQuery;
     $.fn = $.prototype;
-
-    $.fn.add = function (Element_Set) {
-        var iType = _Object_.type(Element_Set);
-
-        if (iType == 'String')
-            Element_Set = $(Element_Set, arguments[1]);
-        else if (iType in Type_Info.DOM.element)
-            Element_Set = [ Element_Set ];
-
-        if (_Object_.likeArray( Element_Set )) {
-            for (var i = 0;  i < Element_Set.length;  i++)
-                if (Element_Set[i] && (
-                    (Element_Set[i].nodeType == 1) ||
-                    (_Object_.type(Element_Set[i]) in Type_Info.DOM.root)
-                ))
-                    Array.prototype.push.call(this, Element_Set[i]);
-
-            if (this.length == 1)
-                this.context = this[0].ownerDocument;
-        }
-
-        return this;
-    };
 
     if (typeof BOM.jQuery != 'function')
         BOM.jQuery = BOM.$ = $;
@@ -965,8 +998,8 @@
             };
         }
     });
-    /* ----- iQuery Instance Method ----- */
 
+    /* ----- iQuery Instance Method ----- */
     function DOM_Size(iName) {
         iName = {
             scroll:    'scroll' + iName,
@@ -1031,27 +1064,18 @@
         };
     }
 
+    var Array_Reverse = Array.prototype.reverse;
+
     $.fn.extend = $.extend;
 
     $.fn.extend({
         splice:             Array.prototype.splice,
         jquery:             '1.9.1',
         iquery:             '1.0',
-        pushStack:          function () {
-            var $_New = Array.prototype.sort.call($(arguments[0]),  function (A, B) {
-                    var $_A = Object_Seek.call(A, 'parentNode').reverse(),
-                        $_B = Object_Seek.call(B, 'parentNode').reverse();
-
-                    if ($_A.length != $_B.length)
-                        return  $_B.length - $_A.length;
-
-                    for (var i = 0;  i < $_A.length;  i++)
-                        if ($_A[i] !== $_B[i])
-                            return (
-                                Object_Seek.call($_A[i], 'previousElementSibling').length  -
-                                Object_Seek.call($_B[i], 'previousElementSibling').length
-                            );
-                });
+        pushStack:          function ($_New) {
+            $_New = $(DOM_Sort(
+                ($_New instanceof Array)  ?  $_New  :  $.makeArray($_New)
+            ));
             $_New.prevObject = this;
 
             return $_New;
@@ -1065,6 +1089,11 @@
                 $_New = this.prevObject.pushStack($_New);
 
             return $_New;
+        },
+        add:                function () {
+            return this.pushStack(
+                Array_Concat(this,  $.apply(BOM, arguments))
+            );
         },
         slice:              function () {
             return  this.pushStack( [ ].slice.apply(this, arguments) );
@@ -1159,16 +1188,16 @@
                 $_Result = $_Result.concat(
                     Object_Seek.call(this[i], 'parentNode').slice(0, -1)
                 );
-            $_Result = $( $.unique($_Result) );
 
-            return this.pushStack(
-                arguments[0]  ?  $_Result.filter(arguments[0])  :  $_Result
-            );
+            return  Array_Reverse.call(this.pushStack(
+                arguments[0]  ?  $($_Result).filter(arguments[0])  :  $_Result
+            ));
         },
         sameParents:        function () {
             if (this.length < 2)  return this.parents();
 
-            var iMin = Object_Seek.call(this[0], 'parentNode'),  iPrev;
+            var iMin = Object_Seek.call(this[0], 'parentNode').slice(0, -1),
+                iPrev;
 
             for (var i = 1, iLast;  i < this.length;  i++) {
                 iLast = Object_Seek.call(this[i], 'parentNode');
@@ -1186,14 +1215,14 @@
                     $_Result = iMin.slice(i);
                     break;
                 }
-            return this.pushStack(
+            return  Array_Reverse.call(this.pushStack(
                 arguments[0]  ?  $($_Result).filter(arguments[0])  :  $_Result
-            );
+            ));
         },
         parentsUntil:       function () {
-            return  this.parents().not(
-                    $(arguments[0]).parents().addBack()
-                );
+            return  Array_Reverse.call(
+                this.parents().not( $(arguments[0]).parents().addBack() )
+            );
         },
         children:           function () {
             var $_Result = [ ];
@@ -1229,7 +1258,6 @@
                 $_Result = $_Result.concat(
                     Object_Seek.call(this[i], 'nextElementSibling')
                 );
-            $_Result = $.unique($_Result);
 
             return this.pushStack(
                 arguments[0]  ?  $($_Result).filter(arguments[0])  :  $_Result
@@ -1242,7 +1270,7 @@
                 $_Result = $_Result.concat(
                     Object_Seek.call(this[i], 'previousElementSibling')
                 );
-            $_Result = $.unique($_Result).reverse();
+            $_Result.reverse();
 
             return this.pushStack(
                 arguments[0]  ?  $($_Result).filter(arguments[0])  :  $_Result
@@ -1261,7 +1289,7 @@
             for (var i = 0;  i < this.length;  i++)
                 $_Result = Array_Concat($_Result,  $(arguments[0], this[i]));
 
-            return  this.pushStack( $.unique($_Result) );
+            return  this.pushStack($_Result);
         },
         detach:             function () {
             for (var i = 0;  i < this.length;  i++)
@@ -1934,6 +1962,7 @@
             var iShift = Math.sqrt(
                     Math.pow(swipeLeft, 2)  +  Math.pow(swipeTop, 2)
                 );
+
             $(iEvent.target).trigger((iShift < 22)  ?
                 ((iTime > 300) ? 'press' : 'tap')  :  {
                     type:      'swipe',
@@ -2180,19 +2209,13 @@
 (function (BOM, DOM, $) {
 
     /* ----- XML HTTP Request ----- */
-    function X_Domain(Target_URL) {
-        var iPort = BOM.location.port || (
-                (BOM.location.protocol == 'http:')  &&  80
-            ) || (
-                (BOM.location.protocol == 'https:')  &&  443
-            );
-        Target_URL = Target_URL.match(/^(\w+?(s)?:)?\/\/([\w\d:]+@)?([^\/\:\@]+)(:(\d+))?/);
+    function X_Domain() {
+        var iPort = BOM.location.port  ?  (':' + BOM.location.port)  :  '';
 
-        if (! Target_URL)  return false;
         return (
-            (Target_URL[1]  &&  (Target_URL[1] != BOM.location.protocol))  ||
-            (Target_URL[4]  &&  (Target_URL[4] != BOM.location.hostname))  ||
-            (Target_URL[6]  &&  (Target_URL[6] != iPort))
+            $.urlDomain( arguments[0] )  ==  [
+                BOM.location.protocol, '//', DOM.domain, iPort
+            ].join('')
         );
     }
 
@@ -2253,13 +2276,12 @@
                 return iContent;
             },
             retry:          function (Wait_Seconds) {
-                var iXHR = new this.constructor,
-                    iData = this.requestData;
-                iXHR.onready = this.onready;
-                iXHR.open.apply(iXHR, this.requestArgs);
+                this.open.apply(this, this.requestArgs);
+
+                var iXHR = this;
 
                 $.wait(Wait_Seconds, function () {
-                    XD_Request.call(iXHR, iData);
+                    XD_Request.call(iXHR, iXHR.requestData);
                 });
             }
         };
@@ -3273,7 +3295,8 @@
                     message:    iMessage,
                     url:        iURL,
                     line:       iLine,
-                    column:     iColumn  ||  (BOM.event && BOM.event.errorCharacter)  ||  0
+                    column:
+                        iColumn  ||  (BOM.event && BOM.event.errorCharacter)  ||  0
                 };
 
             if (iError)  iData.stack = String(iError.stack || iError.stacktrace);
