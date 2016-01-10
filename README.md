@@ -48,7 +48,7 @@ EasyWebApp 与其作者开发的 [**EasyWebUI**](http://git.oschina.net/Tech_Que
    - 独立出 **ListView 对象**，便于实现 局部刷新
  - v2.0   Beta   —— 2015年10月7日   引擎内部实现 **OOP 重构**（第一阶段）
    - **WebApp 对象实现** 独立为 InnerPage、InnerHistory、DataStack、PageLink 四大内部对象
- - v1.8.5 Stable —— 2015年9月24日   SPA 内页也支持用 `<link />` 声明**多数据源**，且所有多数据源页面都支持**数据渲染区域遮罩层**
+ - v1.8.5 Stable —— 2015年9月24日   SPA 内页也支持用 `<link />` 声明**多数据源**，且所有此类页面均支持**通用加载进度事件**
  - v1.7.5 Stable —— 2015年9月18日
    - 新增 **pageLoad 同步事件**，会在用户触发内页跳转时产生
    - 所有的接口调用点 都可用 **apiCall 同步事件**来 Hook

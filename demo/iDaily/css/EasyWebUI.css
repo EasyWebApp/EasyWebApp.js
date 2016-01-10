@@ -8,7 +8,7 @@
  *    and can be used in the Web UI development of
  *    Any Platform.
  *
- *    [Version]    v1.0  (2015-11-26)
+ *    [Version]    v1.0  (2016-01-10)
  *
  *    [Require]    CSS 2.1  (Best Effect with CSS 3),
  *
@@ -17,7 +17,7 @@
  *                 EasyWebUI.js
  *
  *
- *      (C)2014-2015    test_32@fyscu.com
+ *      (C)2014-2016    test_32@fyscu.com
  *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
@@ -79,7 +79,7 @@ hr {
 pre {
     font-size:        20px;
     text-align:       left;
-    word-wrap:        break-word;
+    white-space:      pre-wrap;
     background:       lightgray;
     border:           1px  solid  darkgray;
     border-radius:    3px;
@@ -104,7 +104,8 @@ table tr {
     line-height:    2em;
 }
 table th, table td {
-    padding:    0.5em;
+    padding:        0.5em;
+    white-space:    pre-wrap;
 }
 @media (max-width: 1280px) {
     table td {
@@ -578,15 +579,15 @@ html.Fixed > body > .Fix-Top {
 /* ----- Item Box ----- */
 .Item-Box {
     display:    inline-block;
-    margin:     0  2px  0.5em;
 }
 .Item-Box.visible {
-    background-color:    white;
+    margin:              0  2px  0.5em;
     border:              1px  solid  rgb(215, 215, 215);
     box-shadow:          1px  2px  3px  rgb(200, 200, 200);
     transition:          border-color  ease-in-out  .15s,
                          box-shadow    ease-in-out  .15s;
     padding:             1em;
+    background-color:    white;
 }
 .Item-Box.visible:hover,
 .Item-Box.active {
@@ -1082,6 +1083,10 @@ img.UserLogo {
     background:      rgb(26, 121, 224)  !important;
     color:           white  !important;
     border-color:    transparent  !important;
+}
+.Gray {
+    color:           rgb(235, 235, 235)  !important;
+    border-color:    rgb(235, 235, 235)  !important;
 }
 .Gray_O {
     background:      rgb(235, 235, 235)  !important;

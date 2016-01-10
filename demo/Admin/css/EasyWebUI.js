@@ -2,7 +2,7 @@
 //          >>>  EasyWebUI Component Library  <<<
 //
 //
-//      [Version]     v1.3  (2015-12-28)  Stable
+//      [Version]     v1.9  (2016-01-10)  Stable
 //
 //      [Based on]    iQuery v1  or  jQuery (with jQuery+)
 //
@@ -10,10 +10,11 @@
 //                    isn't dependent on EasyWebUI.css
 //
 //
-//            (C)2014-2015    shiy2008@gmail.com
+//            (C)2014-2016    shiy2008@gmail.com
 //
 
 
+/* ---------- CSS 3 补丁 ---------- */
 (function (BOM, DOM, $) {
 
 /* ---------- Flex Box 补丁  v0.2 ---------- */
@@ -197,9 +198,245 @@
 
 
 
+/* ---------- UI 组件 ---------- */
 (function (BOM, DOM, $) {
 
-    /* ---------- 密码确认插件  v0.3 ---------- */
+/* ---------- DOM 遮罩层  v0.2 ---------- */
+
+    var $_DOM = $(DOM).ready(function () {
+            $.cssRule({
+                '.ShadowCover': {
+                    position:      'absolute',
+                    top:           0,
+                    left:          0,
+                    width:         '100%',
+                    height:        '100%',
+                    background:    'rgba(0, 0, 0, 0.7)',
+                    display:       'table'
+                },
+                '.ShadowCover > *': {
+                    display:             'table-cell',
+                    'vertical-align':    'middle',
+                    'text-align':        'center'
+                }
+            });
+        }),
+        _Instance_ = [ ];
+
+    function ShadowCover($_Container, iContent, CSS_Rule) {
+        var _This_ = this;
+
+        this.$_Cover = $('<div class="ShadowCover"><div /></div>');
+
+        if (iContent)  $(this.$_Cover[0].firstChild).append(iContent);
+
+        this.$_Cover.appendTo($_Container).zIndex('+');
+
+        if ( $.isPlainObject(CSS_Rule) )
+            this.$_Cover.cssRule(CSS_Rule,  function () {
+                _This_.$_Style = $(arguments[0].ownerNode);
+            });
+        _Instance_.push(this);
+    }
+
+    ShadowCover.prototype.close = function () {
+        this.$_Cover.remove();
+        if (this.$_Style)  this.$_Style.remove();
+
+        _Instance_.splice(_Instance_.indexOf(this), 1);
+    };
+
+    ShadowCover.clear = function () {
+        for (var i = _Instance_.length - 1;  i > -1;  i--)
+            _Instance_[i].close();
+    };
+
+    $.fn.shadowCover = function () {
+        var iArgs = $.makeArray(arguments).reverse();
+
+        var More_Logic = (typeof iArgs[0] == 'function')  &&  iArgs.shift();
+        var CSS_Rule = $.isPlainObject(iArgs[0]) && iArgs.shift();
+        var iContent = iArgs[0];
+
+        for (var i = 0, iCover;  i < this.length;  i++) {
+            iCover = new ShadowCover($(this[i]), iContent, CSS_Rule);
+
+            if (More_Logic)  More_Logic.call(this[i], iCover);
+        }
+        return this;
+    };
+
+    $.shadowCover = ShadowCover;
+
+
+/* ---------- DOM/BOM 模态框  v0.4 ---------- */
+
+    var $_BOM = $(BOM);
+
+    BOM.ModalWindow = function (iContent, iStyle, closeCB) {
+        arguments.callee.lastInstance = $.extend(this, {
+            opener:      BOM,
+            self:        this,
+            closed:      false,
+            onunload:    closeCB,
+            frames:      [ ],
+            document:    { },
+            locked:      ($.type(iContent) == 'Window')
+        });
+
+        var _This_ = this;
+
+        $('body').shadowCover(this.locked ? null : iContent,  iStyle,  function () {
+            _This_.__ShadowCover__ = arguments[0];
+
+            _This_.document.body = arguments[0].$_Cover.click(function () {
+                if (! _This_.locked) {
+                    if (arguments[0].target.parentNode === this)
+                        _This_.close();
+                } else
+                    _This_.frames[0].focus();
+            }).height( $_BOM.height() )[0];
+        });
+        if (! this.locked)  return;
+
+        //  模态框 (BOM)
+        this.frames[0] = iContent;
+
+        $.every(0.2,  function () {
+            if (iContent.closed) {
+                _This_.close();
+                return false;
+            }
+        });
+        $_BOM.bind('unload',  function () {
+            iContent.close();
+        });
+    };
+
+    BOM.ModalWindow.prototype.close = function () {
+        if (this.closed)  return;
+
+        this.__ShadowCover__.close();
+
+        this.closed = true;
+
+        if (typeof this.onunload == 'function')
+            this.onunload.call(this.document.body);
+    };
+
+    $_DOM.keydown(function () {
+        var _Instance_ = BOM.ModalWindow.lastInstance;
+        if (! _Instance_)  return;
+
+        if (! _Instance_.locked) {
+            if (arguments[0].which == 27)
+                _Instance_.close();
+        } else
+            _Instance_.frames[0].focus();
+    });
+
+    /* ----- 通用新窗口 ----- */
+
+    function iOpen(iURL, Scale, iCallback) {
+        Scale = (Scale > 0)  ?  Scale  :  3;
+        var Size = {
+            height:    BOM.screen.height / Scale,
+            width:     BOM.screen.width / Scale
+        };
+        var Top = (BOM.screen.height - Size.height) / 2,
+            Left = (BOM.screen.width - Size.width) / 2;
+
+        BOM.alert("请留意本网页浏览器的“弹出窗口拦截”提示，当被禁止时请点选【允许】，然后可能需要重做之前的操作。");
+        var new_Window = BOM.open(iURL, '_blank', [
+            'top=' + Top,               'left=' + Left,
+            'height=' + Size.height,    'width=' + Size.width,
+            'resizable=no,menubar=no,toolbar=no,location=no,status=no,scrollbars=no'
+        ].join(','));
+
+        BOM.new_Window_Fix.call(new_Window, function () {
+            $('link[rel~="shortcut"], link[rel~="icon"], link[rel~="bookmark"]')
+                .add('<base target="_self" />')
+                .appendTo(this.document.head);
+
+            $(this.document).keydown(function (iEvent) {
+                var iKeyCode = iEvent.which;
+
+                if (
+                    (iKeyCode == 122) ||                       //  F11
+                    (iKeyCode == 116) ||                       //  (Ctrl + )F5
+                    (iEvent.ctrlKey && (iKeyCode == 82)) ||    //  Ctrl + R
+                    (iEvent.ctrlKey && (iKeyCode == 78)) ||    //  Ctrl + N
+                    (iEvent.shiftKey && (iKeyCode == 121))     //  Shift + F10
+                )
+                    return false;
+            }).mousedown(function () {
+                if (arguments[0].which == 3)
+                    return false;
+            }).bind('contextmenu', false);
+        });
+
+        if (iCallback)
+            $.every(0.2, function () {
+                if (new_Window.closed) {
+                    iCallback.call(BOM, new_Window);
+                    return false;
+                }
+            });
+        return new_Window;
+    }
+
+    /* ----- showModalDialog 扩展 ----- */
+
+    var old_MD = BOM.showModalDialog;
+
+    BOM.showModalDialog = function () {
+        if (! arguments.length)
+            throw 'A URL Argument is needed unless...';
+        else if (BOM.ModalWindow.lastInstance)
+            throw 'A ModalWindow Instance is running... (Please close it first.)';
+
+        var iArgs = $.makeArray(arguments);
+
+        var iContent = iArgs.shift();
+        var iScale = (typeof iArgs[0] == 'number') && iArgs.shift();
+        var iStyle = $.isPlainObject(iArgs[0]) && iArgs.shift();
+        var CloseBack = (typeof iArgs[0] == 'function') && iArgs.shift();
+
+        if (typeof iArgs[0] == 'string')
+            return  (old_MD || BOM.open).apply(BOM, arguments);
+
+        if (typeof iContent == 'string') {
+            if (! iContent.match(/^(\w+:)?\/\/[\w\d\.:@]+/)) {
+                var iTitle = iContent;
+                iContent = 'about:blank';
+            }
+            iContent = new ModalWindow(
+                iOpen(iContent, iScale, CloseBack)
+            );
+            BOM.new_Window_Fix.call(iContent.frames[0], function () {
+                this.iTime = {
+                    _Root_:    this,
+                    now:       $.now,
+                    every:     $.every,
+                    wait:      $.wait
+                };
+
+                this.iTime.every(0.2, function () {
+                    if (! this.opener) {
+                        this.close();
+                        return false;
+                    }
+                });
+                if (iTitle)
+                    $('<title />', {text:  iTitle}).appendTo(this.document.head);
+            });
+        } else
+            iContent = new ModalWindow(iContent, iStyle, CloseBack);
+
+        return iContent;
+    };
+
+/* ---------- 密码确认插件  v0.3 ---------- */
 
     //  By 魏如松
 
@@ -281,7 +518,6 @@
 
         return this;
     };
-
 
 /* ---------- 面板控件  v0.1 ---------- */
 
@@ -446,9 +682,36 @@
             .css('cursor', 'default');
     };
 
+})(self,  self.document,  self.jQuery || self.Zepto);
+
+
 
 /* ---------- 首屏渲染 自动启用组件集 ---------- */
-    $(DOM).ready(function () {
+(function (BOM, DOM, $) {
+
+    var $_Load_Tips, Load_Cover;
+
+    $(DOM).on('loading',  function (iEvent) {
+
+        if ($(iEvent.target).parents().length > 1)  return;
+
+        if ($_Load_Tips  &&  (iEvent.detail < 1))
+            return  $_Load_Tips.text( iEvent.data );
+        else if (iEvent.detail >= 1)
+            return  Load_Cover.close();
+
+        $_Load_Tips = $('<h1 />', {
+            text:     iEvent.data,
+            style:    'color: white'
+        });
+
+        Load_Cover = BOM.showModalDialog(
+            $_Load_Tips.cssAnimate('fadeIn', 2000, true),
+            {
+                ' ':    {background:  'darkgray'}
+            }
+        );
+    }).ready(function () {
 
         $(DOM.body).addClass('Loaded');
 
@@ -460,7 +723,7 @@
 
         $('.Tab').iTab();
 
-        $('*:button,  a.Button,  .No_Select,  .Panel > .Head,  .Tab > ol')
+        $('*:button,  a.Button,  .No_Select,  .Panel > .Head,  .Tab > label')
             .noSelect();
     });
 

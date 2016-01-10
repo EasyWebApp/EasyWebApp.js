@@ -2,7 +2,7 @@
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]     v2.2  (2016-01-06)  Stable
+//      [Version]     v2.2  (2016-01-10)  Stable
 //
 //      [Based on]    iQuery  |  jQuery with jQuery+,
 //
@@ -373,29 +373,17 @@
             }
         }
     });
-    function Load_Process($_Loaded_Area) {
-        if (! $_Loaded_Area)
-            $_Data_Box = $_Body.find('*[name]');
-        else if ($_Data_Box && $_Data_Box.length)
-            $_Data_Box = $_Data_Box.not( $_Loaded_Area.find('*[name]') );
-        else  return;
-
-        if (! $.shadowCover)  return;
-
-        $.shadowCover.clear();
-        $_Data_Box.sameParents().eq(0).shadowCover('<h1>Data Loading...</h1>', {
-            ' h1':    {
-                color:    'white'
-            }
-        });
-    }
 
     function Multiple_API(iRender) {
         var $_Link = $('head link[src]');
 
         if (! $_Link.length)  return iRender.call(this);
 
-        Load_Process();
+        this.domRoot.trigger({
+            type:      'loading',
+            detail:    0,
+            data:      'Data Loading ...'
+        });
 
         var iData = { },  Data_Ready = $_Link.length;
 
@@ -555,40 +543,44 @@
             $_List = iLink.getTarget().parent();
         $_List = $_List.find( $.ListView.listSelector ).not('input');
 
-        for (var i = 0, $_LV;  i < $_List.length;  i++) {
-            $_LV = $_List.eq(i);
-
-            $.ListView($_LV,  function ($_Item, iValue) {
-                $_Item.find('*').add($_Item)
-                    .filter('*[name]').value(function () {
-                        return iValue[arguments[0]];
-                    });
+        for (var i = 0, $_LV;  i < $_List.length;  i++)
+            $.ListView($_List.eq(i),  function () {
+                arguments[0].value(arguments[1]);
             });
-        }
-        /* ----- Data Render ----- */
-        if (iData instanceof Array) {
-            $.ListView( $_List.eq(0) ).render(iData);
-            Load_Process($_List);
-        } else
-            Load_Process(
-                $_Body.value(function (iName) {
-                    var $_This = $(this);
-                    var iValue = This_App.dataStack.value(iName, $_This.is($_List));
 
-                    if (iValue instanceof Array)
-                        $.ListView($_This).clear().render(iValue);
-                    else if ( $.isPlainObject(iValue) )
-                        $_This.data('EWA_Model', iValue).value(iValue);
-                    else
-                        return iValue;
-                })
-            );
+        /* ----- Data Render ----- */
+        $_Body.trigger({
+            type:      'loading',
+            detail:    0,
+            data:      'Data Loading ...'
+        });
+        if (iData instanceof Array)
+            $.ListView($_List.eq(0),  function () {
+                this.$_View.trigger({
+                    type:      'loading',
+                    detail:    arguments[2] / iData.length
+                });
+            }).render(iData);
+        else
+            $_Body.value(function (iName) {
+                var $_This = $(this).trigger({
+                        type:      'loading',
+                        detail:    arguments[1] / arguments[2].length
+                    });
+                var iValue = This_App.dataStack.value(iName, $_This.is($_List));
+
+                if (iValue instanceof Array)
+                    $.ListView($_This).clear().render(iValue);
+                else if ( $.isPlainObject(iValue) )
+                    $_This.data('EWA_Model', iValue).value(iValue);
+                else
+                    return iValue;
+            });
         return this;
     };
 
     InnerPage.prototype.onReady = function () {
         $_Body.find('button[target]:hidden').remove();
-        $.shadowCover.clear();
 
         var This_App = this.ownerApp;
 
@@ -701,7 +693,10 @@
                     var $_This = $(this);
 
                     if ( $_This.attr('href').match(iHash_RE) ) {
-                        $_This[(this.tagName.toLowerCase() != 'form') ? 'click' : 'submit']();
+                        $_This[
+                            (this.tagName.toLowerCase() != 'form') ?
+                                'click' : 'submit'
+                        ]();
                         return false;
                     }
                 });
@@ -727,7 +722,7 @@
 
         (new WebApp(this, API_Root, URL_Change)).boot(Init_Data);
 
-        return this;
+        return this.addClass('EWA_Container');
     };
 
     $.fn.onPageRender = function () {
