@@ -693,6 +693,11 @@
 
     $(DOM).on('loading',  function (iEvent) {
 
+        //  $.Event 实例对象 detail 属性 Bug ——
+        //      https://www.zhihu.com/question/20174130/answer/80990463
+
+        iEvent = iEvent.originalEvent;
+
         if ($(iEvent.target).parents().length > 1)  return;
 
         if ($_Load_Tips  &&  (iEvent.detail < 1))
@@ -705,12 +710,9 @@
             style:    'color: white'
         });
 
-        Load_Cover = BOM.showModalDialog(
-            $_Load_Tips.cssAnimate('fadeIn', 2000, true),
-            {
-                ' ':    {background:  'darkgray'}
-            }
-        );
+        Load_Cover = BOM.showModalDialog($_Load_Tips, {
+            ' ':    {background:  'darkgray'}
+        });
     }).ready(function () {
 
         $(DOM.body).addClass('Loaded');
