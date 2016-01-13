@@ -4,7 +4,9 @@
 //
 //      [Version]     v1.9  (2016-01-10)  Stable
 //
-//      [Based on]    iQuery v1  or  jQuery (with jQuery+)
+//      [Based on]    iQuery v1  or  jQuery (with jQuery+),
+//
+//                    iQuery+
 //
 //      [Usage]       A jQuery Plugin Library which almost
 //                    isn't dependent on EasyWebUI.css
@@ -52,7 +54,6 @@
                 }
             }
         };
-
     function FlexFix() {
         var $_Box = $(this);
 
@@ -141,6 +142,7 @@
                 $('.Flex-Box').each(FlexFix);
         });
     }
+
 /* ---------- Input Range 补丁  v0.1 ---------- */
 
     function Pseudo_Bind() {
@@ -163,35 +165,35 @@
 
     $.fn.Range = function () {
         return  this.each(function () {
-                var $_This = $(this);
+            var $_This = $(this);
 
-                //  Fill-Lower for Gecko and WebKit
-                if (Pseudo_Bind.No_Bug && (! $_This.hasClass('Detail')))
-                    $_This.cssRule({
-                        ':before': {
-                            width:    (($_This[0].value / $_This[0].max) * 100) + '%  !important'
-                        }
-                    }, Pseudo_Bind);
+            //  Fill-Lower for WebKit
+            if (Pseudo_Bind.No_Bug && (! $_This.hasClass('Detail')))
+                $_This.cssRule({
+                    ':before': {
+                        width:    (($_This[0].value / $_This[0].max) * 100) + '%  !important'
+                    }
+                }, Pseudo_Bind);
 
-                //  Data-List for All Cores
-                var $_List = $('<datalist />', {
-                        id:    $.uuid('Range')
+            //  Data-List for All Cores
+            var $_List = $('<datalist />', {
+                    id:    $.uuid('Range')
+                });
+
+            $_This.attr('list', $_List[0].id);
+
+            if (this.min) {
+                var iSum = (this.max - this.min) / this.step;
+
+                for (var i = 0;  i < iSum;  i++)
+                    $_List.append('<option />', {
+                        value:    Number(this.min + (this.step * i))/*,
+                        text:     */
                     });
+            }
 
-                $_This.attr('list', $_List[0].id);
-
-                if (this.min) {
-                    var iSum = (this.max - this.min) / this.step;
-
-                    for (var i = 0;  i < iSum;  i++)
-                        $_List.append('<option />', {
-                            value:    Number(this.min + (this.step * i))/*,
-                            text:     */
-                        });
-                }
-
-                $_This.before($_List);
-            });
+            $_This.before($_List);
+        });
     };
 
 })(self,  self.document,  self.jQuery || self.Zepto);

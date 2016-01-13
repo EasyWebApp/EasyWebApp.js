@@ -2,7 +2,7 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v1.0  (2016-01-12)  Stable
+//      [Version]    v1.0  (2016-01-13)  Stable
 //
 //                   (Modern & Mobile Edition)
 //
@@ -505,25 +505,7 @@
                 )._event_;
         }
     };
-
     /* ----- DOM Content ----- */
-    _DOM_.innerText = {
-        set:    function (iElement, iText) {
-            if (iElement.tagName.toLowerCase() == '')
-                iElement.appendChild( DOM.createTextNode(iText) );
-            else
-                iElement[_Browser_.ff ? 'textContent' : 'innerText'] = iText;
-        },
-        get:    _Browser_.ff ?
-            function (iElement) {
-                var TextRange = iElement.ownerDocument.createRange();
-                TextRange.selectNodeContents(iElement);
-                return TextRange.toString();
-            } :
-            function (iElement) {
-                return iElement.innerText;
-            }
-    };
 
     _DOM_.innerHTML = {
         set:    function (iElement, iHTML) {
@@ -600,7 +582,7 @@
         if ((iNew.length == 1)  &&  (iNew[0].nodeType == 1)  &&  AttrList)
             _Object_.each(AttrList,  function (iKey, iValue) {
                 switch (iKey) {
-                    case 'text':     return  _DOM_.innerText.set(iNew[0], iValue);
+                    case 'text':     return  iNew[0].textContent = iValue;
                     case 'html':     return  _DOM_.innerHTML.set(iNew[0], iValue);
                     case 'style':    {
                         if ( _Object_.isPlainObject(iValue) )
@@ -1030,15 +1012,15 @@
     }
     function DOM_Insert(iName) {
         return  function () {
-            if (this.length) {
-                if (! this[0][iName])
-                    this.append.apply(
-                        (iName == 'firstElementChild')  ?  this  :  this.parent(),
-                        arguments
-                    );
-                else
-                    this.before.apply($(this[0][iName]), arguments);
-            }
+            if (
+                this.length &&
+                (!  this.before.apply($(this[0][iName]), arguments).length)
+            )
+                this.append.apply(
+                    (iName == 'firstElementChild')  ?  this  :  this.parent(),
+                    arguments
+                );
+
             return this;
         };
     }
@@ -1305,9 +1287,9 @@
 
             for (var i = 0;  i < this.length;  i++)
                 if (iGetter)
-                    iResult.push( _DOM_.innerText.get(this[i]) );
+                    iResult.push( this[i].textContent );
                 else
-                    _DOM_.innerText.set(this[i], iText);
+                    this[i].textContent = iText;
 
             return  iResult.length ? iResult.join('') : this;
         },
@@ -1434,14 +1416,15 @@
                 DOM_Cache = DOM.createDocumentFragment();
 
             return  this.each(function (Index) {
-                    var _Brother_ = Index ? $_Brother.clone(true) : $_Brother,
-                        _Cache_ = DOM_Cache.cloneNode();
+                var _Brother_ = Index ? $_Brother.clone(true) : $_Brother,
+                    _Cache_ = DOM_Cache.cloneNode();
 
-                    for (var i = 0;  i < _Brother_.length;  i++)
-                        _Cache_.appendChild( _Brother_[i] );
+                for (var i = 0;  i < _Brother_.length;  i++)
+                    if (_Brother_[i] !== this)
+                        _Cache_.appendChild(_Brother_[i]);
 
-                    this.parentNode.insertBefore(_Cache_, this);
-                });
+                this.parentNode.insertBefore(_Cache_, this);
+            });
         },
         prepend:            DOM_Insert('firstElementChild'),
         prependTo:          function () {
@@ -1969,7 +1952,8 @@
     function DOM_Ready_Event() {
         if (DOM.isReady || (
             (this !== DOM)  &&  (
-                (DOM.readyState != 'complete')  ||  (! DOM.body.lastChild)
+                (DOM.readyState != 'complete')  ||
+                (!  (DOM.body || { }).lastChild)
             )
         ))
             return;
@@ -2226,21 +2210,31 @@
         return iKF;
     }
 
+    var Animate_Property = {
+            scrollLeft:    true,
+            scrollTop:     true
+        };
+
     $.fn.animate = function (CSS_Final, During_Second) {
         var $_This = this;
 
         $_This.data('_animate_', 1);
 
         $.each(CSS_Final,  function (iName) {
-            var iKeyFrame = KeyFrame($_This.css(iName), this, During_Second);
-
+            var iSpecial = (iName in Animate_Property);
+            var iKeyFrame = KeyFrame(
+                    iSpecial ? $_This[iName]() : $_This.css(iName),
+                    this,
+                    During_Second
+                );
             $.every(1 / FPS,  function () {
-                if ($_This.data('_animate_') && iKeyFrame.length)
-                    $_This.css(iName, iKeyFrame.shift());
-                else {
-                    iKeyFrame = null;
-                    return false;
-                }
+                if ($_This.data('_animate_') && iKeyFrame.length) {
+                    if (iSpecial)
+                        $_This[iName]( iKeyFrame.shift() );
+                    else
+                        $_This.css(iName, iKeyFrame.shift());
+                } else
+                    return  iKeyFrame = false;
             });
         });
 
@@ -2757,8 +2751,7 @@
     Object.defineProperty(Element.prototype, 'dataset', {
         get:    function () {
             return  new DOMStringMap(this);
-        },
-        set:    function () { }
+        }
     });
 
 
@@ -2801,8 +2794,7 @@
     Object.defineProperty(Element.prototype, 'classList', {
         get:    function () {
             return  new DOMTokenList(this);
-        },
-        set:    function () { }
+        }
     });
 
     /* ----- History API ----- */
