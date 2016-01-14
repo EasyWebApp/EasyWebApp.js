@@ -2,7 +2,7 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v1.0  (2016-01-13)  Stable
+//      [Version]    v1.0  (2016-01-14)  Stable
 //
 //                   (Modern & Mobile Edition)
 //
@@ -1328,6 +1328,19 @@
         },
         width:              DOM_Size('Width'),
         height:             DOM_Size('Height'),
+        scrollParents:      function () {
+            return  this.pushStack(
+                $.map(this.parents(),  function () {
+                    var $_This = $(arguments[0]);
+
+                    if (
+                        ($_This.height() < $_This[0].scrollHeight)  ||
+                        ($_This.width() < $_This[0].scrollWidth)
+                    )
+                        return $_This[0];
+                })
+            );
+        },
         scrollTop:          DOM_Scroll('Top'),
         scrollLeft:         DOM_Scroll('Left'),
         position:           function () {
@@ -2067,8 +2080,9 @@
     );
     /* ----- Text Input Event ----- */
 
-    function TypeBack(iHandler, iEvent, iKey) {
-        var iValue = this[iKey]();
+    function TypeBack(iHandler, iKey, iEvent) {
+        var $_This = $(this);
+        var iValue = $_This[iKey]();
 
         if (false  !==  iHandler.call(iEvent.target, iEvent, iValue))
             return;
@@ -2077,13 +2091,13 @@
         iValue.splice(
             BOM.getSelection().getRangeAt(0).startOffset - 1,  1
         );
-        this[iKey]( iValue.join('') );
+        $_This[iKey]( iValue.join('') );
     }
 
     $.fn.input = function (iHandler) {
-        this.filter('input, textarea').on('input',  function () {
-            TypeBack.call($(this), iHandler, arguments[0], 'val');
-        });
+        this.filter('input, textarea').on(
+            'input',  $.proxy(TypeBack, null, iHandler, 'val')
+        );
 
         this.not('input, textarea').on('paste',  function (iEvent) {
 
@@ -2103,7 +2117,7 @@
             )
                 return;
 
-            TypeBack.call($(iEvent.target), iHandler, iEvent, 'text');
+            TypeBack.call(iEvent.target, iHandler, 'text', iEvent);
         });
 
         return this;
@@ -2698,7 +2712,7 @@
 
         function AJAX_Ready() {
             $_Button.prop('disabled', false);
-            iCallback.call($_Form[0], arguments[0]);
+            iCallback.apply($_Form[0], arguments);
         }
 
         $_Form.on('submit',  function (iEvent) {

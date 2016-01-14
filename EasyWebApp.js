@@ -29,12 +29,16 @@
             $(Link_DOM);
         this.$_DOM.data('EWA_PageLink', this);
 
-        $.extend(this, this.$_DOM.attr([
-            'target', 'title', 'alt', 'href', 'method', 'src', 'action'
-        ]));
+        $.extend(this, arguments.callee.getAttr(this.$_DOM));
         this.href = this.href || this.app.history.last().HTML;
         this.method = (this.method || 'Get').toLowerCase();
     }
+
+    PageLink.getAttr = function () {
+        return arguments[0].attr([
+            'target', 'title', 'alt', 'href', 'method', 'src', 'action'
+        ]);
+    };
 
     var Prefetch_Tag = $.browser.modern ? 'prefetch' : 'next',
         $_Body = $(DOM.body);
@@ -65,6 +69,17 @@
             this.data = this.$_DOM.data('EWA_Model') ||
                 this.$_DOM.data('LV_Model');
             return  this.data || { };
+        },
+        valueOf:      function () {
+            return {
+                target:    this.target,
+                title:     this.title,
+                alt:       this.alt,
+                href:      this.href,
+                method:    this.method,
+                src:       this.src,
+                action:    this.action
+            };
         }
     });
 
@@ -87,8 +102,14 @@
     $.extend(InnerPage.prototype, {
         show:       function () {
             this.$_Page.appendTo( this.ownerApp.domRoot ).fadeIn();
-            this.ownerApp.history.last(true)
-                .sourceLink.$_DOM[0].scrollIntoView();
+
+            var Link_DOM = this.ownerApp.history.last(true).sourceLink.$_DOM[0];
+            var iListView = $.ListView.getInstance( Link_DOM.parentNode );
+
+            if (iListView)
+                iListView.focus(Link_DOM);
+            else
+                Link_DOM.scrollIntoView();
         },
         valueOf:    function () {
             return {
@@ -168,7 +189,7 @@
                 if (
                     ((iNew.time - this[i].time) < 60000)  &&
                     (! (iNew.method + this[i].method).match(/Post|Put/i))  &&
-                    $.isEqual(iNew, this[i])
+                    $.isEqual(iNew.sourceLink, this[i].sourceLink)
                 )
                     return  this[i].$_Page;
         },
@@ -338,16 +359,6 @@
             }
             return this;
         },
-        valueOf:      function () {
-            return {
-                target:    this.target,
-                title:     this.title,
-                alt:       this.alt,
-                href:      this.href,
-                method:    this.method,
-                src:       this.src
-            };
-        },
         loadData:        function (Data_Ready) {
             var $_Form = $(this.$_DOM).parents('form').eq(0);
             if ($_Form.length)
@@ -388,12 +399,6 @@
         var $_Link = $('head link[src]');
 
         if (! $_Link.length)  return iRender.call(this);
-
-        this.domRoot.trigger({
-            type:      'loading',
-            detail:    0,
-            data:      'Data Loading ...'
-        });
 
         var iData = { },  Data_Ready = $_Link.length;
 
@@ -553,7 +558,7 @@
                 var iValue = This_App.dataStack.value(iName, $_This.is($_List));
 
                 if (iValue instanceof Array)
-                    $.ListView($_This).clear().render(iValue);
+                    $.ListView.getInstance($_This).clear().render(iValue);
                 else if ( $.isPlainObject(iValue) )
                     $_This.data('EWA_Model', iValue).value(iValue);
                 else
@@ -582,6 +587,10 @@
             This_App.history.last(),
             This_App.history.prev()
         ]);
+        $_Body.trigger({
+            type:      'loading',
+            detail:    1
+        });
 
         return this;
     };
@@ -669,15 +678,15 @@
 
             }).ajaxSubmit(function (iData) {
 
+                var iURL = arguments[2].responseURL;
+
                 var iReturn = This_App.domRoot.triggerHandler('formSubmit', [
-                        This_App.history.last().HTML,
-                        this.action,
-                        iData,
-                        this.href
+                        This_App.history.last().HTML,  iURL,  iData,  this.href
                     ]);
+
                 if ((iReturn !== false)  &&  this.target)
                     This_App.loadLink(
-                        (new PageLink(This_App, this)).valueOf(),
+                        $.extend(PageLink.getAttr( $(this) ),  {action: iURL}),
                         null,
                         iReturn || iData
                     );

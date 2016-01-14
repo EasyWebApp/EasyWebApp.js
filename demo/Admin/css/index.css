@@ -47,13 +47,17 @@ html, body {
     height:      95.4%;
     overflow:    auto;
 }
-[multiple] label {
+form [multiple] label {
     margin:     0.25em  0.5em;
     padding:    0.5em;
 }
-[multiple] label:hover {
+form [multiple] label:hover,
+form [multiple] label.active {
     opacity:    0.7;
 }
-[multiple] label > input[type="radio"] {
+form [multiple] input[type="radio"] {
     display:    none;
+}
+table td.Background-Image {
+    border:    0.5em  solid  transparent;
 }

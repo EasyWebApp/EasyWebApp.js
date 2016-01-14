@@ -1,12 +1,11 @@
 <form target="content" method="GET" action="/api/top/list?callback=?">
-    <div class="Grid-Row CenterY">
+    <div class="Grid-Row CenterY No_Select">
         <div class="Grid-Column Column_1-6">
             内容分类：
         </div>
         <div class="Grid-Column" multiple name="content_type">
-            <label class="Item-Box Blue_O" name="name">
-                <input type="radio" name="id" />
-            </label>
+            <label class="Item-Box Blue_O" name="name"></label>
+            <input type="radio" name="id" />
         </div>
     </div>
     <input type="submit" />
@@ -27,11 +26,8 @@
             <td name="rcount"></td>
             <td name="fcount"></td>
             <td name="time"></td>
-            <td>
-                <a name="fromurl" target="_blank">
-                    <span name="fromname"></span>
-                </a>
-            </td>
+            <td><a name="fromurl" target="_blank"><span name="fromname">
+            </span></a></td>
         </tr>
     </tbody>
 </table>

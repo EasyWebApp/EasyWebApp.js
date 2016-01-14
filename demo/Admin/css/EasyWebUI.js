@@ -319,11 +319,12 @@
         if (this.closed)  return;
 
         this.__ShadowCover__.close();
-
         this.closed = true;
 
         if (typeof this.onunload == 'function')
             this.onunload.call(this.document.body);
+
+        this.constructor.lastInstance = null;
     };
 
     $_DOM.keydown(function () {
@@ -704,8 +705,10 @@
 
         if ($_Load_Tips  &&  (iEvent.detail < 1))
             return  $_Load_Tips.text( iEvent.data );
-        else if (iEvent.detail >= 1)
-            return  Load_Cover.close();
+        else if (iEvent.detail >= 1) {
+            if (Load_Cover instanceof BOM.ModalWindow)  Load_Cover.close();
+            return  $_Load_Tips = Load_Cover = null;
+        }
 
         $_Load_Tips = $('<h1 />', {
             text:     iEvent.data,

@@ -2,12 +2,12 @@
 //              >>>  iQuery+  <<<
 //
 //
-//    [Version]     v0.7  (2015-12-28)  Stable
+//    [Version]     v0.7  (2016-01-14)  Stable
 //
-//    [Based on]    jQuery  v1.9+
+//    [Based on]    iQuery  or  (jQuery with jQuery+)
 //
 //
-//          (C)2015  shiy2008@gmail.com
+//        (C)2015-2016  shiy2008@gmail.com
 //
 
 
@@ -29,8 +29,7 @@
             $_Item = [undefined];
         }
 
-        iView = $_View.data('_LVI_');
-        iView = (iView instanceof _Self_)  ?  iView  :  this;
+        var iView = _Self_.getInstance($_View) || this;
 
         this.callback = {
             insert:         [ ],
@@ -60,7 +59,13 @@
 //        this.limit = (this.data.length > this.limit) ? this.limit : this.data.length;
     }
 
-    ListView.listSelector = 'ul, ol, dl, tbody, *[multiple]';
+    $.extend(ListView, {
+        getInstance:     function () {
+            var _Instance_ = $(arguments[0]).data('_LVI_');
+            return  ((_Instance_ instanceof this)  &&  _Instance_);
+        },
+        listSelector:    'ul, ol, dl, tbody, *[multiple]'
+    });
 
     function _Callback_(iType, $_Item, iValue, Index) {
         var iCallback = this.callback[iType],  iReturn,
@@ -202,16 +207,21 @@
                 if ($_Item < 0)  return this;
                 $_Item = this.indexOf($_Item);
             }
-            if (this.$_View.css('position') == 'static')
-                this.$_View.css('position', 'relative');
+            var $_Scroll = $_Item.scrollParents();
 
-            this.$_View.children().removeClass('active');
+            if ($_Scroll.css('position') == 'static')
+                $_Scroll.css('position', 'relative');
 
-            var iCoord = $_Item.addClass('active').position();
+            $_Item.siblings().removeClass('active');
 
-            this.$_View.animate({
-                scrollTop:     this.$_View.scrollTop() + iCoord.top,
-                scrollLeft:    this.$_View.scrollLeft() + iCoord.left
+            var iCoord = $_Item.addClass('active').offset(),
+                _Coord_ = $_Scroll.offset();
+
+            $_Scroll.animate({
+                scrollTop:
+                    $_Scroll.scrollTop()  +  (iCoord.top - _Coord_.top),
+                scrollLeft:
+                    $_Scroll.scrollLeft()  +  (iCoord.left - _Coord_.left)
             });
 
             return this;

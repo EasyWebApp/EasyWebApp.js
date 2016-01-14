@@ -21,11 +21,21 @@
         switch ( _TP_.split('.')[0] ) {
             case 'news':         ;
             case 'image':        {
-                if ((! _PP_)  ||  (_PP_ != _TP_))
-                    return {
-                        content_type:    iData.tngou
-                    };
-                return Data_Fix(iData.tngou);
+                if (_PP_  &&  (_PP_ == _TP_))  return Data_Fix(iData.tngou);
+
+                $.ListView(
+                    $('form', this).find($.ListView.listSelector).not('input'),
+                    ['label', 'input'],
+                    function ($_Item) {
+                        var _UUID_ = $_Item.filter('input')[0].id = $.uuid();
+                        $_Item.filter('label')[0].setAttribute('for', _UUID_);
+                    }
+                ).on('afterRender',  function () {
+                    this.$_View.children('label')[0].click();
+                });
+                return {
+                    content_type:    iData.tngou
+                };
             }
             case 'news_text':    return Data_Fix([iData])[0];
             case 'gallery':      {
