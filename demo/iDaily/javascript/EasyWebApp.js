@@ -2,7 +2,7 @@
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]     v2.2  (2016-01-10)  Stable
+//      [Version]     v2.2  (2016-01-15)  Stable
 //
 //      [Based on]    iQuery  |  jQuery with jQuery+,
 //
@@ -574,7 +574,9 @@
 
         PageLink.prefetchClear();
 
-        var $_Link = (This_App.history.lastIndex ? This_App.domRoot : $_Body).find('*[target]');
+        var $_Link = (
+                This_App.history.lastIndex ? This_App.domRoot : $_Body
+            ).find('*[target]');
 
         for (var i = 0;  i < $_Link.length;  i++)
             this.link.push(
@@ -582,11 +584,13 @@
             );
 
         This_App.loading = false;
+
         This_App.domRoot.trigger('pageReady', [
             This_App,
             This_App.history.last(),
             This_App.history.prev()
-        ]);
+        ]).focus();
+
         $_Body.trigger({
             type:      'loading',
             detail:    1

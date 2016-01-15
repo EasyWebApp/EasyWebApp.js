@@ -2,7 +2,7 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v1.0  (2016-01-14)  Stable
+//      [Version]    v1.0  (2016-01-15)  Stable
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.
@@ -1196,16 +1196,20 @@
             return  $.each(this, arguments[0]);
         },
         is:                 function (iSelector) {
-            if ((! this[0])  ||  ($.type(this[0]) in Type_Info.DOM.root))
-                return false;
+            for (var i = 0;  i < this.length;  i++) {
+                if ($.type(this[i]) in Type_Info.DOM.root)  return false;
 
-            if (! this[0].parentNode)  $('<div />')[0].appendChild(this[0]);
+                if (! this[i].parentNode)  $('<div />')[0].appendChild(this[i]);
 
-            try {
-                return  this[0].matches(iSelector);
-            } catch (iError) {
-                return  ($(iSelector, this[0].parentNode).index(this[0])  >  -1);
+                try {
+                    return  this[i].matches(iSelector);
+                } catch (iError) {
+                    return (
+                        $(iSelector, this[i].parentNode).index(this[i])  >  -1
+                    );
+                }
             }
+            return false;
         },
         filter:             function (iSelector) {
             var $_Result = [ ];
@@ -2119,6 +2123,19 @@
         'tap', 'press', 'swipe'
     ))
         $.fn[iName] = Event_Method(iName);
+
+    var DOM_Focus = $.fn.focus,
+        iFocusable = [
+            'a[href], area',
+            'label, input, textarea, button, select, option',
+            '*[tabIndex], *[contentEditable]'
+        ].join(', ');
+
+    $.fn.focus = function () {
+        this.not(iFocusable).attr('tabIndex', -1).css('outline', 'none');
+
+        return  DOM_Focus.apply(this, arguments);
+    };
 
     if ($.browser.mobile)  $.fn.click = $.fn.tap;
 
