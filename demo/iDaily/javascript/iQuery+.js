@@ -207,10 +207,13 @@
                 if ($_Item < 0)  return this;
                 $_Item = this.indexOf($_Item);
             }
-            var $_Scroll = $_Item.scrollParents();
+            var $_Scroll = $_Item.scrollParents().eq(0);
 
             if ($_Scroll.css('position') == 'static')
                 $_Scroll.css('position', 'relative');
+
+            if (isNaN(parseInt( $_Scroll.attr('tabIndex') )))
+                $_Scroll.attr('tabIndex', -1).css('outline', 'none')[0].focus();
 
             $_Item.siblings().removeClass('active');
 

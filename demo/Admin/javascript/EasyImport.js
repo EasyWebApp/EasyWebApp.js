@@ -834,7 +834,7 @@
                     if ((! i)  ||  (
                         $_Temp[i].valueOf() != $_Temp[i - 1].valueOf()
                     ) || (
-                        $_Temp[i].DOM.innerHTML  !=  $_Temp[i - 1].DOM.innerHTML
+                        $_Temp[i].DOM.outerHTML  !=  $_Temp[i - 1].DOM.outerHTML
                     ))
                         $_Result[j++] = $_Temp[i].DOM;
 
@@ -1021,8 +1021,9 @@
                     .split('/').slice(0, -1).join('/');
         },
         urlDomain:        function () {
-            return  (arguments[0] || BOM.location.href)
-                    .split('/').slice(0, 3).join('/');
+            return (
+                (arguments[0] || BOM.location.href).match(/^(\w+:)?\/\/[^\/]+/)  ||  [ ]
+            )[0];
         },
         data:             function (iElement, iName, iValue) {
             return  _DOM_.operate('Data', [iElement], iName, iValue);
@@ -1057,18 +1058,28 @@
 
         return  function () {
             switch ( $.type(this[0]) ) {
-                case 'Document':    return  Math.max(
+                case 'Document':
+                    return  Math.max(
                         this[0].documentElement[iName.scroll],
                         this[0].body[iName.scroll]
-                    );  break;
-                case 'Window':      return  this[0][iName.inner] || Math.max(
+                    );
+                case 'Window':
+                    return  this[0][iName.inner] || Math.max(
                         this[0].document.documentElement[iName.client],
                         this[0].document.body[iName.client]
-                    );  break;
-                default:            return  this.css(iName.css, arguments[0]);
+                    );
             }
+            var iValue = parseFloat(arguments[0]),
+                iFix = this.is('table') ? 4 : 0;
+
+            if (isNaN( iValue ))  return  this[0][iName.client] + iFix;
+
+            for (var i = 0;  i < this.length;  i++)
+                this[i][iName.client] = iValue - iFix;
+            return this;
         };
     }
+
     function Scroll_DOM() {
         return (
             ($.browser.webkit || (
@@ -1254,7 +1265,7 @@
                     Object_Seek.call(this[i], 'parentNode').slice(0, -1)
                 );
 
-            return  this.pushStack(Array_Reverse.call(
+            return  Array_Reverse.call(this.pushStack(
                 arguments[0]  ?  $($_Result).filter(arguments[0])  :  $_Result
             ));
         },
@@ -1280,7 +1291,7 @@
                     $_Result = iMin.slice(i);
                     break;
                 }
-            return  this.pushStack(Array_Reverse.call(
+            return  Array_Reverse.call(this.pushStack(
                 arguments[0]  ?  $($_Result).filter(arguments[0])  :  $_Result
             ));
         },
@@ -1426,7 +1437,7 @@
         width:              DOM_Size('Width'),
         height:             DOM_Size('Height'),
         scrollParents:      function () {
-            return  this.pushStack(
+            return  Array_Reverse.call(this.pushStack(
                 $.map(this.parents(),  function () {
                     var $_This = $(arguments[0]);
 
@@ -1436,7 +1447,7 @@
                     )
                         return $_This[0];
                 })
-            );
+            ));
         },
         scrollTop:          DOM_Scroll('Top'),
         scrollLeft:         DOM_Scroll('Left'),
@@ -1960,7 +1971,7 @@
                         Event_Data[iType[i]] = [ ];
                         if ($.browser.modern)
                             this.addEventListener(iType[i], Proxy_Handler, false);
-                        else if (isOriginalEvent({
+                        else if (isOriginalEvent.call({
                             type:      iType[i],
                             target:    this
                         }))
@@ -2641,7 +2652,7 @@
 /* ---------- DOM/CSS Animation ---------- */
 (function ($) {
 
-    var FPS = 20;
+    var FPS = 60;
 
     function KeyFrame(iStart, iEnd, During_Second) {
         During_Second = Number(During_Second) || 1;
@@ -2759,11 +2770,13 @@
 
     /* ----- XML HTTP Request ----- */
     function X_Domain() {
-        var iPort = BOM.location.port  ?  (':' + BOM.location.port)  :  '';
+        var iDomain = $.urlDomain( arguments[0] );
 
-        return (
-            $.urlDomain( arguments[0] )  !=  [
-                BOM.location.protocol, '//', DOM.domain, iPort
+        return  iDomain && (
+            iDomain != [
+                BOM.location.protocol, '//', DOM.domain, (
+                    BOM.location.port  ?  (':' + BOM.location.port)  :  ''
+                )
             ].join('')
         );
     }

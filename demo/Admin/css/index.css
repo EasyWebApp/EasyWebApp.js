@@ -32,7 +32,7 @@ html, body {
 
 #User_Bar {
     box-shadow:    0.3em  0.2em  1em  gray;
-    height:        6%;
+    height:        auto;
 }
 #User_Bar > .Grid-Column {
     padding:    0.5em;
