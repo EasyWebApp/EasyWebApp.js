@@ -2,7 +2,7 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v1.0  (2016-01-15)  Stable
+//      [Version]    v1.0  (2016-01-19)  Stable
 //
 //                   (Modern & Mobile Edition)
 //
@@ -233,6 +233,17 @@
             inArray:          function () {
                 return  Array.prototype.indexOf.call(arguments[1], arguments[0]);
             },
+            merge:            function (iSource) {
+                if (! (iSource instanceof Array))
+                    iSource = this.makeArray(iSource);
+
+                for (var i = 1;  i < arguments.length;  i++)
+                    iSource = Array.prototype.concat.apply(
+                        iSource,
+                        this.likeArray( arguments[i] )  ?  arguments[i]  :  [arguments[i]]
+                    );
+                return iSource;
+            },
             unique:           function (iArray) {
                 var iResult = [ ];
 
@@ -271,34 +282,27 @@
                         return false;
                 }
                 return true;
+            },
+            makeSet:          function () {
+                var iSet = { };
+
+                for (var i = 0;  i < arguments.length;  i++)
+                    iSet[arguments[i]] = true;
+
+                return iSet;
             }
         };
-    function _inKey_() {
-        var iObject = { };
-
-        for (var i = 0;  i < arguments.length;  i++)
-            iObject[arguments[i]] = true;
-
-        return iObject;
-    }
 
     var Type_Info = {
-            Data:         _inKey_('String', 'Number', 'Boolean', 'Null'),
-            BOM:          _inKey_('Window', 'DOMWindow', 'global'),
+            Data:         _Object_.makeSet('String', 'Number', 'Boolean', 'Null'),
+            BOM:          _Object_.makeSet('Window', 'DOMWindow', 'global'),
             DOM:          {
-                set:        _inKey_('Array', 'HTMLCollection', 'NodeList', 'jQuery', 'iQuery'),
-                element:    _inKey_('Window', 'Document', 'HTMLElement'),
-                root:       _inKey_('Document', 'Window')
-            },
-            DOM_Event:    _inKey_(
-                'DOMContentLoaded',
-                'DOMAttrModified', 'DOMAttributeNameChanged',
-                'DOMCharacterDataModified',
-                'DOMElementNameChanged',
-                'DOMNodeInserted', 'DOMNodeInsertedIntoDocument',
-                'DOMNodeRemoved',  'DOMNodeRemovedFromDocument',
-                'DOMSubtreeModified'
-            )
+                set:        _Object_.makeSet(
+                    'Array', 'HTMLCollection', 'NodeList', 'jQuery', 'iQuery'
+                ),
+                element:    _Object_.makeSet('Window', 'Document', 'HTMLElement'),
+                root:       _Object_.makeSet('Document', 'Window')
+            }
         };
 
     _Object_.type = function (iVar) {
@@ -359,9 +363,9 @@
 /* ---------- DOM Info Operator - Get first, Set all. ---------- */
 
     var _DOM_ = {
-            Get_Name_Type:    _inKey_('String', 'Array'),
+            Get_Name_Type:    _Object_.makeSet('String', 'Array', 'Undefined'),
             operate:          function (iType, iElement, iName, iValue) {
-                if ((! iName) || (iValue === null)) {
+                if (iValue === null) {
                     if (this[iType].clear)
                         for (var i = 0;  i < iElement.length;  i++)
                             this[iType].clear(iElement[i], iName);
@@ -371,16 +375,15 @@
                     (iValue === undefined)  &&
                     (_Object_.type(iName) in this.Get_Name_Type)
                 ) {
-                    if (! iElement.length)
-                        return;
-                    else if (typeof iName == 'string')
-                        return  this[iType].get(iElement[0], iName);
-                    else {
+                    if (! iElement.length)  return;
+
+                    if (iName instanceof Array) {
                         var iData = { };
                         for (var i = 0;  i < iName.length;  i++)
                             iData[iName[i]] = this[iType].get(iElement[0], iName[i]);
                         return iData;
                     }
+                    return  this[iType].get(iElement[0], iName);
                 }
                 var iResult;
 
@@ -409,10 +412,12 @@
     /* ----- DOM Attribute ----- */
     _DOM_.Attribute = {
         get:      function (iElement, iName) {
-            if (! (_Object_.type(iElement) in Type_Info.DOM.root)) {
-                var iValue = iElement.getAttribute(iName);
-                return  (iValue === null) ? undefined : iValue;
-            }
+            if (_Object_.type(iElement) in Type_Info.DOM.root)  return;
+
+            if (! iName)  return iElement.attributes;
+
+            var iValue = iElement.getAttribute(iName);
+            if (iValue !== null)  return iValue;
         },
         set:      function (iElement, iName, iValue) {
             return  (_Object_.type(iElement) in Type_Info.DOM.root) ?
@@ -426,7 +431,7 @@
     /* ----- DOM Property ----- */
     _DOM_.Property = {
         get:      function (iElement, iName) {
-            return  iElement[iName];
+            return  iName ? iElement : iElement[iName];
         },
         set:      function (iElement, iName, iValue) {
             iElement[iName] = iValue;
@@ -436,15 +441,19 @@
     /* ----- DOM Style ----- */
     _DOM_.Style = {
         get:           function (iElement, iName) {
-            if ((! iElement) || (_Object_.type(iElement) in Type_Info.DOM.root))
+            if ((! iElement)  ||  (_Object_.type(iElement) in Type_Info.DOM.root))
                 return;
 
-            var iStyle = DOM.defaultView.getComputedStyle(iElement, null).getPropertyValue(iName);
-            var iNumber = parseFloat(iStyle);
+            var iStyle = DOM.defaultView.getComputedStyle(iElement, null);
 
-            return  isNaN(iNumber) ? iStyle : iNumber;
+            if (iName) {
+                iStyle = iStyle.getPropertyValue(iName);
+                var iNumber = parseFloat(iStyle);
+                iStyle = isNaN(iNumber) ? iStyle : iNumber;
+            }
+            return iStyle;
         },
-        PX_Needed:     _inKey_(
+        PX_Needed:     _Object_.makeSet(
             'width',  'min-width',  'max-width',
             'height', 'min-height', 'max-height',
             'margin', 'padding',
@@ -477,12 +486,16 @@
             if (typeof iElement.dataIndex != 'number')
                 iElement.dataIndex = this._Data_.push({ }) - 1;
 
-            var iData =  (this._Data_[iElement.dataIndex] || { })[iName]  ||
-                    (iElement.dataset || { })[ iName.toCamelCase() ];
+            var iData =  this._Data_[iElement.dataIndex] || iElement.dataset;
 
-            if (typeof iData == 'string')  try {
-                iData = BOM.JSON.parseAll(iData);
-            } catch (iError) { }
+            if (iName) {
+                iData = iData || { };
+                iData = iData[iName]  ||  iData[ iName.toCamelCase() ];
+
+                if (typeof iData == 'string')  try {
+                    iData = BOM.JSON.parseAll(iData);
+                } catch (iError) { }
+            }
 
             return  ((iData instanceof Array)  ||  _Object_.isPlainObject(iData))  ?
                     _Object_.extend(true, undefined, iData)  :  iData;
@@ -496,13 +509,6 @@
                 delete this._Data_[iElement.dataIndex];
                 delete iElement.dataIndex;
             }
-        },
-        clone:     function (iOld, iNew) {
-            iNew.dataIndex = this._Data_.push({ }) - 1;
-            return _Object_.extend(
-                    this._Data_[iNew.dataIndex],
-                    this._Data_[iOld.dataIndex]
-                )._event_;
         }
     };
     /* ----- DOM Content ----- */
@@ -610,7 +616,9 @@
                 }
             },
             ':image':      {
-                feature:    _Object_.extend(_inKey_('img', 'svg', 'canvas'), {
+                feature:    _Object_.extend(_Object_.makeSet(
+                    'img', 'svg', 'canvas'
+                ), {
                     input:    {type:  'image'},
                     link:     {type:  'image/x-icon'}
                 }),
@@ -624,7 +632,9 @@
                 }
             },
             ':button':     {
-                feature:    _inKey_('button', 'image', 'submit', 'reset'),
+                feature:    _Object_.makeSet(
+                    'button', 'image', 'submit', 'reset'
+                ),
                 filter:     function (iElement) {
                     var iTag = iElement.tagName.toLowerCase();
 
@@ -635,13 +645,15 @@
                 }
             },
             ':input':      {
-                feature:    _inKey_('input', 'textarea', 'button', 'select'),
+                feature:    _Object_.makeSet(
+                    'input', 'textarea', 'button', 'select'
+                ),
                 filter:     function () {
                     return  (arguments[0].tagName.toLowerCase() in this.feature);
                 }
             },
             ':list':       {
-                feature:    _inKey_('ul', 'ol', 'dl'),
+                feature:    _Object_.makeSet('ul', 'ol', 'dl'),
                 filter:     function () {
                     return  (arguments[0].tagName.toLowerCase() in this.feature);
                 }
@@ -750,7 +762,7 @@
             } :
             function (iSet) {
                 iSet.sort(function (A, B) {
-                    return  A.compareDocumentPosition(B) & 2;
+                    return  (A.compareDocumentPosition(B) & 2) - 1;
                 });
 
                 var $_Result = [ ];
@@ -814,18 +826,6 @@
 
 
     /* ----- iQuery Static Method ----- */
-
-    function Array_Concat(iSource) {
-        if (! (iSource instanceof Array))
-            iSource = $.makeArray(iSource);
-
-        for (var i = 1;  i < arguments.length;  i++)
-            iSource = Array.prototype.concat.apply(
-                iSource,
-                $.likeArray( arguments[i] )  ?  arguments[i]  :  [arguments[i]]
-            );
-        return iSource;
-    }
 
     _Object_.extend($, _Object_, _Time_, {
         browser:          _Browser_,
@@ -944,7 +944,7 @@
 
             return  function () {
                 return  iFunction.apply(
-                    iContext || this,  Array_Concat(iArgs, arguments)
+                    iContext || this,  $.merge(iArgs, arguments)
                 );
             };
         }
@@ -961,6 +961,7 @@
 
         return  function () {
             switch ( $.type(this[0]) ) {
+                case 'Document':
                     return  Math.max(
                         this[0].documentElement[iName.scroll],
                         this[0].body[iName.scroll]
@@ -1066,7 +1067,7 @@
         },
         add:                function () {
             return this.pushStack(
-                Array_Concat(this,  $.apply(BOM, arguments))
+                $.merge(this,  $.apply(BOM, arguments))
             );
         },
         slice:              function () {
@@ -1150,7 +1151,7 @@
             return  _DOM_.operate('Data', this, arguments[0], arguments[1]);
         },
         addBack:            function () {
-            return  this.pushStack( Array_Concat(this, this.prevObject) );
+            return  this.pushStack( $.merge(this, this.prevObject) );
         },
         parent:             function () {
             var $_Result = [ ];
@@ -1210,7 +1211,7 @@
             var $_Result = [ ];
 
             for (var i = 0;  i < this.length;  i++)
-                $_Result = Array_Concat($_Result, this[i].children);
+                $_Result = $.merge($_Result, this[i].children);
 
             return this.pushStack(
                 arguments[0]  ?  $($_Result).filter(arguments[0])  :  $_Result
@@ -1221,7 +1222,7 @@
                 Type_Filter = parseInt(arguments[0]);
 
             for (var i = 0;  i < this.length;  i++)
-                $_Result = Array_Concat(
+                $_Result = $.merge(
                     $_Result,
                     (this[i].tagName.toLowerCase() != 'iframe') ?
                         this[i].childNodes : this[i].contentWindow.document
@@ -1269,7 +1270,7 @@
             var $_Result = [ ];
 
             for (var i = 0;  i < this.length;  i++)
-                $_Result = Array_Concat($_Result,  $(arguments[0], this[i]));
+                $_Result = $.merge($_Result,  $(arguments[0], this[i]));
 
             return  this.pushStack($_Result);
         },
@@ -1281,7 +1282,7 @@
             return this;
         },
         remove:             function () {
-            return this.detach().data();
+            return this.detach();
         },
         empty:              function () {
             this.children().remove();
@@ -1688,14 +1689,29 @@
             return iSelection;
     };
 
+})(self, self.document);
+
+
+
 /* ---------- jQuery Event System ---------- */
+(function (BOM, DOM, $) {
+
+    var Mutation_Event = $.makeSet(
+            'DOMContentLoaded',
+            'DOMAttrModified', 'DOMAttributeNameChanged',
+            'DOMCharacterDataModified',
+            'DOMElementNameChanged',
+            'DOMNodeInserted', 'DOMNodeInsertedIntoDocument',
+            'DOMNodeRemoved',  'DOMNodeRemovedFromDocument',
+            'DOMSubtreeModified'
+        );
 
     function isOriginalEvent() {
         return (
             ('on' + this.type)  in
             (this.target || DOM.documentElement).constructor.prototype
         ) || (
-            this.type in Type_Info.DOM_Event
+            this.type in Mutation_Event
         );
     }
 
@@ -1915,22 +1931,29 @@
 
             for (var i = 0;  i < iHandler.length;  i++)
                 iReturn = iHandler[i].apply(
-                    this[0],  Array_Concat([ ], arguments)
+                    this[0],  $.merge([ ], arguments)
                 );
 
             return iReturn;
         },
         clone:             function (iDeep) {
-            var $_Result = [ ];
+            return  this.pushStack($.map(this,  function () {
+                var $_Old = $(arguments[0]);
+                var $_New = $( $_Old[0].cloneNode(iDeep) );
 
-            for (var i = 0, iEvent;  i < this.length;  i++) {
-                $_Result[i] = this[i].cloneNode(iDeep);
-                iEvent = _DOM_.Data.clone(this[i], $_Result[i]);
+                if (iDeep) {
+                    $_Old = $_Old.find('*').addBack();
+                    $_New = $_New.find('*').addBack();
+                }
+                for (var i = 0, iData;  i < $_Old.length;  i++) {
+                    iData = $($_Old[i]).data();
+                    $($_New[i]).data(iData);
 
-                for (var iType in iEvent)
-                    $_Result[i].addEventListener(iType, Proxy_Handler, false);
-            }
-            return this.pushStack($_Result);
+                    for (var iType in iData._event_)
+                        $_New[i].addEventListener(iType, Proxy_Handler, false);
+                }
+                return $_New[0];
+            }));
         }
     });
 
@@ -1953,7 +1976,7 @@
         };
     }
 
-    for (var iName in _inKey_(
+    for (var iName in $.makeSet(
         'abort', 'error',
         'keydown', 'keypress', 'keyup',
         'mousedown', 'mouseup', 'mousemove', 'mousewheel',
@@ -1978,12 +2001,8 @@
 
     if ($.browser.mobile)  $.fn.click = $.fn.tap;
 
-})(self, self.document, self.iQuery);
-
-
 
 /* ---------- Complex Events ---------- */
-(function (BOM, DOM, $) {
 
     /* ----- DOM Ready ----- */
     var $_DOM = $(DOM);
@@ -2939,7 +2958,7 @@
 //                >>>  EasyImport.js  <<<
 //
 //
-//      [Version]    v1.2  (2016-01-10)  Stable
+//      [Version]    v1.2  (2016-01-19)  Stable
 //
 //                   (Modern & Mobile Edition)
 //
@@ -2955,13 +2974,7 @@
 
 /* ----------- Standard Mode Meta Patches ----------- */
 
-    var $_Meta = [
-            $('<meta />', {
-                'http-equiv':    'Window-Target',
-                content:         '_top'
-            })[0]
-        ],
-        $_Head = $('head');
+    var $_Meta = [ ],  $_Head = $('head');
 
     if ($.browser.mobile)
         $_Meta.push(

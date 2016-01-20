@@ -2,7 +2,7 @@
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]     v2.2  (2016-01-15)  Stable
+//      [Version]     v2.2  (2016-01-20)  Stable
 //
 //      [Based on]    iQuery  |  jQuery with jQuery+,
 //
@@ -529,7 +529,7 @@
             iLink = $_Source && $_Source.data('EWA_PageLink');
         if (iLink  &&  (iLink.target != '_self'))
             $_List = iLink.getTarget().parent();
-        $_List = $_List.find( $.ListView.listSelector ).not('input');
+        $_List = $.ListView.findView($_List);
 
         for (var i = 0, $_LV;  i < $_List.length;  i++)
             $.ListView($_List.eq(i),  function () {

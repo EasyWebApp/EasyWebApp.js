@@ -15,7 +15,8 @@ html, body {
     border-left:    0.3em  solid  transparent;
     cursor:         pointer;
 }
-#Main_Nav li:hover {
+#Main_Nav li:hover,
+#Main_Nav li.active {
     border-color:    rgb(100, 150, 240);
     background:      rgba(100, 150, 240, 0.5);
     color:           white;
@@ -24,7 +25,8 @@ html, body {
     font-weight:    bold;
     text-align:     center;
 }
-#Main_Nav li.Head:hover {
+#Main_Nav li.Head:hover,
+#Main_Nav li.Head.active {
     border-color:    transparent;
     background:      transparent;
 }

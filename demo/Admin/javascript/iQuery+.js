@@ -2,7 +2,7 @@
 //              >>>  iQuery+  <<<
 //
 //
-//    [Version]     v0.7  (2016-01-15)  Stable
+//    [Version]     v0.7  (2016-01-20)  Stable
 //
 //    [Based on]    iQuery  or  (jQuery with jQuery+)
 //
@@ -60,11 +60,15 @@
     }
 
     $.extend(ListView, {
-        getInstance:     function () {
+        getInstance:    function () {
             var _Instance_ = $(arguments[0]).data('_LVI_');
             return  ((_Instance_ instanceof this)  &&  _Instance_);
         },
-        listSelector:    'ul, ol, dl, tbody, *[multiple]'
+        findView:       function () {
+            return $(arguments[0]).find(
+                'ul, ol, dl, tbody, *[multiple]'
+            ).not('input[type="file"]');
+        }
     });
 
     function _Callback_(iType, $_Item, iValue, Index) {
@@ -108,12 +112,16 @@
         itemOf:     function (Index) {
             Index = Index || 0;
 
-            var $_Item = [ ];
+            var _This_ = this,  $_Item;
 
-            for (var i = 0, _Item_;  i < this.selector.length;  i++) {
-                _Item_ = this.$_View.children( this.selector[i] ).eq(Index)[0];
-                if (_Item_)  $_Item.push(_Item_);
-            }
+            if (! this.selector) {
+                $_Item = this.$_View[0].children[Index];
+                $_Item = $_Item ? [$_Item] : [ ];
+            } else
+                $_Item = $.map(this.selector,  function () {
+                    return  _This_.$_View.children( arguments[0] )[Index];
+                });
+
             return  $.extend($(), $_Item, {
                 length:    $_Item.length
             });
@@ -138,18 +146,22 @@
             Index = (Index < this.length)  ?  Index  :  this.length;
 
             var $_Item = this.itemOf(Index);
-
-            if ((! $_Item.length)  ||  $_Item.hasClass('ListView_Item'))
-                $_Item = New_Item.call(this, $_Item, Index);
+            var _Insert_ = (
+                    (! $_Item.length)  ||  $_Item.hasClass('ListView_Item')
+                );
+            if (_Insert_)  $_Item = New_Item.call(this, $_Item, Index);
 
             var _Index_ = (Index < 0)  ?  (Index - 1)  :  Index;
 
             var iReturn = _Callback_.call(
                     this,  'insert',  $_Item,  iValue,  _Index_
                 );
-            this.splice(
-                Index,  0,  this.itemOf(_Index_).addClass('ListView_Item')
-            );
+            if (_Insert_) {
+                $_Item = this.itemOf(_Index_);
+                this.splice(Index, 0, $_Item);
+            }
+            $_Item.addClass('ListView_Item');
+
             this.data.splice(
                 Index,  0,  (iReturn === undefined) ? iValue : iReturn
             );
@@ -214,12 +226,13 @@
             var iCoord = $_Item.addClass('active').offset(),
                 _Coord_ = $_Scroll.offset();
 
-            $_Scroll.animate({
-                scrollTop:
-                    $_Scroll.scrollTop()  +  (iCoord.top - _Coord_.top),
-                scrollLeft:
-                    $_Scroll.scrollLeft()  +  (iCoord.left - _Coord_.left)
-            });
+            if ($_Scroll.length)
+                $_Scroll.animate({
+                    scrollTop:
+                        $_Scroll.scrollTop()  +  (iCoord.top - _Coord_.top),
+                    scrollLeft:
+                        $_Scroll.scrollLeft()  +  (iCoord.left - _Coord_.left)
+                });
 
             return this;
         }

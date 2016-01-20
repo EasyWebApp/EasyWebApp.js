@@ -2,7 +2,7 @@
 //          >>>  EasyWebUI Component Library  <<<
 //
 //
-//      [Version]     v1.9  (2016-01-10)  Stable
+//      [Version]     v1.9  (2016-01-20)  Stable
 //
 //      [Based on]    iQuery v1  or  jQuery (with jQuery+),
 //
@@ -720,8 +720,6 @@
         });
     }).ready(function () {
 
-        $(DOM.body).addClass('Loaded');
-
         $('form').pwConfirm();
 
         $('form input[type="range"]').Range();
@@ -732,6 +730,21 @@
 
         $('*:button,  a.Button,  .No_Select,  .Panel > .Head,  .Tab > label')
             .noSelect();
+
+        $.ListView.findView(
+            $(DOM.body).addClass('Loaded')
+        ).each(function () {
+            var iView = $.ListView.getInstance(this);
+
+            if (iView)  return;
+
+            iView = $.ListView(this);
+
+            iView.$_View.click(function (iEvent) {
+                if (iEvent.target.parentNode === this)
+                    iView.focus( iEvent.target );
+            });
+        });
     });
 
 })(self,  self.document,  self.jQuery || self.Zepto);

@@ -24,7 +24,7 @@
                 if (_PP_  &&  (_PP_ == _TP_))  return Data_Fix(iData.tngou);
 
                 $.ListView(
-                    $('form', this).find($.ListView.listSelector).not('input'),
+                    $.ListView.findView( $('form', this) ),
                     ['label', 'input'],
                     function ($_Item) {
                         var _UUID_ = $_Item.filter('input')[0].id = $.uuid();
