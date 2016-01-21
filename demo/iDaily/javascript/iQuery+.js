@@ -2,7 +2,7 @@
 //              >>>  iQuery+  <<<
 //
 //
-//    [Version]     v0.7  (2016-01-20)  Stable
+//    [Version]     v0.7  (2016-01-21)  Stable
 //
 //    [Based on]    iQuery  or  (jQuery with jQuery+)
 //
@@ -112,19 +112,15 @@
         itemOf:     function (Index) {
             Index = Index || 0;
 
-            var _This_ = this,  $_Item;
+            var _This_ = this,  $_Item = this.$_View[0].children[Index];
 
-            if (! this.selector) {
-                $_Item = this.$_View[0].children[Index];
-                $_Item = $_Item ? [$_Item] : [ ];
-            } else
-                $_Item = $.map(this.selector,  function () {
-                    return  _This_.$_View.children( arguments[0] )[Index];
-                });
-
-            return  $.extend($(), $_Item, {
-                length:    $_Item.length
-            });
+            return $(
+                this.selector ?
+                    $.map(this.selector,  function () {
+                        return  _This_.$_View.children( arguments[0] )[Index];
+                    }) :
+                    ($_Item ? [$_Item] : [ ])
+            );
         },
         slice:      Array.prototype.slice,
         splice:     Array.prototype.splice,

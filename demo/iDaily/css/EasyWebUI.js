@@ -2,7 +2,7 @@
 //          >>>  EasyWebUI Component Library  <<<
 //
 //
-//      [Version]     v1.9  (2016-01-20)  Stable
+//      [Version]     v1.9  (2016-01-21)  Stable
 //
 //      [Based on]    iQuery v1  or  jQuery (with jQuery+),
 //
@@ -598,9 +598,12 @@
                     ].join('"'));
                 var $_Tab_Body = $_Tab_Item.not($_Label).before($_Radio);
 
-                $_Tab_Head = this.$_View.children('label[for]')[
-                    Label_At ? 'prependTo' : 'appendTo'
-                ](this.$_View);
+                $_Tab_Head = $($.map(
+                    this.$_View.children('input[type="radio"]'),
+                    function () {
+                        return  $('label[for="' + arguments[0].id + '"]')[0];
+                    }
+                ))[Label_At ? 'prependTo' : 'appendTo']( this.$_View );
 
                 if (! $.browser.modern)
                     $_Radio.change(function () {

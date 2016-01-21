@@ -18,6 +18,9 @@
         var _TP_ = $.fileName(This_Page.HTML),
             _PP_ = $.fileName(Prev_Page.HTML);
 
+        if ((! $.isEmptyObject(iData))  &&  (iData.status === false))
+            return BOM.alert(iData.msg);
+
         switch ( _TP_.split('.')[0] ) {
             case 'news':         ;
             case 'image':        {
