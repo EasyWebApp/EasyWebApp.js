@@ -970,6 +970,9 @@ img.UserLogo {
 .Tab > input[type="radio"]:checked + * {
     display:    block;
 }
+.Tab > input[type="radio"][checked] + * {
+    display:    block;
+}
 
 .Tab.Point .Grid-Column > .Head,
 .Tab.Button .Grid-Column > .Head,

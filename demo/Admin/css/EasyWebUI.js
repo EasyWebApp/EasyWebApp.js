@@ -2,7 +2,7 @@
 //          >>>  EasyWebUI Component Library  <<<
 //
 //
-//      [Version]     v1.9  (2016-01-21)  Stable
+//      [Version]     v1.9  (2016-01-23)  Stable
 //
 //      [Based on]    iQuery v1  or  jQuery (with jQuery+),
 //
@@ -566,6 +566,12 @@
     }
 
     $.fn.iTab = function () {
+        if (! $.browser.modern)
+            this.on('click',  'input[type="radio"]',  function () {
+                $(this).attr('checked', true)
+                    .siblings('input[type="radio"]').removeAttr('checked');
+            });
+
         return  this.on('click',  'label[for]',  function () {
 
             var $_This = $(this);
@@ -607,8 +613,10 @@
 
                 if (! $.browser.modern)
                     $_Radio.change(function () {
-                        $_Tab_Box.children().not('label, input').hide();
-                        $_Tab_Body.show();
+                        if (this.checked)
+                            this.setAttribute('checked', true);
+                        else
+                            this.removeAttribute('checked');
                     });
             }).on('remove',  function () {
 
@@ -718,9 +726,12 @@
             style:    'color: white'
         });
 
-        Load_Cover = BOM.showModalDialog($_Load_Tips, {
-            ' ':    {background:  'darkgray'}
-        });
+        try {
+            Load_Cover = BOM.showModalDialog($_Load_Tips, {
+                ' ':    {background:  'darkgray'}
+            });
+        } catch (iError) { }
+
     }).ready(function () {
 
         $('form').pwConfirm();

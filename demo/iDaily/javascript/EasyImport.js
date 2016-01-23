@@ -2,7 +2,7 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v1.0  (2016-01-21)  Stable
+//      [Version]    v1.0  (2016-01-23)  Stable
 //
 //                   (Modern & Mobile Edition)
 //
@@ -149,10 +149,15 @@
                 return  iValue && (iValue.constructor === Object);
             },
             likeArray:        function (iObject) {
-                return (
+                if (! iObject)  return false;
+
+                iObject = (typeof iObject.valueOf == 'function')  ?
+                    iObject.valueOf() : iObject;
+
+                return Boolean(
                     iObject  &&
                     (typeof iObject.length == 'number')  &&
-                    (typeof iObject.valueOf() != 'string')
+                    (typeof iObject != 'string')
                 );
             },
             each:             function (Arr_Obj, iEvery) {
@@ -247,12 +252,11 @@
             unique:           function (iArray) {
                 var iResult = [ ];
 
-                for (var i = iArray.length - 1;  i > -1 ;  i--)
+                for (var i = iArray.length - 1, j = 0;  i > -1 ;  i--)
                     if (this.inArray(iArray[i], iArray) == i)
-                        iResult.push( iArray[i] );
-                iResult.reverse();
+                        iResult[j++] = iArray[i];
 
-                return iResult;
+                return iResult.reverse();
             },
             isEqual:          function (iLeft, iRight) {
                 if (!  (iLeft && iRight))
@@ -290,6 +294,28 @@
                     iSet[arguments[i]] = true;
 
                 return iSet;
+            },
+            trace:            function (iObject, iName, iCount, iCallback) {
+                if (typeof iCount == 'function')  iCallback = iCount;
+                iCount = parseInt(iCount);
+                iCount = isNaN(iCount) ? Infinity : iCount;
+
+                var iResult = [ ];
+
+                for (
+                    var _Next_,  i = 0,  j = 0;
+                    iObject[iName]  &&  (j < iCount);
+                    iObject = _Next_,  i++
+                ) {
+                    _Next_ = iObject[iName];
+                    if (
+                        (typeof iCallback != 'function')  ||
+                        (iCallback.call(_Next_, i, _Next_)  !==  false)
+                    )
+                        iResult[j++] = _Next_;
+                }
+
+                return iResult;
             }
         };
 
@@ -346,19 +372,6 @@
 
         return iType;
     };
-
-    function Object_Seek(iName, iCallback) {
-        var iResult = [ ];
-
-        for (var _This_ = this, _Next_, i = 0;  _This_[iName];  _This_ = _Next_, i++) {
-            _Next_ = _This_[iName];
-            iResult.push(_Next_);
-            if ( iCallback )
-                iCallback.call(_Next_, i, _Next_);
-        }
-
-        return iResult;
-    }
 
 /* ---------- DOM Info Operator - Get first, Set all. ---------- */
 
@@ -431,7 +444,7 @@
     /* ----- DOM Property ----- */
     _DOM_.Property = {
         get:      function (iElement, iName) {
-            return  iName ? iElement : iElement[iName];
+            return  iName ? iElement[iName] : iElement;
         },
         set:      function (iElement, iName, iValue) {
             iElement[iName] = iValue;
@@ -888,10 +901,9 @@
                     iParameter.push(iName + '=' + BOM.encodeURIComponent(iValue));
                 }
             else if ($.type(iObject) in Type_Info.DOM.set)
-                for (var i = 0;  i < iObject.length;  i++)
-                    iParameter.push(
-                        iObject[i].name + '=' + BOM.encodeURIComponent(iObject[i].value)
-                    );
+                for (var i = 0, j = 0;  i < iObject.length;  i++)
+                    iParameter[j++] = iObject[i].name + '=' +
+                        BOM.encodeURIComponent( iObject[i].value );
 
             return iParameter.join('&');
         },
@@ -978,7 +990,7 @@
             if (isNaN( iValue ))  return  this[0][iName.client] + iFix;
 
             for (var i = 0;  i < this.length;  i++)
-                this[i][iName.client] = iValue - iFix;
+                this[i].style[iName.css] = iValue - iFix;
             return this;
         };
     }
@@ -1080,7 +1092,7 @@
         },
         index:              function (iTarget) {
             if (! iTarget)
-                return  Object_Seek.call(this[0], 'previousElementSibling').length;
+                return  $.trace(this[0], 'previousElementSibling').length;
 
             var iType = $.type(iTarget);
             switch (true) {
@@ -1117,9 +1129,9 @@
         filter:             function (iSelector) {
             var $_Result = [ ];
 
-            for (var i = 0;  i < this.length;  i++)
+            for (var i = 0, j = 0;  i < this.length;  i++)
                 if ( $(this[i]).is(iSelector) )
-                    $_Result.push( this[i] );
+                    $_Result[j++] = this[i];
 
             return this.pushStack($_Result);
         },
@@ -1127,9 +1139,9 @@
             var $_Not = $(arguments[0]),
                 $_Result = [ ];
 
-            for (var i = 0;  i < this.length;  i++)
+            for (var i = 0, j = 0;  i < this.length;  i++)
                 if ($.inArray(this[i], $_Not) < 0)
-                    $_Result.push(this[i]);
+                    $_Result[j++] = this[i];
 
             return this.pushStack($_Result);
         },
@@ -1156,9 +1168,9 @@
         parent:             function () {
             var $_Result = [ ];
 
-            for (var i = 0;  i < this.length;  i++)
+            for (var i = 0, j = 0;  i < this.length;  i++)
                 if ($.inArray(this[i].parentNode, $_Result) == -1)
-                    $_Result.push( this[i].parentNode );
+                    $_Result[j++] = this[i].parentNode;
 
             return this.pushStack(
                 arguments[0]  ?  $($_Result).filter(arguments[0])  :  $_Result
@@ -1169,7 +1181,7 @@
 
             for (var i = 0;  i < this.length;  i++)
                 $_Result = $_Result.concat(
-                    Object_Seek.call(this[i], 'parentNode').slice(0, -1)
+                    $.trace(this[i], 'parentNode').slice(0, -1)
                 );
 
             return  Array_Reverse.call(this.pushStack(
@@ -1179,11 +1191,11 @@
         sameParents:        function () {
             if (this.length < 2)  return this.parents();
 
-            var iMin = Object_Seek.call(this[0], 'parentNode').slice(0, -1),
+            var iMin = $.trace(this[0], 'parentNode').slice(0, -1),
                 iPrev;
 
             for (var i = 1, iLast;  i < this.length;  i++) {
-                iLast = Object_Seek.call(this[i], 'parentNode');
+                iLast = $.trace(this[i], 'parentNode');
                 if (iLast.length < iMin.length) {
                     iPrev = iMin;
                     iMin = iLast;
@@ -1239,7 +1251,7 @@
 
             for (var i = 0;  i < this.length;  i++)
                 $_Result = $_Result.concat(
-                    Object_Seek.call(this[i], 'nextElementSibling')
+                    $.trace(this[i], 'nextElementSibling')
                 );
 
             return this.pushStack(
@@ -1251,7 +1263,7 @@
 
             for (var i = 0;  i < this.length;  i++)
                 $_Result = $_Result.concat(
-                    Object_Seek.call(this[i], 'previousElementSibling')
+                    $.trace(this[i], 'previousElementSibling')
                 );
             $_Result.reverse();
 
@@ -1300,9 +1312,9 @@
 
             if (! iGetter)  this.empty();
 
-            for (var i = 0;  i < this.length;  i++)
+            for (var i = 0, j = 0;  i < this.length;  i++)
                 if (iGetter)
-                    iResult.push( this[i].textContent );
+                    iResult[j++] = this[i].textContent;
                 else
                     this[i].textContent = iText;
 
@@ -1370,10 +1382,13 @@
                     position:    'fixed'
                 }, iCoordinate));
 
-            if (! (this[0] || { }).ownerDocument)  return;
+            var _DOM_ = (this[0] || { }).ownerDocument;
+            var _Body_ = _DOM_  &&  $('body', _DOM_)[0];
 
-            var _BOM_ = this[0].ownerDocument.defaultView,
-                iBCR = this[0].getBoundingClientRect();
+            if (!  (_DOM_  &&  _Body_  &&  $.contains(_Body_, this[0])))
+                return  {left: 0,  top: 0};
+
+            var _BOM_ = _DOM_.defaultView,  iBCR = this[0].getBoundingClientRect();
 
             return {
                 left:    parseFloat( (_BOM_.pageXOffset + iBCR.left).toFixed(4) ),
@@ -1388,9 +1403,9 @@
             return  this.attr('class',  function (_Index_, old_Class) {
                 old_Class = (old_Class || '').trim().split(/\s+/);
 
-                for (var i = 0;  i < new_Class.length;  i++)
+                for (var i = 0, j = old_Class.length;  i < new_Class.length;  i++)
                     if ($.inArray(new_Class[i], old_Class) == -1)
-                        old_Class.push( new_Class[i] );
+                        old_Class[j++] = new_Class[i];
 
                 return  old_Class.join(' ').trim();
             });
@@ -1406,9 +1421,9 @@
 
                 var new_Class = [ ];
 
-                for (var i = 0;  i < old_Class.length;  i++)
+                for (var i = 0, j = 0;  i < old_Class.length;  i++)
                     if ($.inArray(old_Class[i], iClass) == -1)
-                        new_Class.push( old_Class[i] );
+                        new_Class[j++] = old_Class[i];
 
                 return  new_Class.join(' ');
             });
@@ -1471,15 +1486,15 @@
             var $_Value = this.find('*[name]:input').not(':button, [disabled]'),
                 iValue = [ ];
 
-            for (var i = 0;  i < $_Value.length;  i++) {
-                if ($_Value[i].type.match(/radio|checkbox/i)  &&  (! $_Value[i].checked))
-                    continue;
-
-                iValue.push({
-                    name:     $_Value[i].name,
-                    value:    $_Value[i].value
-                });
-            }
+            for (var i = 0, j = 0;  i < $_Value.length;  i++)
+                if (
+                    (! $_Value[i].type.match(/radio|checkbox/i))  ||
+                    $_Value[i].checked
+                )
+                    iValue[j++] = {
+                        name:     $_Value[i].name,
+                        value:    $_Value[i].value
+                    };
 
             return iValue;
         },
@@ -1694,7 +1709,7 @@
         var iDOM = this.document || this.ownerDocument || this;
 
         if (iDOM.activeElement.tagName.toLowerCase() == 'iframe')  try {
-            return  arguments.callee.call( iDOM.contentWindow );
+            return  arguments.callee.call( iDOM.activeElement.contentWindow );
         } catch (iError) { }
 
         var iSelection = W3C_Selection ? iDOM.getSelection() : iDOM.selection;
@@ -1718,7 +1733,9 @@
         return  this.each(function () {
             var iSelection = Find_Selection.call(this);
             var iNode = iSelection[1];
+
             iSelection = iSelection[0];
+            iNode = (iNode.nodeType == 1)  ?  iNode  :  iNode.parentNode;
 
             if (! W3C_Selection) {
                 iSelection = iSelection.createRange();
@@ -1735,7 +1752,7 @@
                 iStart = Math.min(iNode.selectionStart, iNode.selectionEnd);
                 iEnd = Math.max(iNode.selectionStart, iNode.selectionEnd);
             } else {
-                iProperty = (iNode.nodeType == 1)  ?  'innerHTML'  :  'nodeValue';
+                iProperty = 'innerHTML';
                 iStart = Math.min(iSelection.anchorOffset, iSelection.focusOffset);
                 iEnd = Math.max(iSelection.anchorOffset, iSelection.focusOffset);
             }
@@ -1814,7 +1831,6 @@
         if ($.isPlainObject( iProperty ))  $.extend(this, iProperty);
 
         this.type = iCreate ? iEvent : this.type;
-        this.target = this.target || this.srcElement;
         this.isCustom = (! isOriginalEvent.call(this));
         this.originalEvent = (iCreate || $.isPlainObject(iEvent))  ?
             W3C_Event_Object(this.type, this.isCustom, this.detail)  :  iEvent;
@@ -1832,7 +1848,7 @@
     });
 
     function Proxy_Handler(iEvent, iCallback) {
-        iEvent = $.Event(iEvent || BOM.event);
+        iEvent = $.Event(iEvent);
 
         var $_Target = $(iEvent.target);
         var iHandler = iCallback ?
@@ -1857,7 +1873,7 @@
     }
 
     function JE_Dispatch(iEvent, iFilter) {
-        iEvent = $.Event(iEvent || BOM.event);
+        iEvent = $.Event(iEvent);
 
         var iTarget = iEvent.target;
         var $_Path = $(iTarget).parents().addBack();
@@ -1867,12 +1883,13 @@
             var Index = _Path_.indexOf( $_Path.filter(iFilter).slice(-1)[0] );
             if (Index == -1)  return;
             _Path_ = _Path_.slice(Index);
-        }
-        $_Path = $(_Path_.concat(
-            ($.type(iTarget) == 'Document')  ?  [iTarget.defaultView]  :  [
-                iTarget.ownerDocument, iTarget.ownerDocument.defaultView
-            ]
-        ));
+        } else
+            _Path_ = _Path_.concat(
+                ($.type(iTarget) == 'Document')  ?  [iTarget.defaultView]  :  [
+                    iTarget.ownerDocument, iTarget.ownerDocument.defaultView
+                ]
+            );
+        $_Path = $(_Path_);
 
         for (var i = 0;  i < $_Path.length;  i++)
             if (
@@ -1882,29 +1899,6 @@
                 iEvent.cancelBubble
             )
                 break;
-    }
-
-    function IE_Event_Handler() {
-        var iEvent = BOM.event,  Loaded;
-        iEvent.currentTarget = this;
-
-        switch (iEvent.type) {
-            case 'readystatechange':    iEvent.type = 'load';
-//                Loaded = this.readyState.match(/loaded|complete/);  break;
-            case 'load':
-                Loaded = (this.readyState == 'loaded');  break;
-            case 'propertychange':      {
-                var iType = iEvent.propertyName.match(/^on(.+)/i);
-                if (iType  &&  (IE_Event_Type(iType[1]) == 'onpropertychange'))
-                    iEvent.type = iType[1];
-                else {
-                    iEvent.type = 'DOMAttrModified';
-                    iEvent.attrName = iEvent.propertyName;
-                }
-            }
-            default:                    Loaded = true;
-        }
-        if (Loaded)  arguments[0].call(this, iEvent);
     }
 
     $.fn.extend({
@@ -1949,15 +1943,8 @@
             if (typeof iFilter != 'string')
                 return  this.bind.apply(this, arguments);
 
-            iType = iType.trim().split(/\s+/);
-
-            function iProxy() {
+            return  this.bind(iType,  function () {
                 JE_Dispatch.call(this, arguments[0], iFilter, iCallback);
-            }
-
-            return  this.each(function () {
-                for (var i = 0;  i < iType.length;  i++)
-                    this.addEventListener(iType[i], iProxy, false);
             });
         },
         one:               function () {
@@ -2323,9 +2310,9 @@
         var iKF = [ ],  KF_Sum = FPS * During_Second;
         var iStep = (iEnd - iStart) / KF_Sum;
 
-        for (var i = 0, KFV = iStart; i < KF_Sum; i++) {
+        for (var i = 0, KFV = iStart, j = 0;  i < KF_Sum;  i++) {
             KFV += iStep;
-            iKF.push(Number( KFV.toFixed(2) ));
+            iKF[j++] = Number( KFV.toFixed(2) );
         }
         return iKF;
     }
@@ -2511,6 +2498,18 @@
             }
         };
 
+    function onLoad(iProperty) {
+        if (
+            (! (this.crossDomain || (this.readyState == 4)))  ||
+            (typeof this.onready != 'function')
+        )
+            return;
+
+        if (iProperty)  $.extend(this, iProperty);
+
+        this.onready(this.responseAny(),  'complete',  this);
+    }
+
     function XHR_Extend(XHR_Proto, iMore) {
         var XHR_Open = XHR_Proto.open,  XHR_Send = XHR_Proto.send;
 
@@ -2518,16 +2517,15 @@
             open:           function () {
                 this.crossDomain = X_Domain(arguments[1]);
 
-                var iXHR = this;
+                var iXHR = this,  _XDR_ = (! (this instanceof XMLHttpRequest));
+
                 this[
                     this.crossDomain ? 'onload' : 'onreadystatechange'
-                ] = function () {
-                    if (! (iXHR.crossDomain || (iXHR.readyState == 4)))  return;
+                ] = $.proxy(onLoad,  iXHR,  _XDR_ && {
+                    status:        200,
+                    statusText:    'OK'
+                });
 
-                    if (typeof iXHR.onready == 'function')
-                        iXHR.onready.call(iXHR, iXHR.responseAny(), 'complete', iXHR);
-                    iXHR = null;
-                };
                 XHR_Open.apply(this,  this.requestArgs = arguments);
             },
             send:    function () {
