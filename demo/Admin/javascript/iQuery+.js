@@ -2,7 +2,7 @@
 //              >>>  iQuery+  <<<
 //
 //
-//    [Version]     v0.7  (2016-01-21)  Stable
+//    [Version]     v0.7  (2016-01-25)  Stable
 //
 //    [Based on]    iQuery  or  (jQuery with jQuery+)
 //
@@ -73,9 +73,7 @@
 
     function _Callback_(iType, $_Item, iValue, Index) {
         var iCallback = this.callback[iType],  iReturn,
-            iArgs = ($_Item instanceof $)  ?
-                [$_Item.data('LV_Model', iValue),  iValue,  Index]  :
-                [$_Item];
+            iArgs = ($_Item instanceof $)  ?  [$_Item, iValue, Index]  :  [$_Item];
 
         for (var i = 0;  i < iCallback.length;  i++)
             iReturn = iCallback[i].apply(this, iArgs);
@@ -156,15 +154,14 @@
                 $_Item = this.itemOf(_Index_);
                 this.splice(Index, 0, $_Item);
             }
-            $_Item.addClass('ListView_Item');
+            iValue = (iReturn === undefined) ? iValue : iReturn;
 
-            this.data.splice(
-                Index,  0,  (iReturn === undefined) ? iValue : iReturn
-            );
+            $_Item.addClass('ListView_Item').data('LV_Model', iValue);
+            this.data.splice(Index, 0, iValue);
 
             return this.indexOf(_Index_);
         },
-        render:     function (iData, DetachTemplate) {
+        render:     function (iData) {
             iData = $.likeArray(iData) ? iData : [iData];
 
             for (var i = 0;  i < iData.length;  i++)

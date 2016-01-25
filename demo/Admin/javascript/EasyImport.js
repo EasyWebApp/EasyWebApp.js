@@ -2,7 +2,7 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v1.0  (2016-01-23)  Stable
+//      [Version]    v1.0  (2016-01-24)  Stable
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.
@@ -1918,11 +1918,11 @@
                 var iOffset = $(iEvent.srcElement).offset() || { };
 
                 $.extend(this, {
-                    type:               iEvent.type,
-                    pageX:              iOffset.left,
-                    pageY:              iOffset.top,
-                    target:             iEvent.srcElement,
-                    relatedTarget:      ({
+                    type:             iEvent.type,
+                    pageX:            iOffset.left,
+                    pageY:            iOffset.top,
+                    target:           iEvent.srcElement,
+                    relatedTarget:    ({
                         mouseover:     iEvent.fromElement,
                         mouseout:      iEvent.toElement,
                         mouseenter:    iEvent.fromElement || iEvent.toElement,
@@ -1930,7 +1930,9 @@
                     })[iEvent.type],
                     which:
                         (iEvent.type && (iEvent.type.slice(0, 3) == 'key'))  ?
-                            iEvent.keyCode  :  [0, 1, 3, 0, 2, 0, 0, 0][iEvent.button],
+                            iEvent.keyCode  :
+                            [0, 1, 3, 0, 2, 0, 0, 0][iEvent.button],
+                    wheelDelta:       iEvent.wheelDelta
                 });
             }
         };
@@ -2021,34 +2023,39 @@
         return iReturn;
     }
 
-    function JE_Dispatch(iEvent, iFilter) {
-        iEvent = $.Event(iEvent);
+    $.event = {
+        dispatch:    function (iEvent, iFilter) {
+            iEvent = $.Event(iEvent);
 
-        var iTarget = iEvent.target;
-        var $_Path = $(iTarget).parents().addBack();
-        var _Path_ = $.makeArray($_Path);
+            var iTarget = iEvent.target,  $_Path;
 
-        if (iFilter) {
-            var Index = _Path_.indexOf( $_Path.filter(iFilter).slice(-1)[0] );
-            if (Index == -1)  return;
-            _Path_ = _Path_.slice(Index);
-        } else
-            _Path_ = _Path_.concat(
-                ($.type(iTarget) == 'Document')  ?  [iTarget.defaultView]  :  [
-                    iTarget.ownerDocument, iTarget.ownerDocument.defaultView
-                ]
-            );
-        $_Path = $(_Path_);
+            switch ( $.type(iTarget) ) {
+                case 'HTMLElement':    {
+                    $_Path = $(iTarget).parents().addBack();
+                    $_Path = iFilter ?
+                        Array.prototype.reverse.call( $_Path.filter(iFilter) )  :
+                        $($.makeArray($_Path).reverse().concat([
+                            iTarget.ownerDocument, iTarget.ownerDocument.defaultView
+                        ]));
+                    break;
+                }
+                case 'Document':       iTarget = [iTarget, iTarget.defaultView];
+                case 'Window':         {
+                    if (iFilter)  return;
+                    $_Path = $(iTarget);
+                }
+            }
 
-        for (var i = 0;  i < $_Path.length;  i++)
-            if (
-                (false === Proxy_Handler.call(
-                    $_Path[i],  iEvent,  (! i) && arguments[2]
-                )) ||
-                iEvent.cancelBubble
-            )
-                break;
-    }
+            for (var i = 0;  i < $_Path.length;  i++)
+                if (
+                    (false === Proxy_Handler.call(
+                        $_Path[i],  iEvent,  (! i) && arguments[2]
+                    )) ||
+                    iEvent.cancelBubble
+                )
+                    break;
+        }
+    };
 
     $.extend(IE_Event, {
         type:       function (iType) {
@@ -2146,7 +2153,7 @@
                 return  this.bind.apply(this, arguments);
 
             return  this.bind(iType,  function () {
-                JE_Dispatch.call(this, arguments[0], iFilter, iCallback);
+                $.event.dispatch(arguments[0], iFilter, iCallback);
             });
         },
         one:               function () {
@@ -2176,10 +2183,10 @@
                 }
                 if (! iEvent.isCustom)
                     this[i].fireEvent(
-                        iEvent.type,  $.extend(iEvent.originalEvent, iEvent)
+                        'on' + iEvent.type,  $.extend(iEvent.originalEvent, iEvent)
                     );
                 else
-                    JE_Dispatch.call(this, iEvent);
+                    $.event.dispatch(iEvent);
             }
             return this;
         },
@@ -2207,6 +2214,7 @@
                 }
                 for (var i = 0, iData;  i < $_Old.length;  i++) {
                     iData = $($_Old[i]).data();
+                    $_New[i].dataIndex = null;
                     $($_New[i]).data(iData);
 
                     for (var iType in iData._event_) {
@@ -2755,6 +2763,54 @@
             $_This.find($_Change_Target).click();
     });
 
+    //  Submit & Reset  Bubble
+    function Event_Hijack(iEvent) {
+        iEvent.preventDefault();
+
+        this[iEvent.type]();
+    }
+
+    $_DOM.on('click',  'input, button',  function () {
+
+        if ( this.type.match(/submit|reset/) )
+            $(this.form).one(this.type, Event_Hijack);
+
+    }).on('keydown',  'form input, form select',  function () {
+
+        if ((this.type != 'button')  &&  (arguments[0].which == 13))
+            $(this.form).one((this.type == 'reset') ? 'reset' : 'submit',  Event_Hijack);
+    });
+
+    var $_BOM = $(BOM),
+        _Submit_ = HTMLFormElement.prototype.submit,
+        _Reset_ = HTMLFormElement.prototype.reset;
+
+    function Fake_Bubble(iType, iMethod) {
+        var $_This = $(this);
+
+        $_BOM.on(iType,  function (iEvent) {
+            if (iEvent.target !== $_This[0])  return;
+
+            if (! iEvent.defaultPrevented)  iMethod.call(iEvent.target);
+
+            $_BOM.off(iType, arguments.callee);
+        });
+
+        var iEvent = arguments.callee.caller.arguments[0];
+
+        $.event.dispatch(
+            ((iEvent instanceof $.Event)  &&  (iEvent.type == iType))  ?
+                iEvent : {
+                    type:          iType,
+                    srcElement:    this
+                }
+        );
+    }
+    $.extend(HTMLFormElement.prototype, {
+        submit:    $.proxy(Fake_Bubble, null, 'submit', _Submit_),
+        reset:     $.proxy(Fake_Bubble, null, 'reset', _Reset_)
+    });
+
     /* ----- XML DOM Parser ----- */
 
     var IE_DOMParser = $.map([
@@ -2928,7 +2984,7 @@
     }
 
     function XD_Request(iData) {
-//        this.withCredentials = true;
+        this.withCredentials = true;
 
         if (typeof iData == 'string')
             this.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
@@ -3661,7 +3717,8 @@
                 _Next_.call(iScript);
                 continue;
             }
-            $_Script.clone().one('load', _Next_).attr('src', iScript).appendTo($_Head);
+            $_Script.clone().one('load', _Next_)
+                .attr('src', iScript).appendTo($_Head);
 
             $.start( $.fileName(iScript) );
         }

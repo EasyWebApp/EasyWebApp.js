@@ -2,13 +2,15 @@
 
     var Image_Root = 'http://tnfs.tngou.net/img';
 
-    function Data_Fix() {
-        return  $.map(arguments[0],  function (iValue) {
+    function Data_Fix(iArray) {
+        var Image_Key = iArray[0].src ? 'src' : 'img';
+
+        return  $.map(iArray,  function (iValue) {
             if (iValue.time)
                 iValue.time = (new Date(iValue.time)).toLocaleString();
 
-            if ( (iValue.img || '').indexOf('http') )
-                iValue.img = Image_Root + iValue.img;
+            if ( (iValue[Image_Key] || '').indexOf('http') )
+                iValue[Image_Key] = Image_Root + iValue[Image_Key];
 
             return iValue;
         });
@@ -40,16 +42,8 @@
                     content_type:    iData.tngou
                 };
             }
+            case 'gallery':      iData.list = Data_Fix(iData.list);
             case 'news_text':    return Data_Fix([iData])[0];
-            case 'gallery':      {
-                var Image_Key = iData.list[0].src ? 'src' : 'img';
-
-                return  $.map(iData.list,  function (iValue) {
-                    iValue[Image_Key] = Image_Root + iValue[Image_Key];
-
-                    return iValue;
-                });
-            }
         }
     }).WebApp({ }, 'http://www.tngou.net');
 

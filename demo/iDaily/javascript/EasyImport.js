@@ -2,7 +2,7 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v1.0  (2016-01-23)  Stable
+//      [Version]    v1.0  (2016-01-24)  Stable
 //
 //                   (Modern & Mobile Edition)
 //
@@ -1872,34 +1872,39 @@
         return iReturn;
     }
 
-    function JE_Dispatch(iEvent, iFilter) {
-        iEvent = $.Event(iEvent);
+    $.event = {
+        dispatch:    function (iEvent, iFilter) {
+            iEvent = $.Event(iEvent);
 
-        var iTarget = iEvent.target;
-        var $_Path = $(iTarget).parents().addBack();
-        var _Path_ = $.makeArray($_Path);
+            var iTarget = iEvent.target,  $_Path;
 
-        if (iFilter) {
-            var Index = _Path_.indexOf( $_Path.filter(iFilter).slice(-1)[0] );
-            if (Index == -1)  return;
-            _Path_ = _Path_.slice(Index);
-        } else
-            _Path_ = _Path_.concat(
-                ($.type(iTarget) == 'Document')  ?  [iTarget.defaultView]  :  [
-                    iTarget.ownerDocument, iTarget.ownerDocument.defaultView
-                ]
-            );
-        $_Path = $(_Path_);
+            switch ( $.type(iTarget) ) {
+                case 'HTMLElement':    {
+                    $_Path = $(iTarget).parents().addBack();
+                    $_Path = iFilter ?
+                        Array.prototype.reverse.call( $_Path.filter(iFilter) )  :
+                        $($.makeArray($_Path).reverse().concat([
+                            iTarget.ownerDocument, iTarget.ownerDocument.defaultView
+                        ]));
+                    break;
+                }
+                case 'Document':       iTarget = [iTarget, iTarget.defaultView];
+                case 'Window':         {
+                    if (iFilter)  return;
+                    $_Path = $(iTarget);
+                }
+            }
 
-        for (var i = 0;  i < $_Path.length;  i++)
-            if (
-                (false === Proxy_Handler.call(
-                    $_Path[i],  iEvent,  (! i) && arguments[2]
-                )) ||
-                iEvent.cancelBubble
-            )
-                break;
-    }
+            for (var i = 0;  i < $_Path.length;  i++)
+                if (
+                    (false === Proxy_Handler.call(
+                        $_Path[i],  iEvent,  (! i) && arguments[2]
+                    )) ||
+                    iEvent.cancelBubble
+                )
+                    break;
+        }
+    };
 
     $.fn.extend({
         bind:              function (iType, iCallback) {
@@ -1944,7 +1949,7 @@
                 return  this.bind.apply(this, arguments);
 
             return  this.bind(iType,  function () {
-                JE_Dispatch.call(this, arguments[0], iFilter, iCallback);
+                $.event.dispatch(arguments[0], iFilter, iCallback);
             });
         },
         one:               function () {
@@ -3155,7 +3160,8 @@
                 _Next_.call(iScript);
                 continue;
             }
-            $_Script.clone().one('load', _Next_).attr('src', iScript).appendTo($_Head);
+            $_Script.clone().one('load', _Next_)
+                .attr('src', iScript).appendTo($_Head);
 
             $.start( $.fileName(iScript) );
         }
