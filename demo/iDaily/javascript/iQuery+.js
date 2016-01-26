@@ -26,7 +26,7 @@
         $_View = $($_View);
         if (typeof $_Item == 'function') {
             onInsert = $_Item;
-            $_Item = [undefined];
+            $_Item = null;
         }
 
         var iView = _Self_.getInstance($_View) || this;

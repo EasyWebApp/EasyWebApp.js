@@ -1941,7 +1941,9 @@
         //  Instantiation without "new"
         var _Self_ = arguments.callee;
 
-        if (iEvent instanceof _Self_)  return iEvent;
+        if (iEvent instanceof _Self_)
+            return  $.isPlainObject(iProperty) ?
+                $.extend(iEvent, iProperty)  :  iEvent;
 
         if (! (this instanceof _Self_))
             return  new _Self_(iEvent, iProperty);
@@ -1960,7 +1962,9 @@
         var iCreate = (typeof iEvent == 'string');
 
         if (! iCreate) {
-            if ($.browser.modern) {
+            if ($.isPlainObject( iEvent ))
+                $.extend(this, iEvent);
+            else if ($.browser.modern) {
                 for (var iKey in iEvent)
                     if ((typeof iEvent[iKey] != 'function')  &&  (iKey[0] > 'Z'))
                         this[iKey] = iEvent[iKey];
@@ -2213,8 +2217,11 @@
                     $_New = $_New.find('*').addBack();
                 }
                 for (var i = 0, iData;  i < $_Old.length;  i++) {
-                    iData = $($_Old[i]).data();
                     $_New[i].dataIndex = null;
+
+                    iData = $($_Old[i]).data();
+                    if ($.isEmptyObject( iData ))  continue;
+
                     $($_New[i]).data(iData);
 
                     for (var iType in iData._event_) {
@@ -2801,8 +2808,8 @@
         $.event.dispatch(
             ((iEvent instanceof $.Event)  &&  (iEvent.type == iType))  ?
                 iEvent : {
-                    type:          iType,
-                    srcElement:    this
+                    type:      iType,
+                    target:    this
                 }
         );
     }

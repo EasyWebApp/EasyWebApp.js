@@ -104,7 +104,7 @@
             this.$_Page.appendTo( this.ownerApp.domRoot ).fadeIn();
 
             var Link_DOM = this.ownerApp.history.last(true).sourceLink.$_DOM[0];
-            var iListView = $.ListView.getInstance( Link_DOM.parentNode );
+            var iListView = $.ListView.getInstance( Link_DOM.parentElement );
 
             if (iListView)
                 iListView.focus(Link_DOM);

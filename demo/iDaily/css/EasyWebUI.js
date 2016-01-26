@@ -650,7 +650,7 @@
                     function () { iPause = false; }
                 );
             }).render(
-                Array( $.ListView(this).length )
+                Array( $.ListView.getInstance(this).length )
             );
         }).swipe(function (iEvent) {
             if (

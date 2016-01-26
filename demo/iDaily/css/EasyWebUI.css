@@ -181,6 +181,7 @@ input[type="submit"]:hover,  input[type="submit"]:active,
 input[type="reset"]:hover,   input[type="reset"]:active  {
     background:    gray;
     opacity:       0.7;
+    filter:        Alpha(opacity=70);
     cursor:        pointer;
 }
 button > *,  a.Button > *  {

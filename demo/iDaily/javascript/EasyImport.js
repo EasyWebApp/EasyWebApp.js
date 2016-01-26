@@ -1805,7 +1805,9 @@
         //  Instantiation without "new"
         var _Self_ = arguments.callee;
 
-        if (iEvent instanceof _Self_)  return iEvent;
+        if (iEvent instanceof _Self_)
+            return  $.isPlainObject(iProperty) ?
+                $.extend(iEvent, iProperty)  :  iEvent;
 
         if (! (this instanceof _Self_))
             return  new _Self_(iEvent, iProperty);
@@ -1824,7 +1826,9 @@
         var iCreate = (typeof iEvent == 'string');
 
         if (! iCreate) {
-            for (var iKey in iEvent)
+            if ($.isPlainObject( iEvent ))
+                $.extend(this, iEvent);
+            else  for (var iKey in iEvent)
                 if ((typeof iEvent[iKey] != 'function')  &&  (iKey[0] > 'Z'))
                     this[iKey] = iEvent[iKey];
         }
@@ -1999,6 +2003,8 @@
                 }
                 for (var i = 0, iData;  i < $_Old.length;  i++) {
                     iData = $($_Old[i]).data();
+                    if ($.isEmptyObject( iData ))  continue;
+
                     $($_New[i]).data(iData);
 
                     for (var iType in iData._event_)

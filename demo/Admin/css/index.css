@@ -18,8 +18,16 @@ html, body {
 #Main_Nav li:hover,
 #Main_Nav li.active {
     border-color:    rgb(100, 150, 240);
+    filter:          progid:DXImageTransform.Microsoft.Gradient(
+        GradientType=0, StartColorStr="#7F6496F0", EndColorStr="#7F6496F0"
+    );
+    background:      rgb(0, 0, 0);    /*  IE 8 滤镜 Hover 背景色抖动 Bug */
     background:      rgba(100, 150, 240, 0.5);
     color:           white;
+}
+:root #Main_Nav li:hover,
+:root #Main_Nav li.active {
+    filter:    none \0;
 }
 #Main_Nav li.Head {
     font-weight:    bold;
@@ -56,6 +64,7 @@ form [multiple] label {
 form [multiple] label:hover,
 form [multiple] label.active {
     opacity:    0.7;
+    filter:     Alpha(opacity=70);
 }
 form [multiple] input[type="radio"] {
     display:    none;
