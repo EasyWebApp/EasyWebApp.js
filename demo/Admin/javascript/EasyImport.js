@@ -2,7 +2,7 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v1.0  (2016-01-24)  Stable
+//      [Version]    v1.0  (2016-01-27)  Stable
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.
@@ -517,17 +517,11 @@
 
     /* ----- DOM Property ----- */
     _DOM_.Property = {
-        alias:    {
-            'class':    'className',
-            'for':      'htmlFor'
+        get:    function (iElement, iName) {
+            return  iName ? iElement[iName] : iElement;
         },
-        get:      function (iElement, iName) {
-            return  iName ? iElement[
-                _Browser_.modern  ?  iName  :  (this.alias[iName] || iName)
-            ] : iElement;
-        },
-        set:      function (iElement, iName, iValue) {
-            iElement[this.alias[iName] || iName] = iValue;
+        set:    function (iElement, iName, iValue) {
+            iElement[iName] = iValue;
         }
     };
 
@@ -1026,12 +1020,14 @@
             return  Args_Str.length ? _Args_ : { };
         },
         fileName:         function () {
-            return  (arguments[0] || BOM.location.pathname)
-                    .split('?')[0].split('/').slice(-1)[0];
+            return (
+                arguments[0] || BOM.location.pathname
+            ).match(/([^\?\#]+)(\?|\#)?/)[1].split('/').slice(-1)[0];
         },
         filePath:         function () {
-            return  $.split(arguments[0] || BOM.location.href,  '?',  2)[0]
-                    .split('/').slice(0, -1).join('/');
+            return (
+                arguments[0] || BOM.location.pathname
+            ).match(/([^\?\#]+)(\?|\#)?/)[1].split('/').slice(0, -1).join('/');
         },
         urlDomain:        function () {
             return (

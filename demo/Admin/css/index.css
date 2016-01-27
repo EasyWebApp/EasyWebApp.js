@@ -37,6 +37,7 @@ html, body {
 #Main_Nav li.Head.active {
     border-color:    transparent;
     background:      transparent;
+    filter:          none;
 }
 
 

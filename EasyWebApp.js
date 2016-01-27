@@ -2,7 +2,7 @@
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]     v2.2  (2016-01-20)  Stable
+//      [Version]     v2.3  (2016-01-27)  Alpha
 //
 //      [Based on]    iQuery  |  jQuery with jQuery+,
 //
@@ -158,6 +158,8 @@
                 var iState = arguments[0];
             else
                 var $_Target = arguments[0];
+
+            $.ListView.findView(this.root, true);
 
             var $_Page = ($_Target || this.root).children().detach();
 
@@ -317,7 +319,7 @@
 
     $.extend(PageLink.prototype, {
         getTarget:    function () {
-            return  (this.target == '_self')  ?
+            return  this.target.match(/^_(self|blank)$/) ?
                 this.app.domRoot  :  $('[name="' + this.target + '"]');
         },
         getArgs:      function () {
@@ -645,7 +647,7 @@
     WebApp.prototype.loadLink = function (iAttribute, iArgument, iData) {
         if (typeof iAttribute == 'string') {
             iAttribute = {
-                target:    'self',
+                target:    '_self',
                 href:      iAttribute,
                 src:       iArgument,
             };
@@ -721,6 +723,13 @@
                 });
             }
             This_Page.onReady();
+        });
+
+        $_BOM.on('hashchange',  function () {
+            var iHash = $.split(this.location.hash, '!', 2);
+
+            if ((iHash[0] == '#')  &&  iHash[1])
+                This_App.loadLink( iHash[1] );
         });
 
         return this;

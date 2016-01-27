@@ -2,7 +2,7 @@
 //          >>>  EasyWebUI Component Library  <<<
 //
 //
-//      [Version]     v1.9  (2016-01-23)  Stable
+//      [Version]     v1.9  (2016-01-27)  Stable
 //
 //      [Based on]    iQuery v1  or  jQuery (with jQuery+),
 //
@@ -351,10 +351,13 @@
 
         BOM.alert("请留意本网页浏览器的“弹出窗口拦截”提示，当被禁止时请点选【允许】，然后可能需要重做之前的操作。");
         var new_Window = BOM.open(iURL, '_blank', [
-            'top=' + Top,               'left=' + Left,
-            'height=' + Size.height,    'width=' + Size.width,
-            'resizable=no,menubar=no,toolbar=no,location=no,status=no,scrollbars=no'
-        ].join(','));
+                'top=' + Top,               'left=' + Left,
+                'height=' + Size.height,    'width=' + Size.width,
+                [
+                    'resizable',  'scrollbars',
+                    'menubar',    'toolbar',     'location',  'status'
+                ].join('=no,').slice(0, -1)
+            ].join(','));
 
         BOM.new_Window_Fix.call(new_Window, function () {
             $('link[rel~="shortcut"], link[rel~="icon"], link[rel~="bookmark"]')
@@ -746,13 +749,11 @@
             .noSelect();
 
         $.ListView.findView(
-            $(DOM.body).addClass('Loaded')
+            $(DOM.body).addClass('Loaded'),  true
         ).each(function () {
             var iView = $.ListView.getInstance(this);
 
-            if (iView)  return;
-
-            iView = $.ListView(this);
+            if ( $(this).children('.ListView_Item').length )  return;
 
             iView.$_View.click(function (iEvent) {
                 if (iEvent.target.parentNode === this)

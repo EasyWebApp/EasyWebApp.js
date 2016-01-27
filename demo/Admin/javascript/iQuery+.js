@@ -2,7 +2,7 @@
 //              >>>  iQuery+  <<<
 //
 //
-//    [Version]     v0.7  (2016-01-25)  Stable
+//    [Version]     v0.7  (2016-01-27)  Stable
 //
 //    [Based on]    iQuery  or  (jQuery with jQuery+)
 //
@@ -64,10 +64,16 @@
             var _Instance_ = $(arguments[0]).data('_LVI_');
             return  ((_Instance_ instanceof this)  &&  _Instance_);
         },
-        findView:       function () {
-            return $(arguments[0]).find(
+        findView:       function ($_View, Init_Instance) {
+            $_View = $($_View).find(
                 'ul, ol, dl, tbody, *[multiple]'
             ).not('input[type="file"]');
+
+            if (Init_Instance)
+                for (var i = 0;  i < $_View.length;  i++)
+                    if (! this.getInstance($_View[i]))  this( $_View[i] );
+
+            return $_View;
         }
     });
 

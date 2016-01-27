@@ -443,10 +443,10 @@
 
     /* ----- DOM Property ----- */
     _DOM_.Property = {
-        get:      function (iElement, iName) {
+        get:    function (iElement, iName) {
             return  iName ? iElement[iName] : iElement;
         },
-        set:      function (iElement, iName, iValue) {
+        set:    function (iElement, iName, iValue) {
             iElement[iName] = iValue;
         }
     };
@@ -931,12 +931,14 @@
             return  Args_Str.length ? _Args_ : { };
         },
         fileName:         function () {
-            return  (arguments[0] || BOM.location.pathname)
-                    .split('?')[0].split('/').slice(-1)[0];
+            return (
+                arguments[0] || BOM.location.pathname
+            ).match(/([^\?\#]+)(\?|\#)?/)[1].split('/').slice(-1)[0];
         },
         filePath:         function () {
-            return  $.split(arguments[0] || BOM.location.href,  '?',  2)[0]
-                    .split('/').slice(0, -1).join('/');
+            return (
+                arguments[0] || BOM.location.pathname
+            ).match(/([^\?\#]+)(\?|\#)?/)[1].split('/').slice(0, -1).join('/');
         },
         urlDomain:        function () {
             return (
