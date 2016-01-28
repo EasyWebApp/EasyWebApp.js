@@ -8,7 +8,7 @@
  *    and can be used in the Web UI development of
  *    Any Platform.
  *
- *    [Version]    v1.0  (2016-01-10)
+ *    [Version]    v1.0  (2016-01-28)
  *
  *    [Require]    CSS 2.1  (Best Effect with CSS 3),
  *
@@ -1051,6 +1051,13 @@ img.UserLogo {
 
 
 /* ----------- Atom View ---------- */
+.No_Pointer {
+    pointer-events:    none;
+}
+.No_Pointer > * {
+    pointer-events:    auto;
+}
+/* ----- Colour ----- */
 .Black {
     color:           rgb(53, 52, 57)  !important;
     border-color:    rgb(53, 52, 57)  !important;
@@ -1101,6 +1108,7 @@ img.UserLogo {
     color:           white  !important;
     border-color:    transparent  !important;
 }
+/* ----- Shape ----- */
 .Round {
     border-radius:    50%  !important;
     display:          inline-block;
@@ -1110,6 +1118,7 @@ img.UserLogo {
 .Halo {
     box-shadow:    0  0  25px  gray;
 }
+/* ----- Turning ----- */
 .Rotate-90 {
        -moz-transform:    rotate(90deg);
          -o-transform:    rotate(90deg);

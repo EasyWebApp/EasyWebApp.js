@@ -2,7 +2,7 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v1.0  (2016-01-24)  Stable
+//      [Version]    v1.0  (2016-01-27)  Stable
 //
 //                   (Modern & Mobile Edition)
 //
@@ -937,13 +937,13 @@
         },
         filePath:         function () {
             return (
-                arguments[0] || BOM.location.pathname
+                arguments[0] || BOM.location.href
             ).match(/([^\?\#]+)(\?|\#)?/)[1].split('/').slice(0, -1).join('/');
         },
         urlDomain:        function () {
-            return (
-                (arguments[0] || BOM.location.href).match(/^(\w+:)?\/\/[^\/]+/)  ||  [ ]
-            )[0];
+            return ((
+                arguments[0] || BOM.location.href
+            ).match(/^(\w+:)?\/\/[^\/]+/) || [ ])[0];
         },
         data:             function (iElement, iName, iValue) {
             return  _DOM_.operate('Data', [iElement], iName, iValue);

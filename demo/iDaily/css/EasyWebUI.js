@@ -2,7 +2,7 @@
 //          >>>  EasyWebUI Component Library  <<<
 //
 //
-//      [Version]     v1.9  (2016-01-27)  Stable
+//      [Version]     v1.9  (2016-01-28)  Stable
 //
 //      [Based on]    iQuery v1  or  jQuery (with jQuery+),
 //
@@ -706,9 +706,9 @@
 /* ---------- 首屏渲染 自动启用组件集 ---------- */
 (function (BOM, DOM, $) {
 
-    var $_Load_Tips, Load_Cover;
+    var $_DOM = $(DOM),  $_Load_Tips,  Load_Cover;
 
-    $(DOM).on('loading',  function (iEvent) {
+    $_DOM.on('loading',  function (iEvent) {
 
         //  $.Event 实例对象 detail 属性 Bug ——
         //      https://www.zhihu.com/question/20174130/answer/80990463
@@ -761,5 +761,25 @@
             });
         });
     });
+
+    if ($.browser.msie < 11)  return;
+
+    $_DOM.on(
+        [
+            'mousedown', 'mousemove', 'mouseup',
+            'click', 'dblclick', 'mousewheel',
+            'touchstart', 'touchmove', 'touchend', 'touchcancel',
+            'tap', 'press', 'swipe'
+        ].join(' '),
+        '.No_Pointer',
+        function (iEvent) {
+            if (iEvent.target !== this)  return;
+
+            var $_This = $(this).hide(),
+                $_Under = $(DOM.elementFromPoint(iEvent.pageX, iEvent.pageY));
+            $_This.show();
+            $_Under.trigger(iEvent);
+        }
+    );
 
 })(self,  self.document,  self.jQuery || self.Zepto);
