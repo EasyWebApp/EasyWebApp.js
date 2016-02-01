@@ -2,7 +2,7 @@
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]     v2.3  (2016-01-28)  Alpha
+//      [Version]     v2.3  (2016-02-01)  Beta
 //
 //      [Based on]    iQuery  |  jQuery with jQuery+,
 //
@@ -406,6 +406,10 @@
         }
     });
 
+    function Insert_DOM() {
+        return  $(arguments[0]).appendTo( this.domRoot ).fadeIn();
+    }
+
     function Multiple_API(iRender) {
         var $_Link = $('head link[src]');
 
@@ -428,6 +432,13 @@
         var MarkDown_File = /\.(md|markdown)$/i,
             This_App = this;
 
+        if (iLink.href[0] == '#') {
+            Insert_DOM.call(
+                this,  $('*[id="' + iLink.href.slice(1) + '"]').show()
+            );
+            return  Page_Load.call(this);
+        }
+
         $.get(iLink.href,  (! iLink.href.match(MarkDown_File)) ?
             function (iHTML) {
                 if (typeof iHTML != 'string')  return;
@@ -437,28 +448,26 @@
                     iSelector = This_App.domRoot.selector;
 
                 if ((! not_Fragment)  &&  no_Link) {
-                    $(iHTML).appendTo( This_App.domRoot ).fadeIn();
+                    Insert_DOM.call(This_App, iHTML);
                     return  Multiple_API.call(This_App, Page_Load);
                 }
-                $_Body.sandBox(
-                    iHTML,
-                    ((iSelector && no_Link) ? iSelector : 'body > *')  +  ', head link[src]',
-                    function ($_Content) {
-                        $_Content.filter('link').appendTo('head');
-                        This_App.domRoot.append( $_Content.not('link').fadeIn() );
+                $_Body.sandBox(iHTML,  (
+                    ((iSelector && no_Link) ? iSelector : 'body > *')  +
+                        ', head link[src]'
+                ),  function ($_Content) {
+                        Insert_DOM.call(This_App, $_Content.not('link'));
 
+                        $_Content.filter('link').appendTo('head');
                         Multiple_API.call(This_App, Page_Load);
                     }
                 );
             } :
             function (iMarkDown) {
                 if (typeof BOM.marked == 'function')
-                    $( BOM.marked(iMarkDown) )
-                        .appendTo( This_App.domRoot.empty() ).fadeIn()
-                        .find('a[href]').each(function () {
-                            this.setAttribute(
-                                'target',  this.href.match(MarkDown_File) ? '_self' : '_top'
-                            );
+                    Insert_DOM.call(This_App, BOM.marked(iMarkDown))
+                        .find('a[href]').attr('target',  function () {
+                            return  this.href.match(MarkDown_File) ?
+                                '_self' : '_top';
                         });
                 else
                     This_App.domRoot.text(iMarkDown);

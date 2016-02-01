@@ -2,6 +2,9 @@
 html, body {
     overflow:    hidden;
 }
+.InnerPage {
+    display:    none;
+}
 
 
 #Main_Nav {

@@ -2,7 +2,7 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v1.0  (2016-01-27)  Stable
+//      [Version]    v1.0  (2016-02-01)  Stable
 //
 //                   (Modern & Mobile Edition)
 //
@@ -743,7 +743,7 @@
                 _Selector_[1] += (_Selector_[1].match(/[\s>\+~]\s*$/) ? '*' : '');
 
                 return _Object_.map(
-                    _Self_(iRoot, _Selector_[1]),
+                    iRoot.querySelectorAll(_Selector_[1]),
                     function (iDOM) {
                         if ( iPseudo[_Pseudo_].filter(iDOM) )
                             return  _Selector_[2]  ?
@@ -1652,7 +1652,34 @@
         }).appendTo(DOM.head)[0].sheet;
     };
 
+    function CSS_Rule_Search(iStyleSheet, iFilter) {
+        return  $.map(iStyleSheet || DOM.styleSheets,  function () {
+            var iRule = arguments[0].cssRules,  _Self_ = arguments.callee;
+            if (! iRule)  return;
+
+            return  $.map(iRule,  function (_Rule_) {
+                return  (_Rule_.cssRules ? _Self_ : iFilter)(_Rule_);
+            });
+        });
+    }
+
     $.fn.cssRule = function (iRule, iCallback) {
+        if (! $.isPlainObject(iRule)) {
+            var $_This = this;
+
+            return  ($_This[0]  &&  CSS_Rule_Search(null,  function (_Rule_) {
+                if ((
+                    (typeof $_This.selector != 'string')  ||
+                    ($_This.selector != _Rule_.selectorText)
+                ) &&
+                    (! $_This[0].matches(_Rule_.selectorText))
+                )
+                    return;
+
+                if ((! iRule)  ||  (iRule && _Rule_.style[iRule]))
+                    return _Rule_;
+            }));
+        }
         return  this.each(function () {
             var $_This = $(this);
 
@@ -1671,28 +1698,17 @@
     var Pseudo_RE = /:{1,2}[\w\-]+/g;
 
     $.cssPseudo = function () {
-        var Pseudo_Rule = [ ];
+        return  CSS_Rule_Search(arguments[0],  function (iRule) {
+            var iPseudo = iRule.cssText.match(Pseudo_RE);
+            if (! iPseudo)  return;
 
-        $.each(arguments[0] || DOM.styleSheets,  function () {
-            var iRule = this.cssRules;
-            if (! iRule)  return;
-
-            for (var i = 0, iPseudo;  i < iRule.length;  i++)
-                if (! iRule[i].cssRules) {
-                    iPseudo = iRule[i].cssText.match(Pseudo_RE);
-                    if (! iPseudo)  continue;
-
-                    for (var j = 0;  j < iPseudo.length;  j++)
-                        iPseudo[j] = iPseudo[j].split(':').slice(-1)[0];
-                    iRule[i].pseudo = iPseudo;
-                    iRule[i].selectorText = iRule[i].selectorText ||
-                        iRule[i].cssText.match(/^(.+?)\s*\{/)[1];
-                    Pseudo_Rule.push(iRule[i]);
-                } else
-                    arguments.callee.call(iRule[i], i, iRule[i]);
+            for (var j = 0;  j < iPseudo.length;  j++)
+                iPseudo[j] = iPseudo[j].split(':').slice(-1)[0];
+            iRule.pseudo = iPseudo;
+            iRule.selectorText = iRule.selectorText ||
+                iRule.cssText.match(/^(.+?)\s*\{/)[1];
+            return iRule;
         });
-
-        return Pseudo_Rule;
     };
 
 /* ---------- Selection  Getter & Setter ---------- */
@@ -1995,7 +2011,7 @@
             return iReturn;
         },
         clone:             function (iDeep) {
-            return  this.pushStack($.map(this,  function () {
+            return  $($.map(this,  function () {
                 var $_Old = $(arguments[0]);
                 var $_New = $( $_Old[0].cloneNode(iDeep) );
 
@@ -2313,7 +2329,7 @@
 
 
 /* ---------- DOM/CSS Animation ---------- */
-(function ($) {
+(function (DOM, $) {
 
     var FPS = 60;
 
@@ -2364,13 +2380,17 @@
     $.fx = {interval:  1000 / FPS};
 
     /* ----- CSS 3 Animation ----- */
-    $('head link[rel="stylesheet"]').eq(0).before(
-        $('<link />', {
-            rel:     'stylesheet',
-            type:    'text/css',
-            href:    'http://cdn.bootcss.com/animate.css/3.3.0/animate.min.css'
-        })
-    );
+    var $_CSS_Animate = $('<link />', {
+            rel:      'stylesheet',
+            type:     'text/css',
+            media:    'print',
+            href:     'http://cdn.bootcss.com/animate.css/3.3.0/animate.min.css'
+        });
+    $('head link[rel="stylesheet"]').eq(0).before( $_CSS_Animate );
+
+    $(DOM).ready(function () {
+        $_CSS_Animate.attr('media', 'screen');
+    });
 
     var Animate_End = 'webkitAnimationEnd mozAnimationEnd MSAnimationEnd oanimationend animationend';
 
@@ -2424,7 +2444,7 @@
         return  this.data('_animate_', 0).removeClass('animated');
     };
 
-})(self.iQuery);
+})(self.document, self.iQuery);
 
 
 
@@ -3029,7 +3049,7 @@
 //                >>>  EasyImport.js  <<<
 //
 //
-//      [Version]    v1.2  (2016-01-19)  Stable
+//      [Version]    v1.2  (2016-01-29)  Stable
 //
 //                   (Modern & Mobile Edition)
 //
@@ -3229,46 +3249,85 @@
 
 /* ----------- Practical Extension ----------- */
 
-    /* ----- Lazy Loading  v0.1 ----- */
+    /* ----- Lazy Loading  v0.2 ----- */
 
-    $_DOM.ready(function () {
-        var VP_Height = $_BOM.height(),
-            $_Lazy = $('img[data-src], iframe[data-src]');
-        var Lazy_List = $.extend({ }, {
-                length:    $_Lazy.length
-            }),
-            Load_List = [ ];
+    function Scroll_Queue() {
+        this.$_ViewPort = $(arguments[0] || BOM);
+        this.vpHeight = this.$_ViewPort.height();
+        this.count = 0;
+        this.finish = [ ];
+    }
 
-        $_Lazy.each(function () {
-            var Off_Top = $(this).offset().top;
+    Scroll_Queue.prototype.watch = function () {
+        var _This_ = this,  $_DOM = $(this.$_ViewPort[0].document);
 
-            var i = Math.round(
-                    (Off_Top < VP_Height)  ?  0  :  (Off_Top - VP_Height)
-                );
-            for (;  i < Off_Top;  i++)
-                if (! Lazy_List[i])
-                    Lazy_List[i] = [this];
-                else
-                    Lazy_List[i].push(this);
-        });
-
-        $_BOM.scroll(function () {
-            var iLazy = Lazy_List[ $_DOM.scrollTop() ];
+        this.$_ViewPort.scroll(function () {
+            var iLazy = _This_[ $_DOM.scrollTop() ];
             if (! iLazy)  return;
 
-            for (var i = 0;  i < iLazy.length;  i++) {
-                if ($.inArray(iLazy[i], Load_List) != -1)  continue;
+            for (var i = 0;  i < iLazy.length;  i++)
+                if (
+                    ($.inArray(iLazy[i], this.finish)  ==  -1)  &&
+                    (false  ===  _This_.onScroll( iLazy[i] ))
+                ) {
+                    this.finish.push( iLazy[i] );
 
-                iLazy[i].src = iLazy[i].attributes['data-src'].nodeValue;
-                Load_List.push( iLazy[i] );
-
-                if (--Lazy_List.length == 0) {
-                    $_BOM.unbind('scroll', arguments.callee);
-                    Lazy_List = Load_List = null;
+                    if (--_This_.count == 0)
+                        _This_.$_ViewPort.unbind('scroll', arguments.callee);
                 }
-            }
         });
+    };
+
+    Scroll_Queue.prototype.register = function (Item) {
+        if (! Item)  return;
+
+        Item = $.likeArray(Item) ? Item : [Item];
+
+        if ((! this.count)  &&  Item.length)  this.watch();
+
+        for (var i = 0, Off_Top, iNO;  i < Item.length;  i++) {
+            Off_Top = $(Item[i]).offset().top;
+
+            iNO = Math.round(
+                (Off_Top < this.vpHeight)  ?  0  :  (Off_Top - this.vpHeight)
+            );
+            for (;  iNO < Off_Top;  iNO++)
+                if (! this[iNO])
+                    this[iNO] = [ Item[i] ];
+                else
+                    this[iNO].push( Item[i] );
+        }
+        this.count += Item.length;
+    };
+
+    $_DOM.ready(function () {
+        var iQueue = new Scroll_Queue(),  Lazy_Tag = $.makeSet('IMG', 'IFRAME');
+
+        iQueue.onScroll = function (iLazy) {
+            if ( iLazy.dataset.src )
+                iLazy.src = iLazy.dataset.src;
+            else
+                iLazy.style.backgroundImage = iLazy.dataset.background;
+        };
+
+        this.addEventListener('DOMNodeInserted',  function () {
+            var iTarget = arguments[0].target;
+
+            if (iTarget.nodeType != 1)  return;
+
+            if (iTarget.tagName in Lazy_Tag) {
+                if (! iTarget.dataset.src)  return;
+            } else if (! iTarget.dataset.background)
+                return;
+
+            iQueue.register( iTarget );
+        });
+
+        iQueue.register(
+            $('img[data-src], iframe[data-src], *[data-background]', this.body)
+        );
     });
+
     /* ----- Remote Error Log  v0.2 ----- */
 
     //  Thanks "raphealguo" --- http://rapheal.sinaapp.com/2014/11/06/javascript-error-monitor/

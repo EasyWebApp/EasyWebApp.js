@@ -15,7 +15,10 @@
     <link rel="console" href="console" />
     <script src="javascript/EasyImport.js"></script><script>
         ImportJS([
-            'iQuery+.js',
+            {
+                'iQuery+.js':                                           true,
+                'http://cdn.bootcss.com/marked/0.3.5/marked.min.js':    true
+            },
             {
                 '../css/EasyWebUI.js':    true,
                 'EasyWebApp.js':          true
@@ -25,14 +28,14 @@
     </script>
 </head><body class="Grid-Row">
     <ul id="Main_Nav" class="Grid-Column Column_1-6 No_Select">
-        <li class="Head">管理系统</li>
+        <li class="Head" target="_self" href="#_About">管理系统</li>
         <li target="_self" href="html/news.html">
             新闻审核
         </li>
         <li target="_self" href="html/image.html">
             热图审核
         </li>
-        <li>健康知识</li>
+        <li target="_self" href="404.md">健康知识</li>
     </ul>
     <div class="Grid-Column">
         <div id="User_Bar" class="Grid-Row CenterY No_Select">
@@ -55,6 +58,11 @@
         <div id="Main_View">
             <h1 class="CenterX">
                 欢迎使用由 EasyWebApp v2 驱动的管理系统！
+            </h1>
+        </div>
+        <div class="InnerPage" id="_About">
+            <h1 class="CenterX">
+                感谢 天狗云平台 为本演示程序提供的数据 API！
             </h1>
         </div>
     </div>
