@@ -2,7 +2,7 @@
 //          >>>  EasyWebUI Component Library  <<<
 //
 //
-//      [Version]     v1.9  (2016-01-28)  Stable
+//      [Version]     v1.9  (2016-02-02)  Stable
 //
 //      [Based on]    iQuery v1  or  jQuery (with jQuery+),
 //
@@ -146,18 +146,13 @@
 /* ---------- Input Range 补丁  v0.1 ---------- */
 
     function Pseudo_Bind() {
-        var iStyleSheet = $.cssPseudo([arguments[0]]),
-            iStyle = [ ];
-
-        for (var i = 0;  i < iStyleSheet.length;  i++)
-            if ($.inArray('before', iStyleSheet[i].pseudo) > -1)
-                iStyle.push(iStyleSheet[i].style);
+        var iRule = BOM.getMatchedCSSRules(arguments[0], ':before');
 
         $(this).change(function () {
             var iPercent = ((this.value / this.max) * 100) + '%';
 
-            for (var i = 0;  i < iStyle.length;  i++)
-                iStyle[i].setProperty('width', iPercent, 'important');
+            for (var i = 0;  i < iRule.length;  i++)
+                iRule[i].style.setProperty('width', iPercent, 'important');
         });
     }
 
