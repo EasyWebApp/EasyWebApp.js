@@ -2,7 +2,7 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v1.0  (2016-02-02)  Stable
+//      [Version]    v1.0  (2016-02-03)  Stable
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.
@@ -2867,6 +2867,8 @@
 /* ---------- DOM/CSS Animation ---------- */
 (function (BOM, DOM, $) {
 
+    /* ----- Atom Effect ----- */
+
     var Pseudo_Class = $.makeSet([
             ':link', 'visited', 'hover', 'active', 'focus', 'lang',
             'enabled', 'disabled', 'checked',
@@ -2910,14 +2912,24 @@
         return 0;
     }
 
+    var Tag_Style = { };
+
+    function Tag_Default_CSS(iTagName) {
+        if (! Tag_Style[iTagName]) {
+            var $_Default = $('<' + iTagName + ' />').appendTo('body');
+            Tag_Style[iTagName] = $.extend(
+                { },  BOM.getComputedStyle( $_Default[0] )
+            );
+            $_Default.remove();
+        }
+        return Tag_Style[iTagName];
+    }
+
     function Last_Valid_CSS(iName) {
         var iRule = [this[0]].concat(
                 this.cssRule( iName ).sort( CSS_Rule_Sort ),
                 {
-                    style:    BOM.getComputedStyle(
-                        $('<' + this[0].tagName.toLowerCase() + ' />')
-                            .appendTo('body')[0]
-                    )
+                    style:    Tag_Default_CSS( this[0].tagName.toLowerCase() )
                 }
             );
         for (var i = 0, iValue;  i < iRule.length;  i++) {
@@ -2930,7 +2942,8 @@
     $.fn.extend({
         hide:               function () {
             return  this.css('display',  function () {
-                $(this).data('_CSS_Display_', arguments[1]);
+                if (arguments[1] != 'none')
+                    $(this).data('_CSS_Display_', arguments[1]);
                 return 'none';
             });
         },
@@ -2948,6 +2961,8 @@
             return this;
         }
     });
+
+    /* ----- KeyFrame Animation ----- */
 
     var FPS = 60;
 
@@ -2997,7 +3012,9 @@
 
     $.fx = {interval:  1000 / FPS};
 
+
     /* ----- CSS 3 Animation ----- */
+
     var $_CSS_Animate = $('<link />', {
             rel:      'stylesheet',
             type:     'text/css',
@@ -3045,6 +3062,7 @@
     };
 
     /* ----- Animation ShortCut ----- */
+
     var CSS_Animation = [
             'fadeIn', 'fadeOut'
         ];
