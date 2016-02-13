@@ -2,7 +2,7 @@
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]     v2.3  (2016-02-13)  Beta
+//      [Version]     v2.3  (2016-02-14)  Beta
 //
 //      [Based on]    iQuery  |  jQuery with jQuery+,
 //
@@ -110,17 +110,20 @@
     }
 
     $.extend(InnerPage.prototype, {
-        show:       function () {
+        show:       function ($_Page) {
+            this.$_Page = $_Page ? $($_Page) : this.$_Page;
+
             this.$_Page.appendTo( this.ownerApp.domRoot ).fadeIn();
 
-            var Link_DOM = this.ownerApp.history.last(true).sourceLink.$_DOM[0];
-            var iListView = $.ListView.getInstance( Link_DOM.parentElement );
+            if (! $_Page) {
+                var Link_DOM = this.ownerApp.history.last(true).sourceLink.$_DOM[0];
+                var iListView = $.ListView.getInstance( Link_DOM.parentElement );
 
-            if (iListView)
-                iListView.focus(Link_DOM);
-            else
-                Link_DOM.scrollIntoView();
-
+                if (iListView)
+                    iListView.focus(Link_DOM);
+                else
+                    Link_DOM.scrollIntoView();
+            }
             return this;
         },
         valueOf:    function () {
@@ -409,76 +412,78 @@
         }
     });
 
-    function Insert_DOM() {
-        return  $(arguments[0]).appendTo( this.domRoot ).fadeIn();
-    }
+    $.extend(InnerPage.prototype, {
+        boot:    function (iRender) {
+            var $_API = $('head link[src]'),
+                $_Page = $('head link[target][href]');
 
-    function Multiple_API(iRender) {
-        var $_Link = $('head link[src]');
+            if ( $_Page.length )
+                this.ownerApp.domRoot.one('pageReady',  function () {
+                    BOM.location.hash = '#!' + $_Page.remove().attr('href');
+                });
 
-        if (! $_Link.length)  return iRender.call(this);
+            if (! $_API.length)  return iRender.call(this.ownerApp);
 
-        var iData = { },  Data_Ready = $_Link.length;
+            var iData = { },  Data_Ready = $_API.length;
 
-        for (var i = 0;  i < $_Link.length;  i++)
-            (new PageLink(this, $_Link[i])).loadData(function () {
-                $.extend(iData, arguments[0]);
+            for (var i = 0;  i < $_API.length;  i++)
+                (new PageLink(this.ownerApp, $_API[i])).loadData(function () {
+                    $.extend(iData, arguments[0]);
 
-                if (--Data_Ready > 0)  return;
+                    if (--Data_Ready > 0)  return;
 
-                iRender.call(this, iData);
-                $_Link.remove();
-            });
-    }
+                    iRender.call(this.app, iData);
+                    $_API.remove();
+                });
+        },
+        load:    function (iLink, Page_Load) {
+            var MarkDown_File = /\.(md|markdown)$/i,
+                This_Page = this,  This_App = this.ownerApp;
 
-    function Load_Template(iLink, Page_Load) {
-        var MarkDown_File = /\.(md|markdown)$/i,
-            This_App = this;
-
-        if (iLink.href[0] == '#') {
-            Insert_DOM.call(
-                this,  $('*[id="' + iLink.href.slice(1) + '"]').show()
-            );
-            return  Page_Load.call(this);
-        }
-
-        $.get(iLink.href,  (! iLink.href.match(MarkDown_File)) ?
-            function (iHTML) {
-                if (typeof iHTML != 'string')  return;
-
-                var not_Fragment = iHTML.match(/<\s*(html|head|body)(\s|>)/i),
-                    no_Link = (! iHTML.match(/<\s*link(\s|>)/i)),
-                    iSelector = This_App.domRoot.selector;
-
-                if ((! not_Fragment)  &&  no_Link) {
-                    Insert_DOM.call(This_App, iHTML);
-                    return  Multiple_API.call(This_App, Page_Load);
-                }
-                $_Body.sandBox(iHTML,  (
-                    ((iSelector && no_Link) ? iSelector : 'body > *')  +
-                        ', head link[src]'
-                ),  function ($_Content) {
-                        Insert_DOM.call(This_App, $_Content.not('link'));
-
-                        $_Content.filter('link').appendTo('head');
-                        Multiple_API.call(This_App, Page_Load);
-                    }
+            if (iLink.href[0] == '#') {
+                this.show(
+                    $('*[id="' + iLink.href.slice(1) + '"]').show()
                 );
-            } :
-            function (iMarkDown) {
-                if (typeof BOM.marked == 'function')
-                    Insert_DOM.call(This_App, BOM.marked(iMarkDown))
-                        .find('a[href]').attr('target',  function () {
-                            return  this.href.match(MarkDown_File) ?
-                                '_self' : '_top';
-                        });
-                else
-                    This_App.domRoot.text(iMarkDown);
-
-                Page_Load.call(This_App);
+                return  Page_Load.call(This_App);
             }
-        );
-    }
+
+            $.get(iLink.href,  (! iLink.href.match(MarkDown_File)) ?
+                function (iHTML) {
+                    if (typeof iHTML != 'string')  return;
+
+                    var not_Fragment = iHTML.match(/<\s*(html|head|body)(\s|>)/i),
+                        no_Link = (! iHTML.match(/<\s*link(\s|>)/i)),
+                        iSelector = This_App.domRoot.selector;
+
+                    if ((! not_Fragment)  &&  no_Link)
+                        return This_Page.show(iHTML).boot(Page_Load);
+
+                    $_Body.sandBox(iHTML,  (
+                        ((iSelector && no_Link) ? iSelector : 'body > *')  +
+                            ', head link[src]'
+                    ),  function ($_Content) {
+                            $_Content.filter('link').appendTo('head');
+
+                            This_Page.show( $_Content.not('link') ).boot(Page_Load);
+                        }
+                    );
+                } :
+                function (iMarkDown) {
+                    if (typeof BOM.marked == 'function')
+                        This_Page.show( BOM.marked(iMarkDown) ).$_Page
+                            .find('a[href]').attr('target',  function () {
+                                return  this.href.match(MarkDown_File) ?
+                                    '_self' : '_top';
+                            });
+                    else
+                        This_App.domRoot.text(iMarkDown);
+
+                    Page_Load.call(This_App);
+                }
+            );
+        }
+    });
+
     $.extend(PageLink.prototype, {
         loadTemplate:    function () {
             var iReturn = this.app.domRoot.triggerHandler('pageLoad', [
@@ -512,7 +517,7 @@
 
             this.loadData(Page_Load);
 
-            if (Whole_Page)  Load_Template.call(this.app, this, Page_Load);
+            if (Whole_Page)  This_Page.load(this, Page_Load);
         },
         loadPage:        function () {
             var iReturn = this.app.domRoot.triggerHandler('appExit', [
@@ -749,7 +754,7 @@
         });
 
         if (! Hash_Path_Load.call(This_Page))
-            Multiple_API.call(this,  function () {
+            This_Page.boot(function () {
                 This_Page.render(null, arguments[0]).onReady();
             });
 
