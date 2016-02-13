@@ -2,7 +2,7 @@
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]     v2.3  (2016-02-01)  Beta
+//      [Version]     v2.3  (2016-02-13)  Beta
 //
 //      [Based on]    iQuery  |  jQuery with jQuery+,
 //
@@ -32,6 +32,14 @@
         $.extend(this, arguments.callee.getAttr(this.$_DOM));
         this.href = this.href || this.app.history.last().HTML;
         this.method = (this.method || 'Get').toLowerCase();
+
+        var iFileName = $.fileName( this.href ).split('.');
+
+        this.data = $.extend($.paramJSON(this.href) || { },  {
+            _File_Path_:    $.filePath( this.href ),
+            _File_Name_:    iFileName[0],
+            _Ext_Name_:     iFileName[1]
+        });
     }
 
     PageLink.getAttr = function () {
@@ -66,18 +74,11 @@
             return $_Link;
         },
         getData:      function () {
-            this.data = this.$_DOM.data('EWA_Model') ||
-                this.$_DOM.data('LV_Model');
-            return  this.data || { };
-        },
-        getEnv:       function () {
-            var iFileName = $.fileName( this.href ).split('.');
+            var iData = this.$_DOM.data(['EWA_Model', 'LV_Model']);
 
-            return {
-                _File_Path_:    $.filePath( this.href ),
-                _File_Name_:    iFileName[0],
-                _Ext_Name_:     iFileName[1]
-            };
+            return  this.data = $.extend(
+                this.data,  iData.EWA_Model || iData.LV_Model || { }
+            );
         },
         valueOf:      function () {
             return {
@@ -119,6 +120,8 @@
                 iListView.focus(Link_DOM);
             else
                 Link_DOM.scrollIntoView();
+
+            return this;
         },
         valueOf:    function () {
             return {
@@ -202,7 +205,7 @@
                     (! (iNew.method + this[i].method).match(/Post|Put/i))  &&
                     $.isEqual(iNew.sourceLink, this[i].sourceLink)
                 )
-                    return  this[i].$_Page;
+                    return this[i];
         },
         last:      function () {
             var iPage = this[this.lastIndex] || { };
@@ -343,7 +346,7 @@
         getURL:       function () {
             return  this.app.makeURL(
                 this.src || '',
-                $.extend(this.getEnv(), this.getData()),
+                this.getData(),
                 this.method.match(/Get|Delete/i)  &&  this.getArgs()
             );
         },
@@ -490,13 +493,11 @@
             var This_Page = this.app.history.write(this, $_Target);
 
         /* ----- Load DOM  from  Cache ----- */
-            var $_Cached = this.app.history.cache(),
+            var iCache = this.app.history.cache(),
                 Whole_Page = (this.target == '_self');
 
-            if ($_Cached) {
-                $_Cached.appendTo($_Target).fadeIn();
-                return This_Page.onReady();
-            }
+            if (iCache)  return iCache.show().onReady();
+
 
         /* ----- Load DOM  from  Network ----- */
             var iData,  Load_Stage = Whole_Page ? 2 : 1;
@@ -531,8 +532,7 @@
 
     $.extend(InnerPage.prototype,{
         render:      function ($_Source, iData) {
-            var This_App = this.ownerApp,
-                iLink = $_Source && $_Source.data('EWA_PageLink');
+            var This_App = this.ownerApp;
 
             /* ----- Data Stack Change ----- */
             iData = $.extend(
@@ -543,13 +543,12 @@
                     This_App.history.prev(),
                     iData
                 ]);
-            iData = This_App.dataStack.pushStack(
-                $.extend(iReturn || iData,  iLink ? iLink.getEnv() : { })
-            );
+            iData = This_App.dataStack.pushStack(iReturn || iData);
             if (iReturn === false)  return this;
 
             /* ----- View Init ----- */
-            var $_List = This_App.domRoot;
+            var $_List = This_App.domRoot,
+                iLink = $_Source && $_Source.data('EWA_PageLink');
             if (iLink  &&  (iLink.target != '_self'))
                 $_List = iLink.getTarget().parent();
             $_List = $.ListView.findView($_List);
