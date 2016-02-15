@@ -2,7 +2,7 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v1.0  (2016-02-03)  Stable
+//      [Version]    v1.0  (2016-02-15)  Stable
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.
@@ -3238,7 +3238,9 @@
                 if (
                     (typeof iCallback == 'function')  &&
                     (false === iCallback.call(
-                        $_iFrame[0],  $('head style', _DOM_).add($_Content).clone(true)
+                        $_iFrame[0],  $($.merge(
+                            $.makeArray( $('head style', _DOM_) ),  $_Content
+                        ))
                     ))
                 )
                     $_iFrame.remove();

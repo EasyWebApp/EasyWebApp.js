@@ -2,7 +2,7 @@
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]     v2.3  (2016-02-14)  Beta
+//      [Version]     v2.3  (2016-02-15)  Beta
 //
 //      [Based on]    iQuery  |  jQuery with jQuery+,
 //
@@ -113,7 +113,14 @@
         show:       function ($_Page) {
             this.$_Page = $_Page ? $($_Page) : this.$_Page;
 
-            this.$_Page.appendTo( this.ownerApp.domRoot ).fadeIn();
+            if ( this.$_Page )
+                this.$_Page.appendTo( this.ownerApp.domRoot ).fadeIn();
+            else {
+                this.sourceLink = new PageLink(
+                    this.ownerApp,  this.sourceLink.valueOf()
+                );
+                this.sourceLink.loadTemplate();
+            }
 
             if (! $_Page) {
                 var Link_DOM = this.ownerApp.history.last(true).sourceLink.$_DOM[0];
@@ -124,6 +131,7 @@
                 else
                     Link_DOM.scrollIntoView();
             }
+
             return this;
         },
         valueOf:    function () {
@@ -203,8 +211,9 @@
             var iNew = this[this.lastIndex];
 
             for (var i = 0;  i < this.lastIndex;  i++)
-                if (
-                    ((iNew.time - this[i].time) < 60000)  &&
+                if ((iNew.time - this[i].time) > 60000) {
+                    if (! this[i].sourceLink.action)  this[i].$_Page = null;
+                } else if (
                     (! (iNew.method + this[i].method).match(/Post|Put/i))  &&
                     $.isEqual(iNew.sourceLink, this[i].sourceLink)
                 )
@@ -442,7 +451,7 @@
 
             if (iLink.href[0] == '#') {
                 this.show(
-                    $('*[id="' + iLink.href.slice(1) + '"]').show()
+                    $('*[id="' + iLink.href.slice(1) + '"]').children().clone(true)
                 );
                 return  Page_Load.call(This_App);
             }
@@ -462,11 +471,12 @@
                         ((iSelector && no_Link) ? iSelector : 'body > *')  +
                             ', head link[src]'
                     ),  function ($_Content) {
-                            $_Content.filter('link').appendTo('head');
+                        $_Content.filter('link').appendTo('head');
 
-                            This_Page.show( $_Content.not('link') ).boot(Page_Load);
-                        }
-                    );
+                        This_Page.show( $_Content.not('link') ).boot(Page_Load);
+
+                        return false;
+                    });
                 } :
                 function (iMarkDown) {
                     if (typeof BOM.marked == 'function')
@@ -502,7 +512,6 @@
                 Whole_Page = (this.target == '_self');
 
             if (iCache)  return iCache.show().onReady();
-
 
         /* ----- Load DOM  from  Network ----- */
             var iData,  Load_Stage = Whole_Page ? 2 : 1;
