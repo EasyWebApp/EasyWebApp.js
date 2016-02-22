@@ -2,7 +2,7 @@
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]     v2.3  (2016-02-15)  Beta
+//      [Version]     v2.3  (2016-02-22)  Beta
 //
 //      [Based on]    iQuery  |  jQuery with jQuery+,
 //
@@ -30,6 +30,13 @@
         this.$_DOM.data('EWA_PageLink', this);
 
         $.extend(this, arguments.callee.getAttr(this.$_DOM));
+
+        switch (this.target) {
+            case '_top':      this.type = 'Outer';  break;
+            case '_blank':    this.type = 'Data';   break;
+            case '_self':     ;
+            default:          if (this.href)  this.type = 'Inner';
+        }
         this.href = this.href || this.app.history.last().HTML;
         this.method = (this.method || 'Get').toLowerCase();
 
@@ -114,7 +121,10 @@
             this.$_Page = $_Page ? $($_Page) : this.$_Page;
 
             if ( this.$_Page )
-                this.$_Page.appendTo( this.ownerApp.domRoot ).fadeIn();
+                this.$_Page.appendTo(
+                    this.ownerApp.history.last(true)
+                        .sourceLink.getTarget().empty()
+                ).fadeIn();
             else {
                 this.sourceLink = new PageLink(
                     this.ownerApp,  this.sourceLink.valueOf()
@@ -330,9 +340,11 @@
             ].join('')
         ].join('?');
 
-        iURL = (
-            iURL.match(/^(\w+:)?\/\/[\w\d]+/) ? '' : this.apiRoot
-        ) + iURL;
+        if (! (
+            iURL.match(/^(\w+:)?\/\/[\w\d]+/) ||
+            $.fileName(iURL).match(/\.(htm|html|md|markdown)$/)
+        ))
+            iURL = this.apiRoot + iURL;
 
         return  this.proxy + (
             this.proxy ? BOM.encodeURIComponent(iURL) : iURL
@@ -355,18 +367,25 @@
                 return  (_Arg_ !== undefined)  ?  _Arg_  :  iName;
             });
         },
-        getURL:       function () {
-            return  this.app.makeURL(
-                this.src || '',
-                this.getData(),
-                this.method.match(/Get|Delete/i)  &&  this.getArgs()
-            );
+        getURL:       function (iKey) {
+            if (! this[iKey])  return '';
+
+            if ((iKey != 'href')  ||  (this[iKey][0] != '#')) {
+                this[iKey] = this.app.makeURL(
+                    this[iKey] || '',
+                    this.getData(),
+                    this.method.match(/Get|Delete/i)  &&  this.getArgs()
+                );
+                if ((iKey == 'href')  &&  (this[iKey].slice(-1) == '?'))
+                    this[iKey] = this[iKey].slice(0, -1);
+            }
+            return this[iKey];
         },
         prefetch:     function () {
             if ((this.target == '_self')  &&  this.href) {
                 var $_Prefetch = $('<link />', {
                         rel:     Prefetch_Tag,
-                        href:    this.href
+                        href:    this.getURL('href')
                     });
 
                 if (
@@ -377,7 +396,7 @@
                     $_Prefetch.add(
                         $('<link />', {
                             rel:     Prefetch_Tag,
-                            href:    this.getURL()
+                            href:    this.getURL('src')
                         })
                     );
 
@@ -391,7 +410,7 @@
                 this.app.dataStack.flush($_Form);
 
             var iLink = this,  This_App = this.app,
-                API_URL = this.getURL();
+                API_URL = this.getURL('src');
 
             function AJAX_Ready() {
                 Data_Ready.call(
@@ -421,16 +440,26 @@
         }
     });
 
+    function Original_Link() {
+        return ($.inArray(
+            'nofollow',  (this.getAttribute('rel') || '').split(/\s+/)
+        ) > -1);
+    }
+
     $.extend(InnerPage.prototype, {
         boot:    function (iRender) {
-            var $_API = $('head link[src]'),
-                $_Page = $('head link[target][href]');
+            var This_Page = this,
+                $_Page = $('head link[target][href]'),
+                $_API = $('head link[src]');
 
             if ( $_Page.length )
                 this.ownerApp.domRoot.one('pageReady',  function () {
-                    BOM.location.hash = '#!' + $_Page.remove().attr('href');
+                    return  arguments[1].loadLink(
+                        $_Page.remove().attr(['target', 'href']),
+                        null,
+                        This_Page.sourceLink.getData()
+                    );
                 });
-
             if (! $_API.length)  return iRender.call(this.ownerApp);
 
             var iData = { },  Data_Ready = $_API.length;
@@ -456,7 +485,7 @@
                 return  Page_Load.call(This_App);
             }
 
-            $.get(iLink.href,  (! iLink.href.match(MarkDown_File)) ?
+            $.get(iLink.getURL('href'),  (! iLink.href.match(MarkDown_File)) ?
                 function (iHTML) {
                     if (typeof iHTML != 'string')  return;
 
@@ -469,7 +498,7 @@
 
                     $_Body.sandBox(iHTML,  (
                         ((iSelector && no_Link) ? iSelector : 'body > *')  +
-                            ', head link[src]'
+                            ', head link[target]'
                     ),  function ($_Content) {
                         $_Content.filter('link').appendTo('head');
 
@@ -482,6 +511,14 @@
                     if (typeof BOM.marked == 'function')
                         This_Page.show( BOM.marked(iMarkDown) ).$_Page
                             .find('a[href]').attr('target',  function () {
+                                if (! (
+                                    this.href.indexOf('#!') ||
+                                    Original_Link.call(this)
+                                )) {
+                                    this.setAttribute('rel', 'nofollow');
+                                    return arguments[1];
+                                }
+
                                 return  this.href.match(MarkDown_File) ?
                                     '_self' : '_top';
                             });
@@ -508,13 +545,13 @@
             var This_Page = this.app.history.write(this, $_Target);
 
         /* ----- Load DOM  from  Cache ----- */
-            var iCache = this.app.history.cache(),
-                Whole_Page = (this.target == '_self');
+            var iCache = this.app.history.cache();
 
             if (iCache)  return iCache.show().onReady();
 
         /* ----- Load DOM  from  Network ----- */
-            var iData,  Load_Stage = Whole_Page ? 2 : 1;
+            var iData,  Need_HTML = (this.type == 'Inner');
+            var Load_Stage = Need_HTML ? 2 : 1;
 
             function Page_Load() {
                 if (arguments[0])  iData = arguments[0];
@@ -526,12 +563,12 @@
 
             this.loadData(Page_Load);
 
-            if (Whole_Page)  This_Page.load(this, Page_Load);
+            if (Need_HTML)  This_Page.load(this, Page_Load);
         },
         loadPage:        function () {
             var iReturn = this.app.domRoot.triggerHandler('appExit', [
                     this.app.history.last().HTML,
-                    this.href,
+                    this.getURL('href'),
                     this.getData()
                 ]);
             if (iReturn === false)  return;
@@ -644,6 +681,8 @@
 
 /* ---------- User Event Switcher ---------- */
 
+    var No_Hook = $.makeSet('form', 'input', 'textarea', 'select');
+
     function Event_Filter() {
         var iTagName = this.tagName.toLowerCase(),
             iEvent = arguments.callee.caller.arguments[0];
@@ -651,8 +690,12 @@
         switch (iEvent.type) {
             case 'click':     ;
             case 'tap':       {
-                if (iTagName == 'a')  iEvent.stopPropagation();
-                return  ('a|form|input|textarea|select'.indexOf(iTagName) > -1);
+                if (iTagName == 'a') {
+                    if ( Original_Link.call(this) )  return true;
+
+                    iEvent.preventDefault();
+                }
+                return  (iTagName in No_Hook);
             }
             case 'change':    return  (this !== iEvent.target);
         }
