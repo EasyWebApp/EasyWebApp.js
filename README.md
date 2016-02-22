@@ -3,7 +3,7 @@
 ## 【项目概述】
 **EasyWebApp** 是一个基于 **jQuery API** 的**轻量级 SPA（单页应用）引擎**，**网页设计、后端接口、前端组件 充分解耦** —— 只用**原生 HTML** 做模板，对 **JSON 数据**的结构几无硬性要求，完全兼容现有的 **jQuery 插件**。
 
-本引擎广泛使用的最新开源稳定版 v2.2 脱胎于 2 个**移动端网页应用**（微信公众平台）和 2 个**桌面端网页系统**（某公司开放平台），是一个有较高 **抽象性**、**普适性**的 SPA 引擎，**个人独立开发**、**团队协作开发** 都能轻松胜任~
+本引擎广泛使用的最新开源稳定版 v2.3 脱胎于 2 个**移动端网页应用**（微信公众平台）和 2 个**桌面端网页系统**（某公司开放平台），是一个有较高 **抽象性**、**普适性**的 SPA 引擎，**个人独立开发**、**团队协作开发** 都能轻松胜任~
 
 
 ## 【核心理念】
@@ -30,16 +30,24 @@ EasyWebApp 与其作者开发的 [**EasyWebUI**](http://git.oschina.net/Tech_Que
    - 还引用了 **淘宝网 IP 地理信息**、[**天狗云平台**](http://www.tngou.net) 的开放 API
    - 因为上述接口没有开放 **前端跨域访问**，所以引擎作者用一个 PHP 脚本做了一层代理，导致 **API 数据响应**较慢，请稍安勿臊
 
-### 二、后台管理系统
+### 二、后台管理 UI
  - 前端页面
    - 访问网址：http://easywebapp.oschina.cnpaas.io/demo/Admin
  - 后端数据
    - 主要基于 [**天狗云平台**](http://www.tngou.net) 的开放 API
 
+### 三、开放内容系统（Wiki / CMS）
+【实战项目】 **EasyWiki（易维基）百科系统** —— http://git.oschina.net/Tech_Query/EasyWiki
+
 
 ## 【版本历史】
+ - v2.3   Stable —— 2016年2月22日  **内页加载方式**更灵活
+   - 支持 `#!` 静态路径导航
+   - 数据栈中可取到每个内页的 **模版 URL 参数**、**环境变量**（首批支持 `_File_Path_`、`_File_Name_`、`_Ext_Name_`）
+   - 支持用 HTML `head > link` **链接元素**加载内页
+   - 支持首页 **HTML 内联内页**
  - v2.2   Stable —— 2015年12月3日  引擎内部实现 **OOP 重构**（第二阶段）
-   - 重构 PageLink、ListView、InnerPage，实现**局部刷新**
+   - 重构 PageLink、ListView、InnerPage，实现**局部数据刷新**
    - ListView 实现独立为一个 jQuery 静态方法，并贡献给 iQuery 项目的 [iQuery+ 插件库](http://git.oschina.net/Tech_Query/iQuery/blob/master/iQuery+.js)
    - WebApp 对象“手动控制”实例方法 整合为一个 loadLink 方法
  - v2.1   Stable —— 2015年11月12日

@@ -2,7 +2,7 @@
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]     v2.3  (2016-02-22)  Beta
+//      [Version]     v2.3  (2016-02-22)  Stable
 //
 //      [Based on]    iQuery  |  jQuery with jQuery+,
 //
@@ -122,8 +122,10 @@
 
             if ( this.$_Page )
                 this.$_Page.appendTo(
-                    this.ownerApp.history.last(true)
-                        .sourceLink.getTarget().empty()
+                    (
+                        this.ownerApp.history.isForward(this) ?
+                            this : this.ownerApp.history.last(true)
+                    ).sourceLink.getTarget().empty()
                 ).fadeIn();
             else {
                 this.sourceLink = new PageLink(
@@ -183,10 +185,11 @@
     }
 
     $.extend(InnerHistory.prototype, {
-        splice:    Array.prototype.splice,
-        push:      Array.prototype.push,
-        slice:     Array.prototype.slice,
-        move:      function () {
+        splice:       Array.prototype.splice,
+        push:         Array.prototype.push,
+        slice:        Array.prototype.slice,
+        indexOf:      Array.prototype.indexOf,
+        move:         function () {
             if ($.isPlainObject( arguments[0] ))
                 var iState = arguments[0];
             else
@@ -199,7 +202,7 @@
             if ((! iState)  ||  ((iState.DOM_Index + 2) == this.length))
                 this[this.length - 1].$_Page = $_Page;
         },
-        write:     function (iLink) {
+        write:        function (iLink) {
             if (this.length)  this.move( arguments[1] );
 
             this.prevIndex = this.lastIndex++ ;
@@ -217,7 +220,7 @@
             );
             return iNew;
         },
-        cache:     function () {
+        cache:        function () {
             var iNew = this[this.lastIndex];
 
             for (var i = 0;  i < this.lastIndex;  i++)
@@ -229,13 +232,18 @@
                 )
                     return this[i];
         },
-        last:      function () {
+        last:         function () {
             var iPage = this[this.lastIndex] || { };
             return  arguments[0] ? iPage : iPage.valueOf();
         },
-        prev:      function () {
+        prev:         function () {
             var iPage = this[this.prevIndex] || { };
             return  arguments[0] ? iPage : iPage.valueOf();
+        },
+        isForward:    function () {
+            return (
+                this.indexOf( arguments[0] )  >  this.indexOf( this.last(true) )
+            );
         }
     });
 
@@ -322,7 +330,7 @@
         iURL = $.split(iURL, '?', 2);
         iData = iData || { };
 
-        var iJSONP = iURL[1].match(/&?([^=]+)=\?/);
+        var iJSONP = ('&' + iURL[1]).match(/&([^=]+)=\?/);
         iJSONP = iJSONP && iJSONP[1];
 
         var This_App = this,
