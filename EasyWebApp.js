@@ -2,16 +2,16 @@
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]     v2.3  (2016-02-22)  Stable
+//      [Version]    v2.3  (2016-02-22)  Stable
 //
-//      [Based on]    iQuery  |  jQuery with jQuery+,
+//      [Require]    iQuery  ||  jQuery with jQuery+,
 //
-//                    iQuery+,
+//                   iQuery+,
 //
-//                    [ marked.js ]  (for MarkDown rendering)
+//                   [ marked.js ]  (for MarkDown rendering)
 //
-//      [Usage]       A Light-weight WebApp Framework
-//                    jQuery Compatible API.
+//      [Usage]      A Light-weight WebApp Framework
+//                   jQuery Compatible API.
 //
 //
 //              (C)2015-2016    shiy2008@gmail.com
@@ -42,11 +42,14 @@
 
         var iFileName = $.fileName( this.href ).split('.');
 
-        this.data = $.extend($.paramJSON(this.href) || { },  {
+        this.data = {
             _File_Path_:    $.filePath( this.href ),
             _File_Name_:    iFileName[0],
             _Ext_Name_:     iFileName[1]
-        });
+        };
+
+        if ((this.href || '').indexOf('?')  >  -1)
+            this.data = $.extend($.paramJSON(this.href), this.data);
     }
 
     PageLink.getAttr = function () {

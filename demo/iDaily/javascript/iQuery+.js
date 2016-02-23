@@ -2,9 +2,9 @@
 //              >>>  iQuery+  <<<
 //
 //
-//    [Version]     v0.7  (2016-01-27)  Stable
+//    [Version]    v0.7  (2016-2-23)  Stable
 //
-//    [Based on]    iQuery  or  (jQuery with jQuery+)
+//    [Require]    iQuery  ||  jQuery with jQuery+
 //
 //
 //        (C)2015-2016  shiy2008@gmail.com
@@ -222,16 +222,7 @@
 
             $_Item.siblings().removeClass('active');
 
-            var iCoord = $_Item.addClass('active').offset(),
-                _Coord_ = $_Scroll.offset();
-
-            if ($_Scroll.length)
-                $_Scroll.animate({
-                    scrollTop:
-                        $_Scroll.scrollTop()  +  (iCoord.top - _Coord_.top),
-                    scrollLeft:
-                        $_Scroll.scrollLeft()  +  (iCoord.left - _Coord_.left)
-                });
+            $_Scroll.scrollTo( $_Item.addClass('active') );
 
             return this;
         }

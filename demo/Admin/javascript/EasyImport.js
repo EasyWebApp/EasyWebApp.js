@@ -2,7 +2,7 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v1.0  (2016-02-15)  Stable
+//      [Version]    v1.0  (2016-02-23)  Stable
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.
@@ -997,7 +997,10 @@
             return iParameter.join('&');
         },
         paramJSON:        function (Args_Str) {
-            Args_Str = (Args_Str || BOM.location.search).match(/[^\?&\s]+/g);
+            Args_Str = (
+                Args_Str  ?  $.split(Args_Str, '?', 2)[1]  :  BOM.location.search
+            ).match(/[^\?&\s]+/g);
+
             if (! Args_Str)  return { };
 
             var _Args_ = {
@@ -1005,7 +1008,6 @@
                         return  BOM.JSON.format(this);
                     }
                 };
-
             for (var i = 0, iValue; i < Args_Str.length; i++) {
                 Args_Str[i] = $.split(Args_Str[i], '=', 2);
 
@@ -1379,6 +1381,18 @@
                 $_Result = $.merge($_Result,  $(arguments[0], this[i]));
 
             return  this.pushStack($_Result);
+        },
+        has:                function ($_Filter) {
+            if (typeof $_Filter != 'string') {
+                var _UUID_ = $.uuid('Has');
+                $($_Filter).addClass(_UUID_);
+                $_Filter = '.' + _UUID_;
+            }
+
+            return  this.pushStack($.map(this,  function () {
+                if ( $($_Filter, arguments[0]).removeClass(_UUID_).length )
+                    return arguments[0];
+            }));
         },
         detach:             function () {
             for (var i = 0;  i < this.length;  i++)
@@ -3080,6 +3094,33 @@
         return  this.data('_animate_', 0).removeClass('animated');
     };
 
+    /* ----- Smooth Scroll ----- */
+
+    $.fn.scrollTo = function ($_Target) {
+        $_Target = $($_Target);
+
+        this.has($_Target).each(function () {
+            var $_Scroll = $(this);
+
+            var iCoord = $($.map($_Target,  function () {
+                    if ( $.contains($_Scroll[0], arguments[0]) )
+                        return arguments[0];
+                })).offset(),
+                _Coord_ = $_Scroll.offset();
+
+            if (! $_Scroll.length)  return;
+
+            $_Scroll.animate({
+                scrollTop:
+                    $_Scroll.scrollTop()  +  (iCoord.top - _Coord_.top),
+                scrollLeft:
+                    $_Scroll.scrollLeft()  +  (iCoord.left - _Coord_.left)
+            });
+        });
+
+        return this;
+    };
+
 })(self, self.document, self.iQuery);
 
 
@@ -3328,7 +3369,9 @@
                 this.requestData = arguments[0];
                 this.responseURL = iURL[1] + $.param(
                     $.extend({ }, arguments[0], $.paramJSON(
-                        iURL[2].replace(/(\w+)=\?/,  '$1=DOMHttpRequest.JSONP.' + _UUID_)
+                        '?' + iURL[2].replace(
+                            /(\w+)=\?/,  '$1=DOMHttpRequest.JSONP.' + _UUID_
+                        )
                     ))
                 );
                 this.$_DOM = $('<script />', {src:  this.responseURL}).appendTo(DOM.head);
