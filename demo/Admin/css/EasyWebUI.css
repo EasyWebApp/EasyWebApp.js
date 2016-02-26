@@ -501,7 +501,7 @@ html.Fixed > body > .Fix-Top {
     padding:    0  !important;
 }
 .Grid-Row > .Grid-Column {
-    display:           table-cell  !important;
+    display:           table-cell;
     vertical-align:    top;
 }
 .Grid-Row.CenterY {
@@ -1177,7 +1177,6 @@ img.UserLogo {
     font-style:        normal;
     font-size:         1.5em;
     width:             2em;
-    height:            2em;
 }
 .Icon:before {
     display:       inline-block;
@@ -1187,6 +1186,9 @@ img.UserLogo {
 }
 .Icon.Mail:before {
     content:    "\2709";
+}
+.Icon.Mobile:before {
+    content:    "\1F4F1";
 }
 .Icon.Heart:before {
     content:    "\2661";

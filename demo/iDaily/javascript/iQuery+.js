@@ -2,7 +2,7 @@
 //              >>>  iQuery+  <<<
 //
 //
-//    [Version]    v0.7  (2016-2-23)  Stable
+//    [Version]    v0.9  (2016-2-26)  Stable
 //
 //    [Require]    iQuery  ||  jQuery with jQuery+
 //
@@ -13,7 +13,7 @@
 
 (function (BOM, DOM, $) {
 
-/* ---------- ListView Interface  v0.5 ---------- */
+/* ---------- ListView Interface  v0.6 ---------- */
 
 //  Thanks "EasyWebApp" Project --- http://git.oschina.net/Tech_Query/EasyWebApp
 
@@ -225,10 +225,86 @@
             $_Scroll.scrollTo( $_Item.addClass('active') );
 
             return this;
+        },
+        fork:       function () {
+            var _Self_ = this.constructor,  $_View = this.$_View.clone(true);
+
+            $_View.data({_LVI_: '',  LV_Model: ''})[0].id = '';
+
+            var iFork = _Self_($_View.appendTo( arguments[0] ),  this.selector);
+            iFork.callback = this.callback;
+
+            return iFork;
         }
     });
 
     $.ListView = ListView;
+
+
+/* ---------- TreeView Interface  v0.1 ---------- */
+
+    function TreeView(iListView, iKey, onFork, onFocus) {
+        var _Self_ = arguments.callee;
+
+        if (!  (this instanceof _Self_))
+            return  new _Self_(iListView, iKey, onFork, onFocus);
+
+        this.unit = iListView.on('insert',  function ($_Item, iValue) {
+            if (! iValue[iKey])  return;
+
+            var iFork = this.fork($_Item).clear().render( iValue[iKey] );
+
+            if (typeof onFork == 'function')  onFork.call(iFork);
+        });
+
+        if (typeof onFocus != 'function')  return;
+
+        var _This_ = this;
+
+        this.unit.$_View.on(
+            $.browser.mobile ? 'tap' : 'click',
+            function () {
+                var $_Target = onFocus.apply(this, arguments);
+
+                if ($_Target && _This_.$_Content) {
+                    _This_.$_Content.scrollTo( $_Target );
+                    return false;
+                }
+            }
+        );
+    }
+    $.extend(TreeView.prototype, {
+        bind:    function ($_Item, Depth_Sort, Data_Filter) {
+            this.$_Content = $_Item.sameParents().eq(0);
+            this.data = [ ];
+
+            for (
+                var  i = 0,  _Tree_ = this.data,  _Level_ = 0,  _Parent_;
+                i < $_Item.length;
+                i++
+            ) {
+                if (i > 0)
+                    _Level_ = Depth_Sort.call(this,  $_Item[i - 1],  $_Item[i]);
+
+                if (_Level_ > 0)
+                    _Tree_ = _Tree_.slice(-1)[0].list = $.extend([ ], {
+                        parent:    _Tree_
+                    });
+                else if (_Level_ < 0) {
+                    _Parent_ = _Tree_.parent;
+                    delete _Tree_.parent;
+                    _Tree_ = _Parent_;
+                }
+                _Tree_.push( Data_Filter.call($_Item[i]) );
+            }
+
+            this.unit.clear().render( this.data );
+
+            return this;
+        }
+    });
+
+    $.TreeView = TreeView;
 
 
 /* ---------- Base64 to Blob  v0.1 ---------- */

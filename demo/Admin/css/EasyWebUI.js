@@ -652,8 +652,8 @@
             );
         }).swipe(function (iEvent) {
             if (
-                (typeof iEvent.pageX != 'number')  ||
-                (Math.abs(iEvent.pageY)  >  Math.abs(iEvent.pageX))
+                (typeof iEvent.deltaX != 'number')  ||
+                (Math.abs(iEvent.deltaY)  >  Math.abs(iEvent.deltaX))
             )
                 return;
 
@@ -669,7 +669,7 @@
             $_Target = $_Tab_Body.eq(
                 (
                     $_Tab_Body.index($_Target) + (
-                        (iEvent.pageX < 0)  ?  1  :  -1
+                        (iEvent.deltaX < 0)  ?  1  :  -1
                     )
                 ) % $_Tab_Body.length
             );

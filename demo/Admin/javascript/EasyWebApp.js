@@ -179,7 +179,7 @@
             if (! iHistory)  return;
 
             _This_.move(iState);
-            iHistory.show();
+            iHistory.show().onReady();
 
             $_BOM.trigger('pageChange',  [iState.DOM_Index - _This_.lastIndex]);
             _This_.prevIndex = _This_.lastIndex;
