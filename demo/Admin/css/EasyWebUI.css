@@ -8,7 +8,7 @@
  *    and can be used in the Web UI development of
  *    Any Platform.
  *
- *    [Version]    v1.0  (2016-02-16)
+ *    [Version]    v1.0  (2016-03-16)
  *
  *    [Require]    CSS 2.1  (Best Effect with CSS 3),
  *
@@ -712,12 +712,12 @@ form .Row > label[for] {
     overflow:         hidden;
     text-overflow:    ellipsis;
 }
-form .Row > input[type="text"],    form .Row > input[type="password"],
-form .Row > input[type="email"],   form .Row > input[type="url"],
-form .Row > input[type="search"],  form .Row > input[type="tel"],
-form .Row > input[type="number"],  form .Row > input[type="range"],
-form .Row > textarea,              form .Row select   {
-    width:      68.5%;
+form .Row > label[for] + * {
+    width:    68.5%;
+}
+form .Row > label[for] + input[type="radio"],
+form .Row > label[for] + input[type="checkbox"] {
+    width:    auto;
 }
 form .Row.Grid-Row > .Grid-Column {
     padding-left:    0.5em;

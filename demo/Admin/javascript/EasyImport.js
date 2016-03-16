@@ -2,7 +2,7 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v1.0  (2016-02-26)  Stable
+//      [Version]    v1.0  (2016-03-16)  Stable
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.
@@ -1605,15 +1605,14 @@
             End_Element = (! this.children.length);
 
         var _Set_ = iValue || $.isData(iValue),
-            iURL = (typeof iValue == 'string')  &&  iValue.trim().match(RE_URL);
+            iURL = (typeof iValue == 'string')  &&  iValue.trim();
+        var isURL = iURL && iURL.split('#')[0].match(RE_URL);
 
         switch ( this.tagName.toLowerCase() ) {
             case 'a':           {
                 if (_Set_) {
-                    if (iURL)
-                        $_This.attr('href', iURL[0]);
-                    if (End_Element)
-                        $_This.text(iValue);
+                    if (isURL)  $_This.attr('href', iURL);
+                    if (End_Element)  $_This.text(iValue);
                     return;
                 }
                 return  $_This.attr('href')  ||  (End_Element && $_This.text());
@@ -1628,8 +1627,8 @@
             }
             default:            {
                 if (_Set_) {
-                    if ((! End_Element)  &&  iURL)
-                        $_This.css('background-image',  'url("' + iValue + '")');
+                    if ((! End_Element)  &&  isURL)
+                        $_This.css('background-image',  'url("' + iURL + '")');
                     else
                         $_This.html(iValue);
                     return;
@@ -3417,19 +3416,15 @@
     }
 
     function Idempotent_Args(iURL) {
-        iURL = iURL.split('?');
-        iURL[1] = $.extend(
-            iURL[1] ? $.paramJSON(iURL[1]) : { },  arguments[1]
-        );
+        var iData = $.extend($.paramJSON(iURL), arguments[1]);
 
-        var iPrefetch;
-        $('link[rel="next"], link[rel="prefetch"]').each(function () {
-            if ($.fileName(this.href) == $.fileName(iURL[0]))
-                iPrefetch = true;
-        });
-        if (! iPrefetch)  iURL[1]._ = $.now();
+        if (!  $.map($('link[rel="next"], link[rel="prefetch"]'),  function () {
+            if ($.fileName( arguments[0].href )  ==  $.fileName(iURL))
+                return iURL;
+        }).length)
+            iData._ = $.now();
 
-        return  (iURL[0] + '?' + $.param(iURL[1])).trim('?');
+        return  (iURL.split('?')[0] + '?' + $.param(iData)).trim('?');
     }
 
     $.extend({

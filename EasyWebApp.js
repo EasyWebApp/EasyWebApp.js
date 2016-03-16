@@ -87,7 +87,7 @@
             var iData = this.$_DOM.data(['EWA_Model', 'LV_Model']);
 
             return  this.data = $.extend(
-                this.data,  iData.EWA_Model || iData.LV_Model || { }
+                iData.EWA_Model || iData.LV_Model || { },  this.data
             );
         },
         valueOf:      function () {

@@ -2,7 +2,7 @@
 //              >>>  iQuery+  <<<
 //
 //
-//    [Version]    v0.9  (2016-2-26)  Stable
+//    [Version]    v1.0  (2016-03-01)  Stable
 //
 //    [Require]    iQuery  ||  jQuery with jQuery+
 //
@@ -241,7 +241,7 @@
     $.ListView = ListView;
 
 
-/* ---------- TreeView Interface  v0.1 ---------- */
+/* ---------- TreeView Interface  v0.2 ---------- */
 
     function TreeView(iListView, iKey, onFork, onFocus) {
         var _Self_ = arguments.callee;
@@ -274,7 +274,7 @@
         );
     }
     $.extend(TreeView.prototype, {
-        bind:    function ($_Item, Depth_Sort, Data_Filter) {
+        bind:       function ($_Item, Depth_Sort, Data_Filter) {
             this.$_Content = $_Item.sameParents().eq(0);
             this.data = [ ];
 
@@ -299,6 +299,24 @@
             }
 
             this.unit.clear().render( this.data );
+
+            return this;
+        },
+        linkage:    function ($_Scroll, onScroll) {
+            var _DOM_ = $_Scroll[0].ownerDocument;
+
+            $_Scroll.scroll(function () {
+                if (arguments[0].target !== this)  return;
+
+                var iAnchor = $_Scroll.offset(),
+                    iFontSize = $(_DOM_.body).css('font-size') / 2;
+
+                var $_Anchor = $(_DOM_.elementFromPoint(
+                        iAnchor.left + $_Scroll.css('padding-left') + iFontSize,
+                        iAnchor.top + $_Scroll.css('padding-top') + iFontSize
+                    ));
+                return  onScroll.call(this, $_Anchor);
+            });
 
             return this;
         }
