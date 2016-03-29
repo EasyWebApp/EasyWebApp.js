@@ -2,7 +2,7 @@
 //              >>>  iQuery+  <<<
 //
 //
-//    [Version]    v1.0  (2016-03-01)  Stable
+//    [Version]    v1.0  (2016-03-29)  Stable
 //
 //    [Require]    iQuery  ||  jQuery with jQuery+
 //
@@ -66,12 +66,14 @@
         },
         findView:       function ($_View, Init_Instance) {
             $_View = $($_View).find(
-                'ul, ol, dl, tbody, *[multiple]'
+                'ul, ol, dl, tbody, select, datalist, *[multiple]'
             ).not('input[type="file"]');
 
-            if (Init_Instance)
+            if (Init_Instance === true) {
                 for (var i = 0;  i < $_View.length;  i++)
                     if (! this.getInstance($_View[i]))  this( $_View[i] );
+            } else if (Init_Instance === false)
+                $_View.data('_LVI_', null);
 
             return $_View;
         }

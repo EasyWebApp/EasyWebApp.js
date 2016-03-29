@@ -8,7 +8,7 @@
  *    and can be used in the Web UI development of
  *    Any Platform.
  *
- *    [Version]    v1.0  (2016-03-16)
+ *    [Version]    v1.0  (2016-03-24)
  *
  *    [Require]    CSS 2.1  (Best Effect with CSS 3),
  *
@@ -111,10 +111,11 @@ table tr {
 table th, table td {
     padding:        0.5em;
     white-space:    pre-wrap;
+    max-width:      55em;
 }
 @media (max-width: 1280px) {
-    table td {
-        max-width:    30em;
+    table th, table td {
+        max-width:    25em;
     }
 }
 table th {
@@ -1178,17 +1179,20 @@ img.UserLogo {
     font-size:         1.5em;
     width:             2em;
 }
+.Icon:hover {
+    background:    lightgray;
+}
 .Icon:before {
     display:       inline-block;
     width:         100%;
     height:        100%;
     text-align:    center;
 }
-.Icon.Mail:before {
-    content:    "\2709";
+.Icon.Star:before {
+    content:    "\2730";
 }
-.Icon.Mobile:before {
-    content:    "\1F4F1";
+.Icon.Cloud:before {
+    content:    "\2601";
 }
 .Icon.Heart:before {
     content:    "\2661";
@@ -1196,11 +1200,17 @@ img.UserLogo {
 .Icon.Eye:before {
     content:    "\1F440";
 }
-.Icon.Star:before {
-    content:    "\2730";
-}
 .Icon.Return:before {
     content:    "\21e6";
+}
+.Icon.Pen:before {
+    content:    "\270F";
+}
+.Icon.Mail:before {
+    content:    "\2709";
+}
+.Icon.Mobile:before {
+    content:    "\1F4F1";
 }
 /* ----- Responsive Design ----- */
 @media (max-width:  540px) {

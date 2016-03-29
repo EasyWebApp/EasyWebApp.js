@@ -2,7 +2,7 @@
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v2.3  (2016-02-22)  Stable
+//      [Version]    v2.3  (2016-03-29)  Stable
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //
@@ -37,16 +37,18 @@
             case '_self':     ;
             default:          if (this.href)  this.type = 'Inner';
         }
-        this.href = this.href || this.app.history.last().HTML;
         this.method = (this.method || 'Get').toLowerCase();
+        this.data = { };
+        this.href = this.href || this.app.history.last().HTML;
+        this.href = this.getURL('href');
 
         var iFileName = $.fileName( this.href ).split('.');
 
-        this.data = {
+        $.extend(this.data, {
             _File_Path_:    $.filePath( this.href ),
             _File_Name_:    iFileName[0],
             _Ext_Name_:     iFileName[1]
-        };
+        });
 
         if ((this.href || '').indexOf('?')  >  -1)
             this.data = $.extend($.paramJSON(this.href), this.data);
@@ -90,6 +92,29 @@
                 iData.EWA_Model || iData.LV_Model || { },  this.data
             );
         },
+        getArgs:      function () {
+            var This_App = this.app,  iData = this.getData();
+
+            return  $.map(this.$_DOM[0].dataset,  function (iName) {
+                var _Arg_ = iData[iName] || This_App.dataStack.value(iName);
+
+                return  (_Arg_ !== undefined)  ?  _Arg_  :  iName;
+            });
+        },
+        getURL:       function (iKey) {
+            if (! this[iKey])  return '';
+
+            if ((iKey != 'href')  ||  (this[iKey][0] != '#')) {
+                this[iKey] = this.app.makeURL(
+                    this[iKey] || '',
+                    this.getData(),
+                    this.method.match(/Get|Delete/i)  &&  this.getArgs()
+                );
+                if ((iKey == 'href')  &&  (this[iKey].slice(-1) == '?'))
+                    this[iKey] = this[iKey].slice(0, -1);
+            }
+            return this[iKey];
+        },
         valueOf:      function () {
             return {
                 target:    this.target,
@@ -107,15 +132,16 @@
 
     function InnerPage(App_Instance, iLink) {
         $.extend(this, {
-            ownerApp:      App_Instance,
-            sourceLink:    iLink,
-            title:         iLink.title || DOM.title,
-            URL:           iLink.alt || BOM.location.href,
-            HTML:          iLink.href || DOM.URL,
-            method:        iLink.method,
-            JSON:          iLink.src,
-            time:          $.now(),
-            link:          [ ]
+            ownerApp:         App_Instance,
+            sourceLink:       iLink,
+            title:            iLink.title || DOM.title,
+            URL:              iLink.alt || BOM.location.href,
+            HTML:             iLink.href || DOM.URL,
+            method:           iLink.method,
+            JSON:             iLink.src,
+            time:             $.now(),
+            innerLink:        [ ],
+            innerTemplate:    [ ]
         });
     }
 
@@ -339,7 +365,7 @@
         var This_App = this,
             URL_Param = $.param(
                 $.extend(iArgs || { },  $.paramJSON(
-                    iURL[1].replace(iJSONP + '=?',  '')
+                    '?'  +  iURL[1].replace(iJSONP + '=?',  '')
                 ))
             );
         iURL = [
@@ -368,29 +394,6 @@
         getTarget:    function () {
             return  this.target.match(/^_(self|blank)$/) ?
                 this.app.domRoot  :  $('[name="' + this.target + '"]');
-        },
-        getArgs:      function () {
-            var This_App = this.app,  iData = this.getData();
-
-            return  $.map(this.$_DOM[0].dataset,  function (iName) {
-                var _Arg_ = iData[iName] || This_App.dataStack.value(iName);
-
-                return  (_Arg_ !== undefined)  ?  _Arg_  :  iName;
-            });
-        },
-        getURL:       function (iKey) {
-            if (! this[iKey])  return '';
-
-            if ((iKey != 'href')  ||  (this[iKey][0] != '#')) {
-                this[iKey] = this.app.makeURL(
-                    this[iKey] || '',
-                    this.getData(),
-                    this.method.match(/Get|Delete/i)  &&  this.getArgs()
-                );
-                if ((iKey == 'href')  &&  (this[iKey].slice(-1) == '?'))
-                    this[iKey] = this[iKey].slice(0, -1);
-            }
-            return this[iKey];
         },
         prefetch:     function () {
             if ((this.target == '_self')  &&  this.href) {
@@ -471,30 +474,39 @@
                         This_Page.sourceLink.getData()
                     );
                 });
-            if (! $_API.length)  return iRender.call(this.ownerApp);
+            if (! $_API.length)  return iRender.call(this);
 
             var iData = { },  Data_Ready = $_API.length;
 
+            function API_Load(_Data_) {
+                var iArgs = [iData, _Data_];
+                if (_Data_ instanceof Array)  iArgs.unshift([ ]);
+                iData = $.extend.apply($, iArgs);
+
+                if (--Data_Ready > 0)  return;
+
+                iRender.call(This_Page, iData);
+                $_API.remove();
+            }
+
             for (var i = 0;  i < $_API.length;  i++)
-                (new PageLink(this.ownerApp, $_API[i])).loadData(function () {
-                    $.extend(iData, arguments[0]);
-
-                    if (--Data_Ready > 0)  return;
-
-                    iRender.call(this.app, iData);
-                    $_API.remove();
-                });
+                (new PageLink(this.ownerApp, $_API[i])).loadData(API_Load);
+        },
+        getTemplate:    function (DOM_ID) {
+            if (! this.innerTemplate[DOM_ID]) {
+                this.innerTemplate[DOM_ID] = $('*[id="' + DOM_ID + '"]').remove();
+                $.ListView.findView(this.innerTemplate[DOM_ID], false);
+            }
+            return this.innerTemplate[DOM_ID].children().clone(true);
         },
         load:    function (iLink, Page_Load) {
-            var MarkDown_File = /\.(md|markdown)$/i,
+            var MarkDown_File = /\.(md|markdown)\??/i,
                 This_Page = this,  This_App = this.ownerApp;
 
-            if (iLink.href[0] == '#') {
-                this.show(
-                    $('*[id="' + iLink.href.slice(1) + '"]').children().clone(true)
+            if (iLink.href[0] == '#')
+                return Page_Load.call(
+                    this.show(this.getTemplate( iLink.href.slice(1) )).ownerApp
                 );
-                return  Page_Load.call(This_App);
-            }
 
             $.get(iLink.getURL('href'),  (! iLink.href.match(MarkDown_File)) ?
                 function (iHTML) {
@@ -562,14 +574,14 @@
 
         /* ----- Load DOM  from  Network ----- */
             var iData,  Need_HTML = (this.type == 'Inner');
-            var Load_Stage = Need_HTML ? 2 : 1;
+            var Load_Stage = Need_HTML ? 2 : 1,  This_Link = this;
 
             function Page_Load() {
                 if (arguments[0])  iData = arguments[0];
 
                 if (--Load_Stage != 0)  return;
 
-                This_Page.render(this.$_DOM, iData).onReady();
+                This_Page.render(This_Link.$_DOM, iData).onReady();
             }
 
             this.loadData(Page_Load);
@@ -660,7 +672,7 @@
 
             for (var i = 0, iLink;  i < $_Link.length;  i++) {
                 iLink = new PageLink(this.ownerApp, $_Link[i]);
-                this.link.push(iLink);
+                this.innerLink.push(iLink);
                 if (iPrefetch)  iLink.prefetch();
             }
             return $_Link;
@@ -794,9 +806,9 @@
             if (This_App.loading)  return false;
 
             This_App.dataStack.flush( $(this) ).attr('action',  function () {
-
-                return  This_App.makeURL(arguments[1]);
-
+                return This_App.makeURL(
+                    arguments[1], This_App.history.last(true).sourceLink.getData()
+                );
             }).ajaxSubmit(function (iData) {
 
                 var iURL = arguments[2].responseURL;
@@ -818,7 +830,7 @@
 
         if (! Hash_Path_Load.call(This_Page))
             This_Page.boot(function () {
-                This_Page.render(null, arguments[0]).onReady();
+                this.render(null, arguments[0]).onReady();
             });
 
         $_BOM.on('hashchange',  $.proxy(Hash_Path_Load, This_Page));

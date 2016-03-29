@@ -121,7 +121,7 @@ EasyWebApp 与其作者开发的 [**EasyWebUI**](http://git.oschina.net/Tech_Que
 本引擎模板 把 **HTML name 属性** 推而广之，应用在任何 HTML 元素上，用作 JSON 数据的“**键值对应**”，自动填充**数据容器元素**的 `innerHTML`、`value`、`src`、`href` 乃至 `background-image`，仅有很少的 宽松规范 ——
 
  - 出现在**同一页面的不同数据不可重名**（如 用户、App、作品 等的名字，不可都用 name 来作为 JSON 键，无论它们 来自哪个 API 或 在数据结构的哪一层）
- - 符合 CSS 3 选择器 `ul, ol, dl, tbody, *[multiple]:not(input)` 的数据容器元素（有 name 属性的），其对应的数据结构是一个**以普通对象为元素的数组**，其子元素（它也可以有子元素）只需有一个，引擎会自动复制这个子元素的作为**数组迭代的模板**
+ - 符合 CSS 3 选择器 `ul, ol, dl, tbody, select, datalist, *[multiple]:not(input)` 的数据容器元素（有 name 属性的），其对应的数据结构是一个**以普通对象为元素的数组**，其子元素（它也可以有子元素）只需有一个，引擎会自动复制这个子元素的作为**数组迭代的模板**
  - 数据值 若是 **URL**，它会被优先填在 `<img src="" />`、`<a href="" />` 中，其次会尝试设为 **枝节点元素**（有子元素的）的 background-image，最后才会被赋给 **叶节点元素**（无子元素的）的 innerHTML
 
 ```html
