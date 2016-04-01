@@ -2,7 +2,7 @@
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v2.3  (2016-03-29)  Stable
+//      [Version]    v2.3  (2016-04-01)  Stable
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //
@@ -315,18 +315,16 @@
                     return iData;
             }
         },
-        flush:        function () {
-            var _Data_ = arguments[0].serializeArray(),  iData = { };
+        flush:        function (iSource) {
+            var _Data_ = this.stack;
 
-            for (var i = 0;  i < _Data_.length;  i++)
-                iData[_Data_[i].name] = _Data_[i].value;
+            _Data_[_Data_.length - 1] = $.extend(
+                _Data_[_Data_.length - 1] || { },
+                (iSource instanceof $)  ?
+                    $.paramJSON('?' + iSource.serialize())  :  iSource
+            );
 
-            _Data_ = this.stack;
-            if (! _Data_[_Data_.length - 1])
-                _Data_[_Data_.length - 1] = { };
-            $.extend(_Data_[_Data_.length - 1],  iData);
-
-            return arguments[0];
+            return iSource;
         }
     });
 
@@ -399,7 +397,7 @@
             if ((this.target == '_self')  &&  this.href) {
                 var $_Prefetch = $('<link />', {
                         rel:     Prefetch_Tag,
-                        href:    this.getURL('href')
+                        href:    this.href
                     });
 
                 if (
@@ -426,30 +424,37 @@
             var iLink = this,  This_App = this.app,
                 API_URL = this.getURL('src');
 
-            function AJAX_Ready() {
-                Data_Ready.call(
-                    iLink,
-                    This_App.domRoot.triggerHandler('apiCall', [
-                        This_App,
-                        This_App.history.last().HTML,
-                        This_App.proxy  ?
-                            BOM.decodeURIComponent( API_URL.slice(This_App.proxy.length) )  :
+            function AJAX_Ready(iData) {
+                API_URL = API_URL || iLink.getURL('action');
+
+                iData = This_App.domRoot.triggerHandler('apiCall', [
+                    This_App,
+                    {
+                        method:    iLink.method,
+                        URL:       This_App.proxy  ?
+                            BOM.decodeURIComponent(
+                                API_URL.slice(This_App.proxy.length)
+                            ) :
                             API_URL,
-                        arguments[0]
-                    ]) || arguments[0]
-                );
+                        data:      iData
+                    },
+                    This_App.history.last().HTML
+                ]) || iData;
+
+                if (typeof Data_Ready == 'function')
+                    Data_Ready.call(iLink, iData);
+                else
+                    This_App.dataStack.flush(iData);
             }
-            if (! this.src)  return  AJAX_Ready.call(this, this.getData());
+
+            if (! API_URL)  return  AJAX_Ready.call(this, this.getData());
 
             switch (this.method) {
-                case 'get':       ;
-                case 'delete':
-                    $[this.method](API_URL,  Data_Ready && AJAX_Ready);    break;
+                case 'get':       $[this.method](API_URL, AJAX_Ready);    break;
                 case 'post':      ;
-                case 'put':
-                    $[this.method](
-                        API_URL,  this.getArgs(),  Data_Ready && AJAX_Ready
-                    );
+                case 'put':       ;
+                case 'delete':
+                    $[this.method](API_URL, this.getArgs(), AJAX_Ready);
             }
         }
     });
@@ -508,7 +513,7 @@
                     this.show(this.getTemplate( iLink.href.slice(1) )).ownerApp
                 );
 
-            $.get(iLink.getURL('href'),  (! iLink.href.match(MarkDown_File)) ?
+            $.get(iLink.href,  (! iLink.href.match(MarkDown_File)) ?
                 function (iHTML) {
                     if (typeof iHTML != 'string')  return;
 
@@ -590,9 +595,7 @@
         },
         loadPage:        function () {
             var iReturn = this.app.domRoot.triggerHandler('appExit', [
-                    this.app.history.last().HTML,
-                    this.getURL('href'),
-                    this.getData()
+                    this.app.history.last().HTML,  this.href,  this.getData()
                 ]);
             if (iReturn === false)  return;
 
@@ -781,8 +784,8 @@
 
         var $_Link = $('*[target="_self"][href="' + iHash[1] + '"]');
 
-        if ($_Link.length)
-            $_Link[
+        if ($_Link[0])
+            $_Link[0][
                 ($_Link[0].tagName.toLowerCase() != 'form')  ?
                     'click'  :  'submit'
             ]();
@@ -805,27 +808,29 @@
         $_Body.on('submit',  'form:visible',  function () {
             if (This_App.loading)  return false;
 
-            This_App.dataStack.flush( $(this) ).attr('action',  function () {
-                return This_App.makeURL(
-                    arguments[1], This_App.history.last(true).sourceLink.getData()
+            var iLink = $(this).data('EWA_PageLink') ||
+                    (new PageLink(This_App, this));
+
+            This_App.dataStack.flush( iLink.$_DOM ).attr(
+                'action',  iLink.getURL('action')
+            );
+        }).ajaxSubmit(function (iData) {
+
+            var iURL = arguments[2].responseURL;
+
+            var iReturn = This_App.domRoot.triggerHandler('formSubmit', [
+                    This_App.history.last().HTML,
+                    iURL,
+                    iData,
+                    $(this).attr('href')
+                ]);
+
+            if ((iReturn !== false)  &&  this.target)
+                This_App.loadLink(
+                    $.extend(PageLink.getAttr( $(this) ),  {action: iURL}),
+                    null,
+                    iReturn || iData
                 );
-            }).ajaxSubmit(function (iData) {
-
-                var iURL = arguments[2].responseURL;
-
-                var iReturn = This_App.domRoot.triggerHandler('formSubmit', [
-                        This_App.history.last().HTML,  iURL,  iData,  this.href
-                    ]);
-
-                if ((iReturn !== false)  &&  this.target)
-                    This_App.loadLink(
-                        $.extend(PageLink.getAttr( $(this) ),  {action: iURL}),
-                        null,
-                        iReturn || iData
-                    );
-            }).trigger('submit');
-
-            return false;
         });
 
         if (! Hash_Path_Load.call(This_Page))

@@ -2,7 +2,7 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v1.0  (2016-03-28)  Stable
+//      [Version]    v1.0  (2016-04-01)  Stable
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.
@@ -1588,10 +1588,7 @@
                     (! $_Value[i].type.match(/radio|checkbox/i))  ||
                     $_Value[i].checked
                 )
-                    iValue[j++] = {
-                        name:     $_Value[i].name,
-                        value:    $_Value[i].value
-                    };
+                    iValue[j++] = $($_Value[i]).prop(['name', 'value']);
 
             return iValue;
         },
@@ -2952,13 +2949,18 @@
         return 0;
     }
 
-    var Tag_Style = { };
+    var Tag_Style = { },
+        $_SandBox = $('<iframe />',  {style: 'display: none'}).appendTo('body');
 
     function Tag_Default_CSS(iTagName) {
+        var _BOM_ = $_SandBox[0].contentWindow;
+
         if (! Tag_Style[iTagName]) {
-            var $_Default = $('<' + iTagName + ' />').appendTo('body');
+            var $_Default = $('<' + iTagName + ' />').appendTo(
+                    _BOM_.document.body
+                );
             Tag_Style[iTagName] = $.extend(
-                { },  BOM.getComputedStyle( $_Default[0] )
+                { },  _BOM_.getComputedStyle( $_Default[0] )
             );
             $_Default.remove();
         }
@@ -2988,17 +2990,21 @@
             });
         },
         show:               function () {
-            for (var i = 0, $_This;  i < this.length;  i++) {
-                $_This = $(this[i]);
+            return  this.each(function () {
+                var $_This = $(this);
+                var iStyle = $_This.css(['display', 'visibility', 'opacity']);
 
-                $_This.css({
-                    display:       $_This.data('_CSS_Display_') ||
-                        Last_Valid_CSS.call($_This, 'display'),
-                    visibility:    'visible',
-                    opacity:       1
-                });
-            }
-            return this;
+                if (iStyle.display == 'none')
+                    $_This.css('display', (
+                        $_This.data('_CSS_Display_') ||
+                        Last_Valid_CSS.call($_This, 'display')
+                    ));
+                if (iStyle.visibility == 'hidden')
+                    $_This.css('visibility', 'visible');
+
+                if (iStyle.opacity == 0)
+                    $_This.css('opacity', 1);
+            });
         }
     });
 
@@ -3544,45 +3550,51 @@
     };
 
     /* ----- Form Element AJAX Submit ----- */
+
     $.fn.ajaxSubmit = function (iCallback) {
         if (! this.length)  return this;
 
-        var $_Form = (
-                (this[0].tagName.toLowerCase() == 'form') ?
-                    this : this.find('form')
-            ).eq(0);
-        if (! $_Form.length)  return this;
-
-        var $_Button = $_Form.find(':button').attr('disabled', true);
-
-        function AJAX_Ready() {
-            $_Button.prop('disabled', false);
-            iCallback.apply($_Form[0], arguments);
-        }
-
-        $_Form.on('submit',  function (iEvent) {
+        function AJAX_Submit(iEvent) {
             iEvent.preventDefault();
             iEvent.stopPropagation();
-            $_Button.attr('disabled', true);
 
-            var iMethod = ($_Form.attr('method') || 'Get').toLowerCase();
+            var $_Form = $(this);
 
-            if ( this.checkValidity() )  switch (iMethod) {
+            if ((! this.checkValidity())  ||  $_Form.data('_AJAX_Submitting_'))
+                return;
+
+            $_Form.data('_AJAX_Submitting_', 1);
+
+            var iMethod = (this.method || 'Get').toLowerCase();
+
+            function AJAX_Ready() {
+                $_Form.data('_AJAX_Submitting_', 0);
+                iCallback.apply($_Form[0], arguments);
+            }
+  
+            switch (iMethod) {
                 case 'post':      ;
-                case 'put':
-                    $[iMethod](this.action, this, AJAX_Ready);    break;
-                case 'get':       ;
+                case 'put':       ;
                 case 'delete':
+                    $[iMethod](this.action, this, AJAX_Ready);    break;
+                case 'get':       {
+                    var iURL = $.split(this.action, '?', 2);
+
                     $[iMethod](
-                        this.action  +
-                            (this.action.match(/\w+=[^&]+/) ? '&' : '')  +
-                            $.param( $_Form.serializeArray() ),
+                        iURL[0] + '?' + (
+                            iURL[1]  ?  (iURL[1] + '&')  :  ''
+                        ) + $_Form.serialize(),
                         AJAX_Ready
                     );
-            } else
-                $_Button.prop('disabled', false);
-        });
-        $_Button.prop('disabled', false);
+                }
+            }
+        }
+        var $_Form = this.filter('form');
+
+        if ( $_Form[0] )
+            $_Form.submit(AJAX_Submit);
+        else
+            this.on('submit', 'form:visible', AJAX_Submit);
 
         return this;
     };

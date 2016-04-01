@@ -200,7 +200,7 @@ EasyWebApp 与其作者开发的 [**EasyWebUI**](http://git.oschina.net/Tech_Que
     $('body > section')
         .on('apiCall',  function () {
             //  iData 为 API 返回的数据
-            iData = arguments[4];
+            iData = arguments[2].data;
 
             if (iData.code > 200)
                 alert(iData.message);
@@ -209,6 +209,8 @@ EasyWebApp 与其作者开发的 [**EasyWebUI**](http://git.oschina.net/Tech_Que
 
 })(self.jQuery);
 ```
+【注】 **纯 API 调用返回的数据** 会合并到 当前内页的数据栈
+
 #### （四）首屏渲染
 若首屏渲染时的数据来自 HTTP API，则可复用“调用接口”功能的 HTML 语义，在 `<head />` 中用 `<link />` 声明数据来源即可 ——
 ```html
@@ -297,9 +299,8 @@ $_AppRoot
  - [S] **apiCall 事件** 在一个 HTTP API 请求结束时触发。其回调参数如下：
    -  jQuery Event 对象
    -  WebApp 实例对象
+   -  API 响应对象（包含 URL、HTTP 方法名、返回的数据）
    -  当前 HTML URL
-   -  API URL
-   -  API 返回数据
  - [S] **appExit 事件** 在一个外部页面加载（单页应用实例 销毁）前触发。其回调参数如下：
    -  jQuery Event 对象
    -  当前 HTML URL
