@@ -2,7 +2,7 @@
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v2.3  (2016-04-01)  Stable
+//      [Version]    v2.3  (2016-04-08)  Stable
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //
@@ -147,24 +147,30 @@
 
     $.extend(InnerPage.prototype, {
         show:       function ($_Page) {
-            this.$_Page = $_Page ? $($_Page) : this.$_Page;
+            $_Page = $_Page ? $($_Page) : this.$_Page;
 
-            if ( this.$_Page )
-                this.$_Page.appendTo(
-                    (
-                        this.ownerApp.history.isForward(this) ?
-                            this : this.ownerApp.history.last(true)
-                    ).sourceLink.getTarget().empty()
-                ).fadeIn();
-            else {
-                this.sourceLink = new PageLink(
-                    this.ownerApp,  this.sourceLink.valueOf()
-                );
-                this.sourceLink.loadTemplate();
-            }
+            var iHistory = this.ownerApp.history;
 
             if (! $_Page) {
-                var Link_DOM = this.ownerApp.history.last(true).sourceLink.$_DOM[0];
+                if (iHistory.lastIndex > 1) {
+                    this.sourceLink = new PageLink(
+                        this.ownerApp,  this.sourceLink.valueOf()
+                    );
+                    this.sourceLink.$_DOM[0].click();
+                }
+                return this;
+            }
+
+            var $_Target = (
+                    iHistory.isForward(this) ? this : iHistory.last(true)
+                ).sourceLink.getTarget();
+
+            if (iHistory.length)  iHistory.move( $_Target );
+
+            this.$_Page = $_Page.appendTo( $_Target ).fadeIn();
+
+            if (! arguments.length) {
+                var Link_DOM = iHistory.last(true).sourceLink.$_DOM[0];
                 var iListView = $.ListView.getInstance( Link_DOM.parentElement );
 
                 if (iListView)
@@ -229,11 +235,12 @@
             var $_Page = ($_Target || this.root).children().detach();
 
             if ((! iState)  ||  ((iState.DOM_Index + 2) == this.length))
-                this[this.length - 1].$_Page = $_Page;
+                this[this.length - 1].$_Page =
+                    this[this.length - 1].$_Page  ||  $_Page;
+
+            return $_Page;
         },
         write:        function (iLink) {
-            if (this.length)  this.move( arguments[1] );
-
             this.prevIndex = this.lastIndex++ ;
             this.splice(this.lastIndex,  this.length);
 
@@ -334,7 +341,9 @@
         if (! ($_Root instanceof $))
             $_Root = $($_Root);
 
-        var Split_Index = API_Root  &&  (API_Root.match(/(\w+:)?\/\//) || [ ]).index;
+        var Split_Index = API_Root && (
+                API_Root.match(/(\w+:)?\/\//) || [ ]
+            ).index;
         API_Root = Split_Index ? [
             API_Root.slice(Split_Index),
             API_Root.slice(0, Split_Index)
@@ -349,6 +358,16 @@
             proxy:        API_Root[1] || ''
         });
         this.dataStack = new DataStack(this.history);
+
+        if (! (this.apiRoot && this.proxy))  return;
+
+        var This_App = this;
+
+        $.ajaxPrefilter(function (iOption) {
+            if (iOption.url.indexOf( This_App.apiRoot ))  return;
+
+            iOption.url = This_App.proxy + BOM.encodeURIComponent(iOption.url);
+        });
     }
 
     var RE_Str_Var = /\{(.+?)\}/g;
@@ -381,9 +400,7 @@
         ))
             iURL = this.apiRoot + iURL;
 
-        return  this.proxy + (
-            this.proxy ? BOM.encodeURIComponent(iURL) : iURL
-        );
+        return iURL;
     };
 
 /* ---------- Auto Navigation ---------- */
@@ -425,17 +442,11 @@
                 API_URL = this.getURL('src');
 
             function AJAX_Ready(iData) {
-                API_URL = API_URL || iLink.getURL('action');
-
                 iData = This_App.domRoot.triggerHandler('apiCall', [
                     This_App,
                     {
                         method:    iLink.method,
-                        URL:       This_App.proxy  ?
-                            BOM.decodeURIComponent(
-                                API_URL.slice(This_App.proxy.length)
-                            ) :
-                            API_URL,
+                        URL:       API_URL || iLink.getURL('action'),
                         data:      iData
                     },
                     This_App.history.last().HTML
@@ -465,6 +476,14 @@
         ) > -1);
     }
 
+    function Data_Merge(iOld, iNew) {
+        var iArgs = [true, iOld, iNew];
+
+        if (iNew instanceof Array)  iArgs.splice(1, 0, [ ]);
+
+        return  $.extend.apply($, iArgs);
+    }
+
     $.extend(InnerPage.prototype, {
         boot:    function (iRender) {
             var This_Page = this,
@@ -484,9 +503,7 @@
             var iData = { },  Data_Ready = $_API.length;
 
             function API_Load(_Data_) {
-                var iArgs = [iData, _Data_];
-                if (_Data_ instanceof Array)  iArgs.unshift([ ]);
-                iData = $.extend.apply($, iArgs);
+                iData = Data_Merge(iData, _Data_);
 
                 if (--Data_Ready > 0)  return;
 
@@ -586,7 +603,7 @@
 
                 if (--Load_Stage != 0)  return;
 
-                This_Page.render(This_Link.$_DOM, iData).onReady();
+                This_Page.render(This_Link, iData).onReady();
             }
 
             this.loadData(Page_Load);
@@ -608,13 +625,12 @@
     });
 
     $.extend(InnerPage.prototype,{
-        render:      function ($_Source, iData) {
+        render:      function (Source_Link, iData) {
             var This_App = this.ownerApp;
 
             /* ----- Data Stack Change ----- */
-            iData = $.extend(
-                true,  $_Source && $_Source.data('EWA_Model'),  iData
-            );
+            iData = Data_Merge(Source_Link && Source_Link.getData(),  iData);
+
             var iReturn = This_App.domRoot.triggerHandler('pageRender', [
                     This_App.history.last(),
                     This_App.history.prev(),
@@ -624,10 +640,10 @@
             if (iReturn === false)  return this;
 
             /* ----- View Init ----- */
-            var $_List = This_App.domRoot,
-                iLink = $_Source && $_Source.data('EWA_PageLink');
-            if (iLink  &&  (iLink.target != '_self'))
-                $_List = iLink.getTarget().parent();
+            var $_List = This_App.domRoot;
+
+            if (Source_Link  &&  (Source_Link.target != '_self'))
+                $_List = Source_Link.getTarget().parent();
             $_List = $.ListView.findView($_List);
 
             for (var i = 0, $_LV;  i < $_List.length;  i++)
@@ -816,18 +832,16 @@
             );
         }).ajaxSubmit(function (iData) {
 
-            var iURL = arguments[2].responseURL;
-
             var iReturn = This_App.domRoot.triggerHandler('formSubmit', [
                     This_App.history.last().HTML,
-                    iURL,
+                    this.url,
                     iData,
                     $(this).attr('href')
                 ]);
 
             if ((iReturn !== false)  &&  this.target)
                 This_App.loadLink(
-                    $.extend(PageLink.getAttr( $(this) ),  {action: iURL}),
+                    $.extend(PageLink.getAttr( $(this) ),  {action: this.url}),
                     null,
                     iReturn || iData
                 );

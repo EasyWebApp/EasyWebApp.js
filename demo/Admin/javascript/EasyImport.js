@@ -2,7 +2,7 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v1.0  (2016-04-01)  Stable
+//      [Version]    v1.0  (2016-04-08)  Stable
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.
@@ -3177,7 +3177,9 @@
         this.withCredentials = true;
 
         if (typeof iData == 'string')
-            this.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+            this.setRequestHeader(
+                'Content-Type',  'application/x-www-form-urlencoded'
+            );
         if (! this.crossDomain) {
             this.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
             this.setRequestHeader('Accept', '*/*');
@@ -3238,19 +3240,47 @@
                     XD_Request.call(iXHR, iXHR.requestData);
                 });
             }
-        };
+        },
+        $_DOM = $(DOM);
 
-    function onLoad(iProperty) {
+    function onLoad(iProperty, iData) {
+        if (iProperty)  $.extend(this, iProperty);
+
         if (
             (! (this.crossDomain || (this.readyState == 4)))  ||
             (typeof this.onready != 'function')
         )
             return;
 
-        if (iProperty)  $.extend(this, iProperty);
+        var iError = (this.status > 399);
 
-        this.onready(this.responseAny(),  'complete',  this);
+        $_DOM.trigger('ajaxComplete', [this]);
+        $_DOM.trigger('ajax' + (iError ? 'Error' : 'Success'),  [this]);
+
+        this.onready(
+            iData || this.responseAny(),
+            iError ? 'error' : 'success',
+            this
+        );
     }
+
+    var Success_State = {
+            readyState:    4,
+            status:        200,
+            statusText:    'OK'
+        };
+
+    function beforeSend(iXHR) {
+        $_DOM.triggerHandler('ajaxPrefilter', [iXHR])
+        $_DOM.trigger('ajaxSend', [iXHR]);
+    }
+
+    $.ajaxPrefilter = function (iFilter) {
+        if (typeof iFilter == 'function')
+            $_DOM.on('ajaxPrefilter',  function () {
+                iFilter( arguments[1] );
+            });
+    };
 
     function XHR_Extend(XHR_Proto, iMore) {
         var XHR_Open = XHR_Proto.open,  XHR_Send = XHR_Proto.send;
@@ -3263,14 +3293,12 @@
 
                 this[
                     this.crossDomain ? 'onload' : 'onreadystatechange'
-                ] = $.proxy(onLoad,  iXHR,  _XDR_ && {
-                    status:        200,
-                    statusText:    'OK'
-                });
+                ] = $.proxy(onLoad,  iXHR,  _XDR_ && Success_State,  null);
 
                 XHR_Open.apply(this,  this.requestArgs = arguments);
             },
             send:    function () {
+                beforeSend(this);
                 XHR_Send.call(this,  this.requestData = arguments[0]);
             }
         }, iMore);
@@ -3349,15 +3377,18 @@
 
             //  <script />, JSONP
             if (this.method == 'GET') {
-                this.responseURL = iTarget;
+                this.url = iTarget;
                 return;
             }
 
             //  <iframe />
-            var iDHR = this,  $_Form = $(iTarget);
+            var $_Form = $(iTarget).submit(function () {
+                    if ( $(this).data('_AJAX_Submitting_') )  return false;
+                }),
+                iDHR = this;
 
-            var $_Button = $_Form.find(':button').attr('disabled', true),
-                iTarget = $_Form.attr('target');
+            var iTarget = $_Form.attr('target');
+
             if ((! iTarget)  ||  iTarget.match(/^_(top|parent|self|blank)$/i)) {
                 iTarget = $.uuid('iframe');
                 $_Form.attr('target', iTarget);
@@ -3365,16 +3396,13 @@
 
             $('iframe[name="' + iTarget + '"]').sandBox(function () {
                 $(this).on('load',  function () {
-                    $_Button.prop('disabled', false);
+                    $_Form.data('_AJAX_Submitting_', 0);
 
                     if (iDHR.readyState)  try {
-                        var $_Content = $(this).contents();
-                        iDHR.responseText = $_Content.find('body').text();
-                        iDHR.status = 200;
-                        iDHR.readyState = 4;
-                        iDHR.onready.call(
-                            $_Form[0],  iDHR.responseAny(),  $_Content,  iDHR
-                        );
+                        onLoad.call(iDHR, $.extend({
+                            responseText:
+                                $(this).contents().find('body').text()
+                        }, Success_State));
                     } catch (iError) { }
                 });
             }).attr('name', iTarget);
@@ -3383,33 +3411,35 @@
             this.requestArgs = arguments;
         },
         send:                function () {
+            beforeSend(this);
+
             if (this.method == 'POST')
                 this.$_DOM.submit();    //  <iframe />
             else {
                 //  <script />, JSONP
-                var iURL = this.responseURL.match(/([^\?=&]+\?|\?)?(\w.+)?/);
+                var iURL = this.url.match(/([^\?=&]+\?|\?)?(\w.+)?/);
                 if (! iURL)  throw 'Illegal URL !';
 
                 var _UUID_ = $.uuid(),  iDHR = this;
 
                 BOM.DOMHttpRequest.JSONP[_UUID_] = function () {
-                    if (iDHR.readyState) {
-                        iDHR.status = 200;
-                        iDHR.readyState = 4;
-                        iDHR.onready.call(iDHR, arguments[0], 'success', iDHR);
-                    }
+                    if (iDHR.readyState)
+                        onLoad.call(iDHR, {
+                            readyState:    4,
+                            status:        200
+                        }, arguments[0]);
                     delete this[_UUID_];
                     iDHR.$_DOM.remove();
                 };
                 this.requestData = arguments[0];
-                this.responseURL = iURL[1] + $.param(
+                this.url = iURL[1] + $.param(
                     $.extend({ }, arguments[0], $.paramJSON(
                         '?' + iURL[2].replace(
                             /(\w+)=\?/,  '$1=DOMHttpRequest.JSONP.' + _UUID_
                         )
                     ))
                 );
-                this.$_DOM = $('<script />', {src:  this.responseURL}).appendTo(DOM.head);
+                this.$_DOM = $('<script />',  {src: this.url}).appendTo(DOM.head);
             }
             this.readyState = 1;
         },
@@ -3422,7 +3452,7 @@
     });
 
     /* ----- HTTP Wraped Method ----- */
-    function iHTTP(iMethod, iURL, iData, iCallback) {
+    function HTTP_Request(iMethod, iURL, iData, iCallback) {
         var iXHR = BOM[
                 (X_Domain(iURL) && ($.browser.msie < 10))  ?  'XDomainRequest' : 'XMLHttpRequest'
             ];
@@ -3453,56 +3483,43 @@
         return  XD_Request.call(iXHR, iData);
     }
 
-    function Idempotent_Args(iURL) {
-        var iData = $.extend($.paramJSON(iURL), arguments[1]);
+    var HTTP_Method = $.makeSet('POST', 'PUT', 'DELETE');
 
-        if (!  $.map($('link[rel="next"], link[rel="prefetch"]'),  function () {
-            if ($.fileName( arguments[0].href )  ==  $.fileName(iURL))
-                return iURL;
-        }).length)
-            iData._ = $.now();
+    for (var iMethod in HTTP_Method)
+        $[ iMethod.toLowerCase() ] = $.proxy(HTTP_Request, BOM, iMethod);
 
-        return  (iURL.split('?')[0] + '?' + $.param(iData)).trim('?');
-    }
+    $.getJSON = $.get = function (iURL, iData, iCallback) {
+        if (typeof iData == 'function') {
+            iCallback = iData;
+            iData = { };
+        }
 
-    $.extend({
-        get:         function (iURL, iData, iCallback) {
-            if (typeof iData == 'function') {
-                iCallback = iData;
-                iData = { };
-            }
-            //  XHR
-            if (! iURL.match(/\w+=\?/))
-                return  iHTTP('GET',  Idempotent_Args(iURL, iData),  null,  iCallback);
-
-            //  JSONP
+        //  JSONP
+        if ( iURL.match(/\w+=\?/) ) {
             var iDHR = new BOM.DOMHttpRequest();
             iDHR.open('GET', iURL);
             iDHR.onready = iCallback;
             return iDHR.send(iData);
-        },
-        post:        function () {
-            var iArgs = $.makeArray(arguments);
-            iArgs.unshift('POST');
-
-            return  iHTTP.apply(BOM, iArgs);
-        },
-        'delete':    function (iURL, iData, iCallback) {
-            if (typeof iData == 'function') {
-                iCallback = iData;
-                iData = { };
-            }
-            return  iHTTP('DELETE',  Idempotent_Args(iURL, iData),  null,  iCallback);
-        },
-        put:         function () {
-            var iArgs = $.makeArray(arguments);
-            iArgs.unshift('PUT');
-
-            return  iHTTP.apply(BOM, iArgs);
         }
-    });
 
-    $.getJSON = $.get;
+        //  XHR
+        iData = $.extend($.paramJSON(iURL), iData);
+
+        var File_Name = $.fileName(iURL);
+
+        if (!  $.map($('link[rel="next"], link[rel="prefetch"]'),  function () {
+            if ($.fileName( arguments[0].href )  ==  File_Name)
+                return iURL;
+        }).length)
+            iData._ = $.now();
+
+        return HTTP_Request(
+            'GET',
+            (iURL.split('?')[0] + '?' + $.param(iData)).trim('?'),
+            null,
+            iCallback
+        );
+    };
 
     /* ----- Smart HTML Loading ----- */
     $.fn.load = function (iURL, iData, iCallback) {
@@ -3541,10 +3558,8 @@
                 $(this).remove();
             });
         }
-        if (! iData)
-            $.get(iURL[0], Load_Back);
-        else
-            $.post(iURL[0], iData, Load_Back);
+
+        $[iData ? 'post' : 'get'](iURL[0], iData, Load_Back);
 
         return this;
     };
@@ -3555,40 +3570,27 @@
         if (! this.length)  return this;
 
         function AJAX_Submit(iEvent) {
-            iEvent.preventDefault();
-            iEvent.stopPropagation();
-
             var $_Form = $(this);
 
             if ((! this.checkValidity())  ||  $_Form.data('_AJAX_Submitting_'))
-                return;
+                return false;
 
             $_Form.data('_AJAX_Submitting_', 1);
 
-            var iMethod = (this.method || 'Get').toLowerCase();
+            var iMethod = (this.method || 'Get').toUpperCase();
 
-            function AJAX_Ready() {
-                $_Form.data('_AJAX_Submitting_', 0);
-                iCallback.apply($_Form[0], arguments);
-            }
-  
-            switch (iMethod) {
-                case 'post':      ;
-                case 'put':       ;
-                case 'delete':
-                    $[iMethod](this.action, this, AJAX_Ready);    break;
-                case 'get':       {
-                    var iURL = $.split(this.action, '?', 2);
-
-                    $[iMethod](
-                        iURL[0] + '?' + (
-                            iURL[1]  ?  (iURL[1] + '&')  :  ''
-                        ) + $_Form.serialize(),
-                        AJAX_Ready
-                    );
-                }
-            }
+            if ((iMethod in HTTP_Method)  ||  (iMethod == 'GET'))
+                $[ iMethod.toLowerCase() ](
+                    this.action,
+                    $.paramJSON('?' + $_Form.serialize()),
+                    function () {
+                        $_Form.data('_AJAX_Submitting_', 0);
+                        iCallback.apply($_Form[0], arguments);
+                    }
+                );
+            return false;
         }
+
         var $_Form = this.filter('form');
 
         if ( $_Form[0] )
@@ -3767,7 +3769,7 @@
 //                >>>  EasyImport.js  <<<
 //
 //
-//      [Version]    v1.2  (2016-01-29)  Stable
+//      [Version]    v1.2  (2016-04-06)  Stable
 //
 //      [Usage]      A Asynchronous & Responsive Loader
 //                   for Resource File in Web Browser.
@@ -3857,7 +3859,7 @@
                 iList[i] = _Group_;
             }
             for (var j = 0;  j < _Group_.length;  j++)
-                if (! _Group_[j].match(/^http(s)?:\/\//))
+                if (! _Group_[j].match(/^(\w+:)?\/\//))
                     _Group_[j] = Root_Path + _Group_[j];
         }
 
