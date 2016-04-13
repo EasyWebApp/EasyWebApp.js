@@ -2,7 +2,7 @@
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v2.3  (2016-04-08)  Stable
+//      [Version]    v2.3  (2016-04-11)  Stable
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //
@@ -150,9 +150,12 @@
             $_Page = $_Page ? $($_Page) : this.$_Page;
 
             var iHistory = this.ownerApp.history;
+            var iForward = iHistory.isForward(this);
 
             if (! $_Page) {
-                if (iHistory.lastIndex > 1) {
+                if (this.sourceLink.type != 'Inner')
+                    BOM.history[iForward ? 'forward' : 'back']();
+                else {
                     this.sourceLink = new PageLink(
                         this.ownerApp,  this.sourceLink.valueOf()
                     );
@@ -161,11 +164,9 @@
                 return this;
             }
 
-            var $_Target = (
-                    iHistory.isForward(this) ? this : iHistory.last(true)
-                ).sourceLink.getTarget();
+            var $_Target = this.sourceLink.getTarget();
 
-            if (iHistory.length)  iHistory.move( $_Target );
+            if (iHistory.length || iForward)  iHistory.move( $_Target );
 
             this.$_Page = $_Page.appendTo( $_Target ).fadeIn();
 
@@ -227,11 +228,10 @@
         move:         function () {
             if ($.isPlainObject( arguments[0] ))
                 var iState = arguments[0];
-            else
+            else {
                 var $_Target = arguments[0];
-
-            $.ListView.findView(this.root, true);
-
+                $.ListView.findView(this.root, true);
+            }
             var $_Page = ($_Target || this.root).children().detach();
 
             if ((! iState)  ||  ((iState.DOM_Index + 2) == this.length))

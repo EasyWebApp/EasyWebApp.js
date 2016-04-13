@@ -2,7 +2,7 @@
 //              >>>  iQuery+  <<<
 //
 //
-//    [Version]    v1.0  (2016-03-29)  Stable
+//    [Version]    v1.0  (2016-04-13)  Stable
 //
 //    [Require]    iQuery  ||  jQuery with jQuery+
 //
@@ -243,7 +243,7 @@
     $.ListView = ListView;
 
 
-/* ---------- TreeView Interface  v0.2 ---------- */
+/* ---------- TreeView Interface  v0.3 ---------- */
 
     function TreeView(iListView, iKey, onFork, onFocus) {
         var _Self_ = arguments.callee;
@@ -251,30 +251,42 @@
         if (!  (this instanceof _Self_))
             return  new _Self_(iListView, iKey, onFork, onFocus);
 
+        var _This_ = this,
+            iEvent = $.browser.mobile ? 'tap' : 'click',
+            iSelector = iListView.selector ?
+                iListView.selector.join(', ') : [
+                    iListView.$_Template[0].tagName.toLowerCase()
+                ].concat(
+                    (iListView.$_Template.attr('class') || '').split(/\s+/)
+                ).join('.').trim('.');
+
+        function TopWatch() {
+            $('.TreeNode', this).toggle();
+
+            if (typeof onFocus != 'function')  return;
+
+            var $_Target = onFocus.apply(this, arguments);
+
+            if ($_Target && _This_.$_Content) {
+                _This_.$_Content.scrollTo( $_Target );
+                return false;
+            }
+        }
+        iListView.$_View.addClass('TreeNode').on(iEvent, iSelector, TopWatch);
+
         this.unit = iListView.on('insert',  function ($_Item, iValue) {
             if (! iValue[iKey])  return;
 
             var iFork = this.fork($_Item).clear().render( iValue[iKey] );
 
+            iFork.$_View.children().removeClass('active');
+
             if (typeof onFork == 'function')  onFork.call(iFork);
+
+            iFork.$_View.addClass('TreeNode').off(iEvent, iSelector, TopWatch);
         });
-
-        if (typeof onFocus != 'function')  return;
-
-        var _This_ = this;
-
-        this.unit.$_View.on(
-            $.browser.mobile ? 'tap' : 'click',
-            function () {
-                var $_Target = onFocus.apply(this, arguments);
-
-                if ($_Target && _This_.$_Content) {
-                    _This_.$_Content.scrollTo( $_Target );
-                    return false;
-                }
-            }
-        );
     }
+
     $.extend(TreeView.prototype, {
         bind:       function ($_Item, Depth_Sort, Data_Filter) {
             this.$_Content = $_Item.sameParents().eq(0);

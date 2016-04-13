@@ -2,7 +2,7 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v1.0  (2016-04-08)  Stable
+//      [Version]    v1.0  (2016-04-13)  Stable
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.
@@ -180,7 +180,7 @@
 
     var _Browser_ = {
             msie:             IE_Ver,
-            ff:               FF_Ver,
+            mozilla:          FF_Ver,
             webkit:           WK_Ver,
             modern:           !  (IE_Ver < 9),
             mobile:           !! is_Mobile,
@@ -2568,7 +2568,7 @@
 
     /* ----- Mouse Wheel Event ----- */
 
-    if (! $.browser.ff)  return;
+    if (! $.browser.mozilla)  return;
 
     $_DOM.on('DOMMouseScroll',  function (iEvent) {
         $(iEvent.target).trigger({
@@ -2950,7 +2950,13 @@
     }
 
     var Tag_Style = { },
-        $_SandBox = $('<iframe />',  {style: 'display: none'}).appendTo('body');
+        $_SandBox = $('<iframe />', {
+            src:      'about:blank',
+            style:    'display: none'
+        });
+    $(DOM).ready(function () {
+        $_SandBox.appendTo( this.body );
+    });
 
     function Tag_Default_CSS(iTagName) {
         var _BOM_ = $_SandBox[0].contentWindow;
@@ -2967,7 +2973,7 @@
         return Tag_Style[iTagName];
     }
 
-    function Last_Valid_CSS(iName) {
+    function Last_Valid_CSS(iName, inValid) {
         var iRule = [this[0]].concat(
                 this.cssRule( iName ).sort( CSS_Rule_Sort ),
                 {
@@ -2977,19 +2983,20 @@
         for (var i = 0, iValue;  i < iRule.length;  i++) {
             iValue = iRule[i].style[iName];
 
-            if (iValue && (iValue != 'none'))  return iValue;
+            if (iValue  &&  (iValue != (inValid || 'none')))
+                return iValue;
         }
     }
 
     $.fn.extend({
-        hide:               function () {
+        hide:    function () {
             return  this.css('display',  function () {
                 if (arguments[1] != 'none')
                     $(this).data('_CSS_Display_', arguments[1]);
                 return 'none';
             });
         },
-        show:               function () {
+        show:    function () {
             return  this.each(function () {
                 var $_This = $(this);
                 var iStyle = $_This.css(['display', 'visibility', 'opacity']);
@@ -3010,7 +3017,11 @@
 
     /* ----- KeyFrame Animation ----- */
 
-    var FPS = 60;
+    var FPS = 60,
+        Animate_Property = {
+            scrollLeft:    true,
+            scrollTop:     true
+        };
 
     function KeyFrame(iStart, iEnd, During_Second) {
         During_Second = Number(During_Second) || 1;
@@ -3025,17 +3036,14 @@
         return iKF;
     }
 
-    var Animate_Property = {
-            scrollLeft:    true,
-            scrollTop:     true
-        };
-
-    $.fn.animate = function (CSS_Final, During_Second) {
-        var $_This = this;
-
-        $_This.data('_animate_', 1);
+    function KeyFrame_Animate(CSS_Final, During_Second, iEasing, iCallback) {
+        var $_This = this.data('_Animate_', 0);
 
         $.each(CSS_Final,  function (iName) {
+            if (isNaN( Number(this) ))  return  $_This.css(iName, this);
+
+            $_This.data('_Animate_',  $_This.data('_Animate_') + 1);
+
             var iSpecial = (iName in Animate_Property);
             var iKeyFrame = KeyFrame(
                     iSpecial ? $_This[iName]() : $_This.css(iName),
@@ -3043,88 +3051,145 @@
                     During_Second
                 );
             $.every(1 / FPS,  function () {
-                if ($_This.data('_animate_') && iKeyFrame.length) {
+                if ($_This.data('_Animate_') && iKeyFrame.length) {
                     if (iSpecial)
                         $_This[iName]( iKeyFrame.shift() );
                     else
                         $_This.css(iName, iKeyFrame.shift());
-                } else
+                } else {
+                    var iCount = $_This.data('_Animate_') - 1;
+                    $_This.data('_Animate_', iCount);
+
+                    if ((! iCount) && iCallback)  iCallback.call( $_This[0] );
+
                     return  iKeyFrame = false;
-            });
-        });
-
-        return $_This;
-    };
-
-    $.fx = {interval:  1000 / FPS};
-
-
-    /* ----- CSS 3 Animation ----- */
-
-    var $_CSS_Animate = $('<link />', {
-            rel:      'stylesheet',
-            type:     'text/css',
-            media:    'print',
-            href:     'http://cdn.bootcss.com/animate.css/3.3.0/animate.min.css'
-        });
-    $('head link[rel="stylesheet"]').eq(0).before( $_CSS_Animate );
-
-    $(DOM).ready(function () {
-        $_CSS_Animate.attr('media', 'screen');
-    });
-
-    var Animate_End = 'webkitAnimationEnd mozAnimationEnd MSAnimationEnd oanimationend animationend';
-
-    $.fn.cssAnimate = function (iType) {
-        var _Args_ = $.makeArray(arguments).slice(1);
-
-        var iDuring = (! isNaN(parseFloat(_Args_[0]))) && _Args_.shift();
-        var iCallback = (typeof _Args_[0] == 'function') && _Args_.shift();
-        var iLoop = _Args_[0];
-
-        var iClass = 'animated ' + iType + (iLoop ? ' infinite' : '');
-
-        this.one(Animate_End,  function () {
-            $(this).removeClass(iClass);
-
-            if (iCallback)
-                iCallback.apply(this, arguments);
-        });
-
-        if (iDuring) {
-            iDuring = (iDuring / 1000) + 's';
-            this.cssRule({
-                ' ': {
-                       '-moz-animation-duration':    iDuring,
-                    '-webkit-animation-duration':    iDuring,
-                         '-o-animation-duration':    iDuring,
-                        '-ms-animation-duration':    iDuring,
-                            'animation-duration':    iDuring,
                 }
             });
-        }
+        });
+        return $_This;
+    }
 
-        return  this.removeClass('animated').addClass(iClass);
+    /* ----- Transition Animation ----- */
+
+    var CSS_Prefix = (function (iHash) {
+            for (var iKey in iHash)
+                if ( $.browser[iKey] )  return iHash[iKey];
+        })({
+            mozilla:    'moz',
+            webkit:     'webkit',
+            msie:       'ms'
+        });
+
+    function CSS_AMP() {
+        return  '-' + CSS_Prefix + '-' + arguments[0];
+    }
+
+    var End_Event = 'TransitionEnd';
+    var Bind_Name = End_Event.toLowerCase() + ' ' + CSS_Prefix + End_Event;
+
+    function Transition_Animate() {
+        var iTransition = [
+                'all',  (arguments[1] + 's'),  arguments[2]
+            ].join(' ');
+
+        return  this.on(Bind_Name, arguments[3])
+                .css('transition', iTransition).css(
+                    CSS_AMP('transition'),  iTransition
+                )
+                .css( arguments[0] );
+    }
+
+    $.fn.animate = function (CSS_Final) {
+        var iArgs = $.makeArray(arguments).slice(1);
+
+        this.data('_CSS_Animate_', this.css(
+            Object.getOwnPropertyNames( CSS_Final )
+        ));
+
+        return (
+            ($.browser.msie < 10)  ?  KeyFrame_Animate  :  Transition_Animate
+        ).call(
+            this,
+            CSS_Final,
+            isNaN(Number( iArgs[0] ))  ?  0.25  :  iArgs.shift(),
+            (typeof iArgs[0] == 'string')  ?  iArgs.shift()  :  '',
+            (typeof iArgs[0] == 'function')  &&  iArgs[0]
+        );
+    };
+
+    $.fn.stop = function () {
+        return  this.data('_Animate_', 0);
     };
 
     /* ----- Animation ShortCut ----- */
 
-    var CSS_Animation = [
-            'fadeIn', 'fadeOut'
-        ];
+    $.fn.extend($.map({
+        fadeIn:     {opacity:  1},
+        fadeOut:    {opacity:  0},
+        slideUp:    {
+            overflow:    'hidden',
+            height:      0,
+            padding:     0,
+            opacity:     0
+        },
+        slideDown:    {
+            overflow:    'auto',
+            height:      'auto',
+            padding:     'auto',
+            opacity:     'auto'
+        }
+    },  function (CSS_Next) {
+        return  function () {
+            var $_This = this,  CSS_Prev = this.data('_CSS_Animate_');
 
-    function iAnimate(iType) {
-        return  function (iCallback, iDuring, iLoop) {
-            return  this.cssAnimate(iType, iCallback, iDuring, iLoop);
+            return  this.animate.apply(this, $.merge(
+                [$.map(CSS_Next,  function (iValue, iKey) {
+                    if (iValue == 'auto') {
+                        iValue = Last_Valid_CSS.call($_This, iKey);
+                        iValue = (parseFloat(iValue) == 0)  ?
+                            CSS_Prev[iKey]  :  iValue;
+                    }
+                    return  iValue || CSS_Next[iKey];
+                })],
+                arguments
+            ));
         };
-    }
+    }));
 
-    for (var i = 0;  i < CSS_Animation.length;  i++)
-        $.fn[ CSS_Animation[i] ] = iAnimate( CSS_Animation[i] );
+    $.fn.toggle = function (iDuring) {/*
+        return  this['slide'  +  (this.height() ? 'Up' : 'Down')].apply(
+            this,  arguments
+        );*/
+        iDuring = iDuring || 0.25;
 
-    $.fn.stop = function () {
-        return  this.data('_animate_', 0).removeClass('animated');
+        var iStyle = this.data('_CSS_Toggle_');
+
+        if (! this.height())
+            return  this.css('overflow',  iStyle.overflow || 'auto').animate(
+                {
+                    height:
+                        Last_Valid_CSS.call(this, 'height', '0px')  ||  'auto',
+                    opacity:    iStyle.opacity
+                },
+                iDuring,
+                arguments[1]
+            );
+
+        if (! iStyle)
+            this.data('_CSS_Toggle_',  this.css(['overflow', 'opacity']));
+
+        return  this.css('overflow', 'hidden').animate(
+            {
+                height:     0,
+                opacity:    0
+            },
+            iDuring,
+            arguments[1]
+        );
     };
+
+    $.fx = {interval:  1000 / FPS};
+
 
     /* ----- Smooth Scroll ----- */
 
@@ -3215,7 +3280,7 @@
                             this.responseType = 'application/json';
                         } catch (iError) {
                             if ($.browser.msie != 9)  try {
-                                if (! $.browser.ff)
+                                if (! $.browser.mozilla)
                                     iContent = $.parseXML(_Content_);
                                 else if (this.responseXML)
                                     iContent = this.responseXML;
@@ -3424,10 +3489,7 @@
 
                 BOM.DOMHttpRequest.JSONP[_UUID_] = function () {
                     if (iDHR.readyState)
-                        onLoad.call(iDHR, {
-                            readyState:    4,
-                            status:        200
-                        }, arguments[0]);
+                        onLoad.call(iDHR, Success_State, arguments[0]);
                     delete this[_UUID_];
                     iDHR.$_DOM.remove();
                 };
