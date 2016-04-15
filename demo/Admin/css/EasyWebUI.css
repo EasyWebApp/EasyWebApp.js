@@ -8,7 +8,7 @@
  *    and can be used in the Web UI development of
  *    Any Platform.
  *
- *    [Version]    v1.0  (2016-03-24)
+ *    [Version]    v1.0  (2016-04-14)
  *
  *    [Require]    CSS 2.1  (Best Effect with CSS 3),
  *
@@ -127,10 +127,12 @@ thead tr {
     color:         white  !important;
 }
 tbody tr {
-    font-size:     0.9em;
-    transition:    background-color  ease-in-out  .15s,
-                   box-shadow        ease-in-out  .15s;
-    max-height:    20em;
+        font-size:     0.9em;
+        max-height:    20em;
+   -moz-transition:    0.25s;
+     -o-transition:    0.25s;
+-webkit-transition:    0.25s;
+        transition:    0.25s;
 }
 tbody tr:hover {
     background:    whitesmoke  !important;
@@ -165,31 +167,36 @@ fieldset > legend {
 /* --- Button --- */
 input[type="button"],  button,  a.Button,
 input[type="submit"],  input[type="reset"]  {
-    -webkit-appearance:         none;
-       -moz-appearance:         none;
-            appearance:         none;
-            text-decoration:    none;
-            text-align:         center;
-            font-size:          1em;
-            word-wrap:          break-word;
-            word-break:         break-all;
-            background:         rgb(88, 167, 0);
-            color:              white;
-            padding:            0.5em  1em;
-            border:             none;
-            border-radius:      5px;
-            display:            inline-block;
-            margin:             0  0.5em;
+-webkit-appearance:         none;
+   -moz-appearance:         none;
+        appearance:         none;
+        text-decoration:    none;
+        text-align:         center;
+        font-size:          1em;
+        word-wrap:          break-word;
+        word-break:         break-all;
+        padding:            0.5em  1em;
+        background:         white;
+        color:              black;
+        border:             1px  solid  gray;
+        border-radius:      5px;
+        display:            inline-block;
+        margin:             0  0.5em;
+   -moz-transition:         0.25s;
+     -o-transition:         0.25s;
+-webkit-transition:         0.25s;
+        transition:         0.25s;
 }
 input[type="button"]:hover,  input[type="button"]:active,
 button:hover,                button:active,
 a.Button:hover,              a.Button:active,
 input[type="submit"]:hover,  input[type="submit"]:active,
 input[type="reset"]:hover,   input[type="reset"]:active  {
-    background:    gray;
-    opacity:       0.7;
-    filter:        Alpha(opacity=70);
-    cursor:        pointer;
+    background:      lightgray;
+    border-color:    transparent;
+    opacity:         0.7;
+    filter:          Alpha(opacity=70);
+    cursor:          pointer;
 }
 button > *,  a.Button > *  {
     display:           inline-block;
@@ -198,10 +205,13 @@ button > *,  a.Button > *  {
     margin:            0  0.5em;
 }
 input[type="submit"], button[type="submit"] {
-    display:      block;
-    max-width:    50%  !important;
-    min-width:    8em;
-    margin:       1em  auto;
+    background:      rgb(88, 167, 0);
+    color:           white;
+    border-color:    rgb(88, 167, 0);
+    display:         block;
+    max-width:       50%  !important;
+    min-width:       8em;
+    margin:          1em  auto;
 }
 /* --- Text Input --- */
 input[type="text"],   input[type="password"],
@@ -209,13 +219,15 @@ input[type="tel"],    input[type="number"],
 input[type="email"],  input[type="url"],
 input[type="search"], input[type="date"],
 select,               textarea {
-    font-size:        1em;
-    padding:          0.5em;
-    border:           1px  solid  rgb(204, 204, 204);
-    border-radius:    5px;
-    transition:       border-color  ease-in-out  .15s,
-                      box-shadow    ease-in-out  .15s;
-    display:          inline-block;
+        display:          inline-block;
+        font-size:        1em;
+        padding:          0.5em;
+        border:           1px  solid  rgb(204, 204, 204);
+        border-radius:    5px;
+   -moz-transition:       0.25s;
+     -o-transition:       0.25s;
+-webkit-transition:       0.25s;
+        transition:       0.25s;
 }
 input[type="text"]:focus,     input[type="text"]:hover,
 input[type="password"]:focus, input[type="password"]:hover,
@@ -240,21 +252,26 @@ input:-ms-input-placeholder {
 }
 /* --- Search Bar --- */
 input.Search, input[type="search"] {
-    width:    7em;
+        width:         7em;
+   -moz-transition:    0.25s;
+     -o-transition:    0.25s;
+-webkit-transition:    0.25s;
+        transition:    0.25s;
 }
-input.Search:hover, input[type="search"]:hover {
+input.Search:hover, input[type="search"]:hover,
+input.Search:focus, input[type="search"]:focus {
     width:    15em;
 }
 /* --- Radio & Check --- */
 input[type="radio"], input[type="checkbox"] {
-    -webkit-appearance:    none;
-       -moz-appearance:    none;
-            appearance:    none;
-            width:         1.5em;
-            height:        1.5em;
-            border:        1px  solid  gray;
-            background:    white;
-            outline:       none;
+-webkit-appearance:    none;
+   -moz-appearance:    none;
+        appearance:    none;
+        width:         1.5em;
+        height:        1.5em;
+        border:        1px  solid  gray;
+        background:    white;
+        outline:       none;
 }
 input[type="radio"] {
     border-radius:    50%;
@@ -288,15 +305,15 @@ input[type="file"] {
     Thank for Range.css --- http://danielstern.ca/range.css/
 */
 input[type="range"] {
-    -webkit-appearance:    none;
-       -moz-appearance:    none;
-            appearance:    none;
-            width:         100%;
-            height:        1.5em;
-            background:    transparent;
-            outline:       none;
-            cursor:        pointer;
-            position:      relative;
+-webkit-appearance:    none;
+   -moz-appearance:    none;
+        appearance:    none;
+        width:         100%;
+        height:        1.5em;
+        background:    transparent;
+        outline:       none;
+        cursor:        pointer;
+        position:      relative;
 }
 input[type="range"]::-webkit-slider-runnable-track {
     width:            100%;
@@ -340,30 +357,30 @@ input[type="range"]::-ms-fill-upper {
     background:    lightgray;
 }
 input[type="range"]::-webkit-slider-thumb {
-    -webkit-appearance:       none;
-       -moz-appearance:       none;
-            appearance:       none;
-            background:       white;
-            border:           1px  solid  gray;
-            height:           1.5em;
-            width:            2em;
-            border-radius:    0.75em;
-            margin-top:       -1px;
-            margin-left:      -1px;
-            position:         relative;
+-webkit-appearance:       none;
+   -moz-appearance:       none;
+        appearance:       none;
+        background:       white;
+        border:           1px  solid  gray;
+        height:           1.5em;
+        width:            2em;
+        border-radius:    0.75em;
+        margin-top:       -1px;
+        margin-left:      -1px;
+        position:         relative;
 }
 input[type="range"]::-moz-range-thumb,
 input[type="range"]::-ms-thumb {
-    -webkit-appearance:       none;
-       -moz-appearance:       none;
-            appearance:       none;
-            background:       white;
-            border:           1px  solid  gray;
-            height:           1.5em;
-            width:            2em;
-            border-radius:    0.75em;
-            margin-top:       -1px;
-            margin-left:      -1px;
+-webkit-appearance:       none;
+   -moz-appearance:       none;
+        appearance:       none;
+        background:       white;
+        border:           1px  solid  gray;
+        height:           1.5em;
+        width:            2em;
+        border-radius:    0.75em;
+        margin-top:       -1px;
+        margin-left:      -1px;
 }
 input[type="range"].Detail:before,
 input[type="range"].Detail:after    {
@@ -588,13 +605,15 @@ html.Fixed > body > .Fix-Top {
     display:    inline-block;
 }
 .Item-Box.visible {
-    margin:              0  2px  0.5em;
-    border:              1px  solid  rgb(215, 215, 215);
-    box-shadow:          1px  2px  3px  rgb(200, 200, 200);
-    transition:          border-color  ease-in-out  .15s,
-                         box-shadow    ease-in-out  .15s;
-    padding:             1em;
-    background-color:    white;
+        background-color:    white;
+        padding:             1em;
+        margin:              0  2px  0.5em;
+        border:              1px  solid  rgb(215, 215, 215);
+        box-shadow:          1px  2px  3px  rgb(200, 200, 200);
+   -moz-transition:          0.25s;
+     -o-transition:          0.25s;
+-webkit-transition:          0.25s;
+        transition:          0.25s;
 }
 .Item-Box.visible:hover,
 .Item-Box.active {
@@ -604,25 +623,25 @@ html.Fixed > body > .Fix-Top {
 }
 /* ----- Flex Box ----- */
 .Flex-Box {
-    display:       -moz-box  !important;        /*  Old Version:  Firefox (buggy)  */
-    display:    -webkit-box  !important;        /*  Old Version:  Safari, iOS, Android Browser, older WebKit Browsers  */
-    display:         -o-box  !important;        /*  Classic Opera  */
-    display:        -ms-flexbox  !important;    /*  Mix Version:  IE 10  */
-    display:       -moz-flex  !important;
-    display:    -webkit-flex  !important;
-    display:         -o-flex  !important;
-    display:            flex  !important;
+    display:   -moz-box      !important;    /*  Old Version:  Firefox (buggy)  */
+    display:-webkit-box      !important;    /*  Old Version:  Safari, iOS, Android Browser, older WebKit Browsers  */
+    display:     -o-box      !important;    /*  Classic Opera  */
+    display:    -ms-flexbox  !important;    /*  Mix Version:  IE 10  */
+    display:   -moz-flex     !important;
+    display:-webkit-flex     !important;
+    display:     -o-flex     !important;
+    display:        flex     !important;
 
-    width:              auto;
+    width:          auto;
 }
 .Flex-Box.Column {
-       -moz-box-orient:        vertical;
-    -webkit-box-orient:        vertical;
-         -o-box-orient:        vertical;
-       -moz-flex-direction:    column;
-    -webkit-flex-direction:    column;
-         -o-flex-direction:    column;
-            flex-direction:    column;
+   -moz-box-orient:        vertical;
+-webkit-box-orient:        vertical;
+     -o-box-orient:        vertical;
+   -moz-flex-direction:    column;
+-webkit-flex-direction:    column;
+     -o-flex-direction:    column;
+        flex-direction:    column;
 }
 .Flex-Box.Column > * {
     width:    100%;
@@ -640,24 +659,24 @@ html.Fixed > body > .Fix-Top {
     min-height:    3em;
 }
 .Flex-Box.CenterX {
-       -moz-box-pack:           center;
-    -webkit-box-pack:           center;
-         -o-box-pack:           center;
-        -ms-flex-pack:          center;
-       -moz-justify-content:    center;
-    -webkit-justify-content:    center;
-         -o-justify-content:    center;
-            justify-content:    center;
-            text-align:         left;
+   -moz-box-pack:           center;
+-webkit-box-pack:           center;
+     -o-box-pack:           center;
+    -ms-flex-pack:          center;
+   -moz-justify-content:    center;
+-webkit-justify-content:    center;
+     -o-justify-content:    center;
+        justify-content:    center;
+        text-align:         left;
 }
 .Flex-Box.CenterY {
-    -webkit-box-align:      center;
-       -moz-box-align:      center;
-        -ms-flex-align:     center;
-       -moz-align-items:    center;
-    -webkit-align-items:    center;
-         -o-align-items:    center;
-            align-items:    center;
+-webkit-box-align:      center;
+   -moz-box-align:      center;
+    -ms-flex-align:     center;
+   -moz-align-items:    center;
+-webkit-align-items:    center;
+     -o-align-items:    center;
+        align-items:    center;
 }
 
 
@@ -786,15 +805,22 @@ ul.DropDown.Body {
     padding:       0;
     list-style:    none;
 }
+ul.DropDown.Body > li {
+        background:    white;
+        color:         black;
+   -moz-transition:    0.25s;
+     -o-transition:    0.25s;
+-webkit-transition:    0.25s;
+        transition:    0.25s;
+}
+ul.DropDown.Body > li:hover,
+ul.DropDown.Body > li:focus  {
+    background:    lightgray;
+}
 ul.DropDown.Body > li > a {
     display:            block;
     padding:            1em  2em;
     text-decoration:    none;
-}
-ul.DropDown.Body > li > a:hover,
-ul.DropDown.Body > li > a:focus  {
-    background:    lightgray;
-    color:         white;
 }
 /*
     ul.NavBar has same appearance as .DropDown.Body on Mobile Device
@@ -836,19 +862,23 @@ ul.DropDown.Body > li > a:focus  {
         content:    none;
     }
     ul.NavBar > li {
-        padding:    0;
-        margin:     5%;
-        width:      90%;
+        padding:       0;
+        width:         90%;
+        margin:        5%;
+        border:        none  !important;
+        color:         black  !important;
+   -moz-transition:    0.25s;
+     -o-transition:    0.25s;
+-webkit-transition:    0.25s;
+        transition:    0.25s;
+    }
+    ul.NavBar > li:hover,
+    ul.NavBar > li:focus  {
+        background:    lightgray;
+        color:         white;
     }
     ul.NavBar > li > a {
         text-decoration:    none;
-        color:              black  !important;
-        border:             none  !important;
-    }
-    ul.NavBar > li > a:hover,
-    ul.NavBar > li > a:focus  {
-        background:    lightgray;
-        color:         white;
     }
 }
 
@@ -921,9 +951,9 @@ img.UserLogo {
     background-size:     40px  40px;
 }
 .Progress-Bar.active {
-    -webkit-animation:    Progress-Bar_stripes  2s  linear  infinite;
-    -o-animation:         Progress-Bar_stripes  2s  linear  infinite;
-    animation:            Progress-Bar_stripes  2s  linear  infinite;
+     -o-animation:    Progress-Bar_stripes  2s  linear  infinite;
+-webkit-animation:    Progress-Bar_stripes  2s  linear  infinite;
+        animation:    Progress-Bar_stripes  2s  linear  infinite;
 }
 
 /* ---------- Panel Control ---------- */
@@ -946,14 +976,18 @@ img.UserLogo {
 
 /* ---------- Tab Control ---------- */
 .Tab > label {
-    display:          inline-block;
-    margin-bottom:    -1px;
-    padding:          0.5em  1em;
-    line-height:      2.3em;
-    text-align:       center;
-    background:       rgb(230, 230, 230);
-    color:            rgb(118, 118, 119);
-    cursor:           pointer;
+        display:          inline-block;
+        margin-bottom:    -1px;
+        padding:          0.5em  1em;
+        line-height:      2.3em;
+        text-align:       center;
+        color:            rgb(118, 118, 119);
+        cursor:           pointer;
+        background:       rgb(230, 230, 230);
+   -moz-transition:       0.25s;
+     -o-transition:       0.25s;
+-webkit-transition:       0.25s;
+        transition:       0.25s;
 }
 .Tab > label.active {
     background:     white  !important;
@@ -1008,25 +1042,27 @@ img.UserLogo {
 }
 /* ----- Monitor Mode ----- */
 .Tab.Monitor > label {
-    margin:           1em  1%;
-    padding:          0;
-    line-height:      normal;
-    font-size:        2em;
-    text-align:       left;
-    background:       white;
-    border:           1px  solid  rgb(215, 215, 215);
-    box-shadow:       1px  2px  3px  rgb(200, 200, 200);
-    transition:       border-color  ease-in-out  .15s,
-                      box-shadow    ease-in-out  .15s;
-    border-radius:    0;
-    display:          inline-block;
-    max-width:        30%;
+        margin:           1em  1%;
+        padding:          0;
+        line-height:      normal;
+        font-size:        2em;
+        text-align:       left;
+        border-radius:    0;
+        display:          inline-block;
+        max-width:        30%;
+        background:       white;
+        border:           1px  solid  rgb(215, 215, 215);
+        box-shadow:       1px  2px  3px  rgb(200, 200, 200);
+   -moz-transition:       0.25s;
+     -o-transition:       0.25s;
+-webkit-transition:       0.25s;
+        transition:       0.25s;
 }
 .Tab.Monitor > label:hover {
+    background:      white  !important;
     border-color:    rgb(14, 144, 210);
     box-shadow:      inset  0  1px  1px  rgba(0, 0, 0, 0.075),
                      0  0  8px  rgba(14, 144, 210, 0.6);
-    background:      white  !important;
 }
 .Tab.Monitor > .Body,
 .Tab.Monitor > div,    .Tab.Monitor > section  {
@@ -1058,6 +1094,26 @@ img.UserLogo {
 
 
 /* ----------- Atom View ---------- */
+.No_Select {
+   -moz-user-select: -moz-none;
+ -khtml-user-select:      none;
+-webkit-user-select:      none;
+     -o-user-select:      none;
+    -ms-user-select:      none;
+        user-select:      none;
+-webkit-touch-callout:    none;
+        cursor:           default;
+}
+.No_Select input,  .No_Select textarea  {
+   -moz-user-select:      initial;
+ -khtml-user-select:      initial;
+-webkit-user-select:      initial;
+     -o-user-select:      initial;
+    -ms-user-select:      initial;
+        user-select:      initial;
+-webkit-touch-callout:    initial;
+        cursor:           auto;
+}
 .No_Pointer {
     pointer-events:    none;
 }
@@ -1127,39 +1183,39 @@ img.UserLogo {
 }
 /* ----- Turning ----- */
 .Rotate-90 {
-       -moz-transform:    rotate(90deg);
-         -o-transform:    rotate(90deg);
-    -webkit-transform:    rotate(90deg);
-            transform:    rotate(90deg);
-            filter:       progid:DXImageTransform.Microsoft.BasicImage(rotation=1);
+   -moz-transform:    rotate(90deg);
+     -o-transform:    rotate(90deg);
+-webkit-transform:    rotate(90deg);
+        transform:    rotate(90deg);
+        filter:       progid:DXImageTransform.Microsoft.BasicImage(rotation=1);
 }
 .Rotate-180 {
-       -moz-transform:    rotate(180deg);
-         -o-transform:    rotate(180deg);
-    -webkit-transform:    rotate(180deg);
-            transform:    rotate(180deg);
-            filter:       progid:DXImageTransform.Microsoft.BasicImage(rotation=2);
+   -moz-transform:    rotate(180deg);
+     -o-transform:    rotate(180deg);
+-webkit-transform:    rotate(180deg);
+        transform:    rotate(180deg);
+        filter:       progid:DXImageTransform.Microsoft.BasicImage(rotation=2);
 }
 .Flip-Y {
-       -moz-transform:    scale(-1，1);
-         -o-transform:    scale(-1，1);
-    -webkit-transform:    scale(-1，1);
-            transform:    scale(-1，1);
-            filter:       FlipH();
+   -moz-transform:    scale(-1，1);
+     -o-transform:    scale(-1，1);
+-webkit-transform:    scale(-1，1);
+        transform:    scale(-1，1);
+        filter:       FlipH();
 }
 .Flip-X {
-       -moz-transform:    scale(1，-1);
-         -o-transform:    scale(1，-1);
-    -webkit-transform:    scale(1，-1);
-            transform:    scale(1，-1);
-            filter:       FlipV();
+   -moz-transform:    scale(1，-1);
+     -o-transform:    scale(1，-1);
+-webkit-transform:    scale(1，-1);
+        transform:    scale(1，-1);
+        filter:       FlipV();
 }
 .Reflect {
-    -webkit-box-reflect:    below  0px  -webkit-gradient(
-        linear,
-        left top, left bottom,
-        from(transparent), to(rgba(250, 250, 250, 0.1))
-    );
+-webkit-box-reflect:    below  0px  -webkit-gradient(
+            linear,
+            left top, left bottom,
+            from(transparent), to(rgba(250, 250, 250, 0.1))
+        );
 }
 /* ----- Background ----- */
 .Background-Image {
@@ -1173,11 +1229,15 @@ img.UserLogo {
 }
 /* ----- Icon ----- */
 .Icon {
-    display:           inline-block;
-    vertical-align:    middle;
-    font-style:        normal;
-    font-size:         1.5em;
-    width:             2em;
+        display:           inline-block;
+        vertical-align:    middle;
+        font-style:        normal;
+        font-size:         1.5em;
+        width:             2em;
+   -moz-transition:        0.25s;
+     -o-transition:        0.25s;
+-webkit-transition:        0.25s;
+        transition:        0.25s;
 }
 .Icon:hover {
     background:    lightgray;
@@ -1202,6 +1262,12 @@ img.UserLogo {
 }
 .Icon.Return:before {
     content:    "\21e6";
+}
+.Icon.Add:before {
+    content:    "+";
+}
+.Icon.Remove:before {
+    content:    "-";
 }
 .Icon.Pen:before {
     content:    "\270F";

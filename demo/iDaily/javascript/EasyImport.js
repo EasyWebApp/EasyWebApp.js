@@ -2,7 +2,7 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v1.0  (2016-04-13)  Stable
+//      [Version]    v1.0  (2016-04-15)  Stable
 //
 //                   (Modern & Mobile Edition)
 //
@@ -661,12 +661,16 @@
                 feature:    _Object_.makeSet(
                     'input', 'textarea', 'button', 'select'
                 ),
-                filter:     function () {
-                    return  (arguments[0].tagName.toLowerCase() in this.feature);
+                filter:     function (iDOM) {
+                    return (
+                        (iDOM.tagName.toLowerCase() in this.feature)  ||
+                        (typeof iDOM.getAttribute('contentEditable') == 'string')  ||
+                        iDOM.designMode
+                    );
                 }
             },
             ':list':       {
-                feature:    _Object_.makeSet('ul', 'ol', 'dl'),
+                feature:    _Object_.makeSet('ul', 'ol', 'dl', 'datalist'),
                 filter:     function () {
                     return  (arguments[0].tagName.toLowerCase() in this.feature);
                 }
@@ -1651,7 +1655,7 @@
 
         return  $('<style />', {
             type:       'text/css',
-            'class':    'jQuery_CSS-Rule',
+            'class':    'iQuery_CSS-Rule',
             text:       (! iMedia) ? CSS_Text : [
                 '@media ' + iMedia + ' {',
                 CSS_Text.replace(/\n/m, "\n    "),
@@ -1718,14 +1722,13 @@
             }));
         }
         return  this.each(function () {
-            var $_This = $(this);
+            var _Rule_ = { };
 
-            var _UUID_ = $_This.data('css') || $.uuid(),  _Rule_ = { };
+            this.id = this.id || $.uuid();
 
             for (var iSelector in iRule)
-                _Rule_['*[data-css="' + _UUID_ + '"]' + iSelector] = iRule[iSelector];
+                _Rule_['#' + this.id + iSelector] = iRule[iSelector];
 
-            $(this).attr('data-css', _UUID_);
             var iSheet = $.cssRule(_Rule_);
 
             if (typeof iCallback == 'function')  iCallback.call(this, iSheet);
@@ -2437,7 +2440,9 @@
         return Tag_Style[iTagName];
     }
 
-    function Last_Valid_CSS(iName, inValid) {
+    var Disable_Value = $.makeSet('none', '0', '0px', 'hidden');
+
+    function Last_Valid_CSS(iName) {
         var iRule = [this[0]].concat(
                 this.cssRule( iName ).sort( CSS_Rule_Sort ),
                 {
@@ -2447,7 +2452,7 @@
         for (var i = 0, iValue;  i < iRule.length;  i++) {
             iValue = iRule[i].style[iName];
 
-            if (iValue  &&  (iValue != (inValid || 'none')))
+            if (iValue  &&  (! (iValue in Disable_Value)))
                 return iValue;
         }
     }
@@ -2564,6 +2569,8 @@
     }
 
     $.fn.animate = function (CSS_Final) {
+        if (! this[0])  return this;
+
         var iArgs = $.makeArray(arguments).slice(1);
 
         this.data('_CSS_Animate_', this.css(
@@ -2575,7 +2582,7 @@
         ).call(
             this,
             CSS_Final,
-            isNaN(Number( iArgs[0] ))  ?  0.25  :  iArgs.shift(),
+            isNaN(Number( iArgs[0] ))  ?  0.4  :  (iArgs.shift() / 1000),
             (typeof iArgs[0] == 'string')  ?  iArgs.shift()  :  '',
             (typeof iArgs[0] == 'function')  &&  iArgs[0]
         );
@@ -2604,14 +2611,19 @@
         }
     },  function (CSS_Next) {
         return  function () {
+            if (! this[0])  return this;
+
             var $_This = this,  CSS_Prev = this.data('_CSS_Animate_');
 
             return  this.animate.apply(this, $.merge(
                 [$.map(CSS_Next,  function (iValue, iKey) {
                     if (iValue == 'auto') {
                         iValue = Last_Valid_CSS.call($_This, iKey);
-                        iValue = (parseFloat(iValue) == 0)  ?
-                            CSS_Prev[iKey]  :  iValue;
+                        if (
+                            (parseFloat(iValue) == 0)  &&
+                            (! iValue.match(/\s/))
+                        )
+                            iValue = CSS_Prev[iKey];
                     }
                     return  iValue || CSS_Next[iKey];
                 })],
@@ -2620,35 +2632,15 @@
         };
     }));
 
-    $.fn.toggle = function (iDuring) {/*
-        return  this['slide'  +  (this.height() ? 'Up' : 'Down')].apply(
+    $.fn.toggle = function () {
+        return  this[[
+            ['show', 'hide'],  ['slideDown', 'slideUp']
+        ][
+            arguments.length && 1
+        ][
+            this.height() && 1
+        ]].apply(
             this,  arguments
-        );*/
-        iDuring = iDuring || 0.25;
-
-        var iStyle = this.data('_CSS_Toggle_');
-
-        if (! this.height())
-            return  this.css('overflow',  iStyle.overflow || 'auto').animate(
-                {
-                    height:
-                        Last_Valid_CSS.call(this, 'height', '0px')  ||  'auto',
-                    opacity:    iStyle.opacity
-                },
-                iDuring,
-                arguments[1]
-            );
-
-        if (! iStyle)
-            this.data('_CSS_Toggle_',  this.css(['overflow', 'opacity']));
-
-        return  this.css('overflow', 'hidden').animate(
-            {
-                height:     0,
-                opacity:    0
-            },
-            iDuring,
-            arguments[1]
         );
     };
 

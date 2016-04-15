@@ -2,7 +2,7 @@
 //          >>>  EasyWebUI Component Library  <<<
 //
 //
-//      [Version]     v1.9  (2016-02-02)  Stable
+//      [Version]     v1.9  (2016-04-14)  Stable
 //
 //      [Based on]    iQuery v1  or  jQuery (with jQuery+),
 //
@@ -682,16 +682,8 @@
 /* ---------- 元素禁止选中  v0.1 ---------- */
 
     $.fn.noSelect = function () {
-        return  this.attr('unSelectable', 'on').css({
-               '-moz-user-select':      '-moz-none',
-             '-khtml-user-select':           'none',
-            '-webkit-user-select':           'none',
-                 '-o-user-select':           'none',
-                '-ms-user-select':           'none',
-                    'user-select':           'none',
-            '-webkit-touch-callout':         'none'
-        }).bind('selectStart', false).bind('contextmenu', false)
-            .css('cursor', 'default');
+        return  this.attr('unSelectable', 'on').addClass('.No_Select')
+                .bind('selectStart', false).bind('contextmenu', false);
     };
 
 })(self,  self.document,  self.jQuery || self.Zepto);
