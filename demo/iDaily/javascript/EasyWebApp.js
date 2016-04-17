@@ -2,7 +2,7 @@
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v2.3  (2016-04-11)  Stable
+//      [Version]    v2.3  (2016-04-17)  Stable
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //
@@ -86,11 +86,13 @@
             return $_Link;
         },
         getData:      function () {
-            var iData = this.$_DOM.data(['EWA_Model', 'LV_Model']);
+            var iData = this.$_DOM.data('EWA_Model');
 
-            return  this.data = $.extend(
-                iData.EWA_Model || iData.LV_Model || { },  this.data
-            );
+            if (! iData) {
+                iData = $.ListView.getInstance( this.$_DOM[0].parentNode );
+                iData = iData && iData.valueOf( this.$_DOM.index() );
+            }
+            return  this.data = $.extend(iData || { },  this.data);
         },
         getArgs:      function () {
             var This_App = this.app,  iData = this.getData();
@@ -624,6 +626,29 @@
         }
     });
 
+    function ArrayRender(iArray, ValueRender) {
+        $.ListView(this,  function () {
+            ValueRender.call(arguments[0], arguments[1]);
+        }).clear().render( iArray );
+    }
+
+    function ObjectRender(iData) {
+        var _Self_ = arguments.callee;
+
+        if (iData instanceof Array)
+            return  ArrayRender.call(this[0], iData, _Self_);
+
+        var $_Value = this.filter('[name]');
+        $_Value = $_Value.length ? $_Value : this.find('[name]');
+
+        $_Value.value(function (iName) {
+            if (iData[iName] instanceof Array)
+                ArrayRender.call(this, iData[iName], _Self_);
+            else
+                return iData[iName];
+        });
+    }
+
     $.extend(InnerPage.prototype,{
         render:      function (Source_Link, iData) {
             var This_App = this.ownerApp;
@@ -644,43 +669,15 @@
 
             if (Source_Link  &&  (Source_Link.target != '_self'))
                 $_List = Source_Link.getTarget().parent();
-            $_List = $.ListView.findView($_List);
+            $_List = $.ListView.findView($_List, true);
 
-            for (var i = 0, $_LV;  i < $_List.length;  i++)
-                $.ListView($_List.eq(i),  function () {
-                    arguments[0].value(arguments[1]);
-                });
 
             /* ----- Data Render ----- */
-            $_Body.trigger({
-                type:      'loading',
-                detail:    0,
-                data:      'Data Loading ...'
-            });
             if (iData instanceof Array)
-                $.ListView($_List.eq(0),  function () {
-                    this.$_View.trigger({
-                        type:      'loading',
-                        detail:    arguments[2] / iData.length
-                    });
-                }).render(iData);
+                ArrayRender.call($_List[0], iData, ObjectRender);
             else
-                $_Body.value(function (iName) {
-                    var $_This = $(this).trigger({
-                            type:      'loading',
-                            detail:    arguments[1] / arguments[2].length
-                        });
-                    var iValue = This_App.dataStack.value(
-                            iName,  $_This.is($_List)
-                        );
+                ObjectRender.call($_Body, iData);
 
-                    if (iValue instanceof Array)
-                        $.ListView.getInstance($_This).clear().render(iValue);
-                    else if ( $.isPlainObject(iValue) )
-                        $_This.data('EWA_Model', iValue).value(iValue);
-                    else
-                        return iValue;
-                });
             return this;
         },
         findLink:    function (iPrefetch) {

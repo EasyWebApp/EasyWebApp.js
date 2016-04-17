@@ -16,6 +16,14 @@
         });
     }
 
+    $(DOM).on('click',  'th',  function () {
+        $.ListView.getInstance(
+            $('tbody', $(this).parents('table')[0])
+        ).sort(function (A, B) {
+            return  B.count - A.count;
+        });
+    });
+
     $('#Main_View').on('pageRender',  function (iEvent, This_Page, Prev_Page, iData) {
         var _TP_ = $.fileName(This_Page.HTML),
             _PP_ = $.fileName(Prev_Page.HTML);

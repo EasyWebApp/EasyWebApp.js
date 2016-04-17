@@ -2,7 +2,7 @@
 //              >>>  iQuery+  <<<
 //
 //
-//    [Version]    v1.2  (2016-04-15)  Stable
+//    [Version]    v1.3  (2016-04-17)  Stable
 //
 //    [Require]    iQuery  ||  jQuery with jQuery+
 //
@@ -13,7 +13,7 @@
 
 (function (BOM, DOM, $) {
 
-/* ---------- ListView Interface  v0.6 ---------- */
+/* ---------- ListView Interface  v0.7 ---------- */
 
 //  Thanks "EasyWebApp" Project --- http://git.oschina.net/Tech_Query/EasyWebApp
 
@@ -41,7 +41,6 @@
         if (iView !== this)  return iView;
 
         this.$_View = $_View.data('_LVI_', this);
-        this.data = [ ];
 
         this.selector = $_Item;
         this.length = 0;
@@ -54,9 +53,6 @@
             this[this.length] = $_Item;
         }
         this.$_Template = this[0].clone(true);
-
-//        this.limit = parseInt( this.$_View.attr('max') )  ||  Infinity;
-//        this.limit = (this.data.length > this.limit) ? this.limit : this.data.length;
     }
 
     $.extend(ListView, {
@@ -163,7 +159,6 @@
             iValue = (iReturn === undefined) ? iValue : iReturn;
 
             $_Item.addClass('ListView_Item').data('LV_Model', iValue);
-            this.data.splice(Index, 0, iValue);
 
             return this.indexOf(_Index_);
         },
@@ -178,10 +173,18 @@
             return this;
         },
         valueOf:    function (Index) {
-            var iValue = this.data.slice(
-                    Index,  ++Index ? Index : undefined
-                )[0];
-            return  (iValue === undefined) ? $.makeArray(this.data) : iValue;
+            if (! isNaN(Number( Index )))
+                return this.indexOf(Index).data('LV_Model');
+
+            var iData = this.$_View.data('LV_Model');
+
+            if (! iData) {
+                iData = $.map(this,  function () {
+                    return arguments[0].data('LV_Model');
+                });
+                this.$_View.data('LV_Model', iData);
+            }
+            return iData;
         },
         remove:     function (Index) {
             var $_Item = this.indexOf(Index);
@@ -191,19 +194,18 @@
                 Index = $_Item;
                 $_Item = this.indexOf(Index);
             }
+
             if (
                 $_Item.length  &&
                 (false !== this.trigger(
                     'remove',  $_Item,  this.valueOf(Index),  Index
                 ))
-            ) {
-                $_Item.remove();
-                this.splice(Index, 1);
-                return  this.data.splice(Index, 1)[0];
-            }
+            )
+                this.splice(Index, 1)[0].remove();
+
+            return this;
         },
         clear:      function () {
-            this.data = [ ];
             this.splice(0, this.length);
             this.$_View.empty();
 
@@ -224,15 +226,15 @@
 
             return this;
         },
-        sort:       function () {
-            var _Item_ = this.$_View[0].children;
-            var $_Item = $.makeArray(_Item_);
-
-            $_Item.sort($.proxy(arguments[0], this));
-
-            for (var i = 0;  i < $_Item.length;  i++)
-                if ($_Item[i] !== _Item_[i])
-                    this.insert(this.remove( $_Item[i] ),  i);
+        sort:       function (iCallback) {
+            $($.merge.apply($, Array.prototype.sort.call(
+                this,
+                function ($_A, $_B) {
+                    return iCallback(
+                        $_A.data('LV_Model'),  $_B.data('LV_Model'),  $_A,  $_B
+                    );
+                }
+            ))).detach().appendTo( this.$_View );
         },
         fork:       function () {
             var _Self_ = this.constructor,  $_View = this.$_View.clone(true);
