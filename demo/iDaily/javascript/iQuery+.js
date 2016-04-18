@@ -2,7 +2,7 @@
 //              >>>  iQuery+  <<<
 //
 //
-//    [Version]    v1.3  (2016-04-17)  Stable
+//    [Version]    v1.3  (2016-04-18)  Stable
 //
 //    [Require]    iQuery  ||  jQuery with jQuery+
 //
@@ -124,18 +124,19 @@
             );
         },
         slice:      Array.prototype.slice,
-        splice:     Array.prototype.splice,
-        indexOf:    function (Index) {
-            if (! isNaN(parseInt( Index )))
-                return  $(this.slice(Index,  ++Index ? Index : undefined)[0]);
+        indexOf:    function (Index, getInstance) {
+            if (! isNaN(Number( Index )))
+                return  this.slice(Index,  (Index + 1) || undefined)[0];
 
             var $_Item = $(Index);
 
             for (var i = 0;  i < this.length;  i++)
                 if (this[i].index($_Item[0]) > -1)
-                    return i;
-            return -1;
+                    return  getInstance  ?  arguments.callee.call(this, i)  :  i;
+
+            return  getInstance ? $() : -1;
         },
+        splice:     Array.prototype.splice,
         insert:     function (iValue, Index) {
             iValue = (iValue === undefined)  ?  { }  :  iValue;
 
@@ -173,8 +174,8 @@
             return this;
         },
         valueOf:    function (Index) {
-            if (! isNaN(Number( Index )))
-                return this.indexOf(Index).data('LV_Model');
+            if (Index  ||  (Index == 0))
+                return  this.indexOf(arguments[0], true).data('LV_Model');
 
             var iData = this.$_View.data('LV_Model');
 
@@ -194,7 +195,6 @@
                 Index = $_Item;
                 $_Item = this.indexOf(Index);
             }
-
             if (
                 $_Item.length  &&
                 (false !== this.trigger(
@@ -212,18 +212,14 @@
             return this;
         },
         focus:      function () {
-            var $_Item = this.indexOf( arguments[0] );
+            var $_Item = this.indexOf(arguments[0], true);
 
-            if (typeof $_Item == 'number') {
-                if ($_Item < 0)  return this;
-                $_Item = this.indexOf($_Item);
+            if ( $_Item[0] ) {
+                $_Item.siblings().removeClass('active');
+                $_Item.scrollParents().eq(0).focus().scrollTo(
+                    $_Item.addClass('active')
+                );
             }
-            var $_Scroll = $_Item.scrollParents().eq(0).focus();
-
-            $_Item.siblings().removeClass('active');
-
-            $_Scroll.scrollTo( $_Item.addClass('active') );
-
             return this;
         },
         sort:       function (iCallback) {

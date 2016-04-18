@@ -2,7 +2,7 @@
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v2.3  (2016-04-17)  Stable
+//      [Version]    v2.4  (2016-04-18)  Beta
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //
@@ -95,12 +95,10 @@
             return  this.data = $.extend(iData || { },  this.data);
         },
         getArgs:      function () {
-            var This_App = this.app,  iData = this.getData();
+            var iData = $.extend(this.app.history.getData(), this.getData());
 
             return  $.map(this.$_DOM[0].dataset,  function (iName) {
-                var _Arg_ = iData[iName] || This_App.dataStack.value(iName);
-
-                return  (_Arg_ !== undefined)  ?  _Arg_  :  iName;
+                return  (iData[iName] !== undefined)  ?  iData[iName]  :  iName;
             });
         },
         getURL:       function (iKey) {
@@ -110,7 +108,9 @@
                 this[iKey] = this.app.makeURL(
                     this[iKey] || '',
                     this.getData(),
-                    this.method.match(/Get|Delete/i)  &&  this.getArgs()
+                    ((iKey == 'href')  ?  (! this.src)  :  (
+                        this.method.toUpperCase() == 'GET'
+                    )) && this.getArgs()
                 );
                 if ((iKey == 'href')  &&  (this[iKey].slice(-1) == '?'))
                     this[iKey] = this[iKey].slice(0, -1);
@@ -216,7 +216,6 @@
             _This_.move(iState);
             iHistory.show().onReady();
 
-            $_BOM.trigger('pageChange',  [iState.DOM_Index - _This_.lastIndex]);
             _This_.prevIndex = _This_.lastIndex;
             _This_.lastIndex = iState.DOM_Index;
         });
@@ -282,59 +281,24 @@
             return (
                 this.indexOf( arguments[0] )  >  this.indexOf( this.last(true) )
             );
-        }
-    });
-
-/* ---------- [object DataStack] ---------- */
-
-    function DataStack() {
-        this.history = arguments[0];
-
-        var iStack = this.stack = [ ];
-
-        $_BOM.on('pageChange',  function () {
-            iStack.length += arguments[1];
-        });
-    }
-
-    $.extend(DataStack.prototype, {
-        pushStack:    function (iData) {
-            if (this.stack.length < this.history.length)
-                this.stack.push(null);
-
-            var Old_Sum = this.stack.length - 1 - this.history.lastIndex;
-            if (Old_Sum > 0)  this.stack.length -= Old_Sum;
-
-            this.stack.push(iData);
-            return iData;
         },
-        value:        function (iName, Need_Array) {
-            for (var i = this.history.lastIndex + 1, iObject, iData;  i > -1;  i--) {
-                iObject = this.stack[i];
-                if (! iObject)  continue;
+        mergeData:    function (iSource, Index) {
+            var iPage = this.slice(Index,  (Index + 1) || undefined)[0];
 
-                if (Need_Array && (iObject instanceof Array))
-                    return iObject;
-
-                iData = iObject[iName];
-                if (Need_Array) {
-                    if (iData instanceof Array)
-                        return iData;
-                } else if ( $.isData(iData) )
-                    return iData;
-            }
-        },
-        flush:        function (iSource) {
-            var _Data_ = this.stack;
-
-            _Data_[_Data_.length - 1] = $.extend(
-                _Data_[_Data_.length - 1] || { },
+            iPage.data = $.extend(
+                iPage.data || { },
                 (iSource instanceof $)  ?
                     $.paramJSON('?' + iSource.serialize())  :  iSource
             );
-
             return iSource;
-        }
+        },
+        getData:      function () {
+            var iData = $.map(this,  function () {
+                    return arguments[0].data;
+                });
+            return  (iData.length < 2)  ?
+                (iData[0] || { })  :  $.extend.apply($, iData);
+        },
     });
 
 /* ---------->> WebApp Constructor <<---------- */
@@ -359,7 +323,6 @@
             loading:      false,
             proxy:        API_Root[1] || ''
         });
-        this.dataStack = new DataStack(this.history);
 
         if (! (this.apiRoot && this.proxy))  return;
 
@@ -376,20 +339,19 @@
 
     WebApp.prototype.makeURL = function (iURL, iData, iArgs) {
         iURL = $.split(iURL, '?', 2);
-        iData = iData || { };
+        iData = $.extend(this.history.getData(),  iData || { });
 
         var iJSONP = ('&' + iURL[1]).match(/&([^=]+)=\?/);
         iJSONP = iJSONP && iJSONP[1];
 
-        var This_App = this,
-            URL_Param = $.param(
+        var URL_Param = $.param(
                 $.extend(iArgs || { },  $.paramJSON(
                     '?'  +  iURL[1].replace(iJSONP + '=?',  '')
                 ))
             );
         iURL = [
             BOM.decodeURIComponent(iURL[0]).replace(RE_Str_Var,  function () {
-                return  iData[arguments[1]] || This_App.dataStack.value(arguments[1]);
+                return iData[arguments[1]];
             }),
             (! iJSONP)  ?  URL_Param  :  [
                 URL_Param,  URL_Param ? '&' : '',  iJSONP,  '=?'
@@ -438,7 +400,7 @@
         loadData:        function (Data_Ready) {
             var $_Form = $(this.$_DOM).parents('form').eq(0);
             if ($_Form.length)
-                this.app.dataStack.flush($_Form);
+                this.app.history.mergeData($_Form, -1);
 
             var iLink = this,  This_App = this.app,
                 API_URL = this.getURL('src');
@@ -457,7 +419,7 @@
                 if (typeof Data_Ready == 'function')
                     Data_Ready.call(iLink, iData);
                 else
-                    This_App.dataStack.flush(iData);
+                    This_App.history.mergeData(iData, -1);
             }
 
             if (! API_URL)  return  AJAX_Ready.call(this, this.getData());
@@ -638,10 +600,7 @@
         if (iData instanceof Array)
             return  ArrayRender.call(this[0], iData, _Self_);
 
-        var $_Value = this.filter('[name]');
-        $_Value = $_Value.length ? $_Value : this.find('[name]');
-
-        $_Value.value(function (iName) {
+        this.value('name',  function (iName) {
             if (iData[iName] instanceof Array)
                 ArrayRender.call(this, iData[iName], _Self_);
             else
@@ -661,7 +620,8 @@
                     This_App.history.prev(),
                     iData
                 ]);
-            iData = This_App.dataStack.pushStack(iReturn || iData);
+            this.data = iData = iReturn || iData;
+
             if (iReturn === false)  return this;
 
             /* ----- View Init ----- */
@@ -824,21 +784,23 @@
             var iLink = $(this).data('EWA_PageLink') ||
                     (new PageLink(This_App, this));
 
-            This_App.dataStack.flush( iLink.$_DOM ).attr(
+            This_App.history.mergeData(iLink.$_DOM, -1).attr(
                 'action',  iLink.getURL('action')
             );
         }).ajaxSubmit(function (iData) {
 
             var iReturn = This_App.domRoot.triggerHandler('formSubmit', [
                     This_App.history.last().HTML,
-                    this.url,
+                    arguments[2].url,
                     iData,
                     $(this).attr('href')
                 ]);
 
             if ((iReturn !== false)  &&  this.target)
                 This_App.loadLink(
-                    $.extend(PageLink.getAttr( $(this) ),  {action: this.url}),
+                    $.extend(PageLink.getAttr( $(this) ),  {
+                        action:    arguments[2].url
+                    }),
                     null,
                     iReturn || iData
                 );
