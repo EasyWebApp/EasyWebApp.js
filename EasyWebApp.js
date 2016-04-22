@@ -2,7 +2,7 @@
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v2.4  (2016-04-18)  Beta
+//      [Version]    v2.4  (2016-04-19)  Beta
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //
@@ -156,7 +156,9 @@
 
             if (! $_Page) {
                 if (this.sourceLink.type != 'Inner')
-                    BOM.history[iForward ? 'forward' : 'back']();
+                    BOM.setTimeout(function () {
+                        BOM.history[iForward ? 'forward' : 'back']();
+                    });
                 else {
                     this.sourceLink = new PageLink(
                         this.ownerApp,  this.sourceLink.valueOf()

@@ -2,7 +2,7 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v1.0  (2016-04-18)  Stable
+//      [Version]    v1.0  (2016-04-22)  Stable
 //
 //                   (Modern & Mobile Edition)
 //
@@ -472,6 +472,12 @@
 
     /* ----- DOM Style ----- */
     _DOM_.Style = {
+        PX_Needed:
+            RegExp([
+                'width', 'height', 'margin', 'padding',
+                'top', 'right', 'bottom',  'left',
+                'border-radius'
+            ].join('|')),
         get:           function (iElement, iName) {
             if ((! iElement)  ||  (_Object_.type(iElement) in Type_Info.DOM.root))
                 return;
@@ -480,22 +486,21 @@
 
             if (iName) {
                 iStyle = iStyle.getPropertyValue(iName);
-                var iNumber = parseFloat(iStyle);
-                iStyle = isNaN(iNumber) ? iStyle : iNumber;
+
+                if ((! iStyle)  &&  iName.match(this.PX_Needed))
+                    iStyle = 0;
+                else if (iStyle.indexOf(' ') == -1) {
+                    var iNumber = parseFloat(iStyle);
+                    iStyle = isNaN(iNumber) ? iStyle : iNumber;
+                }
             }
             return iStyle;
         },
-        PX_Needed:     _Object_.makeSet(
-            'width',  'min-width',  'max-width',
-            'height', 'min-height', 'max-height',
-            'margin', 'padding',
-            'top',    'left',
-            'border-radius'
-        ),
+        Set_Method:    _Browser_.modern ? 'setProperty' : 'setAttribute',
         set:           function (iElement, iName, iValue) {
             if (_Object_.type(iElement) in Type_Info.DOM.root)  return false;
 
-            if ((! isNaN( Number(iValue) ))  &&  this.PX_Needed[iName])
+            if ((! isNaN( Number(iValue) ))  &&  iName.match(this.PX_Needed))
                 iValue += 'px';
 
             if (iElement)
@@ -2595,15 +2600,16 @@
         animate:    function (CSS_Final) {
             if (! this[0])  return this;
 
-            var iArgs = $.makeArray(arguments).slice(1);
+            var iArgs = $.makeArray(arguments).slice(1),
+                iCSS = Object.getOwnPropertyNames( CSS_Final );
 
-            this.data('_CSS_Animate_', this.css(
-                Object.getOwnPropertyNames( CSS_Final )
-            ));
+            this.data('_CSS_Animate_',  function () {
+                return  $.extend(arguments[1], $(this).css(iCSS));
+            });
 
             return (
                 (($.browser.msie < 10)  ||  (! $.isEmptyObject(
-                    $.intersect(CSS_Final, Animate_Property)
+                    $.intersect($.makeSet.apply($, iCSS),  Animate_Property)
                 ))) ?
                     KeyFrame_Animate  :  Transition_Animate
             ).call(
@@ -2634,7 +2640,7 @@
             overflow:    'auto',
             height:      'auto',
             padding:     'auto',
-            opacity:     'auto'
+            opacity:     1
         }
     },  function (CSS_Next) {
         return  function () {
@@ -2645,14 +2651,12 @@
             return  this.animate.apply(this, $.merge(
                 [$.map(CSS_Next,  function (iValue, iKey) {
                     if (iValue == 'auto') {
-                        iValue = Last_Valid_CSS.call($_This, iKey);
-                        if (
-                            (parseFloat(iValue) == 0)  &&
-                            (! iValue.match(/\s/))
-                        )
-                            iValue = CSS_Prev[iKey];
+                        iValue = (CSS_Prev || { })[iKey];
+                        if ((! iValue)  &&  (iValue !== 0))
+                            iValue = Last_Valid_CSS.call($_This, iKey);
                     }
-                    return  iValue || CSS_Next[iKey];
+                    return  (iValue  ||  (iValue === 0))  ?
+                        iValue : CSS_Next[iKey];
                 })],
                 arguments
             ));

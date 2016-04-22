@@ -2,7 +2,7 @@
 //          >>>  EasyWebUI Component Library  <<<
 //
 //
-//      [Version]     v1.9  (2016-04-14)  Stable
+//      [Version]     v2.4  (2016-04-22)  Stable
 //
 //      [Based on]    iQuery v1  or  jQuery (with jQuery+),
 //
@@ -16,7 +16,7 @@
 //
 
 
-/* ---------- CSS 3 补丁 ---------- */
+/* ---------- HTML 5 / CSS 3 补丁 ---------- */
 (function (BOM, DOM, $) {
 
 /* ---------- Flex Box 补丁  v0.2 ---------- */
@@ -188,6 +188,78 @@
             }
 
             $_This.before($_List);
+        });
+    };
+
+/* ---------- Input List 补丁  v0.2 ---------- */
+
+    function Tips_Show() {
+        if (! this.height())  this.slideDown(100);
+    }
+
+    function Tips_Hide() {
+        if ( this.height() )  this.slideUp(100);
+
+        return this;
+    }
+
+    $.fn.smartInput = function () {
+        return  this.each(function () {
+            var $_Input = $(this),  iPosition = this.parentNode.style.position;
+
+            if (BOM.HTMLDataListElement  ||  ($_Input.attr('autocomplete') == 'off'))
+                return;
+
+            if ((! iPosition)  ||  (iPosition == 'static'))
+                $(this.parentNode).css({
+                    position:    'relative',
+                    zoom:        1
+                });
+            iPosition = $_Input.attr('autocomplete', 'off').position();
+            iPosition.top += $_Input.height();
+
+            var $_List = $(
+                    '#' + this.getAttribute('list') + ' > select[multiple]'
+                ).css($.extend(iPosition, {
+                    position:     'absolute',
+                    'z-index':    10000,
+                    height:       0,
+                    width:        $_Input.width(),
+                    padding:      0,
+                    border:       0,
+                    overflow:     'hidden',
+                    opacity:      0
+                })).change(function () {
+                    $_Input[0].value = Tips_Hide.call($_List)[0].value;
+                });
+            var $_Option = $_List.children();
+
+            $_Input.after($_List)
+                .dblclick($.proxy(Tips_Show, $_List))
+                .blur($.proxy(Tips_Hide, $_List))
+                .keyup(function () {
+                    var iValue = this.value;
+
+                    if (iValue === '')  return $_Option.appendTo($_List);
+
+                    $_Option.each(function () {
+                        for (var i = 0, j = 0;  i < iValue.length;  i++) {
+                            if (iValue[i + 1]  ===  undefined)  break;
+
+                            if (
+                                this.value.indexOf( iValue[i] )  <
+                                this.value.indexOf( iValue[i + 1] )
+                            ) {
+                                if (! this.parentElement)
+                                    $_List[0].appendChild( this );
+                                continue;
+                            }
+
+                            $(this).detach();
+                        }
+                    });
+                    Tips_Show.call($_List);
+                });
         });
     };
 
@@ -676,6 +748,137 @@
 
             $('label[for="' + $_Target[0].previousElementSibling.id + '"]')[0]
                 .click();
+        });
+    };
+
+/* ---------- 阅读导航栏  v0.1 ---------- */
+
+    $.fn.iReadNav = function ($_Context) {
+        return  this.each(function () {
+            var iMainNav = $.TreeView(
+                    $.ListView(this,  function ($_Item, iValue) {
+
+                        $('a', $_Item[0]).text(iValue.text)[0].href =
+                            '#' + iValue.id;
+                        $_Item.attr('title', iValue.text);
+                    }),
+                    null,
+                    function () {
+                        arguments[0].$_View.attr('class', '');
+                    },
+                    function () {
+                        var iTarget = arguments[0].target;
+
+                        if (iTarget.tagName.toLowerCase() == 'a')
+                            return (
+                                '*[id="'  +  iTarget.href.split('#')[1]  +  '"]'
+                            );
+                    }
+                );
+            iMainNav.linkage($_Context,  function ($_Anchor) {
+                $_Anchor = $_Anchor.prevAll('h1, h2, h3');
+
+                if (! $.contains(this, $_Anchor[0]))  return;
+
+                $_Anchor = $(
+                    'a[href="#' + $_Anchor[0].id + '"]',  iMainNav.unit.$_View[0]
+                );
+                $('.ListView_Item.active', iMainNav.unit.$_View[0])
+                    .removeClass('active');
+
+                $.ListView.getInstance( $_Anchor.parents('.TreeNode')[0] )
+                    .focus( $_Anchor[0].parentNode );
+            });
+
+            $_Context.on('Refresh',  function () {
+
+                iMainNav.bind(
+                    $('h1, h2, h3', this),
+                    function ($_A, $_B) {
+                        return  $_B.tagName[1] - $_A.tagName[1];
+                    },
+                    function () {
+                        if (! this.id.match(/\w/))  this.id = $.uuid('Header');
+
+                        return {
+                            id:      this.id,
+                            text:    $(this).text()
+                        };
+                    }
+                );
+                return false;
+
+            }).on('Clear',  function () {
+                return  (! iMainNav.unit.clear());
+            });
+        });
+    };
+
+/* ---------- 目录树  v0.2 ---------- */
+
+    function inlineEdit() {
+        $(arguments[0].target).one('blur',  function () {
+            if (this.textContent)  this.removeAttribute('contentEditable');
+        }).prop('contentEditable', true).focus();
+
+        return false;
+    }
+
+    function branchDelete() {
+        var iList = $.ListView.getInstance( this.parentNode );
+
+        iList.remove( this );
+
+        if (! iList.$_View[0].children[0])  iList.$_View.remove();
+
+        return false;
+    }
+
+    $.fn.iTree = function (Sub_Key, onInsert) {
+        return  this.each(function () {
+            var iOrgTree = $.TreeView(
+                    $.ListView(this, onInsert),
+                    Sub_Key,
+                    function () {
+                        arguments[0].$_View.parent().cssRule({
+                            ':before':    {
+                                content:    '"-"  !important'
+                            }
+                        });
+                    },
+                    function () {
+                        $(':input', this).focus();
+
+                        var iRule = Array.prototype.slice.call(
+                                BOM.getMatchedCSSRules(this, ':before'),  -1
+                            )[0];
+
+                        if (! $(iRule.parentStyleSheet.ownerNode).hasClass(
+                            'iQuery_CSS-Rule'
+                        ))
+                            return;
+
+                        iRule.style.setProperty('content', (
+                            (iRule.style.content == '"-"')  ?  '"+"'  :  '"-"'
+                        ), 'important');
+                    }
+                );
+            iOrgTree.unit.$_View
+                .on('Insert',  '.ListView_Item',  function () {
+                    var iList = $.ListView.getInstance( this.parentNode );
+                    var iSub = $.ListView.getInstance(
+                            $(this).children('.TreeNode')
+                        );
+
+                    if ( iSub )
+                        iSub.insert( arguments[1] );
+                    else
+                        iOrgTree.branch(iList, this, arguments[1]);
+
+                    return false;
+                })
+                .on('Edit', '.ListView_Item', inlineEdit)
+                .on('Delete',  '.ListView_Item', branchDelete);
         });
     };
 

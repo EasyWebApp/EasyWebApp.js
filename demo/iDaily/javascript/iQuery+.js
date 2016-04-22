@@ -231,6 +231,8 @@
                     );
                 }
             ))).detach().appendTo( this.$_View );
+
+            return this;
         },
         fork:       function () {
             var _Self_ = this.constructor,  $_View = this.$_View.clone(true);
@@ -287,6 +289,8 @@
             branch:    [ ]
         };
         var iTree = this.on('branch', onFork);
+
+        iKey = iKey || 'list';
 
         this.unit = iListView.on('insert',  function ($_Item, iValue) {
             if ( iValue[iKey] )

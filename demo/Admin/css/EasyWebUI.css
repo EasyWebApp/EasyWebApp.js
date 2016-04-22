@@ -8,7 +8,7 @@
  *    and can be used in the Web UI development of
  *    Any Platform.
  *
- *    [Version]    v1.0  (2016-04-14)
+ *    [Version]    v1.0  (2016-04-19)
  *
  *    [Require]    CSS 2.1  (Best Effect with CSS 3),
  *
@@ -218,9 +218,11 @@ input[type="text"],   input[type="password"],
 input[type="tel"],    input[type="number"],
 input[type="email"],  input[type="url"],
 input[type="search"], input[type="date"],
-select,               textarea {
+select,               textarea,
+[contentEditable],    [designMode] {
         display:          inline-block;
         font-size:        1em;
+        background:       white;
         padding:          0.5em;
         border:           1px  solid  rgb(204, 204, 204);
         border-radius:    5px;
@@ -238,7 +240,9 @@ input[type="url"]:focus,      input[type="url"]:hover,
 input[type="search"]:focus,   input[type="search"]:hover,
 input[type="date"]:focus,     input[type="date"]:hover,
 select:focus,                 select:hover,
-textarea:focus,               textarea:hover {
+textarea:focus,               textarea:hover,
+[contentEditable]:focus,      [contentEditable]:hover,
+[designMode]:focus,           [designMode]:hover {
     outline:         none;
     border-color:    rgb(14, 144, 210);
     box-shadow:      inset  0  1px  1px  rgba(0, 0, 0, 0.075),
@@ -407,7 +411,7 @@ input[type="range"].Detail:focus::-ms-fill-upper  {
     background:    deepskyblue;
 }
 datalist {
-    display:    none  !important;
+    display:    none;
 }
 /* ----- iFrame ----- */
 iframe {
@@ -783,8 +787,9 @@ ul.NavBar > li:active {
 
 /* ----- DropDown Menu ----- */
 .DropDown.Head {
-    position:      relative;
+    display:       inline-block;
     min-height:    1.5em;
+    position:      relative;
 }
 .DropDown.Body {
     display:       none;
@@ -1090,6 +1095,30 @@ img.UserLogo {
     overflow:            hidden;
     position:            relative;
     z-index:             0;
+}
+
+
+/* ----------- Tree Control ---------- */
+.Tree {
+    margin:          0;
+    padding-left:    2em;
+}
+.Tree li {
+    list-style:     none;
+    line-height:    2em;
+    position:       relative;
+}
+.Tree li:before {
+    content:          none;
+    position:         absolute;
+    border:           1px solid gray;
+    border-radius:    3px;
+    line-height:      1em;
+    width:            1em;
+    text-align:       center;
+    zoom:             0.5;
+    left:             -2em;
+    top:              0.7em;
 }
 
 
