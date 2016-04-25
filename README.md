@@ -1,9 +1,9 @@
 # EasyWebApp
 
 ## 【项目概述】
-**EasyWebApp** 是一个基于 **jQuery API** 的**轻量级 SPA（单页应用）引擎**，**网页设计、后端接口、前端组件 充分解耦** —— 只用**原生 HTML** 做模板，对 **JSON 数据**的结构几无硬性要求，完全兼容现有的 **jQuery 插件**。
+**EasyWebApp** 是一个基于 **jQuery API** 的 **轻量级 SPA（单页应用）引擎**， **网页设计、后端接口、前端组件 充分解耦** —— 只用 **原生 HTML** 做模板，对 **JSON 数据**的结构几无硬性要求，完全兼容现有的 **jQuery 插件**。
 
-本引擎广泛使用的最新开源稳定版 v2.3 脱胎于 2 个**移动端网页应用**（微信公众平台）和 2 个**桌面端网页系统**（某公司开放平台），是一个有较高 **抽象性**、**普适性**的 SPA 引擎，**个人独立开发**、**团队协作开发** 都能轻松胜任~
+本引擎广泛使用的最新开源稳定版 v2.3 脱胎于 2 个 **移动端网页应用**（微信公众平台）和 2 个 **桌面端网页系统**（某公司开放平台），是一个有较高 **抽象性**、 **普适性**的 SPA 引擎， **个人独立开发**、 **团队协作开发** 都能轻松胜任~
 
 
 ## 【核心理念】
@@ -19,7 +19,7 @@ EasyWebApp 与其作者开发的 [**EasyWebUI**](http://git.oschina.net/Tech_Que
 
 ## 【演示项目】
 
-演示源码的授权协议与本项目的**开源协议**一致 —— **自由使用、自主修改，保留署名、分享改进**！
+演示源码的授权协议与本项目的 **开源协议**一致 —— **自由使用、自主修改，保留署名、分享改进**！
 
 ### 一、每日资讯（移动版）
  - 前端页面
@@ -41,13 +41,18 @@ EasyWebApp 与其作者开发的 [**EasyWebUI**](http://git.oschina.net/Tech_Que
 
 
 ## 【版本历史】
+ - v2.4   Stable —— 2016年4月25日
+   - 所有 HTML 文件中均可 **内联内页**
+   - **纯 API 调用**返回的数据 也会压入数据栈
+   - URL 默认参数、API 调用代理不再由本引擎负责 URL 处理，应由 jQuery 标准 API `$.ajaxPrefilter()` 统一处理
+   - 内部对象 DataStack 的功能融入 InnerHistory，大幅简化数据的存取、渲染
  - v2.3   Stable —— 2016年2月22日  **内页加载方式**更灵活
    - 支持 `#!` 静态路径导航
-   - 数据栈中可取到每个内页的 **模版 URL 参数**、**环境变量**（首批支持 `_File_Path_`、`_File_Name_`、`_Ext_Name_`）
+   - 数据栈中可取到每个内页的 **模版 URL 参数**、 **环境变量**（首批支持 `_File_Path_`、`_File_Name_`、`_Ext_Name_`）
    - 支持用 HTML `head > link` **链接元素**加载内页
    - 支持首页 **HTML 内联内页**
  - v2.2   Stable —— 2015年12月3日  引擎内部实现 **OOP 重构**（第二阶段）
-   - 重构 PageLink、ListView、InnerPage，实现**局部数据刷新**
+   - 重构 PageLink、ListView、InnerPage，实现 **局部数据刷新**
    - ListView 实现独立为一个 jQuery 静态方法，并贡献给 iQuery 项目的 [iQuery+ 插件库](http://git.oschina.net/Tech_Query/iQuery/blob/master/iQuery+.js)
    - WebApp 对象“手动控制”实例方法 整合为一个 loadLink 方法
  - v2.1   Stable —— 2015年11月12日
@@ -56,7 +61,7 @@ EasyWebApp 与其作者开发的 [**EasyWebUI**](http://git.oschina.net/Tech_Que
    - 独立出 **ListView 对象**，便于实现 局部刷新
  - v2.0   Beta   —— 2015年10月7日   引擎内部实现 **OOP 重构**（第一阶段）
    - **WebApp 对象实现** 独立为 InnerPage、InnerHistory、DataStack、PageLink 四大内部对象
- - v1.8.5 Stable —— 2015年9月24日   SPA 内页也支持用 `<link />` 声明**多数据源**，且所有此类页面均支持**通用加载进度事件**
+ - v1.8.5 Stable —— 2015年9月24日   SPA 内页也支持用 `<link />` 声明 **多数据源**，且所有此类页面均支持 **通用加载进度事件**
  - v1.7.5 Stable —— 2015年9月18日
    - 新增 **pageLoad 同步事件**，会在用户触发内页跳转时产生
    - 所有的接口调用点 都可用 **apiCall 同步事件**来 Hook
@@ -70,7 +75,7 @@ EasyWebApp 与其作者开发的 [**EasyWebUI**](http://git.oschina.net/Tech_Que
  - v1.4.5 Stable —— 2015年8月11日   集成 **首屏渲染数据**的 API 调用
  - v1.3.5 Stable —— 2015年8月10日   支持 **API URL 访问代理**、API 返回 纯文本数据
  - v1.3   Stable —— 2015年8月3日    支持 **MarkDown 模板渲染**，并发布 首个演示程序
- - v1.2   Stable —— 2015年7月24日   首个**开源稳定版**，**第一代 API** 形态已稳定
+ - v1.2   Stable —— 2015年7月24日   首个 **开源稳定版**， **第一代 API** 形态已稳定
  - v1.1   Beta   —— 2015年7月22日   首个开源版本，基本模式、架构已成形
 
 ---
@@ -80,9 +85,9 @@ EasyWebApp 与其作者开发的 [**EasyWebUI**](http://git.oschina.net/Tech_Que
 ### 〇、开发流程
 
 本节总述 EasyWebApp 建议的 SPA 开发流程，后面三节是本流程具体步骤的示例讲解 ——
- 1. **产品设计师** 做好 **Web 原型**后，**前端工程师** 即可按原型制作页面，与 **视觉设计师**（美工）并行工作
- 2. 同时，在前端工程师开始制作页面时，综合考虑 原型中页面、功能的划分，与 **后端工程师** 商定好 **数据 API** 的 **URL**、**数据结构**、**字段名**（参考 **RESTful 规范**、下文【数据填充】规范）
- 3. 用 **HTML、CSS、jQuery 最自然的思维方式** 去制作页面（原来你**前后端分离**模式下怎么写前端程序 现在就怎么写）~
+ 1. **产品设计师** 做好 **Web 原型**后， **前端工程师** 即可按原型制作页面，与 **视觉设计师**（美工）并行工作
+ 2. 同时，在前端工程师开始制作页面时，综合考虑 原型中页面、功能的划分，与 **后端工程师** 商定好 **数据 API** 的 **URL**、 **数据结构**、 **字段名**（参考 **RESTful 规范**、下文【数据填充】规范）
+ 3. 用 **HTML、CSS、jQuery 最自然的思维方式** 去制作页面（原来你 **前后端分离**模式下怎么写前端程序 现在就怎么写）~
  4. 应用本引擎在 HTML、jQuery 上的特性，引擎就会自动把各个页面串接起来，成为一个单页应用~
 
 ### 一、加载引擎
@@ -118,10 +123,10 @@ EasyWebApp 与其作者开发的 [**EasyWebUI**](http://git.oschina.net/Tech_Que
 </body></html>
 ```
 ### 三、数据填充
-本引擎模板 把 **HTML name 属性** 推而广之，应用在任何 HTML 元素上，用作 JSON 数据的“**键值对应**”，自动填充**数据容器元素**的 `innerHTML`、`value`、`src`、`href` 乃至 `background-image`，仅有很少的 宽松规范 ——
+本引擎模板 把 **HTML name 属性** 推而广之，应用在任何 HTML 元素上，用作 JSON 数据的“ **键值对应**”，自动填充 **数据容器元素**的 `innerHTML`、`value`、`src`、`href` 乃至 `background-image`，仅有很少的 宽松规范 ——
 
- - 出现在**同一页面的不同数据不可重名**（如 用户、App、作品 等的名字，不可都用 name 来作为 JSON 键，无论它们 来自哪个 API 或 在数据结构的哪一层）
- - 符合 CSS 3 选择器 `ul, ol, dl, tbody, select, datalist, *[multiple]:not(input)` 的数据容器元素（有 name 属性的），其对应的数据结构是一个**以普通对象为元素的数组**，其子元素（它也可以有子元素）只需有一个，引擎会自动复制这个子元素的作为**数组迭代的模板**
+ - 出现在 **同一页面的不同数据不可重名**（如 用户、App、作品 等的名字，不可都用 name 来作为 JSON 键，无论它们 来自哪个 API 或 在数据结构的哪一层）
+ - 符合 CSS 3 选择器 `ul, ol, dl, tbody, select, datalist, *[multiple]:not(input)` 的数据容器元素（有 name 属性的），其对应的数据结构是一个 **以普通对象为元素的数组**，其子元素（它也可以有子元素）只需有一个，引擎会自动复制这个子元素的作为 **数组迭代的模板**
  - 数据值 若是 **URL**，它会被优先填在 `<img src="" />`、`<a href="" />` 中，其次会尝试设为 **枝节点元素**（有子元素的）的 background-image，最后才会被赋给 **叶节点元素**（无子元素的）的 innerHTML
 
 ```html
@@ -225,7 +230,7 @@ EasyWebApp 与其作者开发的 [**EasyWebUI**](http://git.oschina.net/Tech_Que
 【注】前文所述的 SPA 内页代码中也可用形如以上的 `<link />` 标签来声明 **多数据源**，此时，打开此内页的 SPA 链接元素上就可以省略 src 属性。
 
 #### （五）表单提交
-SPA 中所有**可见表单** 均会被本引擎用 **AJAX 提交**接管，用户在表单内填写的数据、表单提交返回的数据 都会被压入引擎的数据栈。
+SPA 中所有 **可见表单** 均会被本引擎用 **AJAX 提交**接管，用户在表单内填写的数据、表单提交返回的数据 都会被压入引擎的数据栈。
 
 同时，上述表单的源码标签上也可使用 **SPA 链接元素**的属性，用以在表单提交后继续 加载内外页面（但 表单提交的 Method 与 接口调用的不可不同）~
 ```html
@@ -253,6 +258,70 @@ SPA 中所有**可见表单** 均会被本引擎用 **AJAX 提交**接管，用�
 })(self.jQuery);
 ```
 
+#### （六）请求预处理
+
+##### 自定义参数
+```JavaScript
+$.ajaxPrefilter(function (iOption) {
+    iOption.contentType = 'application/json';
+    iOption.url += '&custom=xxx';
+});
+```
+##### 跨域代理
+```JavaScript
+$.ajaxPrefilter(function (iOption) {
+    iOption.url = 'http://proxy.com/?url=' + BOM.encodeURIComponent(iOption.url);
+});
+```
+##### 请求签名
+```JavaScript
+var URL_Args = $.paramJSON();
+
+function Request_Sign(iData) {
+    iData = (typeof iData == 'string')  ?  $.paramJSON(iData)  :  iData;
+
+    return $.map(
+        Object.getOwnPropertyNames(iData).sort(),
+        function (iKey) {
+            if (typeof iData[iKey] == 'function')  return;
+
+            if (iData[iKey][0] == '{')  try {
+                return  iKey + '=' + JSON.stringify(iData[iKey]);
+            } catch (iError) { }
+
+            return  iKey + '=' + iData[iKey];
+        }
+    ).join('&');
+}
+
+$.ajaxPrefilter(function (iOption) {
+    if ( iOption.url.match(/\.(html|md)/) )  return;
+
+    iOption.xhrFields = $.extend(iOption.xhrFields || { },  {
+        withCredentials:    true
+    });
+
+    var iData = (typeof iOption.data == 'string')  ?
+            ('?' + iOption.data)  :  iOption.data;
+
+    var iArgs = {
+            AppID:    URL_Args.AppID,
+            sign:     md5(Request_Sign(iData || iOption.url)  +  URL_Args.AppKey)
+        };
+
+    if (iOption.type == 'GET')
+        iOption.url = iOption.url.split('?')[0] + '?' +
+            $.param($.extend($.paramJSON(iOption.url), iArgs, {
+                token:    URL_Args.token
+            }));
+    else {
+        iOption.url += 'token=' + URL_Args.token;
+        iOption.data = $.param($.extend(iData, iArgs));
+    }
+});
+```
+
+
 ## 【API 总览】
 
 ### 一、jQuery 实例方法
@@ -278,20 +347,20 @@ $_AppRoot
     );
 ```
 ### 二、jQuery 自定义事件
-本引擎不支持“在 jQuery 插件 初始化时传入各种回调函数”的方式，一切**可编程点**均直接在 **实例化 WebApp** 的元素上触发**自定义 DOM 事件**，开发者只需使用 jQuery 标准的事件监听方法，就可以在其回调函数中调用 **WebApp 实例**的方法。
+本引擎不支持“在 jQuery 插件 初始化时传入各种回调函数”的方式，一切 **可编程点**均直接在 **实例化 WebApp** 的元素上触发 **自定义 DOM 事件**，开发者只需使用 jQuery 标准的事件监听方法，就可以在其回调函数中调用 **WebApp 实例**的方法。
 
 【事件分类】
- - [A] 表示 **异步事件**，一般在 事件名所表示的操作 完成时 触发，可在回调内根据 API 返回值，酌情调用 WebApp 实例方法，**手动控制 WebApp 加载页面**
+ - [A] 表示 **异步事件**，一般在 事件名所表示的操作 完成时 触发，可在回调内根据 API 返回值，酌情调用 WebApp 实例方法， **手动控制 WebApp 加载页面**
  - [S] 表示 **同步事件**，一般在 事件名所表示的操作 进行前 触发，可能需要开发者：
-   -  判断是否阻止**事件操作**执行 —— return false
-   -  在自定义数据格式中提取**内容数据**参与渲染 —— return {...}
+   -  判断是否阻止 **事件操作**执行 —— return false
+   -  在自定义数据格式中提取 **内容数据**参与渲染 —— return {...}
 
 【事件总表】
  - [S] **pageLoad 事件** 在用户触发内页跳转时产生。其回调参数如下：
    -  jQuery Event 对象
    -  正在渲染的页面对象
    -  刚切换走的页面对象
- - [S] **pageRender 事件** 在一个内部页面的模板、数据加载完，准备**用数据渲染模板**时触发。其回调参数如下：
+ - [S] **pageRender 事件** 在一个内部页面的模板、数据加载完，准备 **用数据渲染模板**时触发。其回调参数如下：
    -  jQuery Event 对象
    -  正在渲染的页面对象
    -  刚切换走的页面对象
@@ -348,4 +417,4 @@ EasyWebApp v2.x 的基本模型（对照 MVC 模式）——
 
 
 ## 【项目缘起】
-**EasyWebApp** 算是其作者与 产品、设计、后端的各种“撕逼”后，或坚持、或折中的结果。其 **HTML 模板机制** 源于作者早期的一个 PHP 前端项目 [EasyWebTemplate](http://git.oschina.net/Tech_Query/EasyWebTemplate)（基于 **phpQuery**），而其 **事件驱动的 API** 则源于文首提到的开放平台首个版本的**智能表单引擎** JSON_Web.js（强数据格式依赖、不支持不规律的界面设计，未到达开源水准，但会继续吸收其优秀的特性）。虽然前面这些小项目 都有些幼稚，但却又是 **敢于把独立思考成果付诸实践**的有益尝试，若没有这些沉淀，就没有本项目自 2015年6月29日的26天 内即发布**开源稳定版**的成绩~
+**EasyWebApp** 算是其作者与 产品、设计、后端的各种“撕逼”后，或坚持、或折中的结果。其 **HTML 模板机制** 源于作者早期的一个 PHP 前端项目 [EasyWebTemplate](http://git.oschina.net/Tech_Query/EasyWebTemplate)（基于 **phpQuery**），而其 **事件驱动的 API** 则源于文首提到的开放平台首个版本的 **智能表单引擎** JSON_Web.js（强数据格式依赖、不支持不规律的界面设计，未到达开源水准，但会继续吸收其优秀的特性）。虽然前面这些小项目 都有些幼稚，但却又是 **敢于把独立思考成果付诸实践**的有益尝试，若没有这些沉淀，就没有本项目自 2015年6月29日的26天 内即发布 **开源稳定版**的成绩~

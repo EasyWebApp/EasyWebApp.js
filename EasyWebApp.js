@@ -2,7 +2,7 @@
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v2.4  (2016-04-19)  Beta
+//      [Version]    v2.4  (2016-04-25)  Stable
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //
@@ -309,31 +309,12 @@
         if (! ($_Root instanceof $))
             $_Root = $($_Root);
 
-        var Split_Index = API_Root && (
-                API_Root.match(/(\w+:)?\/\//) || [ ]
-            ).index;
-        API_Root = Split_Index ? [
-            API_Root.slice(Split_Index),
-            API_Root.slice(0, Split_Index)
-        ] : [API_Root];
-
         $.extend(this, {
             domRoot:      $_Root,
-            apiRoot:      API_Root[0] || '',
+            apiRoot:      API_Root,
             urlChange:    URL_Change,
             history:      new InnerHistory(this, $_Root),
-            loading:      false,
-            proxy:        API_Root[1] || ''
-        });
-
-        if (! (this.apiRoot && this.proxy))  return;
-
-        var This_App = this;
-
-        $.ajaxPrefilter(function (iOption) {
-            if (iOption.url.indexOf( This_App.apiRoot ))  return;
-
-            iOption.url = This_App.proxy + BOM.encodeURIComponent(iOption.url);
+            loading:      false
         });
     }
 

@@ -2,7 +2,7 @@
 //              >>>  iQuery+  <<<
 //
 //
-//    [Version]    v1.3  (2016-04-18)  Stable
+//    [Version]    v1.3  (2016-04-25)  Stable
 //
 //    [Require]    iQuery  ||  jQuery with jQuery+
 //
@@ -269,9 +269,11 @@
                     (iListView.$_Template.attr('class') || '').split(/\s+/)
                 ).join('.').trim('.'),
             function () {
-                if ( $(arguments[0].target).is(':input') )  return;
+                var $_This = $(this);
 
-                $(this).children('.TreeNode').toggle(200);
+                if (arguments[0].pageX > $_This.offset().left)  return;
+
+                $_This.children('.TreeNode').toggle(200);
 
                 if (typeof onFocus != 'function')  return;
 
@@ -289,8 +291,6 @@
             branch:    [ ]
         };
         var iTree = this.on('branch', onFork);
-
-        iKey = iKey || 'list';
 
         this.unit = iListView.on('insert',  function ($_Item, iValue) {
             if ( iValue[iKey] )
