@@ -2,7 +2,7 @@
 //          >>>  EasyWebUI Component Library  <<<
 //
 //
-//      [Version]     v2.4  (2016-04-22)  Stable
+//      [Version]     v2.4  (2016-04-26)  Stable
 //
 //      [Based on]    iQuery v1  or  jQuery (with jQuery+),
 //
@@ -191,10 +191,18 @@
         });
     };
 
-/* ---------- Input List 补丁  v0.2 ---------- */
+/* ---------- Input Data-List 补丁  v0.2 ---------- */
 
-    function Tips_Show() {
-        if (! this.height())  this.slideDown(100);
+    var List_Type = 'input[type="' +
+            ['text', 'tel', 'email', 'url', 'search'].join('"], input[type="')  +
+            '"]';
+
+    function Tips_Show($_List) {
+        if (! this.value)  $_List.append( $_List.$_Option );
+
+        if (! $_List.height())  $_List.slideDown(100);
+
+        return this.value;
     }
 
     function Tips_Hide() {
@@ -203,8 +211,36 @@
         return this;
     }
 
+    function Tips_Match($_List) {
+        $_List.$_Option = $.unique($.merge(
+            $_List.$_Option,  $_List.children()
+        ));
+
+        var iValue = Tips_Show.call(this, $_List);
+
+        if (! iValue)  return;
+
+        $.each($_List.$_Option,  function () {
+            for (var i = 0, _Index_;  i < iValue.length;  i++) {
+                if (iValue[i + 1]  ===  undefined)  break;
+
+                _Index_ = this.value.indexOf( iValue[i] );
+
+                if (
+                    (_Index_ < 0)  ||
+                    (_Index_  >=  this.value.indexOf( iValue[i + 1] ))
+                ) {
+                    if (this.parentElement)  $(this).detach();
+                    return;
+                }
+            }
+            if (! this.parentElement)  $_List[0].appendChild( this );
+        });
+    }
+
     $.fn.smartInput = function () {
-        return  this.each(function () {
+        return  this.filter(List_Type).each(function () {
+
             var $_Input = $(this),  iPosition = this.parentNode.style.position;
 
             if (BOM.HTMLDataListElement  ||  ($_Input.attr('autocomplete') == 'off'))
@@ -232,34 +268,16 @@
                 })).change(function () {
                     $_Input[0].value = Tips_Hide.call($_List)[0].value;
                 });
-            var $_Option = $_List.children();
+            $_List.$_Option = [ ];
+
+            var iFilter = $.proxy(Tips_Match, null, $_List);
 
             $_Input.after($_List)
-                .dblclick($.proxy(Tips_Show, $_List))
+                .dblclick($.proxy(Tips_Show, null, $_List))
                 .blur($.proxy(Tips_Hide, $_List))
-                .keyup(function () {
-                    var iValue = this.value;
-
-                    if (iValue === '')  return $_Option.appendTo($_List);
-
-                    $_Option.each(function () {
-                        for (var i = 0, j = 0;  i < iValue.length;  i++) {
-                            if (iValue[i + 1]  ===  undefined)  break;
-
-                            if (
-                                this.value.indexOf( iValue[i] )  <
-                                this.value.indexOf( iValue[i + 1] )
-                            ) {
-                                if (! this.parentElement)
-                                    $_List[0].appendChild( this );
-                                continue;
-                            }
-
-                            $(this).detach();
-                        }
-                    });
-                    Tips_Show.call($_List);
-                });
+                .keyup(iFilter)
+                .on('paste', iFilter)
+                .on('cut', iFilter);
         });
     };
 
@@ -853,13 +871,15 @@
                                 BOM.getMatchedCSSRules(this, ':before'),  -1
                             )[0];
 
-                        if (! $(iRule.parentStyleSheet.ownerNode).hasClass(
-                            'iQuery_CSS-Rule'
+                        if (! (
+                            arguments[1] &&
+                            $(iRule.parentStyleSheet.ownerNode)
+                                .hasClass('iQuery_CSS-Rule')
                         ))
                             return;
 
                         iRule.style.setProperty('content', (
-                            (iRule.style.content == '"-"')  ?  '"+"'  :  '"-"'
+                            (iRule.style.content[1] == '-')  ?  '"+"'  :  '"-"'
                         ), 'important');
                     }
                 );

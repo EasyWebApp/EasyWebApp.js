@@ -2,7 +2,7 @@
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v2.4  (2016-04-25)  Stable
+//      [Version]    v2.4  (2016-04-26)  Stable
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //
@@ -89,8 +89,14 @@
             var iData = this.$_DOM.data('EWA_Model');
 
             if (! iData) {
-                iData = $.ListView.getInstance( this.$_DOM[0].parentNode );
-                iData = iData && iData.valueOf( this.$_DOM.index() );
+                iData = this.$_DOM.hasClass('ListView_Item') ?
+                    this.$_DOM : this.$_DOM.parents('.ListView_Item');
+
+                if ( iData[0] ) {
+                    iData = $.ListView.getInstance(iData[0].parentNode);
+
+                    iData = iData && iData.valueOf( this.$_DOM.index() );
+                }
             }
             return  this.data = $.extend(iData || { },  this.data);
         },
@@ -306,12 +312,9 @@
 /* ---------->> WebApp Constructor <<---------- */
 
     function WebApp($_Root, API_Root, URL_Change) {
-        if (! ($_Root instanceof $))
-            $_Root = $($_Root);
-
         $.extend(this, {
-            domRoot:      $_Root,
-            apiRoot:      API_Root,
+            domRoot:      $($_Root),
+            apiRoot:      API_Root || '',
             urlChange:    URL_Change,
             history:      new InnerHistory(this, $_Root),
             loading:      false
@@ -817,25 +820,38 @@
         return this.addClass('EWA_Container');
     };
 
+    function RouterBack(iHTML, iJSON) {
+        var Page_Match = (iHTML && iJSON)  ?  2  :  1,
+            iArgs = $.makeArray( arguments ).slice(4);
+
+        var iApp = (iArgs[0] instanceof WebApp)  &&  iArgs.shift();
+        var This_Page = iArgs[0],  iData = iArgs[2];
+
+        if (This_Page.HTML && This_Page.HTML.match(iHTML))
+            Page_Match-- ;
+        if (This_Page.JSON && This_Page.JSON.match(iJSON))
+            Page_Match-- ;
+
+        if (Page_Match === 0)
+            iData = arguments[2].apply(this,  iApp ? [
+                iApp, This_Page, iArgs[1], iData
+            ] : [
+                iData, This_Page, iArgs[1]
+            ]) || iData;
+
+        return iData;
+    }
+
     $.fn.onPageRender = function () {
         var iArgs = $.makeArray(arguments);
 
         var iHTML = $.type(iArgs[0]).match(/String|RegExp/i) && iArgs.shift();
         var iJSON = $.type(iArgs[0]).match(/String|RegExp/i) && iArgs.shift();
-        var iCallback = (typeof iArgs[0] == 'function') && iArgs[0];
 
-        if (iCallback  &&  (iHTML || iJSON))
-            this.on('pageRender',  function (iEvent, This_Page, Prev_Page, iData) {
-                var Page_Match = (iHTML && iJSON) ? 2 : 1;
-
-                if (This_Page.HTML && This_Page.HTML.match(iHTML))
-                    Page_Match-- ;
-                if (This_Page.JSON && This_Page.JSON.match(iJSON))
-                    Page_Match-- ;
-
-                if (Page_Match === 0)
-                    return  iCallback.call(this, iData, Prev_Page);
-            });
+        if ((iHTML || iJSON)  &&  (typeof iArgs[0] == 'function'))
+            this.on('pageRender', $.proxy(
+                RouterBack,  null,  iHTML,  iJSON,  iArgs[0]
+            ));
 
         return this;
     };
@@ -845,20 +861,11 @@
 
         var iHTML = $.type(iArgs[0]).match(/String|RegExp/i) && iArgs.shift();
         var iJSON = $.type(iArgs[0]).match(/String|RegExp/i) && iArgs.shift();
-        var iCallback = (typeof iArgs[0] == 'function') && iArgs[0];
 
-        if (iCallback  &&  (iHTML || iJSON))
-            this.on('pageReady',  function (iEvent, iApp, This_Page, Prev_Page) {
-                var Page_Match = (iHTML && iJSON) ? 2 : 1;
-
-                if (This_Page.HTML && This_Page.HTML.match(iHTML))
-                    Page_Match-- ;
-                if (This_Page.JSON && This_Page.JSON.match(iJSON))
-                    Page_Match-- ;
-
-                if (Page_Match === 0)
-                    iCallback.call(this, iApp, Prev_Page);
-            });
+        if ((iHTML || iJSON)  &&  (typeof iArgs[0] == 'function'))
+            this.on('pageReady', $.proxy(
+                RouterBack,  null,  iHTML,  iJSON,  iArgs[0]
+            ));
 
         return this;
     };

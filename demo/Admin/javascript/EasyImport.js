@@ -203,7 +203,8 @@
                 return  iValue && (iValue.constructor === Object);
             },
             likeArray:        function (iObject) {
-                if (! iObject)  return false;
+                if ((! iObject)  ||  (typeof iObject != 'object'))
+                    return false;
 
                 iObject = (typeof iObject.valueOf == 'function')  ?
                     iObject.valueOf() : iObject;
@@ -351,10 +352,19 @@
                 return true;
             },
             makeSet:          function () {
-                var iSet = { };
+                var iArgs = arguments,  iValue = true,  iSet = { };
 
-                for (var i = 0;  i < arguments.length;  i++)
-                    iSet[arguments[i]] = true;
+                if (this.likeArray( iArgs[1] )) {
+                    iValue = iArgs[0];
+                    iArgs = iArgs[1];
+                } else if (this.likeArray( iArgs[0] )) {
+                    iValue = iArgs[1];
+                    iArgs = iArgs[0];
+                }
+
+                for (var i = 0;  i < iArgs.length;  i++)
+                    iSet[ iArgs[i] ] = (typeof iValue == 'function')  ?
+                        iValue() : iValue;
 
                 return iSet;
             },
@@ -3601,13 +3611,13 @@
         iData = $.extend($.paramJSON(iURL), iData);
 
         var File_Name = $.fileName(iURL);
-/*
+
         if (!  $.map($('link[rel="next"], link[rel="prefetch"]'),  function () {
             if ($.fileName( arguments[0].href )  ==  File_Name)
                 return iURL;
         }).length)
             iData._ = $.now();
-*/
+
         return HTTP_Request(
             'GET',
             (iURL.split('?')[0] + '?' + $.param(iData)).trim('?'),
@@ -4135,18 +4145,19 @@
                 iLazy.style.backgroundImage = iLazy.dataset.background;
         };
 
-        this.addEventListener('DOMNodeInserted',  function () {
-            var iTarget = arguments[0].target;
+        if ( $.browser.modern )
+            this.addEventListener('DOMNodeInserted',  function () {
+                var iTarget = arguments[0].target;
 
-            if (iTarget.nodeType != 1)  return;
+                if (iTarget.nodeType != 1)  return;
 
-            if (iTarget.tagName in Lazy_Tag) {
-                if (! iTarget.dataset.src)  return;
-            } else if (! iTarget.dataset.background)
-                return;
+                if (iTarget.tagName in Lazy_Tag) {
+                    if (! iTarget.dataset.src)  return;
+                } else if (! iTarget.dataset.background)
+                    return;
 
-            iQueue.register( iTarget );
-        });
+                iQueue.register( iTarget );
+            });
 
         iQueue.register(
             $('img[data-src], iframe[data-src], *[data-background]', this.body)

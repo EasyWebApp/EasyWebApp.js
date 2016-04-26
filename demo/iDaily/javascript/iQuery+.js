@@ -2,7 +2,7 @@
 //              >>>  iQuery+  <<<
 //
 //
-//    [Version]    v1.3  (2016-04-25)  Stable
+//    [Version]    v1.3  (2016-04-26)  Stable
 //
 //    [Require]    iQuery  ||  jQuery with jQuery+
 //
@@ -12,6 +12,36 @@
 
 
 (function (BOM, DOM, $) {
+
+/* ---------- Event Interface  v0.1 ---------- */
+
+    function EventInterface() {
+        this.callback = $.makeSet(arguments, Array);
+
+        return this;
+    }
+
+    $.extend(EventInterface.prototype, {
+        on:         function (iType, iCallback) {
+            if (
+                (typeof iType == 'string')  &&
+                (typeof iCallback == 'function')  &&
+                (this.callback[iType].indexOf(iCallback) == -1)
+            )
+                this.callback[iType].push(iCallback);
+
+            return this;
+        },
+        trigger:    function () {
+            var iCallback = this.callback[ arguments[0] ],  iReturn;
+
+            for (var i = 0;  i < iCallback.length;  i++)
+                iReturn = iCallback[i].apply(
+                    this,  $.makeArray(arguments).slice(1)
+                );
+            return iReturn;
+        }
+    });
 
 /* ---------- ListView Interface  v0.7 ---------- */
 
@@ -29,13 +59,9 @@
             $_Item = null;
         }
 
-        var iView = _Self_.getInstance($_View) || this;
-
-        this.callback = {
-            insert:         [ ],
-            remove:         [ ],
-            afterRender:    [ ]
-        };
+        var iView = _Self_.getInstance($_View) || EventInterface.call(
+                this, 'insert', 'remove', 'afterRender'
+            );
         if (onInsert)  iView.on('insert', onInsert);
 
         if (iView !== this)  return iView;
@@ -90,27 +116,9 @@
         return $_Clone;
     }
 
-    $.extend(ListView.prototype, {
-        on:         function (iType, iCallback) {
-            if (
-                (typeof iType == 'string')  &&
-                (typeof iCallback == 'function')  &&
-                (this.callback[iType].indexOf(iCallback) == -1)
-            )
-                this.callback[iType].push(iCallback);
-
-            return this;
-        },
-        trigger:    function (iType, $_Item, iValue, Index) {
-            var iCallback = this.callback[iType],  iReturn,
-                iArgs = ($_Item instanceof $)  ?  [$_Item, iValue, Index]  :  [$_Item];
-
-            for (var i = 0;  i < iCallback.length;  i++)
-                iReturn = iCallback[i].apply(this, iArgs);
-
-            return iReturn;
-        },
-        itemOf:     function (Index) {
+    ListView.prototype = $.extend(new EventInterface(),  {
+        constructor:    ListView,
+        itemOf:         function (Index) {
             Index = Index || 0;
 
             var _This_ = this,  $_Item = this.$_View[0].children[Index];
@@ -123,8 +131,8 @@
                     ($_Item ? [$_Item] : [ ])
             );
         },
-        slice:      Array.prototype.slice,
-        indexOf:    function (Index, getInstance) {
+        slice:          Array.prototype.slice,
+        indexOf:        function (Index, getInstance) {
             if (! isNaN(Number( Index )))
                 return  this.slice(Index,  (Index + 1) || undefined)[0];
 
@@ -136,8 +144,8 @@
 
             return  getInstance ? $() : -1;
         },
-        splice:     Array.prototype.splice,
-        insert:     function (iValue, Index) {
+        splice:         Array.prototype.splice,
+        insert:         function (iValue, Index) {
             iValue = (iValue === undefined)  ?  { }  :  iValue;
 
             Index = parseInt(Index) || 0;
@@ -163,7 +171,7 @@
 
             return this.indexOf(_Index_);
         },
-        render:     function (iData) {
+        render:         function (iData) {
             iData = $.likeArray(iData) ? iData : [iData];
 
             for (var i = 0;  i < iData.length;  i++)
@@ -173,7 +181,7 @@
 
             return this;
         },
-        valueOf:    function (Index) {
+        valueOf:        function (Index) {
             if (Index  ||  (Index == 0))
                 return  this.indexOf(arguments[0], true).data('LV_Model');
 
@@ -187,7 +195,7 @@
             }
             return iData;
         },
-        remove:     function (Index) {
+        remove:         function (Index) {
             var $_Item = this.indexOf(Index);
 
             if (typeof $_Item == 'number') {
@@ -205,13 +213,13 @@
 
             return this;
         },
-        clear:      function () {
+        clear:          function () {
             this.splice(0, this.length);
             this.$_View.empty();
 
             return this;
         },
-        focus:      function () {
+        focus:          function () {
             var $_Item = this.indexOf(arguments[0], true);
 
             if ( $_Item[0] ) {
@@ -222,7 +230,7 @@
             }
             return this;
         },
-        sort:       function (iCallback) {
+        sort:           function (iCallback) {
             $($.merge.apply($, Array.prototype.sort.call(
                 this,
                 function ($_A, $_B) {
@@ -234,12 +242,12 @@
 
             return this;
         },
-        fork:       function () {
-            var _Self_ = this.constructor,  $_View = this.$_View.clone(true);
+        fork:           function () {
+            var $_View = this.$_View.clone(true);
 
             $_View.data({_LVI_: '',  LV_Model: ''})[0].id = '';
 
-            var iFork = _Self_($_View.appendTo( arguments[0] ),  this.selector);
+            var iFork = ListView($_View.appendTo( arguments[0] ),  this.selector);
             iFork.$_Template = this.$_Template.clone(true);
             iFork.callback = this.callback;
 
@@ -250,7 +258,7 @@
     $.ListView = ListView;
 
 
-/* ---------- TreeView Interface  v0.4 ---------- */
+/* ---------- TreeView Interface  v0.3 ---------- */
 
     function TreeView(iListView, iKey, onFork, onFocus) {
         var _Self_ = arguments.callee;
@@ -258,7 +266,7 @@
         if (!  (this instanceof _Self_))
             return  new _Self_(iListView, iKey, onFork, onFocus);
 
-        var _This_ = this;
+        var _This_ = EventInterface.call(this, 'branch');
 
         this.listener = [
             $.browser.mobile ? 'tap' : 'click',
@@ -268,16 +276,17 @@
                 ].concat(
                     (iListView.$_Template.attr('class') || '').split(/\s+/)
                 ).join('.').trim('.'),
-            function () {
+            function (iEvent) {
+                if ( $(iEvent.target).is(':input') )  return;
+
                 var $_This = $(this);
+                var Pseudo_Click = (iEvent.pageX < $_This.offset().left);
 
-                if (arguments[0].pageX > $_This.offset().left)  return;
-
-                $_This.children('.TreeNode').toggle(200);
+                if ( Pseudo_Click )  $_This.children('.TreeNode').toggle(200);
 
                 if (typeof onFocus != 'function')  return;
 
-                var $_Target = onFocus.apply(this, arguments);
+                var $_Target = onFocus.call(this, iEvent, Pseudo_Click);
 
                 if ($_Target && _This_.$_Content) {
                     _This_.$_Content.scrollTo( $_Target );
@@ -287,10 +296,9 @@
         ];
         $.fn.on.apply(iListView.$_View.addClass('TreeNode'), this.listener);
 
-        this.callback = {
-            branch:    [ ]
-        };
         var iTree = this.on('branch', onFork);
+
+        iKey = iKey || 'list';
 
         this.unit = iListView.on('insert',  function ($_Item, iValue) {
             if ( iValue[iKey] )
@@ -298,27 +306,9 @@
         });
     }
 
-    $.extend(TreeView.prototype, {
-        on:         function (iType, iCallback) {
-            if (
-                (typeof iType == 'string')  &&
-                (typeof iCallback == 'function')  &&
-                (this.callback[iType].indexOf(iCallback) == -1)
-            )
-                this.callback[iType].push(iCallback);
-
-            return this;
-        },
-        trigger:    function () {
-            var iCallback = this.callback[ arguments[0] ],  iReturn;
-
-            for (var i = 0;  i < iCallback.length;  i++)
-                iReturn = iCallback[i].apply(
-                    this,  $.makeArray(arguments).slice(1)
-                );
-            return iReturn;
-        },
-        branch:     function (iListView, $_Item, iData) {
+    TreeView.prototype = $.extend(new EventInterface(),  {
+        constructor:    TreeView,
+        branch:         function (iListView, $_Item, iData) {
             var iFork = iListView.fork($_Item).clear().render(iData);
 
             iFork.$_View.children().removeClass('active');
@@ -331,7 +321,7 @@
 
             return iFork;
         },
-        bind:       function ($_Item, Depth_Sort, Data_Filter) {
+        bind:           function ($_Item, Depth_Sort, Data_Filter) {
             this.$_Content = $_Item.sameParents().eq(0);
             this.data = [ ];
 
@@ -359,7 +349,7 @@
 
             return this;
         },
-        linkage:    function ($_Scroll, onScroll) {
+        linkage:        function ($_Scroll, onScroll) {
             var _DOM_ = $_Scroll[0].ownerDocument;
 
             $_Scroll.scroll(function () {
