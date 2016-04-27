@@ -349,7 +349,7 @@
         };
 
     var Type_Info = {
-            Data:         _Object_.makeSet('String', 'Number', 'Boolean', 'Null'),
+            Data:         _Object_.makeSet('String', 'Number', 'Boolean'),
             BOM:          _Object_.makeSet('Window', 'DOMWindow', 'global'),
             DOM:          {
                 set:        _Object_.makeSet(
@@ -882,8 +882,8 @@
 
     _Object_.extend($, _Object_, _Time_, {
         browser:          _Browser_,
-        isData:           function () {
-            return  (this.type(arguments[0]) in Type_Info.Data);
+        isData:           function (iValue) {
+            return  Boolean(iValue)  ||  (this.type(iValue) in Type_Info.Data);
         },
         isSelector:       function () {
             try {
@@ -971,6 +971,22 @@
             }
 
             return  Args_Str.length ? _Args_ : { };
+        },
+        paramSign:        function (iData) {
+            iData = (typeof iData == 'string')  ?  $.paramJSON(iData)  :  iData;
+
+            return $.map(
+                Object.getOwnPropertyNames(iData).sort(),
+                function (iKey) {
+                    switch (typeof iData[iKey]) {
+                        case 'function':    return;
+                        case 'object':      try {
+                            return  iKey + '=' + JSON.stringify(iData[iKey]);
+                        } catch (iError) { }
+                    }
+                    return  iKey + '=' + iData[iKey];
+                }
+            ).join(arguments[1] || '&');
         },
         fileName:         function () {
             return (
@@ -1566,7 +1582,7 @@
             }
             case 'img':         return  $_This.attr('src', iValue);
             case 'textarea':    ;
-            case 'select':      ;
+            case 'option':      $_This.text(iValue);    break;
             case 'input':       {
                 var _Value_ = this.value;
                 try {
@@ -3143,7 +3159,7 @@
 
             $_Form.data('_AJAX_Submitting_', 1);
 
-            var iMethod = (this.method || 'Get').toUpperCase();
+            var iMethod = ($_Form.attr('method') || 'Get').toUpperCase();
 
             if ((iMethod in HTTP_Method)  ||  (iMethod == 'GET'))
                 $[ iMethod.toLowerCase() ](

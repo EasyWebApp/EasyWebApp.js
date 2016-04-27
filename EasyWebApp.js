@@ -2,7 +2,7 @@
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v2.4  (2016-04-26)  Stable
+//      [Version]    v2.4  (2016-04-27)  Stable
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //
@@ -89,14 +89,12 @@
             var iData = this.$_DOM.data('EWA_Model');
 
             if (! iData) {
-                iData = this.$_DOM.hasClass('ListView_Item') ?
-                    this.$_DOM : this.$_DOM.parents('.ListView_Item');
+                var $_Item = this.$_DOM.hasClass('ListView_Item') ?
+                        this.$_DOM : this.$_DOM.parents('.ListView_Item');
 
-                if ( iData[0] ) {
-                    iData = $.ListView.getInstance(iData[0].parentNode);
-
-                    iData = iData && iData.valueOf( this.$_DOM.index() );
-                }
+                if ( $_Item[0] )
+                    iData = $.ListView.getInstance( $_Item[0].parentNode )
+                        .valueOf( $_Item );
             }
             return  this.data = $.extend(iData || { },  this.data);
         },
@@ -229,6 +227,15 @@
         });
     }
 
+    function Data_Merge(iOld, iNew) {
+        var iArgs = $.makeArray(arguments);
+        iArgs.unshift(true);
+
+        if (iArgs.slice(-1)[0] instanceof Array)  iArgs.splice(1, 0, [ ]);
+
+        return  $.extend.apply($, iArgs);
+    }
+
     $.extend(InnerHistory.prototype, {
         splice:       Array.prototype.splice,
         push:         Array.prototype.push,
@@ -301,11 +308,13 @@
             return iSource;
         },
         getData:      function () {
-            var iData = $.map(this,  function () {
-                    return arguments[0].data;
+            var iData = $.map(this,  function (iPage) {
+                    var _Data_ = iPage.data || iPage.sourceLink.data;
+
+                    return  _Data_ && [_Data_];
                 });
             return  (iData.length < 2)  ?
-                (iData[0] || { })  :  $.extend.apply($, iData);
+                (iData[0] || { })  :  Data_Merge.apply(null, iData);
         },
     });
 
@@ -424,14 +433,6 @@
         return ($.inArray(
             'nofollow',  (this.getAttribute('rel') || '').split(/\s+/)
         ) > -1);
-    }
-
-    function Data_Merge(iOld, iNew) {
-        var iArgs = [true, iOld, iNew];
-
-        if (iNew instanceof Array)  iArgs.splice(1, 0, [ ]);
-
-        return  $.extend.apply($, iArgs);
     }
 
     $.extend(InnerPage.prototype, {

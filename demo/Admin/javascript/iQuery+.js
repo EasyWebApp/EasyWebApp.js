@@ -2,7 +2,7 @@
 //              >>>  iQuery+  <<<
 //
 //
-//    [Version]    v1.3  (2016-04-26)  Stable
+//    [Version]    v1.4  (2016-04-27)  Stable
 //
 //    [Require]    iQuery  ||  jQuery with jQuery+
 //
@@ -12,6 +12,40 @@
 
 
 (function (BOM, DOM, $) {
+
+/* ---------- Class Generator  v0.1 ---------- */
+
+    $.iClass = function (iConstructor, iPrototype) {
+        var iPrivate = function () {
+                iConstructor.apply(this, arguments);
+                $.extend(this,  iPrototype || { });
+            },
+            iPublic = function () { };
+
+        iPrivate.prototype = $.extend(new iPublic(), {
+            constructor:    iPublic,
+            valueOf:        function () {
+                return this.constructor.prototype;
+            },
+            pubData:        function (iKey, iValue) {
+                this.constructor.prototype[iKey] = iValue;
+
+                return this;
+            }
+        });
+
+        iPrivate.pubMethod = function (iKey, iValue) {
+            var Pub_Proto = this.prototype;
+
+            delete Pub_Proto.constructor;
+
+            Pub_Proto.constructor.prototype[iKey] = iValue;
+
+            Pub_Proto.constructor = this;
+        };
+
+        return iPrivate;
+    };
 
 /* ---------- Event Interface  v0.1 ---------- */
 
@@ -35,10 +69,12 @@
         trigger:    function () {
             var iCallback = this.callback[ arguments[0] ],  iReturn;
 
-            for (var i = 0;  i < iCallback.length;  i++)
-                iReturn = iCallback[i].apply(
+            for (var i = 0, _Return_;  i < iCallback.length;  i++) {
+                _Return_ = iCallback[i].apply(
                     this,  $.makeArray(arguments).slice(1)
                 );
+                if ($.isData(_Return_))  iReturn = _Return_;
+            }
             return iReturn;
         }
     });
