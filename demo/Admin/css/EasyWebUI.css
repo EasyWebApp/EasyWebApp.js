@@ -8,7 +8,7 @@
  *    and can be used in the Web UI development of
  *    Any Platform.
  *
- *    [Version]    v1.0  (2016-04-19)
+ *    [Version]    v1.0  (2016-04-28)
  *
  *    [Require]    CSS 2.1  (Best Effect with CSS 3),
  *
@@ -411,7 +411,7 @@ input[type="range"].Detail:focus::-ms-fill-upper  {
     background:    deepskyblue;
 }
 datalist {
-    display:    none;
+    display:    none  !important;
 }
 /* ----- iFrame ----- */
 iframe {
@@ -525,9 +525,6 @@ html.Fixed > body > .Fix-Top {
 .Grid-Row > .Grid-Column {
     display:           table-cell;
     vertical-align:    top;
-}
-.Grid-Row.CenterY {
-    height:    100%;
 }
 .Grid-Row.CenterY > .Grid-Column,
 .Grid-Column.CenterY {

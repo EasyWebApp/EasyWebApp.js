@@ -2,7 +2,7 @@
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v2.4  (2016-04-27)  Stable
+//      [Version]    v2.5  (2016-05-04)  Alpha
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //
@@ -16,6 +16,71 @@
 //
 //              (C)2015-2016    shiy2008@gmail.com
 //
+
+
+/* ---------- Abstract View Data I/O ---------- */
+
+(function ($) {
+
+    function ArrayRender(iArray, ValueRender) {
+        $.ListView(this,  function () {
+            ValueRender.call(arguments[0], arguments[1]);
+        }).clear().render( iArray );
+    }
+
+    function ObjectRender(iData) {
+        var _Self_ = arguments.callee;
+
+        if (iData instanceof Array)
+            return  ArrayRender.call(this[0], iData, _Self_);
+
+        this.value('name',  function (iName) {
+
+            if (iData[iName] instanceof Array)
+                ArrayRender.call(this, iData[iName], _Self_);
+            else
+                return iData[iName];
+        });
+    }
+
+    $.fn.extend({
+        dataRender:    function (iData) {
+            if (iData instanceof Array)
+                ArrayRender.call(
+                    $.ListView.findView(this, true)[0],  iData,  ObjectRender
+                );
+            else
+                ObjectRender.call(this, iData);
+
+            return this;
+        },
+        dataReader:    function () {
+            var $_Key = $('[name]', this[0]).not( $('[name] [name]', this[0]) ),
+                iData = { };
+
+            if (! $_Key[0])  return this.value();
+
+            for (var i = 0, iName, iLV;  i < $_Key.length;  i++) {
+                iName = $_Key[i].getAttribute('name');
+                iLV = $.ListView.getInstance( $_Key[i] );
+
+                if (! iLV)
+                    iData[iName] = arguments.callee.call( $( $_Key[i] ) );
+                else {
+                    iData[iName] = [ ];
+
+                    for (var j = 0;  j < iLV.length;  j++)
+                        iData[iName][j] = $.extend(
+                            iLV.valueOf(j),  arguments.callee.call( iLV[j] )
+                        );
+                }
+            }
+            return iData;
+        }
+    });
+
+})(self.jQuery);
+
 
 
 (function (BOM, DOM, $) {
@@ -122,15 +187,13 @@
             return this[iKey];
         },
         valueOf:      function () {
-            return {
-                target:    this.target,
-                title:     this.title,
-                alt:       this.alt,
-                href:      this.href,
-                method:    this.method,
-                src:       this.src,
-                action:    this.action
-            };
+            var iValue = { };
+
+            for (var iKey in this)
+                if (! (typeof this[iKey]).match(/object|function/))
+                    iValue[iKey] = this[iKey];
+
+            return iValue;
         }
     });
 
@@ -144,7 +207,7 @@
             URL:              iLink.alt || BOM.location.href,
             HTML:             iLink.href || DOM.URL,
             method:           iLink.method,
-            JSON:             iLink.src,
+            JSON:             iLink.src || iLink.action,
             time:             $.now(),
             innerLink:        [ ],
             innerTemplate:    [ ]
@@ -190,15 +253,7 @@
 
             return this;
         },
-        valueOf:    function () {
-            return {
-                title:     this.title,
-                URL:       this.URL,
-                HTML:      this.HTML,
-                method:    this.method,
-                JSON:      this.JSON
-            };
-        }
+        valueOf:    PageLink.prototype.valueOf
     });
 
 /* ---------- [object InnerHistory] ---------- */
@@ -370,7 +425,12 @@
                 this.app.domRoot  :  $('[name="' + this.target + '"]');
         },
         prefetch:     function () {
-            if ((this.target == '_self')  &&  this.href) {
+            var iHTML = (this.href || '').split('?');
+
+            if (
+                (this.target == '_self')  &&
+                ((iHTML[1] || '').indexOf('=') == -1)
+            ) {
                 var $_Prefetch = $('<link />', {
                         rel:     Prefetch_Tag,
                         href:    this.href
@@ -486,19 +546,26 @@
                     if (typeof iHTML != 'string')  return;
 
                     var not_Fragment = iHTML.match(/<\s*(html|head|body)(\s|>)/i),
-                        no_Link = (! iHTML.match(/<\s*link(\s|>)/i)),
+                        iSimple = (! iHTML.match(/<\s*(link|script)(\s|>)/i)),
                         iSelector = This_App.domRoot.selector;
 
-                    if ((! not_Fragment)  &&  no_Link)
+                    if ((! not_Fragment)  &&  iSimple)
                         return This_Page.show(iHTML).boot(Page_Load);
 
                     $_Body.sandBox(iHTML,  (
-                        ((iSelector && no_Link) ? iSelector : 'body > *')  +
-                            ', head link[target]'
+                        ((iSelector && iSimple) ? iSelector : 'body > *')  +
+                            ', head link[target], script'
                     ),  function ($_Content) {
-                        $_Content.filter('link').appendTo('head');
+                        $_Content = $_Content.not('script[src]');
 
-                        This_Page.show( $_Content.not('link') ).boot(Page_Load);
+                        $_Content.filter('link').appendTo('head');
+                        var $_Script = $_Content.filter('script');
+
+                        for (var i = 0;  i < $_Script.length;  i++)
+                            $.globalEval( $_Script[i].text );
+
+                        This_Page.show( $_Content.not('link, script') )
+                            .boot(Page_Load);
 
                         return false;
                     });
@@ -575,31 +642,10 @@
         }
     });
 
-    function ArrayRender(iArray, ValueRender) {
-        $.ListView(this,  function () {
-            ValueRender.call(arguments[0], arguments[1]);
-        }).clear().render( iArray );
-    }
-
-    function ObjectRender(iData) {
-        var _Self_ = arguments.callee;
-
-        if (iData instanceof Array)
-            return  ArrayRender.call(this[0], iData, _Self_);
-
-        this.value('name',  function (iName) {
-            if (iData[iName] instanceof Array)
-                ArrayRender.call(this, iData[iName], _Self_);
-            else
-                return iData[iName];
-        });
-    }
-
     $.extend(InnerPage.prototype,{
         render:      function (Source_Link, iData) {
             var This_App = this.ownerApp;
 
-            /* ----- Data Stack Change ----- */
             iData = Data_Merge(Source_Link && Source_Link.getData(),  iData);
 
             var iReturn = This_App.domRoot.triggerHandler('pageRender', [
@@ -609,21 +655,16 @@
                 ]);
             this.data = iData = iReturn || iData;
 
-            if (iReturn === false)  return this;
+            if (iReturn !== false) {
+                var $_Render = This_App.domRoot;
 
-            /* ----- View Init ----- */
-            var $_List = This_App.domRoot;
+                if (! (iData instanceof Array))
+                    $_Render = $_Body;
+                else if (Source_Link  &&  (Source_Link.target != '_self'))
+                    $_Render = Source_Link.getTarget().parent();
 
-            if (Source_Link  &&  (Source_Link.target != '_self'))
-                $_List = Source_Link.getTarget().parent();
-            $_List = $.ListView.findView($_List, true);
-
-
-            /* ----- Data Render ----- */
-            if (iData instanceof Array)
-                ArrayRender.call($_List[0], iData, ObjectRender);
-            else
-                ObjectRender.call($_Body, iData);
+                $_Render.dataRender(iData);
+            }
 
             return this;
         },

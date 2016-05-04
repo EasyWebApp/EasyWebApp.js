@@ -2,7 +2,7 @@
 //              >>>  iQuery+  <<<
 //
 //
-//    [Version]    v1.4  (2016-04-27)  Stable
+//    [Version]    v1.4  (2016-04-29)  Stable
 //
 //    [Require]    iQuery  ||  jQuery with jQuery+
 //
@@ -221,12 +221,12 @@
             if (Index  ||  (Index == 0))
                 return  this.indexOf(arguments[0], true).data('LV_Model');
 
-            var iData = this.$_View.data('LV_Model');
+            var iData = this.$_View.data('LV_Model') || [ ];
 
-            if (! iData) {
-                iData = $.map(this,  function () {
-                    return arguments[0].data('LV_Model');
-                });
+            if (! iData[0]) {
+                for (var i = 0;  i < this.length;  i++)
+                    iData.push( this[i].data('LV_Model') );
+
                 this.$_View.data('LV_Model', iData);
             }
             return iData;
@@ -316,8 +316,9 @@
                 if ( $(iEvent.target).is(':input') )  return;
 
                 var $_This = $(this);
-                var Pseudo_Click = (iEvent.pageX < $_This.offset().left);
-
+                var Pseudo_Click = (
+                        iEvent.pageX  &&  (iEvent.pageX < $_This.offset().left)
+                    );
                 if ( Pseudo_Click )  $_This.children('.TreeNode').toggle(200);
 
                 if (typeof onFocus != 'function')  return;

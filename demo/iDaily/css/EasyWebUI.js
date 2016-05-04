@@ -2,7 +2,7 @@
 //          >>>  EasyWebUI Component Library  <<<
 //
 //
-//      [Version]     v2.4  (2016-04-26)  Stable
+//      [Version]     v2.5  (2016-04-28)  Stable
 //
 //      [Based on]    iQuery v1  or  jQuery (with jQuery+),
 //
@@ -191,11 +191,13 @@
         });
     };
 
-/* ---------- Input Data-List 补丁  v0.2 ---------- */
+/* ---------- Input Data-List 补丁  v0.3 ---------- */
 
-    var List_Type = 'input[type="' +
-            ['text', 'tel', 'email', 'url', 'search'].join('"], input[type="')  +
-            '"]';
+    var List_Type = 'input[type="' + [
+            'text', 'tel', 'email', 'url', 'search'
+        ].join(
+            '"][list], input[type="'
+        ) + '"]';
 
     function Tips_Show($_List) {
         if (! this.value)  $_List.append( $_List.$_Option );
@@ -238,13 +240,25 @@
         });
     }
 
-    $.fn.smartInput = function () {
+    function DL_Change(iCallback) {
+        return  this.change(function () {
+            var iOption = this.list.options;
+
+            for (var i = 0;  i < iOption.length;  i++)
+                if (this.value == iOption[i].value)
+                    return  iCallback.call(this, arguments[0], iOption[i]);
+        });
+    }
+
+    $.fn.smartInput = function (onChange) {
         return  this.filter(List_Type).each(function () {
 
             var $_Input = $(this),  iPosition = this.parentNode.style.position;
 
-            if (BOM.HTMLDataListElement  ||  ($_Input.attr('autocomplete') == 'off'))
-                return;
+            if ( BOM.HTMLDataListElement )
+                return  DL_Change.call($_Input, onChange);
+
+            if ($_Input.attr('autocomplete') == 'off')  return;
 
             if ((! iPosition)  ||  (iPosition == 'static'))
                 $(this.parentNode).css({
@@ -254,20 +268,32 @@
             iPosition = $_Input.attr('autocomplete', 'off').position();
             iPosition.top += $_Input.height();
 
-            var $_List = $(
-                    '#' + this.getAttribute('list') + ' > select[multiple]'
-                ).css($.extend(iPosition, {
-                    position:     'absolute',
-                    'z-index':    10000,
-                    height:       0,
-                    width:        $_Input.width(),
-                    padding:      0,
-                    border:       0,
-                    overflow:     'hidden',
-                    opacity:      0
-                })).change(function () {
-                    $_Input[0].value = Tips_Hide.call($_List)[0].value;
-                });
+        //  DOM Property Patch
+            $_Input[0].list = $('#' + this.getAttribute('list'))[0];
+
+            var $_List = $('select[multiple]', $_Input[0].list);
+
+            $_Input[0].list.options = $_List[0].children;
+
+        //  DropDown List
+            $_List.css($.extend(iPosition, {
+                position:     'absolute',
+                'z-index':    10000,
+                height:       0,
+                width:        $_Input.width(),
+                padding:      0,
+                border:       0,
+                overflow:     'hidden',
+                opacity:      0
+            })).change(function () {
+                $_Input[0].value = Tips_Hide.call($_List)[0].value;
+
+                return onChange.call(
+                    $_Input[0],
+                    arguments[0],
+                    this.children[this.selectIndex]
+                );
+            });
             $_List.$_Option = [ ];
 
             var iFilter = $.proxy(Tips_Match, null, $_List);
@@ -623,11 +649,11 @@
         }).children('.Head').dblclick(function () {
             var $_Head = $(this);
             var $_Panel = $_Head.parent();
-            var $_Head_Height =
-                    Number( $_Head.css('height').slice(0, -2) )
-                    + Number( $_Head.css('margin-top').slice(0, -2) )
-                    + Number( $_Head.css('margin-bottom').slice(0, -2) )
-                    + Number( $_Panel.css('padding-top').slice(0, -2) ) * 2;
+
+            var $_Head_Height = parseFloat( $_Head.css('height') )
+                    + parseFloat( $_Head.css('margin-top') )
+                    + parseFloat( $_Head.css('margin-bottom') )
+                    + parseFloat( $_Panel.css('padding-top') ) * 2;
 
             if (! $_Panel.hasClass('closed')) {
                 $_Panel.data('height', $_Panel.height());
@@ -834,10 +860,17 @@
 
 /* ---------- 目录树  v0.2 ---------- */
 
+    function StopBubble() {
+        arguments[0].stopPropagation();
+    }
+
     function inlineEdit() {
         $(arguments[0].target).one('blur',  function () {
-            if (this.textContent)  this.removeAttribute('contentEditable');
-        }).prop('contentEditable', true).focus();
+            if ( this.textContent ) {
+                this.removeAttribute('contentEditable');
+                $(this).off('click', StopBubble);
+            }
+        }).prop('contentEditable', true).on('click', StopBubble).focus();
 
         return false;
     }
