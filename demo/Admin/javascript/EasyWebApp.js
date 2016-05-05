@@ -376,6 +376,10 @@
 /* ---------->> WebApp Constructor <<---------- */
 
     function WebApp($_Root, API_Root, URL_Change) {
+        $.EventInterface.apply(this, [
+            'pageLoad', 'formSubmit', 'apiCall', 'pageRender', 'pageReady', 'appExit'
+        ]);
+
         $.extend(this, {
             domRoot:      $($_Root),
             apiRoot:      API_Root || '',
@@ -384,6 +388,9 @@
             loading:      false
         });
     }
+
+    WebApp.prototype = new $.EventInterface();
+    WebApp.prototype.constructor = WebApp;
 
     var RE_Str_Var = /\{(.+?)\}/g;
 
@@ -461,7 +468,8 @@
                 API_URL = this.getURL('src');
 
             function AJAX_Ready(iData) {
-                iData = This_App.domRoot.triggerHandler('apiCall', [
+                iData = This_App.trigger(
+                    'apiCall',
                     This_App,
                     {
                         method:    iLink.method,
@@ -469,7 +477,7 @@
                         data:      iData
                     },
                     This_App.history.last().HTML
-                ]) || iData;
+                ) || iData;
 
                 if (typeof Data_Ready == 'function')
                     Data_Ready.call(iLink, iData);
@@ -502,8 +510,10 @@
                 $_API = $('head link[src]');
 
             if ( $_Page.length )
-                this.ownerApp.domRoot.one('pageReady',  function () {
-                    return  arguments[1].loadLink(
+                this.ownerApp.on('pageReady',  function () {
+                    this.off('pageReady', arguments.callee);
+
+                    return  arguments[0].loadLink(
                         $_Page.remove().attr(['target', 'href']),
                         null,
                         This_Page.sourceLink.getData()
@@ -596,10 +606,11 @@
 
     $.extend(PageLink.prototype, {
         loadTemplate:    function () {
-            var iReturn = this.app.domRoot.triggerHandler('pageLoad', [
+            var iReturn = this.app.trigger(
+                    'pageLoad',
                     this.app.history.last(),
                     this.app.history.prev()
-                ]);
+                );
             if (iReturn === false)  return;
 
             this.app.loading = true;
@@ -629,9 +640,12 @@
             if (Need_HTML)  This_Page.load(this, Page_Load);
         },
         loadPage:        function () {
-            var iReturn = this.app.domRoot.triggerHandler('appExit', [
-                    this.app.history.last().HTML,  this.href,  this.getData()
-                ]);
+            var iReturn = this.app.trigger(
+                    'appExit',
+                    this.app.history.last().HTML,
+                    this.href,
+                    this.getData()
+                );
             if (iReturn === false)  return;
 
             this.app.history.move();
@@ -648,11 +662,12 @@
 
             iData = Data_Merge(Source_Link && Source_Link.getData(),  iData);
 
-            var iReturn = This_App.domRoot.triggerHandler('pageRender', [
+            var iReturn = This_App.trigger(
+                    'pageRender',
                     This_App.history.last(),
                     This_App.history.prev(),
                     iData
-                ]);
+                );
             this.data = iData = iReturn || iData;
 
             if (iReturn !== false) {
@@ -691,11 +706,13 @@
 
             This_App.loading = false;
 
-            This_App.domRoot.trigger('pageReady', [
+            This_App.trigger(
+                'pageReady',
                 This_App,
                 This_App.history.last(),
                 This_App.history.prev()
-            ]).focus();
+            );
+            This_App.domRoot.focus();
 
             $_Body.trigger({
                 type:      'loading',
@@ -817,12 +834,13 @@
             );
         }).ajaxSubmit(function (iData) {
 
-            var iReturn = This_App.domRoot.triggerHandler('formSubmit', [
+            var iReturn = This_App.trigger(
+                    'formSubmit',
                     This_App.history.last().HTML,
                     arguments[2].url,
                     iData,
                     $(this).attr('href')
-                ]);
+                );
 
             if ((iReturn !== false)  &&  this.target)
                 This_App.loadLink(
@@ -847,6 +865,12 @@
 /* ---------->> jQuery Wrapper <<---------- */
 
     $.fn.WebApp = function () {
+        if (! this[0])  return;
+
+        var iWebApp = $(this[0]).data('_EWAI_');
+
+        if (iWebApp instanceof WebApp)  return iWebApp;
+
         var iArgs = $.makeArray(arguments);
 
         var Init_Data = $.extend(
@@ -857,9 +881,11 @@
         var API_Root = (typeof iArgs[0] == 'string') && iArgs.shift();
         var URL_Change = (typeof iArgs[0] == 'boolean') && iArgs[0];
 
-        (new WebApp(this, API_Root, URL_Change)).boot(Init_Data);
+        iWebApp = (new WebApp(this, API_Root, URL_Change)).boot(Init_Data);
 
-        return this.addClass('EWA_Container');
+        $(this[0]).data('_EWAI_', iWebApp).addClass('EWA_Container');
+
+        return iWebApp;
     };
 
     function RouterBack(iHTML, iJSON) {

@@ -2,7 +2,7 @@
 //              >>>  iQuery+  <<<
 //
 //
-//    [Version]    v1.4  (2016-04-29)  Stable
+//    [Version]    v1.4  (2016-05-04)  Stable
 //
 //    [Require]    iQuery  ||  jQuery with jQuery+
 //
@@ -58,11 +58,17 @@
     $.extend(EventInterface.prototype, {
         on:         function (iType, iCallback) {
             if (
-                (typeof iType == 'string')  &&
                 (typeof iCallback == 'function')  &&
                 (this.callback[iType].indexOf(iCallback) == -1)
             )
                 this.callback[iType].push(iCallback);
+
+            return this;
+        },
+        off:        function (iType, iCallback) {
+            var Index = this.callback[iType].indexOf(iCallback);
+
+            if (Index > -1)  this.callback[iType].splice(Index, 1);
 
             return this;
         },
@@ -78,6 +84,8 @@
             return iReturn;
         }
     });
+
+    $.EventInterface = EventInterface;
 
 /* ---------- ListView Interface  v0.7 ---------- */
 

@@ -3,7 +3,7 @@
 ## 【项目概述】
 **EasyWebApp** 是一个基于 **jQuery API** 的 **轻量级 SPA（单页应用）引擎**， **网页设计、后端接口、前端组件 充分解耦** —— 只用 **原生 HTML** 做模板，对 **JSON 数据**的结构几无硬性要求，完全兼容现有的 **jQuery 插件**。
 
-本引擎广泛使用的最新开源稳定版 v2.3 脱胎于 2 个 **移动端网页应用**（微信公众平台）和 2 个 **桌面端网页系统**（某公司开放平台），是一个有较高 **抽象性**、 **普适性**的 SPA 引擎， **个人独立开发**、 **团队协作开发** 都能轻松胜任~
+本引擎广泛使用的最新开源稳定版 v2.4 脱胎于 2 个 **移动端网页应用**（微信公众平台）和 2 个 **桌面端网页系统**（某公司开放平台），是一个有较高 **抽象性**、 **普适性**的 SPA 引擎， **个人独立开发**、 **团队协作开发** 都能轻松胜任~
 
 
 ## 【核心理念】
@@ -41,6 +41,10 @@ EasyWebApp 与其作者开发的 [**EasyWebUI**](http://git.oschina.net/Tech_Que
 
 
 ## 【版本历史】
+ - v2.5   Alpha  —— 2016年5月4日
+   - 独立出 **抽象视图数据读写**方法 `$.fn.dataRender()`、`$.fn.dataReader()`，方便业务逻辑复用
+   - 支持 **内页模板文件**中的 **内联 JavaScript** 执行
+   - `WebApp` 对象继承 **iQuery+ v1.4** 内置的 `$.EventInterface()` 抽象接口，实现 **事件多回调**采用最后一次有效返回数据
  - v2.4   Stable —— 2016年4月25日
    - 所有 HTML 文件中均可 **内联内页**
    - **纯 API 调用**返回的数据 也会压入数据栈
@@ -277,22 +281,6 @@ $.ajaxPrefilter(function (iOption) {
 ```JavaScript
 var URL_Args = $.paramJSON();
 
-function Request_Sign(iData) {
-    iData = (typeof iData == 'string')  ?  $.paramJSON(iData)  :  iData;
-
-    return $.map(
-        Object.getOwnPropertyNames(iData).sort(),
-        function (iKey) {
-            if (typeof iData[iKey] == 'function')  return;
-
-            if (iData[iKey][0] == '{')  try {
-                return  iKey + '=' + JSON.stringify(iData[iKey]);
-            } catch (iError) { }
-
-            return  iKey + '=' + iData[iKey];
-        }
-    ).join('&');
-}
 
 $.ajaxPrefilter(function (iOption) {
     if ( iOption.url.match(/\.(html|md)/) )  return;
@@ -306,7 +294,7 @@ $.ajaxPrefilter(function (iOption) {
 
     var iArgs = {
             AppID:    URL_Args.AppID,
-            sign:     md5(Request_Sign(iData || iOption.url)  +  URL_Args.AppKey)
+            sign:     md5($.paramSign(iData || iOption.url)  +  URL_Args.AppKey)
         };
 
     if (iOption.type == 'GET')
@@ -320,12 +308,36 @@ $.ajaxPrefilter(function (iOption) {
     }
 });
 ```
+【注】上述代码中的 `$.paramJSON()`、`$.paramSign()` 来自 [**iQuery**](http://git.oschina.net/Tech_Query/iQuery)。
 
 
 ## 【API 总览】
 
 ### 一、jQuery 实例方法
-```javascript
+
+#### 应用初始化
+```JavaScript
+//  幂等方法，不会重复初始化，且总返回 WebApp 实例对象
+var iWebApp = $_AppRoot.WebApp(
+        Init_Data,                         //  可选，一般为 登录后的会话数据
+        'http://cross.domain.api/root',    //  可选，API 服务器 与 静态网页资源服务器 不同时设置
+        URL_Change                         //  可选，Boolean，控制 地址栏网址 是否改变
+    );
+```
+#### 数据渲染
+```JavaScript
+//  层次、递进结构
+$_Gradation.dataRender( iObject );
+
+//  水平展开的迭代结构
+$_Iteration.dataRender( iArray );
+```
+#### 数据读取
+```JavaScript
+$_Any.dataReader();
+```
+#### 快捷方法
+```JavaScript
 $_AppRoot
     .onPageRender(
         HTML_Match,    //  二选一，String 或 Regexp，匹配 HTML 文件路径
@@ -339,15 +351,45 @@ $_AppRoot
         JSON_Match,    // （同上）
         Page_Render    //  必选，本引擎渲染 HTML、JSON 后，执行传统 DOM Ready 回调中的页面逻辑
     )
-    .WebApp(
-        Init_Data,                         //  可选，一般为 登录后的会话数据
-        'http://cross.domain.api/root',    //  可选，API 服务器 与 静态网页资源服务器 不同时设置，
-                                               并支持 跨域代理 URL 前缀
-        URL_Change                         //  可选，Boolean，控制 地址栏网址 是否改变
-    );
 ```
-### 二、jQuery 自定义事件
-本引擎不支持“在 jQuery 插件 初始化时传入各种回调函数”的方式，一切 **可编程点**均直接在 **实例化 WebApp** 的元素上触发 **自定义 DOM 事件**，开发者只需使用 jQuery 标准的事件监听方法，就可以在其回调函数中调用 **WebApp 实例**的方法。
+
+### 二、WebApp 对象实例方法
+
+#### 事件绑定
+```JavaScript
+iWebApp.on('pageRender',  function (This_Page, Prev_Page, iData) {
+    ...
+
+    return iData.data;    //  返回处理过的数据用于渲染
+});
+```
+#### 事件解绑
+```JavaScript
+iWebApp.off('pageRender', iCallback);
+```
+#### 手动加载
+```JavaScript
+//  完整参数写法
+
+iWebApp.loadLink({
+    title:     "局部刷新",
+    href:      HTML_URL,
+    method:    'POST',
+    src:       API_URL,
+}, {
+    arg_1:    'arg_1_name'
+});
+
+//  参数简写形式（只能用于加载内页）
+
+iWebApp.loadLink('path/to/template.html', 'path/to/api', {
+    arg_1:    'arg_1_name'
+});
+```
+【注】传参规则 请参考本引擎的 **页面串接规则**（上文【使用入门】第四大节）
+
+### 三、WebApp 自定义事件
+本引擎不支持“在 jQuery 插件 初始化时传入各种回调函数”的方式，一切 **可编程点**均直接在 **WebApp 实例对象**上触发 **自定义事件**，开发者只需使用 **类 jQuery 事件监听方法**，就可以在其回调函数中调用 **WebApp 实例**的方法。
 
 【事件分类】
  - [A] 表示 **异步事件**，一般在 事件名所表示的操作 完成时 触发，可在回调内根据 API 返回值，酌情调用 WebApp 实例方法， **手动控制 WebApp 加载页面**
@@ -387,26 +429,6 @@ $_AppRoot
    -  刚渲染好的页面对象
    -  刚切换走的页面对象
 
-### 三、WebApp 对象实例方法
-WebApp 支持手动调用 本引擎 **页面串接规则**（上文【使用入门】第四大节）对应的 JavaScript 实例方法 ——
-```javascript
-//  完整参数写法
-
-iWebApp.loadLink({
-    title:     "局部刷新",
-    href:      HTML_URL,
-    method:    'POST',
-    src:       API_URL,
-}, {
-    arg_1:    'arg_1_name'
-});
-
-//  参数简写形式（只能用于加载内页）
-
-iWebApp.loadLink('path/to/template.html', 'path/to/api', {
-    arg_1:    'arg_1_name'
-});
-```
 
 ## 【进阶导引】
 EasyWebApp v2.x 的基本模型（对照 MVC 模式）——
