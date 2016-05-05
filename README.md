@@ -41,7 +41,7 @@ EasyWebApp 与其作者开发的 [**EasyWebUI**](http://git.oschina.net/Tech_Que
 
 
 ## 【版本历史】
- - v2.5   Alpha  —— 2016年5月4日
+ - v2.5   Beta  —— 2016年5月5日
    - 独立出 **抽象视图数据读写**方法 `$.fn.dataRender()`、`$.fn.dataReader()`，方便业务逻辑复用
    - 支持 **内页模板文件**中的 **内联 JavaScript** 执行
    - `WebApp` 对象继承 **iQuery+ v1.4** 内置的 `$.EventInterface()` 抽象接口，实现 **事件多回调**采用最后一次有效返回数据
@@ -150,17 +150,12 @@ EasyWebApp 与其作者开发的 [**EasyWebUI**](http://git.oschina.net/Tech_Que
  - 缺点：链接指向的外部页面无法被搜索引擎收录
 
 #### （一）加载内页（AJAX 无刷新）
-```html
-<div target="_self" title="New Page" href="path/to/page_1.html"
-     src="path/to/data/api/{id}" data-arg_1="data_name_1">
-    <img src="path/to/logo.png" />XXX
-</div>
-```
-```javascript
+```HTML
+<script>
 (function (BOM, $) {
 
     $('body > section')
-        .onPageRender('page_1.html',  function (iData, Prev_Page) {
+        .onPageRender('page_1.html',  function (iData, This_Page, Prev_Page) {
             //  iData 是 API 返回的 JSON，格式自定义，默认为 空对象
             if (iData.code == 200)
                 return iData.data;
@@ -171,52 +166,59 @@ EasyWebApp 与其作者开发的 [**EasyWebUI**](http://git.oschina.net/Tech_Que
         .WebApp();
 
 })(self, self.jQuery);
+</script>
+
+<div target="_self" title="New Page" href="path/to/page_1.html"
+     src="path/to/data/api/{id}" data-arg_1="data_name_1">
+    <img src="path/to/logo.png" />XXX
+</div>
 ```
 【注】上述代码加载的内页 可以是 **HTML 代码片段**（包括 所有可见元素、style 元素），无需重复编码。
 
 #### （二）加载外页（传统刷新）
-```html
-<div target="_top" href="path/to/page_2.html" data-arg_1="data_name_1">
-    <img src="path/to/logo.png" />XXX
-</div>
-```
-```javascript
+```HTML
+<script>
 (function (BOM, $) {
 
-    $('body > section')
+    $('body > section').WebApp()
         .on('appExit',  function () {
             //  若 SPA 链接元素 是 form，则 iData 为 表单提交所返回的数据
-            iData = arguments[3];
+            iData = arguments[2];
 
             if (iData.code > 200) {
                 alert(iData.message);
                 return false;           //   阻止页面刷新、跳转
             }
-        })
-        .WebApp();
+        });
 
 })(self, self.jQuery);
+</script>
+
+<div target="_top" href="path/to/page_2.html" data-arg_1="data_name_1">
+    <img src="path/to/logo.png" />XXX
+</div>
 ```
+
 #### （三）调用接口（纯数据，无页面加载）
 ```html
-<button target="_blank" src="path/to/data/api/{id}" data-arg_3="data_name_3">
-    喜欢
-</button>
-```
-```javascript
+<script>
 (function ($) {
 
-    $('body > section')
+    $('body > section').WebApp()
         .on('apiCall',  function () {
             //  iData 为 API 返回的数据
-            iData = arguments[2].data;
+            iData = arguments[1].data;
 
             if (iData.code > 200)
                 alert(iData.message);
-        })
-        .WebApp();
+        });
 
 })(self.jQuery);
+</script>
+
+<button target="_blank" src="path/to/data/api/{id}" data-arg_3="data_name_3">
+    喜欢
+</button>
 ```
 【注】 **纯 API 调用返回的数据** 会合并到 当前内页的数据栈
 
@@ -238,6 +240,21 @@ SPA 中所有 **可见表单** 均会被本引擎用 **AJAX 提交**接管，用
 
 同时，上述表单的源码标签上也可使用 **SPA 链接元素**的属性，用以在表单提交后继续 加载内外页面（但 表单提交的 Method 与 接口调用的不可不同）~
 ```html
+<script>
+(function ($) {
+
+    $('body > section').WebApp()
+        .on('formSubmit',  function () {
+
+            var iData = arguments[2];
+
+            alert( iData.message );
+            return  (iData.code == 200)  &&  iData;
+        });
+
+})(self.jQuery);
+</script>
+
 <form method="POST" action="path/to/api/{uid}"
       target="_top" href="path/to/app_1.html" data-arg_2="data_name_2">
     <input type="hidden" name="uid" />
@@ -245,21 +262,6 @@ SPA 中所有 **可见表单** 均会被本引擎用 **AJAX 提交**接管，用
     <input type="password" name="password" placeholder="密码" />
     <input type="submit" />
 </form>
-```
-```javascript
-(function ($) {
-
-    $('body > section')
-        .on('formSubmit',  function () {
-
-            var iData = arguments[3];
-
-            alert( iData.message );
-            return  (iData.code == 200)  &&  iData;
-        })
-        .WebApp();
-
-})(self.jQuery);
 ```
 
 #### （六）请求预处理
@@ -334,7 +336,7 @@ $_Iteration.dataRender( iArray );
 ```
 #### 数据读取
 ```JavaScript
-$_Any.dataReader();
+var iData = $_Any.dataReader();
 ```
 #### 快捷方法
 ```JavaScript
@@ -349,16 +351,23 @@ $_AppRoot
     .onPageReady(
         HTML_Match,    // （同上）
         JSON_Match,    // （同上）
-        Page_Render    //  必选，本引擎渲染 HTML、JSON 后，执行传统 DOM Ready 回调中的页面逻辑
+        Page_Ready     //  必选，本引擎渲染 HTML、JSON 后，执行传统 DOM Ready 回调中的页面逻辑
+    )
+    .onAppExit(
+        HTML_Match,    // （同上）
+        JSON_Match,    // （同上）
+        App_Exit       //  必选，返回 false 可阻止“整页跳转刷新”销毁本 WebApp 实例
     )
 ```
+【注】上述方法的 **回调传参顺序** 是下文“WebApp 自定义事件”中相应事件回调参数的“末位居首”。
+
 
 ### 二、WebApp 对象实例方法
 
 #### 事件绑定
 ```JavaScript
 iWebApp.on('pageRender',  function (This_Page, Prev_Page, iData) {
-    ...
+    //  数据结构 整理逻辑
 
     return iData.data;    //  返回处理过的数据用于渲染
 });
@@ -394,40 +403,34 @@ iWebApp.loadLink('path/to/template.html', 'path/to/api', {
 【事件分类】
  - [A] 表示 **异步事件**，一般在 事件名所表示的操作 完成时 触发，可在回调内根据 API 返回值，酌情调用 WebApp 实例方法， **手动控制 WebApp 加载页面**
  - [S] 表示 **同步事件**，一般在 事件名所表示的操作 进行前 触发，可能需要开发者：
-   -  判断是否阻止 **事件操作**执行 —— return false
-   -  在自定义数据格式中提取 **内容数据**参与渲染 —— return {...}
+   -  判断是否阻止 **事件操作**执行 —— `return false;`
+   -  在自定义数据格式中提取 **内容数据**参与渲染 —— `return {...};`
 
 【事件总表】
  - [S] **pageLoad 事件** 在用户触发内页跳转时产生。其回调参数如下：
-   -  jQuery Event 对象
    -  正在渲染的页面对象
    -  刚切换走的页面对象
  - [S] **pageRender 事件** 在一个内部页面的模板、数据加载完，准备 **用数据渲染模板**时触发。其回调参数如下：
-   -  jQuery Event 对象
    -  正在渲染的页面对象
    -  刚切换走的页面对象
    -  API 返回数据
- - [S] **apiCall 事件** 在一个 HTTP API 请求结束时触发。其回调参数如下：
-   -  jQuery Event 对象
+ - [A] **pageReady 事件** 在一个内部页面渲染完成时触发。其回调参数如下：
+   -  刚渲染好的页面对象
+   -  刚切换走的页面对象
    -  WebApp 实例对象
+ - [S] **apiCall 事件** 在一个 HTTP API 请求结束时触发。其回调参数如下：
    -  API 响应对象（包含 URL、HTTP 方法名、返回的数据）
    -  当前 HTML URL
+   -  WebApp 实例对象
  - [S] **appExit 事件** 在一个外部页面加载（单页应用实例 销毁）前触发。其回调参数如下：
-   -  jQuery Event 对象
    -  当前 HTML URL
    -  将加载的外部页面 URL
    -  SPA 链接元素对应的数据对象（如 id 等 须附加在 URL 后页面才能正常跳转的参数）
  - [S] **formSubmit 事件** 在一个表单提交并返回数据后触发（此时可能会跳转页面）。其回调参数如下：
-   -  jQuery Event 对象
    -  当前 HTML URL
    -  当前 form 实际使用的 action URL
    -  表单提交 返回数据
    -  即将跳转到的页面 HTML URL
- - [A] **pageReady 事件** 在一个内部页面渲染完成时触发。其回调参数如下：
-   -  jQuery Event 对象
-   -  WebApp 实例对象
-   -  刚渲染好的页面对象
-   -  刚切换走的页面对象
 
 
 ## 【进阶导引】

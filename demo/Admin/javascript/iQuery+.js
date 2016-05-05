@@ -2,7 +2,7 @@
 //              >>>  iQuery+  <<<
 //
 //
-//    [Version]    v1.4  (2016-05-04)  Stable
+//    [Version]    v1.4  (2016-05-05)  Stable
 //
 //    [Require]    iQuery  ||  jQuery with jQuery+
 //
@@ -71,6 +71,13 @@
             if (Index > -1)  this.callback[iType].splice(Index, 1);
 
             return this;
+        },
+        one:        function (iType, iCallback) {
+            return  this.on(iType,  function () {
+                this.off(iType, arguments.callee);
+
+                return  iCallback.apply(this, arguments);
+            });
         },
         trigger:    function () {
             var iCallback = this.callback[ arguments[0] ],  iReturn;
@@ -346,7 +353,7 @@
         iKey = iKey || 'list';
 
         this.unit = iListView.on('insert',  function ($_Item, iValue) {
-            if ( iValue[iKey] )
+            if ($.likeArray( iValue[iKey] )  &&  iValue[iKey][0])
                 iTree.branch(this, $_Item, iValue[iKey]);
         });
     }

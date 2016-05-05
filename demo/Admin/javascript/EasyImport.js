@@ -2,7 +2,7 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v1.0  (2016-05-04)  Stable
+//      [Version]    v1.0  (2016-05-05)  Stable
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.
@@ -870,9 +870,13 @@
         var iRoot = this;
 
         if ((this.nodeType != 9)  &&  this.parentNode) {
-            if (! this.id)  this.id = _Time_.uuid();
+            var _ID_ = this.getAttribute('id');
 
-            iPath = '#' + this.id + ' ' + iPath;
+            if (! _ID_) {
+                _ID_ = _Time_.uuid();
+                this.setAttribute('id', _ID_);
+            }
+            iPath = '#' + _ID_ + ' ' + iPath;
             iRoot = this.parentNode;
         }
 
@@ -3335,22 +3339,43 @@
 (function (BOM, DOM, $) {
 
     /* ----- XML HTTP Request ----- */
-    function X_Domain() {
-        var iDomain = $.urlDomain( arguments[0] );
 
-        return  iDomain && (
-            iDomain != [
-                BOM.location.protocol, '//', DOM.domain, (
-                    BOM.location.port  ?  (':' + BOM.location.port)  :  ''
-                )
-            ].join('')
+    function onLoad(iProperty, iData) {
+        if (iProperty)  $.extend(this, iProperty);
+
+        if (! (this.option.crossDomain || (this.readyState == 4)))
+            return;
+
+        var iError = (this.status > 399),  iArgs = [this, this.option];
+
+        $_DOM.trigger('ajaxComplete', iArgs);
+        $_DOM.trigger('ajax' + (iError ? 'Error' : 'Success'),  iArgs);
+
+        if (typeof this.onready != 'function')  return;
+
+        this.onready(
+            iData || this.responseAny(),  iError ? 'error' : 'success',  this
         );
     }
+
+    var Success_State = {
+            readyState:    4,
+            status:        200,
+            statusText:    'OK'
+        },
+        $_DOM = $(DOM);
 
     function XD_Request(iData) {
         var iOption = this.option;
 
         this.open.call(this, iOption.type, iOption.url, true);
+
+        this[this.option.crossDomain ? 'onload' : 'onreadystatechange'] = $.proxy(
+            onLoad,
+            this,
+            (! (this instanceof BOM.XMLHttpRequest))  &&  Success_State,
+            null
+        );
 
         if (iOption.xhrFields)  $.extend(this, iOption.xhrFields);
 
@@ -3370,6 +3395,10 @@
             this.setRequestHeader('Content-Type', (
                 iOption.contentType || 'application/x-www-form-urlencoded'
             ));
+
+        this.option.data = iData;
+
+        $_DOM.trigger('ajaxSend',  [this, this.option]);
 
         this.send(iData);
 
@@ -3422,32 +3451,35 @@
             retry:          function () {
                 $.wait(arguments[0],  $.proxy(XD_Request, this));
             }
-        },
-        $_DOM = $(DOM);
+        }
 
-    function onLoad(iProperty, iData) {
-        if (iProperty)  $.extend(this, iProperty);
+    $.extend(BOM.XMLHttpRequest.prototype, XHR_Extension);
 
-        if (! (this.option.crossDomain || (this.readyState == 4)))
-            return;
+    if ($.browser.msie < 10)
+        $.extend(BOM.XDomainRequest.prototype, XHR_Extension, {
+            setRequestHeader:    function () {
+                console.warn("IE 8/9 XDR doesn't support Changing HTTP Headers...");
+            }
+        });
 
-        var iError = (this.status > 399),  iArgs = [this, this.option];
+    function X_Domain() {
+        var iDomain = $.urlDomain( arguments[0] );
 
-        $_DOM.trigger('ajaxComplete', iArgs);
-        $_DOM.trigger('ajax' + (iError ? 'Error' : 'Success'),  iArgs);
-
-        if (typeof this.onready != 'function')  return;
-
-        this.onready(
-            iData || this.responseAny(),  iError ? 'error' : 'success',  this
+        return  iDomain && (
+            iDomain != [
+                BOM.location.protocol, '//', DOM.domain, (
+                    BOM.location.port  ?  (':' + BOM.location.port)  :  ''
+                )
+            ].join('')
         );
     }
 
-    var Success_State = {
-            readyState:    4,
-            status:        200,
-            statusText:    'OK'
-        };
+    $.ajaxPrefilter = function (iFilter) {
+        if (typeof iFilter == 'function')
+            $_DOM.on('ajaxPrefilter',  function (iEvent, iXHR) {
+                iFilter(iXHR.option, iXHR.option, iXHR);
+            });
+    };
 
     function beforeOpen(iMethod, iURL, iData) {
         this.option = {
@@ -3458,52 +3490,6 @@
         };
         $_DOM.triggerHandler('ajaxPrefilter', [this]);
     }
-
-    $.ajaxPrefilter = function (iFilter) {
-        if (typeof iFilter == 'function')
-            $_DOM.on('ajaxPrefilter',  function (iEvent, iXHR) {
-                iFilter(iXHR.option, iXHR.option, iXHR);
-            });
-    };
-
-    function XHR_Extend(XHR_Proto, iMore) {
-        var XHR_Open = XHR_Proto.open,  XHR_Send = XHR_Proto.send;
-
-        $.extend(XHR_Proto, XHR_Extension, {
-            open:           function () {
-                XHR_Open.apply(this, arguments);
-
-                if (! $.isPlainObject( this.option ))  return;
-
-                this[
-                    this.option.crossDomain ? 'onload' : 'onreadystatechange'
-                ] = $.proxy(
-                    onLoad,
-                    this,
-                    (! (this instanceof XMLHttpRequest))  &&  Success_State,
-                    null
-                );
-            },
-            send:    function (iData) {
-                if ($.isPlainObject( this.option )) {
-                    this.option.data = iData;
-
-                    $_DOM.trigger('ajaxSend',  [this, this.option]);
-                }
-
-                XHR_Send.call(this, iData);
-            }
-        }, iMore);
-    }
-
-    XHR_Extend(BOM.XMLHttpRequest.prototype);
-
-    if ($.browser.msie < 10)
-        XHR_Extend(BOM.XDomainRequest.prototype, {
-            setRequestHeader:    function () {
-                console.warn("IE 8/9 XDR doesn't support Changing HTTP Headers...");
-            }
-        });
 
     /* ----- HTML DOM SandBox ----- */
     $.fn.sandBox = function () {

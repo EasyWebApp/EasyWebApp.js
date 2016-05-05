@@ -24,7 +24,9 @@
         });
     });
 
-    $('#Main_View').on('pageRender',  function (iEvent, This_Page, Prev_Page, iData) {
+    var iWebApp = $('#Main_View').WebApp({ }, 'http://www.tngou.net');
+
+    iWebApp.on('pageRender',  function (This_Page, Prev_Page, iData) {
         var _TP_ = $.fileName(This_Page.HTML),
             _PP_ = $.fileName(Prev_Page.HTML);
 
@@ -37,7 +39,7 @@
                 if (_PP_  &&  (_PP_ == _TP_))  return Data_Fix(iData.tngou);
 
                 $.ListView(
-                    $.ListView.findView( $('form', this) ),
+                    $.ListView.findView( this.domRoot.find('form') ),
                     ['label', 'input'],
                     function ($_Item) {
                         var _UUID_ = $_Item.filter('input')[0].id = $.uuid();
@@ -53,6 +55,6 @@
             case 'gallery':      iData.list = Data_Fix(iData.list);
             case 'news_text':    return Data_Fix([iData])[0];
         }
-    }).WebApp({ }, 'http://www.tngou.net');
+    });
 
 })(self, self.document, self.iQuery);

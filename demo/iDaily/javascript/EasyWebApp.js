@@ -2,7 +2,7 @@
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v2.5  (2016-05-04)  Alpha
+//      [Version]    v2.5  (2016-05-05)  Beta
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //
@@ -375,10 +375,12 @@
 
 /* ---------->> WebApp Constructor <<---------- */
 
-    function WebApp($_Root, API_Root, URL_Change) {
-        $.EventInterface.apply(this, [
+    var Event_Type = [
             'pageLoad', 'formSubmit', 'apiCall', 'pageRender', 'pageReady', 'appExit'
-        ]);
+        ];
+
+    function WebApp($_Root, API_Root, URL_Change) {
+        $.EventInterface.apply(this, Event_Type);
 
         $.extend(this, {
             domRoot:      $($_Root),
@@ -470,13 +472,13 @@
             function AJAX_Ready(iData) {
                 iData = This_App.trigger(
                     'apiCall',
-                    This_App,
                     {
                         method:    iLink.method,
                         URL:       API_URL || iLink.getURL('action'),
                         data:      iData
                     },
-                    This_App.history.last().HTML
+                    This_App.history.last().HTML,
+                    This_App
                 ) || iData;
 
                 if (typeof Data_Ready == 'function')
@@ -510,10 +512,8 @@
                 $_API = $('head link[src]');
 
             if ( $_Page.length )
-                this.ownerApp.on('pageReady',  function () {
-                    this.off('pageReady', arguments.callee);
-
-                    return  arguments[0].loadLink(
+                this.ownerApp.one('pageReady',  function () {
+                    return  arguments[2].loadLink(
                         $_Page.remove().attr(['target', 'href']),
                         null,
                         This_Page.sourceLink.getData()
@@ -708,9 +708,9 @@
 
             This_App.trigger(
                 'pageReady',
-                This_App,
                 This_App.history.last(),
-                This_App.history.prev()
+                This_App.history.prev(),
+                This_App
             );
             This_App.domRoot.focus();
 
@@ -888,54 +888,38 @@
         return iWebApp;
     };
 
-    function RouterBack(iHTML, iJSON) {
-        var Page_Match = (iHTML && iJSON)  ?  2  :  1,
-            iArgs = $.makeArray( arguments ).slice(4);
+    $.fn.extend($.map(
+        $.makeSet.apply($,  $.map(Event_Type,  function () {
+            return  ('on-' + arguments[0]).toCamelCase();
+        })),
+        function (iValue, iType) {
+            return  function () {
+                var iArgs = $.makeArray(arguments);
 
-        var iApp = (iArgs[0] instanceof WebApp)  &&  iArgs.shift();
-        var This_Page = iArgs[0],  iData = iArgs[2];
+                var iHTML = $.type(iArgs[0]).match(/String|RegExp/i) && iArgs.shift();
+                var iJSON = $.type(iArgs[0]).match(/String|RegExp/i) && iArgs.shift();
+                var iCallback = (typeof iArgs[0] == 'function')  &&  iArgs[0];
 
-        if (This_Page.HTML && This_Page.HTML.match(iHTML))
-            Page_Match-- ;
-        if (This_Page.JSON && This_Page.JSON.match(iJSON))
-            Page_Match-- ;
+                if ((iHTML || iJSON)  &&  iCallback)
+                    this.WebApp().on(iType,  function (This_Page) {
+                        var Page_Match = (iHTML && iJSON)  ?  2  :  1;
 
-        if (Page_Match === 0)
-            iData = arguments[2].apply(this,  iApp ? [
-                iApp, This_Page, iArgs[1], iData
-            ] : [
-                iData, This_Page, iArgs[1]
-            ]) || iData;
+                        if (iHTML  &&  (This_Page.HTML || '').match(iHTML))
+                            Page_Match-- ;
+                        if (iJSON  &&  (This_Page.JSON || '').match(iJSON))
+                            Page_Match-- ;
 
-        return iData;
-    }
+                        if (! Page_Match) {
+                            var iArgs = $.makeArray( arguments );
+                            iArgs.unshift( iArgs.pop() );
 
-    $.fn.onPageRender = function () {
-        var iArgs = $.makeArray(arguments);
+                            return  iCallback.apply(this, iArgs);
+                        }
+                    });
 
-        var iHTML = $.type(iArgs[0]).match(/String|RegExp/i) && iArgs.shift();
-        var iJSON = $.type(iArgs[0]).match(/String|RegExp/i) && iArgs.shift();
-
-        if ((iHTML || iJSON)  &&  (typeof iArgs[0] == 'function'))
-            this.on('pageRender', $.proxy(
-                RouterBack,  null,  iHTML,  iJSON,  iArgs[0]
-            ));
-
-        return this;
-    };
-
-    $.fn.onPageReady = function () {
-        var iArgs = $.makeArray(arguments);
-
-        var iHTML = $.type(iArgs[0]).match(/String|RegExp/i) && iArgs.shift();
-        var iJSON = $.type(iArgs[0]).match(/String|RegExp/i) && iArgs.shift();
-
-        if ((iHTML || iJSON)  &&  (typeof iArgs[0] == 'function'))
-            this.on('pageReady', $.proxy(
-                RouterBack,  null,  iHTML,  iJSON,  iArgs[0]
-            ));
-
-        return this;
-    };
+                return this;
+            };
+        }
+    ));
 
 })(self, self.document, self.jQuery);
