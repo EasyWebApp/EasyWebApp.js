@@ -1117,8 +1117,11 @@ img.UserLogo {
     left:             -2em;
     top:              0.7em;
 }
-.Tree li:hover {
-    background:    lightgray;
+.Tree li:hover > * {
+    background-color:    lightgray;
+}
+.Tree li:hover > ul {
+    background-color:    inherit;
 }
 
 

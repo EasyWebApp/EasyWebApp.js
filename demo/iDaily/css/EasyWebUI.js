@@ -2,7 +2,7 @@
 //          >>>  EasyWebUI Component Library  <<<
 //
 //
-//      [Version]     v2.5  (2016-04-28)  Stable
+//      [Version]     v2.6  (2016-05-06)  Stable
 //
 //      [Based on]    iQuery v1  or  jQuery (with jQuery+),
 //
@@ -663,6 +663,41 @@
                 $_Panel.stop().animate({height:  $_Panel.data('height')});
                 $_Panel.removeClass('closed');
             }
+        });
+    };
+
+/* ---------- 数据表 控件  v0.1 ---------- */
+
+    var Sort_Class = {
+            '':            'SortDown',
+            'SortUp':      'SortDown',
+            'SortDown':    'SortUp'
+        };
+
+    $.fn.iTable = function () {
+        return  this.each(function () {
+            var iLV = $.ListView( $('tbody', this) );
+
+            $('th', $(this).children('thead')[0]).click(function () {
+                var $_This = $(this);
+
+                var iClass = ($_This.attr('class') || '').match(
+                        /\s?(Sort(Up|Down))\s?/
+                    );
+                iClass = iClass ? iClass[1] : '';
+
+                $_This.removeClass(iClass).addClass( Sort_Class[iClass] );
+
+                var iNO = (Sort_Class[iClass] == 'SortUp')  ?  0.5  :  -0.5,
+                    Index = $_This.index();
+
+                iLV.sort(function () {
+                    var $_A = $( arguments[2.5 - iNO][0].children[Index] ),
+                        $_B = $( arguments[2.5 + iNO][0].children[Index] );
+
+                    return  $_A.text().localeCompare( $_B.text() );
+                });
+            });
         });
     };
 

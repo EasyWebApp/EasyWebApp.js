@@ -1733,7 +1733,7 @@
             case 'option':      $_This.text(iValue);    break;
             case 'input':       {
                 var _Value_ = this.value;
-                try {
+                if (this.type != 'tel')  try {
                     _Value_ = JSON.parse(_Value_);
                 } catch (iError) { }
 
