@@ -25,8 +25,6 @@
         if ((! $.isEmptyObject(iData))  &&  (iData.status === false))
             return BOM.alert(iData.msg);
 
-        $('table', this.domRoot[0]).iTable();
-
         switch ( _TP_.split('.')[0] ) {
             case 'news':         ;
             case 'image':        {
@@ -42,6 +40,9 @@
                 ).on('afterRender',  function () {
                     this.$_View.children('label')[0].click();
                 });
+
+                $('table', this.domRoot[0]).iTable();
+
                 return {
                     content_type:    iData.tngou
                 };

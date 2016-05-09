@@ -2,7 +2,7 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v1.0  (2016-05-05)  Stable
+//      [Version]    v1.0  (2016-05-07)  Stable
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.
@@ -1733,13 +1733,16 @@
             case 'option':      $_This.text(iValue);    break;
             case 'input':       {
                 var _Value_ = this.value;
-                if (this.type != 'tel')  try {
+
+                if (this.getAttribute('type') != 'tel')  try {
                     _Value_ = JSON.parse(_Value_);
                 } catch (iError) { }
 
                 if ((this.type || '').match(/radio|checkbox/i)) {
                     if (_Set_) {
-                        if (_Value_ === iValue)
+                        if ((! _Value_)  ||  (_Value_ == 'on'))
+                            this.value = iValue;
+                        else if (_Value_ === iValue)
                             this.checked = true;
                     } else
                         return  this.checked && _Value_;
@@ -3451,7 +3454,7 @@
             retry:          function () {
                 $.wait(arguments[0],  $.proxy(XD_Request, this));
             }
-        }
+        };
 
     $.extend(BOM.XMLHttpRequest.prototype, XHR_Extension);
 

@@ -2,7 +2,7 @@
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v2.5  (2016-05-05)  Beta
+//      [Version]    v2.5  (2016-05-09)  Beta
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //
@@ -311,13 +311,13 @@
 
             return $_Page;
         },
-        write:        function (iLink) {
+        write:        function () {
             this.prevIndex = this.lastIndex++ ;
             this.splice(this.lastIndex,  this.length);
 
-            iLink = iLink || { };
-
-            var iNew = new InnerPage(this.ownerApp, iLink);
+            var iNew = (arguments[0] instanceof InnerPage)  ?  arguments[0]  :  (
+                    new InnerPage(this.ownerApp,  arguments[0] || { })
+                );
             this.push(iNew);
 
             BOM.history.pushState(
@@ -615,16 +615,18 @@
 
             this.app.loading = true;
 
-            var $_Target = this.getTarget();
-            var This_Page = this.app.history.write(this, $_Target);
-
         /* ----- Load DOM  from  Cache ----- */
             var iCache = this.app.history.cache();
 
-            if (iCache)  return iCache.show().onReady();
-
+            if (iCache) {
+                this.app.history.write(iCache);
+                return iCache.show().onReady();
+            }
         /* ----- Load DOM  from  Network ----- */
+            var This_Page = this.app.history.write(this);
+
             var iData,  Need_HTML = (this.type == 'Inner');
+
             var Load_Stage = Need_HTML ? 2 : 1,  This_Link = this;
 
             function Page_Load() {

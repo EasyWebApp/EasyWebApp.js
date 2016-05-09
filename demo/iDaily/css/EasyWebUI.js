@@ -692,10 +692,11 @@
                     Index = $_This.index();
 
                 iLV.sort(function () {
-                    var $_A = $( arguments[2.5 - iNO][0].children[Index] ),
-                        $_B = $( arguments[2.5 + iNO][0].children[Index] );
+                    var A = $( arguments[2.5 - iNO][0].children[Index] ).text(),
+                        B = $( arguments[2.5 + iNO][0].children[Index] ).text();
 
-                    return  $_A.text().localeCompare( $_B.text() );
+                    return  isNaN(parseFloat( A ))  ?
+                        A.localeCompare( B )  :  (parseFloat(A) - parseFloat(B));
                 });
             });
         });
