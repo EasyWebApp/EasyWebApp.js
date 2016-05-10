@@ -2,7 +2,7 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v1.0  (2016-04-25)  Stable
+//      [Version]    v1.0  (2016-05-10)  Stable
 //
 //                   (Modern & Mobile Edition)
 //
@@ -501,9 +501,10 @@
             if (iName && iStyle) {
                 iStyle = iStyle.getPropertyValue(iName);
 
-                if ((! iStyle)  &&  iName.match(this.PX_Needed))
-                    iStyle = 0;
-                else if (iStyle.indexOf(' ') == -1) {
+                if (! iStyle) {
+                    if (iName.match( this.PX_Needed ))
+                        iStyle = 0;
+                } else if (iStyle.indexOf(' ') == -1) {
                     var iNumber = parseFloat(iStyle);
                     iStyle = isNaN(iNumber) ? iStyle : iNumber;
                 }
@@ -768,18 +769,23 @@
     function QuerySelector(iPath) {
         var iRoot = this;
 
-        if ((this.nodeType != 9)  &&  this.parentNode) {
-            var _ID_ = this.getAttribute('id');
+        if ((this.nodeType == 9)  ||  (! this.parentNode))
+            return iRoot.querySelectorAll(iPath);
 
-            if (! _ID_) {
-                _ID_ = _Time_.uuid();
-                this.setAttribute('id', _ID_);
-            }
-            iPath = '#' + _ID_ + ' ' + iPath;
-            iRoot = this.parentNode;
+        var _ID_ = this.getAttribute('id');
+
+        if (! _ID_) {
+            _ID_ = _Time_.uuid('iQS');
+            this.setAttribute('id', _ID_);
         }
+        iPath = '#' + _ID_ + ' ' + iPath;
+        iRoot = this.parentNode;
 
-        return iRoot.querySelectorAll(iPath);
+        iPath = iRoot.querySelectorAll(iPath);
+
+        if (_ID_.slice(0, 3)  ==  'iQS')  this.removeAttribute('id');
+
+        return iPath;
     }
 
     function DOM_Search(iRoot, iSelector) {
@@ -1826,12 +1832,14 @@
             }));
         }
         return  this.each(function () {
-            var _Rule_ = { };
+            var _Rule_ = { },  _ID_ = this.getAttribute('id');
 
-            this.id = this.id || $.uuid();
-
+            if (! _ID_) {
+                _ID_ = $.uuid();
+                this.setAttribute('id', _ID_);
+            }
             for (var iSelector in iRule)
-                _Rule_['#' + this.id + iSelector] = iRule[iSelector];
+                _Rule_['#' + _ID_ + iSelector] = iRule[iSelector];
 
             var iSheet = $.cssRule(_Rule_);
 
@@ -2964,9 +2972,7 @@
 
                 if (iCallback  &&  (false === iCallback.call(
                     $_iFrame[0],  $($.merge(
-                        $.makeArray($(
-                            'head style, head link[rel="stylesheet"]',  _DOM_
-                        )),
+                        $.makeArray($('head style, head script',  _DOM_)),
                         $_Content[0] ? $_Content : _DOM_.body.childNodes
                     ))
                 )))
@@ -3142,23 +3148,34 @@
 
     /* ----- Smart HTML Loading ----- */
     $.fn.load = function (iURL, iData, iCallback) {
-        if (! this.length)  return this;
+        if (! this[0])  return this;
 
         var $_This = this;
 
         iURL = $.split(iURL.trim(), /\s+/, 2, ' ');
+
         if (typeof iData == 'function') {
             iCallback = iData;
             iData = null;
         }
+
         function Append_Back() {
             $_This.children().fadeOut();
-            $(arguments[0]).appendTo( $_This.empty() ).fadeIn();
+
+            var $_Content = $(arguments[0]);
+            var $_Script = $_Content.filter('script').not('[src]');
+
+            arguments[0] = $_Content.not( $_Script )
+                .appendTo( $_This.empty() ).fadeIn();
+
+            for (var i = 0;  i < $_Script.length;  i++)
+                $.globalEval( $_Script[i].text );
 
             if (typeof iCallback == 'function')
                 for (var i = 0;  i < $_This.length;  i++)
                     iCallback.apply($_This[i], arguments);
         }
+
         function Load_Back(iHTML) {
             if (typeof iHTML != 'string')  return;
 
@@ -3170,11 +3187,11 @@
             var _Context_ = [this, $.makeArray(arguments)];
 
             $(DOM.body).sandBox(iHTML,  iURL[1],  function ($_innerDOM) {
-                _Context_[1].splice(0, 1, $_innerDOM);
+                _Context_[1][0] = $_innerDOM;
 
                 Append_Back.apply(_Context_[0], _Context_[1]);
 
-                $(this).remove();
+                return false;
             });
         }
 

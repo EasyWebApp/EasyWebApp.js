@@ -28,7 +28,12 @@
         switch ( _TP_.split('.')[0] ) {
             case 'news':         ;
             case 'image':        {
-                if (_PP_  &&  (_PP_ == _TP_))  return Data_Fix(iData.tngou);
+                if (_PP_  &&  (_PP_ == _TP_)) {
+                    $.ListView.getInstance('.Tab.Point')
+                        .clear().render(Array(Math.ceil(iData.total / 10)));
+
+                    return Data_Fix(iData.tngou);
+                }
 
                 $.ListView(
                     $.ListView.findView( this.domRoot.find('form') ),
@@ -43,6 +48,16 @@
 
                 $('table', this.domRoot[0]).iTable();
 
+                $.ListView(
+                    $('.Tab.Point', this.domRoot[0]).iTab()[0],
+                    function ($_Item) {
+                        var $_Table = $('table', $_Item[0]);
+
+                        $.ListView($.ListView.findView($_Table, false)[0]);
+
+                        $_Item.filter('label').text(arguments[2] + 1);
+                    }
+                );
                 return {
                     content_type:    iData.tngou
                 };

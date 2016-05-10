@@ -73,6 +73,12 @@ form [multiple] label.active {
 form [multiple] input[type="radio"] {
     display:    none;
 }
+
+#Main_View .Tab.Point > label {
+    border-radius:    0;
+    width:            3em;
+    zoom:             0.5;
+}
 table td.Background-Image {
     border:    0.5em  solid  transparent;
 }

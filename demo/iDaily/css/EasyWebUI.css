@@ -8,7 +8,7 @@
  *    and can be used in the Web UI development of
  *    Any Platform.
  *
- *    [Version]    v1.0  (2016-04-28)
+ *    [Version]    v1.0  (2016-05-10)
  *
  *    [Require]    CSS 2.1  (Best Effect with CSS 3),
  *
@@ -978,18 +978,17 @@ img.UserLogo {
 
 /* ---------- Tab Control ---------- */
 .Tab > label {
-        display:          inline-block;
-        margin-bottom:    -1px;
-        padding:          0.5em  1em;
-        line-height:      2.3em;
-        text-align:       center;
-        color:            rgb(118, 118, 119);
-        cursor:           pointer;
-        background:       rgb(230, 230, 230);
-   -moz-transition:       0.25s;
-     -o-transition:       0.25s;
--webkit-transition:       0.25s;
-        transition:       0.25s;
+        display:        inline-block;
+        padding:        0.5em  1em;
+        line-height:    2.3em;
+        text-align:     center;
+        color:          rgb(118, 118, 119);
+        cursor:         pointer;
+        background:     rgb(230, 230, 230);
+   -moz-transition:     0.25s;
+     -o-transition:     0.25s;
+-webkit-transition:     0.25s;
+        transition:     0.25s;
 }
 .Tab > label.active {
     background:     white  !important;
@@ -1004,7 +1003,7 @@ img.UserLogo {
     overflow-x:          hidden;
     overflow-y:          auto;
     background-color:    white;
-    border-radius:       0  5px  5px  5px;
+    border-radius:       0  0  5px  5px;
     height:              90%;
 }
 .Tab > input[type="radio"],
@@ -1117,10 +1116,10 @@ img.UserLogo {
     left:             -2em;
     top:              0.7em;
 }
-.Tree li:hover > * {
+.Tree li > *:hover {
     background-color:    lightgray;
 }
-.Tree li:hover > ul {
+.Tree li > ul:hover {
     background-color:    inherit;
 }
 

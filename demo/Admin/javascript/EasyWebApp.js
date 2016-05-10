@@ -315,10 +315,9 @@
             this.prevIndex = this.lastIndex++ ;
             this.splice(this.lastIndex,  this.length);
 
-            var iNew = (arguments[0] instanceof InnerPage)  ?  arguments[0]  :  (
-                    new InnerPage(this.ownerApp,  arguments[0] || { })
-                );
+            var iNew = new InnerPage(this.ownerApp,  arguments[0] || { });
             this.push(iNew);
+            iNew.$_Page = (this.cache() || { }).$_Page;
 
             BOM.history.pushState(
                 {DOM_Index:  this.lastIndex},
@@ -564,7 +563,7 @@
 
                     $_Body.sandBox(iHTML,  (
                         ((iSelector && iSimple) ? iSelector : 'body > *')  +
-                            ', head link[target], script'
+                            ', link[rel="stylesheet"], link[target]'
                     ),  function ($_Content) {
                         $_Content = $_Content.not('script[src]');
 
@@ -616,15 +615,11 @@
             this.app.loading = true;
 
         /* ----- Load DOM  from  Cache ----- */
-            var iCache = this.app.history.cache();
-
-            if (iCache) {
-                this.app.history.write(iCache);
-                return iCache.show().onReady();
-            }
-        /* ----- Load DOM  from  Network ----- */
             var This_Page = this.app.history.write(this);
 
+            if (This_Page.$_Page)  return This_Page.show().onReady();
+
+        /* ----- Load DOM  from  Network ----- */
             var iData,  Need_HTML = (this.type == 'Inner');
 
             var Load_Stage = Need_HTML ? 2 : 1,  This_Link = this;

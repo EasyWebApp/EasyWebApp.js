@@ -563,7 +563,7 @@
 
                     $_Body.sandBox(iHTML,  (
                         ((iSelector && iSimple) ? iSelector : 'body > *')  +
-                            ', head link[target], script'
+                            ', link[rel="stylesheet"], link[target]'
                     ),  function ($_Content) {
                         $_Content = $_Content.not('script[src]');
 

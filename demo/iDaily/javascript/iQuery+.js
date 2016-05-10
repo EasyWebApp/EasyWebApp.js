@@ -2,7 +2,7 @@
 //              >>>  iQuery+  <<<
 //
 //
-//    [Version]    v1.4  (2016-05-06)  Stable
+//    [Version]    v1.4  (2016-05-10)  Stable
 //
 //    [Require]    iQuery  ||  jQuery with jQuery+
 //
@@ -98,6 +98,8 @@
 
 //  Thanks "EasyWebApp" Project --- http://git.oschina.net/Tech_Query/EasyWebApp
 
+    var Click_Type = $.browser.mobile ? 'tap' : 'click';
+
     function ListView($_View, $_Item, onInsert) {
         var _Self_ = arguments.callee;
 
@@ -130,6 +132,15 @@
             this[this.length] = $_Item;
         }
         this.$_Template = this[0].clone(true);
+/*
+        iView = this;
+
+        this.$_View.on(Click_Type,  this.getSelector(),  function (iEvent) {
+            if ((iEvent.target !== this)  &&  (iEvent.target.parentNode !== this))
+                return;
+
+            $(this).hasClass('active')  ||  iView.focus(this);
+        });*/
     }
 
     $.extend(ListView, {
@@ -169,6 +180,14 @@
 
     ListView.prototype = $.extend(new EventInterface(),  {
         constructor:    ListView,
+        getSelector:    function () {
+            return  this.selector ?
+                this.selector.join(', ') : [
+                    this.$_Template[0].tagName.toLowerCase()
+                ].concat(
+                    (this.$_Template.attr('class') || '').split(/\s+/)
+                ).join('.').trim('.');
+        },
         itemOf:         function (Index) {
             Index = Index || 0;
 
@@ -327,13 +346,8 @@
         var _This_ = EventInterface.call(this, 'branch');
 
         this.listener = [
-            $.browser.mobile ? 'tap' : 'click',
-            iListView.selector ?
-                iListView.selector.join(', ') : [
-                    iListView.$_Template[0].tagName.toLowerCase()
-                ].concat(
-                    (iListView.$_Template.attr('class') || '').split(/\s+/)
-                ).join('.').trim('.'),
+            Click_Type,
+            iListView.getSelector(),
             function (iEvent) {
                 if ( $(iEvent.target).is(':input') )  return;
 
@@ -502,7 +516,9 @@
                 );
             else
                 iPromise.oncomplete = function () {
-                    iCallback.call(this,  BufferToString( arguments[0].target.result ));
+                    iCallback.call(
+                        this,  BufferToString( arguments[0].target.result )
+                    );
                 };
         } catch (iError) {
             iFailback(iError);
