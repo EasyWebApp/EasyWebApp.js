@@ -74,11 +74,34 @@ form [multiple] input[type="radio"] {
     display:    none;
 }
 
-#Main_View .Tab.Point > label {
-    border-radius:    0;
-    width:            3em;
-    zoom:             0.5;
-}
 table td.Background-Image {
     border:    0.5em  solid  transparent;
+}
+#Main_View .NavBar {
+    max-height:    5em;
+    overflow:      hidden;
+}
+#Main_View .NavBar:after {
+    content:        "...";
+    font-size:      inherit;
+    line-height:    normal;
+    height:         auto;
+    width:          auto;
+    visibility:     visible;
+    position:       absolute;
+    right:          2.25em;
+    bottom:         0.75em;
+}
+#Main_View .NavBar:hover {
+    max-height:    none;
+}
+#Main_View .NavBar:hover:after {
+    font-size:      0;
+    line-height:    0;
+    height:         0;
+    width:          0;
+    visibility:     hidden;
+}
+#Main_View .NavBar > li:hover {
+    background:    white;
 }

@@ -15,29 +15,31 @@
         <input type="submit" />
     </form>
 
-    <div class="Tab Point CenterX">
-        <div class="Body">
-            <table>
-                <thead><tr>
-                    <th>主配图</th><th>关键词</th><th>浏览量</th><th>评论量</th><th>收藏量</th><th>发布时间</th><th>发布源</th>
-                </tr></thead>
-                <tbody name="content">
-                    <tr target="_self" href="html/news_text.html"
-                        src="/api/top/show?callback=?" data-id="id">
-                        <td name="img" class="Background-Image" />
-                            <i></i>
-                        </td>
-                        <td name="keywords"></td>
-                        <td name="count"></td>
-                        <td name="rcount"></td>
-                        <td name="fcount"></td>
-                        <td name="time"></td>
-                        <td><a name="fromurl" rel="nofollow" target="_blank"><span name="fromname">
-                        </span></a></td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-        <label>1</label>
+    <div name="content">
+        <table>
+            <thead><tr>
+                <th>主配图</th><th>关键词</th><th>浏览量</th><th>评论量</th><th>收藏量</th><th>发布时间</th><th>发布源</th>
+            </tr></thead>
+            <tbody name="list">
+                <tr target="_self" href="html/news_text.html"
+                    src="/api/top/show?callback=?" data-id="id">
+                    <td name="img" class="Background-Image" />
+                        <i></i>
+                    </td>
+                    <td name="keywords"></td>
+                    <td name="count"></td>
+                    <td name="rcount"></td>
+                    <td name="fcount"></td>
+                    <td name="time"></td>
+                    <td><a name="fromurl" rel="nofollow" target="_blank"><span name="fromname">
+                    </span></a></td>
+                </tr>
+            </tbody>
+        </table>
+        <ul class="NavBar" name="page">
+            <li name="index" target="content" src="/api/top/list?rows=10&callback=?"
+                data-id="id" data-page="index">
+            </li>
+        </ul>
     </div>
 </body>

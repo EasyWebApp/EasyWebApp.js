@@ -15,26 +15,28 @@
         <input type="submit" />
     </form>
 
-    <div class="Tab Point CenterX">
-        <div class="Body">
-            <table>
-                <thead><tr>
-                    <th>封面图</th><th>标题</th><th>图片数</th><th>浏览量</th><th>发布时间</th>
-                </tr></thead>
-                <tbody name="content">
-                    <tr target="_self" href="html/gallery.html"
-                        src="/tnfs/api/show?callback=?" data-id="id">
-                        <td name="img" class="Background-Image" />
-                            <i></i>
-                        </td>
-                        <td name="title"></td>
-                        <td name="size"></td>
-                        <td name="count"></td>
-                        <td name="time"></td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-        <label>1</label>
+    <div name="content">
+        <table>
+            <thead><tr>
+                <th>封面图</th><th>标题</th><th>图片数</th><th>浏览量</th><th>发布时间</th>
+            </tr></thead>
+            <tbody name="list">
+                <tr target="_self" href="html/gallery.html"
+                    src="/tnfs/api/show?callback=?" data-id="id">
+                    <td name="img" class="Background-Image" />
+                        <i></i>
+                    </td>
+                    <td name="title"></td>
+                    <td name="size"></td>
+                    <td name="count"></td>
+                    <td name="time"></td>
+                </tr>
+            </tbody>
+        </table>
+        <ul class="NavBar" name="page">
+            <li name="index" target="content" src="/tnfs/api/list?rows=10&callback=?"
+                data-id="id" data-page="index">
+            </li>
+        </ul>
     </div>
 </body>

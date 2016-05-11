@@ -131,6 +131,9 @@
 
             this[this.length] = $_Item;
         }
+
+        _Self_.findView(this.$_View, false);
+
         this.$_Template = this[0].clone(true);
 /*
         iView = this;
