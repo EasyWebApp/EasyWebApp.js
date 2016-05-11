@@ -3,9 +3,10 @@
     var Image_Root = 'http://tnfs.tngou.net/img';
 
     function Data_Page(iSum) {
-        return  $.map(Array(Math.ceil(iSum / 10)),  function () {
-            return  {index:  arguments[1] + 1};
-        });
+        if (iSum > -1)
+            return  $.map(Array(Math.ceil(iSum / 10)),  function () {
+                return  {index:  arguments[1] + 1};
+            });
     }
 
     function Data_Fix(iArray) {
@@ -25,8 +26,7 @@
     var iWebApp = $('#Main_View').WebApp({ }, 'http://www.tngou.net');
 
     iWebApp.on('pageRender',  function (This_Page, Prev_Page, iData) {
-        var _TP_ = $.fileName(This_Page.HTML),
-            _PP_ = $.fileName(Prev_Page.HTML);
+        var _TP_ = $.fileName(This_Page.HTML);
 
         if ((! $.isEmptyObject(iData))  &&  (iData.status === false))
             return BOM.alert(iData.msg);
@@ -38,7 +38,7 @@
             }
             case 'news':         ;
             case 'image':        {
-                if (_PP_  &&  (_PP_ == _TP_))
+                if (This_Page.JSON)
                     return {
                         page:    Data_Page(iData.total),
                         list:    Data_Fix(iData.tngou)

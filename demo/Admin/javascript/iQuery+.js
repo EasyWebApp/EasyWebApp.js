@@ -135,15 +135,11 @@
         _Self_.findView(this.$_View, false);
 
         this.$_Template = this[0].clone(true);
-/*
-        iView = this;
 
-        this.$_View.on(Click_Type,  this.getSelector(),  function (iEvent) {
-            if ((iEvent.target !== this)  &&  (iEvent.target.parentNode !== this))
-                return;
-
-            $(this).hasClass('active')  ||  iView.focus(this);
-        });*/
+        this.$_View.on(Click_Type,  '.ListView_Item',  function (iEvent) {
+            if (! $(this).hasClass('active'))
+                _Self_.getInstance(this.parentNode).focus(this);
+        });
     }
 
     $.extend(ListView, {

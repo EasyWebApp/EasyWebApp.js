@@ -80,6 +80,7 @@ table td.Background-Image {
 #Main_View .NavBar {
     max-height:    5em;
     overflow:      hidden;
+    position:      relative;
 }
 #Main_View .NavBar:after {
     content:        "...";
@@ -89,8 +90,8 @@ table td.Background-Image {
     width:          auto;
     visibility:     visible;
     position:       absolute;
-    right:          2.25em;
-    bottom:         0.75em;
+    right:          0;
+    bottom:         1.25em;
 }
 #Main_View .NavBar:hover {
     max-height:    none;
