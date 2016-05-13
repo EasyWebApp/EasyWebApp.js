@@ -41,10 +41,11 @@ EasyWebApp 与其作者开发的 [**EasyWebUI**](http://git.oschina.net/Tech_Que
 
 
 ## 【版本历史】
- - v2.5   Beta  —— 2016年5月5日
+ - v2.5   Stable  —— 2016年5月13日
    - 独立出 **抽象视图数据读写**方法 `$.fn.dataRender()`、`$.fn.dataReader()`，方便业务逻辑复用
    - 支持 **内页模板文件**中的 **内联 JavaScript** 执行
    - `WebApp` 对象继承 **iQuery+ v1.4** 内置的 `$.EventInterface()` 抽象接口，实现 **事件多回调**采用最后一次有效返回数据
+   - 提高了 DOM 缓存可控性
  - v2.4   Stable —— 2016年4月25日
    - 所有 HTML 文件中均可 **内联内页**
    - **纯 API 调用**返回的数据 也会压入数据栈
@@ -65,19 +66,21 @@ EasyWebApp 与其作者开发的 [**EasyWebUI**](http://git.oschina.net/Tech_Que
    - 独立出 **ListView 对象**，便于实现 局部刷新
  - v2.0   Beta   —— 2015年10月7日   引擎内部实现 **OOP 重构**（第一阶段）
    - **WebApp 对象实现** 独立为 InnerPage、InnerHistory、DataStack、PageLink 四大内部对象
- - v1.8.5 Stable —— 2015年9月24日   SPA 内页也支持用 `<link />` 声明 **多数据源**，且所有此类页面均支持 **通用加载进度事件**
- - v1.7.5 Stable —— 2015年9月18日
+ - v1.8.5 Stable —— 2015年9月24日
+   - SPA 内页也支持用 `<link />` 声明 **多数据源**
    - 新增 **pageLoad 同步事件**，会在用户触发内页跳转时产生
    - 所有的接口调用点 都可用 **apiCall 同步事件**来 Hook
- - v1.7   Stable —— 2015年9月11日   数据在每个 WebApp 实例内外的流转链 更顺畅
- - v1.6.5 Stable —— 2015年9月7日    WebApp 对象“手动控制”实例方法 参数写法与 HTML 属性统一（也支持 缺省简写形式）
- - v1.6   Stable —— 2015年8月20日   **第一代数据堆栈** 独立为一个对象
- - v1.5.5 Stable —— 2015年8月18日
+ - v1.7   Stable —— 2015年9月11日
+   - 数据在每个 WebApp 实例内外的流转链 更顺畅
+   - WebApp 对象“手动控制”实例方法 参数写法与 HTML 属性统一（也支持 缺省简写形式）
+ - v1.6   Stable —— 2015年8月20日
+   - **第一代数据堆栈** 独立为一个对象
    - 支持 **RESTful API** 的 Post、Delete、Put 方法
    - 支持 **模板文件 预加载**
    - 支持 数据模型 嵌套一层对象
- - v1.4.5 Stable —— 2015年8月11日   集成 **首屏渲染数据**的 API 调用
- - v1.3.5 Stable —— 2015年8月10日   支持 **API URL 访问代理**、API 返回 纯文本数据
+ - v1.4.5 Stable —— 2015年8月11日
+   - 集成 **首屏渲染数据**的 API 调用
+   - 支持 **API URL 访问代理**、API 返回 纯文本数据
  - v1.3   Stable —— 2015年8月3日    支持 **MarkDown 模板渲染**，并发布 首个演示程序
  - v1.2   Stable —— 2015年7月24日   首个 **开源稳定版**， **第一代 API** 形态已稳定
  - v1.1   Beta   —— 2015年7月22日   首个开源版本，基本模式、架构已成形
@@ -154,7 +157,7 @@ EasyWebApp 与其作者开发的 [**EasyWebUI**](http://git.oschina.net/Tech_Que
 <script>
 (function (BOM, $) {
 
-    $('body > section')
+    $('body > section').WebApp().domRoot
         .onPageRender('page_1.html',  function (iData, This_Page, Prev_Page) {
             //  iData 是 API 返回的 JSON，格式自定义，默认为 空对象
             if (iData.code == 200)
@@ -162,8 +165,7 @@ EasyWebApp 与其作者开发的 [**EasyWebUI**](http://git.oschina.net/Tech_Que
 
             BOM.alert(iData.message);
             BOM.history.go(-1);
-        })
-        .WebApp();
+        });
 
 })(self, self.jQuery);
 </script>
@@ -321,9 +323,10 @@ $.ajaxPrefilter(function (iOption) {
 ```JavaScript
 //  幂等方法，不会重复初始化，且总返回 WebApp 实例对象
 var iWebApp = $_AppRoot.WebApp(
-        Init_Data,                         //  可选，一般为 登录后的会话数据
-        'http://cross.domain.api/root',    //  可选，API 服务器 与 静态网页资源服务器 不同时设置
-        URL_Change                         //  可选，Boolean，控制 地址栏网址 是否改变
+        Init_Data,                     //  可选，一般为 登录后的会话数据
+        'http://api.demo.net/root',    //  可选，API 服务器 与 静态网页资源服务器 不同时设置
+        Cache_Second,                  //  可选，DOM 缓存时限（秒，默认无限）
+        URL_Change                     //  可选，Boolean，控制 地址栏网址 是否改变
     );
 ```
 #### 数据渲染

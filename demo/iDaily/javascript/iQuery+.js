@@ -2,7 +2,7 @@
 //              >>>  iQuery+  <<<
 //
 //
-//    [Version]    v1.4  (2016-05-10)  Stable
+//    [Version]    v1.4  (2016-05-12)  Stable
 //
 //    [Require]    iQuery  ||  jQuery with jQuery+
 //
@@ -137,7 +137,14 @@
         this.$_Template = this[0].clone(true);
 
         this.$_View.on(Click_Type,  '.ListView_Item',  function (iEvent) {
-            if (! $(this).hasClass('active'))
+            var $_This = $(this);
+
+            if (
+                (! $_This.hasClass('active'))  &&
+                $_This.scrollParents().is(
+                    'a[href], *[tabIndex], *[contentEditable]'
+                )
+            )
                 _Self_.getInstance(this.parentNode).focus(this);
         });
     }

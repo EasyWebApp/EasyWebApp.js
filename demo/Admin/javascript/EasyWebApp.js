@@ -2,7 +2,7 @@
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v2.5  (2016-05-09)  Beta
+//      [Version]    v2.5  (2016-05-13)  Stable
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //
@@ -88,7 +88,7 @@
 /* ---------- [object PageLink] ---------- */
 
     function PageLink(This_App, Link_DOM, iArgument, iData) {
-        this.app = This_App;
+        this.ownApp = This_App;
         this.$_DOM = $.isPlainObject(Link_DOM) ?
             this.createDOM(Link_DOM, iArgument, iData)  :
             $(Link_DOM);
@@ -104,7 +104,7 @@
         }
         this.method = (this.method || 'Get').toLowerCase();
         this.data = { };
-        this.href = this.href || this.app.history.last().HTML;
+        this.href = this.href || this.ownApp.history.last().HTML;
         this.href = this.getURL('href');
 
         var iFileName = $.fileName( this.href ).split('.');
@@ -164,7 +164,7 @@
             return  this.data = $.extend(iData || { },  this.data);
         },
         getArgs:      function () {
-            var iData = $.extend(this.app.history.getData(), this.getData());
+            var iData = $.extend(this.ownApp.history.getData(), this.getData());
 
             return  $.map(this.$_DOM[0].dataset,  function (iName) {
                 return  (iData[iName] !== undefined)  ?  iData[iName]  :  iName;
@@ -174,7 +174,7 @@
             if (! this[iKey])  return '';
 
             if ((iKey != 'href')  ||  (this[iKey][0] != '#')) {
-                this[iKey] = this.app.makeURL(
+                this[iKey] = this.ownApp.makeURL(
                     this[iKey] || '',
                     this.getData(),
                     ((iKey == 'href')  ?  (! this.src)  :  (
@@ -330,10 +330,10 @@
             var iNew = this[this.lastIndex];
 
             for (var i = 0;  i < this.lastIndex;  i++)
-                if ((iNew.time - this[i].time) > 60000) {
+                if ((iNew.time - this[i].time)  >  (this.ownerApp.cache * 1000)) {
                     if (! this[i].sourceLink.action)  this[i].$_Page = null;
                 } else if (
-                    (! (iNew.method + this[i].method).match(/Post|Put/i))  &&
+                    (! iNew.JSON)  &&
                     $.isEqual(iNew.sourceLink, this[i].sourceLink)
                 )
                     return this[i];
@@ -378,12 +378,13 @@
             'pageLoad', 'formSubmit', 'apiCall', 'pageRender', 'pageReady', 'appExit'
         ];
 
-    function WebApp($_Root, API_Root, URL_Change) {
+    function WebApp($_Root, API_Root, Cache_Second, URL_Change) {
         $.EventInterface.apply(this, Event_Type);
 
         $.extend(this, {
             domRoot:      $($_Root),
             apiRoot:      API_Root || '',
+            cache:        Cache_Second || Infinity,
             urlChange:    URL_Change,
             history:      new InnerHistory(this, $_Root),
             loading:      false
@@ -430,7 +431,7 @@
     $.extend(PageLink.prototype, {
         getTarget:    function () {
             return  this.target.match(/^_(self|blank)$/) ?
-                this.app.domRoot  :  $('[name="' + this.target + '"]');
+                this.ownApp.domRoot  :  $('[name="' + this.target + '"]');
         },
         prefetch:     function () {
             var iHTML = (this.href || '').split('?');
@@ -463,9 +464,9 @@
         loadData:        function (Data_Ready) {
             var $_Form = $(this.$_DOM).parents('form').eq(0);
             if ($_Form.length)
-                this.app.history.mergeData($_Form, -1);
+                this.ownApp.history.mergeData($_Form, -1);
 
-            var iLink = this,  This_App = this.app,
+            var iLink = this,  This_App = this.ownApp,
                 API_URL = this.getURL('src');
 
             function AJAX_Ready(iData) {
@@ -605,19 +606,20 @@
 
     $.extend(PageLink.prototype, {
         loadTemplate:    function () {
-            var iReturn = this.app.trigger(
+            var iReturn = this.ownApp.trigger(
                     'pageLoad',
-                    this.app.history.last(),
-                    this.app.history.prev()
+                    this.ownApp.history.last(),
+                    this.ownApp.history.prev()
                 );
             if (iReturn === false)  return;
 
-            this.app.loading = true;
+            this.ownApp.loading = true;
 
         /* ----- Load DOM  from  Cache ----- */
-            var This_Page = this.app.history.write(this);
+            var This_Page = this.ownApp.history.write(this);
 
-            if (This_Page.$_Page)  return This_Page.show().onReady();
+            if (this.ownApp.cache && This_Page.$_Page)
+                return This_Page.show().onReady();
 
         /* ----- Load DOM  from  Network ----- */
             var iData,  Need_HTML = (this.type == 'Inner');
@@ -637,15 +639,15 @@
             if (Need_HTML)  This_Page.load(this, Page_Load);
         },
         loadPage:        function () {
-            var iReturn = this.app.trigger(
+            var iReturn = this.ownApp.trigger(
                     'appExit',
-                    this.app.history.last().HTML,
+                    this.ownApp.history.last().HTML,
                     this.href,
                     this.getData()
                 );
             if (iReturn === false)  return;
 
-            this.app.history.move();
+            this.ownApp.history.move();
             BOM.sessionStorage.EWA_Model = BOM.JSON.stringify(
                 $.isPlainObject(iReturn) ? iReturn : this.getData()
             );
@@ -876,9 +878,12 @@
                 $.isPlainObject(iArgs[0])  &&  iArgs.shift()
             );
         var API_Root = (typeof iArgs[0] == 'string') && iArgs.shift();
+        var Cache_Second = (typeof iArgs[0] == 'number') && iArgs.shift();
         var URL_Change = (typeof iArgs[0] == 'boolean') && iArgs[0];
 
-        iWebApp = (new WebApp(this, API_Root, URL_Change)).boot(Init_Data);
+        iWebApp = (new WebApp(
+            this,  API_Root,  Cache_Second,  URL_Change
+        )).boot(Init_Data);
 
         $(this[0]).data('_EWAI_', iWebApp).addClass('EWA_Container');
 

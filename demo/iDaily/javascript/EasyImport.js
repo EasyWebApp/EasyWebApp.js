@@ -2530,8 +2530,9 @@
 
     var Tag_Style = { },
         $_SandBox = $('<iframe />', {
-            src:      'about:blank',
-            style:    'display: none'
+            id:       '_iQuery_SandBox_',
+            style:    'display: none',
+            src:      'blank.html'
         });
     $(DOM).ready(function () {
         $_SandBox.appendTo( this.body );
@@ -3308,9 +3309,32 @@
 
     /* ----- History API ----- */
 
-    var _State_ = [[null, DOM.title, DOM.URL]],
-        _Pushing_ = false,
-        $_BOM = $(BOM);
+    var _BOM_,      $_BOM = $(BOM),
+        _Pushing_,  _State_ = [[null, DOM.title, DOM.URL]];
+
+    $(DOM).ready(function () {
+        var iFrame = $('#_iQuery_SandBox_')[0];
+
+        _BOM_ = iFrame.contentWindow;
+
+        iFrame.onload = function () {
+            if (_Pushing_) {
+                _Pushing_ = false;
+                return;
+            }
+
+            var iState = _State_[ _BOM_.location.search.slice(7) ];
+            if (! iState)  return;
+
+            BOM.history.state = iState[0];
+            DOM.title = iState[1];
+
+            $_BOM.trigger({
+                type:     'popstate',
+                state:    iState[0]
+            });
+        };
+    });
 
     BOM.history.pushState = function (iState, iTitle, iURL) {
         for (var iKey in iState)
@@ -3320,33 +3344,15 @@
         if (typeof iTitle != 'string')
             throw TypeError("The History State needs a Title String !");
 
-        DOM.title = iTitle;
+        _BOM_.document.title = DOM.title = iTitle;
         _Pushing_ = true;
-        BOM.location.hash = '_' + (_State_.push(arguments) - 1);
+        _BOM_.location.search = 'index=' + (_State_.push(arguments) - 1);
     };
 
     BOM.history.replaceState = function () {
         _State_ = [ ];
         this.pushState.apply(this, arguments);
     };
-
-    $_BOM.on('hashchange',  function () {
-        if (_Pushing_) {
-            _Pushing_ = false;
-            return;
-        }
-
-        var iState = _State_[ BOM.location.hash.slice(2) ];
-        if (! iState)  return;
-
-        BOM.history.state = iState[0];
-        DOM.title = iState[1];
-
-        $_BOM.trigger({
-            type:     'popstate',
-            state:    iState[0]
-        });
-    });
 
 })(self, self.document, self.jQuery);
 
