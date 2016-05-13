@@ -167,7 +167,13 @@
             var iData = $.extend(this.ownApp.history.getData(), this.getData());
 
             return  $.map(this.$_DOM[0].dataset,  function (iName) {
-                return  (iData[iName] !== undefined)  ?  iData[iName]  :  iName;
+                if (
+                    ((Number(iName) % 1)  !==  0)  &&
+                    (iData[iName] !== undefined)
+                )
+                    return iData[iName];
+
+                return iName;
             });
         },
         getURL:       function (iKey) {

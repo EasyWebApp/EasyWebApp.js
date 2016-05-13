@@ -2,7 +2,7 @@
 //              >>>  iQuery+  <<<
 //
 //
-//    [Version]    v1.4  (2016-05-12)  Stable
+//    [Version]    v1.4  (2016-05-13)  Stable
 //
 //    [Require]    iQuery  ||  jQuery with jQuery+
 //
@@ -349,7 +349,14 @@
         if (!  (this instanceof _Self_))
             return  new _Self_(iListView, iKey, onFork, onFocus);
 
-        var _This_ = EventInterface.call(this, 'branch');
+        var _This_ = EventInterface.call(this, 'branch').on('branch', onFork);
+
+        iKey = iKey || 'list';
+
+        this.unit = iListView.on('insert',  function ($_Item, iValue) {
+            if ($.likeArray( iValue[iKey] )  &&  iValue[iKey][0])
+                _This_.branch(this, $_Item, iValue[iKey]);
+        });
 
         this.listener = [
             Click_Type,
@@ -363,6 +370,9 @@
                     );
                 if ( Pseudo_Click )  $_This.children('.TreeNode').toggle(200);
 
+                $('.ListView_Item.active', _This_.unit.$_View[0]).not(this)
+                    .removeClass('active');
+
                 if (typeof onFocus != 'function')  return;
 
                 var $_Target = onFocus.call(this, iEvent, Pseudo_Click);
@@ -374,15 +384,6 @@
             }
         ];
         $.fn.on.apply(iListView.$_View.addClass('TreeNode'), this.listener);
-
-        var iTree = this.on('branch', onFork);
-
-        iKey = iKey || 'list';
-
-        this.unit = iListView.on('insert',  function ($_Item, iValue) {
-            if ($.likeArray( iValue[iKey] )  &&  iValue[iKey][0])
-                iTree.branch(this, $_Item, iValue[iKey]);
-        });
     }
 
     TreeView.prototype = $.extend(new EventInterface(),  {
