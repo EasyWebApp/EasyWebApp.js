@@ -1,26 +1,15 @@
-//
-//                    >>>  EasyWebApp.js  <<<
-//
-//
-//      [Version]    v2.5  (2016-05-13)  Stable
-//
-//      [Require]    iQuery  ||  jQuery with jQuery+,
-//
-//                   iQuery+,
-//
-//                   [ marked.js ]  (for MarkDown rendering)
-//
-//      [Usage]      A Light-weight WebApp Framework
-//                   jQuery Compatible API.
-//
-//
-//              (C)2015-2016    shiy2008@gmail.com
-//
+if (typeof this.define != 'function')
+    this.define = function () {
+        return  arguments[arguments.length - 1]();
+    };
 
 
-/* ---------- Abstract View Data I/O ---------- */
+define('EasyWebApp',  function () {
 
-(function ($) {
+    var WebApp;
+
+
+WebApp = (function (BOM, DOM, $) {
 
     function ArrayRender(iArray, ValueRender) {
         $.ListView(this,  function () {
@@ -79,11 +68,12 @@
         }
     });
 
-})(self.jQuery);
+})(self, self.document, self.jQuery);
 
 
 
-(function (BOM, DOM, $) {
+WebApp = (function (BOM, DOM, $) {
+
 
 /* ---------- [object PageLink] ---------- */
 
@@ -380,17 +370,16 @@
 
 /* ---------->> WebApp Constructor <<---------- */
 
-    var Event_Type = [
-            'pageLoad', 'formSubmit', 'apiCall', 'pageRender', 'pageReady', 'appExit'
-        ];
-
     function WebApp($_Root, API_Root, Cache_Second, URL_Change) {
-        $.EventInterface.apply(this, Event_Type);
+        $.EventInterface.apply(this, [
+            'pageLoad', 'formSubmit', 'apiCall', 'pageRender', 'pageReady', 'appExit'
+        ]);
 
         $.extend(this, {
             domRoot:      $($_Root),
             apiRoot:      API_Root || '',
-            cache:        Cache_Second || Infinity,
+            cache:        (Cache_Second || (Cache_Second == 0))  ?
+                Cache_Second  :  Infinity,
             urlChange:    URL_Change,
             history:      new InnerHistory(this, $_Root),
             loading:      false
@@ -867,6 +856,34 @@
         return this;
     };
 
+    return WebApp;
+
+})(self, self.document, self.jQuery);
+
+
+//
+//                    >>>  EasyWebApp.js  <<<
+//
+//
+//      [Version]    v2.5  (2016-05-16)  Stable
+//
+//      [Require]    iQuery  ||  jQuery with jQuery+,
+//
+//                   iQuery+,
+//
+//                   [ marked.js ]  (for MarkDown rendering)
+//
+//      [Usage]      A Light-weight WebApp Framework
+//                   jQuery Compatible API.
+//
+//
+//              (C)2015-2016    shiy2008@gmail.com
+//
+
+
+
+WebApp = (function (BOM, DOM, $, WebApp) {
+
 /* ---------->> jQuery Wrapper <<---------- */
 
     $.fn.WebApp = function () {
@@ -897,7 +914,9 @@
     };
 
     $.fn.extend($.map(
-        $.makeSet.apply($,  $.map(Event_Type,  function () {
+        $.makeSet.apply($, $.map([
+            'pageLoad', 'formSubmit', 'apiCall', 'pageRender', 'pageReady', 'appExit'
+        ],  function () {
             return  ('on-' + arguments[0]).toCamelCase();
         })),
         function (iValue, iType) {
@@ -930,4 +949,7 @@
         }
     ));
 
-})(self, self.document, self.jQuery);
+})(self, self.document, self.jQuery, WebApp);
+
+
+});

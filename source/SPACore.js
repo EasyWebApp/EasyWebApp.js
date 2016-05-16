@@ -1,89 +1,7 @@
-//
-//                    >>>  EasyWebApp.js  <<<
-//
-//
-//      [Version]    v2.5  (2016-05-13)  Stable
-//
-//      [Require]    iQuery  ||  jQuery with jQuery+,
-//
-//                   iQuery+,
-//
-//                   [ marked.js ]  (for MarkDown rendering)
-//
-//      [Usage]      A Light-weight WebApp Framework
-//                   jQuery Compatible API.
-//
-//
-//              (C)2015-2016    shiy2008@gmail.com
-//
+define(['ViewDataIO'],  function () {
 
+    var BOM = self,  DOM = self.document;
 
-/* ---------- Abstract View Data I/O ---------- */
-
-(function ($) {
-
-    function ArrayRender(iArray, ValueRender) {
-        $.ListView(this,  function () {
-            ValueRender.call(arguments[0], arguments[1]);
-        }).clear().render( iArray );
-    }
-
-    function ObjectRender(iData) {
-        var _Self_ = arguments.callee;
-
-        if (iData instanceof Array)
-            return  ArrayRender.call(this[0], iData, _Self_);
-
-        this.value('name',  function (iName) {
-
-            if (iData[iName] instanceof Array)
-                ArrayRender.call(this, iData[iName], _Self_);
-            else
-                return iData[iName];
-        });
-    }
-
-    $.fn.extend({
-        dataRender:    function (iData) {
-            if (iData instanceof Array)
-                ArrayRender.call(
-                    $.ListView.findView(this, true)[0],  iData,  ObjectRender
-                );
-            else
-                ObjectRender.call(this, iData);
-
-            return this;
-        },
-        dataReader:    function () {
-            var $_Key = $('[name]', this[0]).not( $('[name] [name]', this[0]) ),
-                iData = { };
-
-            if (! $_Key[0])  return this.value();
-
-            for (var i = 0, iName, iLV;  i < $_Key.length;  i++) {
-                iName = $_Key[i].getAttribute('name');
-                iLV = $.ListView.getInstance( $_Key[i] );
-
-                if (! iLV)
-                    iData[iName] = arguments.callee.call( $( $_Key[i] ) );
-                else {
-                    iData[iName] = [ ];
-
-                    for (var j = 0;  j < iLV.length;  j++)
-                        iData[iName][j] = $.extend(
-                            iLV.valueOf(j),  arguments.callee.call( iLV[j] )
-                        );
-                }
-            }
-            return iData;
-        }
-    });
-
-})(self.jQuery);
-
-
-
-(function (BOM, DOM, $) {
 
 /* ---------- [object PageLink] ---------- */
 
@@ -380,17 +298,16 @@
 
 /* ---------->> WebApp Constructor <<---------- */
 
-    var Event_Type = [
-            'pageLoad', 'formSubmit', 'apiCall', 'pageRender', 'pageReady', 'appExit'
-        ];
-
     function WebApp($_Root, API_Root, Cache_Second, URL_Change) {
-        $.EventInterface.apply(this, Event_Type);
+        $.EventInterface.apply(this, [
+            'pageLoad', 'formSubmit', 'apiCall', 'pageRender', 'pageReady', 'appExit'
+        ]);
 
         $.extend(this, {
             domRoot:      $($_Root),
             apiRoot:      API_Root || '',
-            cache:        Cache_Second || Infinity,
+            cache:        (Cache_Second || (Cache_Second == 0))  ?
+                Cache_Second  :  Infinity,
             urlChange:    URL_Change,
             history:      new InnerHistory(this, $_Root),
             loading:      false
@@ -867,67 +784,6 @@
         return this;
     };
 
-/* ---------->> jQuery Wrapper <<---------- */
+    return WebApp;
 
-    $.fn.WebApp = function () {
-        if (! this[0])  return;
-
-        var iWebApp = $(this[0]).data('_EWAI_');
-
-        if (iWebApp instanceof WebApp)  return iWebApp;
-
-        var iArgs = $.makeArray(arguments);
-
-        var Init_Data = $.extend(
-                $.parseJSON(BOM.sessionStorage.EWA_Model || '{ }'),
-                $.paramJSON(),
-                $.isPlainObject(iArgs[0])  &&  iArgs.shift()
-            );
-        var API_Root = (typeof iArgs[0] == 'string') && iArgs.shift();
-        var Cache_Second = (typeof iArgs[0] == 'number') && iArgs.shift();
-        var URL_Change = (typeof iArgs[0] == 'boolean') && iArgs[0];
-
-        iWebApp = (new WebApp(
-            this,  API_Root,  Cache_Second,  URL_Change
-        )).boot(Init_Data);
-
-        $(this[0]).data('_EWAI_', iWebApp).addClass('EWA_Container');
-
-        return iWebApp;
-    };
-
-    $.fn.extend($.map(
-        $.makeSet.apply($,  $.map(Event_Type,  function () {
-            return  ('on-' + arguments[0]).toCamelCase();
-        })),
-        function (iValue, iType) {
-            return  function () {
-                var iArgs = $.makeArray(arguments);
-
-                var iHTML = $.type(iArgs[0]).match(/String|RegExp/i) && iArgs.shift();
-                var iJSON = $.type(iArgs[0]).match(/String|RegExp/i) && iArgs.shift();
-                var iCallback = (typeof iArgs[0] == 'function')  &&  iArgs[0];
-
-                if ((iHTML || iJSON)  &&  iCallback)
-                    this.WebApp().on(iType,  function (This_Page) {
-                        var Page_Match = (iHTML && iJSON)  ?  2  :  1;
-
-                        if (iHTML  &&  (This_Page.HTML || '').match(iHTML))
-                            Page_Match-- ;
-                        if (iJSON  &&  (This_Page.JSON || '').match(iJSON))
-                            Page_Match-- ;
-
-                        if (! Page_Match) {
-                            var iArgs = $.makeArray( arguments );
-                            iArgs.unshift( iArgs.pop() );
-
-                            return  iCallback.apply(this, iArgs);
-                        }
-                    });
-
-                return this;
-            };
-        }
-    ));
-
-})(self, self.document, self.jQuery);
+});

@@ -437,12 +437,33 @@ iWebApp.loadLink('path/to/template.html', 'path/to/api', {
 
 
 ## 【进阶导引】
+
 EasyWebApp v2.x 的基本模型（对照 MVC 模式）——
  - 页面模板 —— 数据接口 (View - Model)
  - 接口数据 —— 操作历史 (Model - View)
  - 操作事件 —— 业务逻辑 (Controller)
  - 组件化（依靠 CSS 框架、jQuery 插件，不越俎代庖）
 
+
+## 【参与开发】
+
+### （〇）环境搭建
+ 1. 安装 **Git**（比 SVN 更适合 **开源团队**）
+ 2. 安装 **Node.JS** 最新 LTS 版
+
+### （一）从源码构建
+
+UNIX-Shell、Windows-CMD 通用脚本 ——
+
+```Shell
+npm install -g requirejs
+
+mkdir ./EasyWebApp;
+git clone https://git.oschina.net/Tech_Query/EasyWebApp.git ./EasyWebApp
+
+node r.js -o build/source.js     #  EasyWebApp.js
+node r.js -o build/release.js    #  EasyWebApp.min.js  EasyWebApp.min.js.map
+```
 
 ## 【项目缘起】
 **EasyWebApp** 算是其作者与 产品、设计、后端的各种“撕逼”后，或坚持、或折中的结果。其 **HTML 模板机制** 源于作者早期的一个 PHP 前端项目 [EasyWebTemplate](http://git.oschina.net/Tech_Query/EasyWebTemplate)（基于 **phpQuery**），而其 **事件驱动的 API** 则源于文首提到的开放平台首个版本的 **智能表单引擎** JSON_Web.js（强数据格式依赖、不支持不规律的界面设计，未到达开源水准，但会继续吸收其优秀的特性）。虽然前面这些小项目 都有些幼稚，但却又是 **敢于把独立思考成果付诸实践**的有益尝试，若没有这些沉淀，就没有本项目自 2015年6月29日的26天 内即发布 **开源稳定版**的成绩~
