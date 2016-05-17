@@ -457,12 +457,13 @@ UNIX-Shell、Windows-CMD 通用脚本 ——
 
 ```Shell
 npm install -g requirejs
+npm install -g uglify-js
 
 mkdir ./EasyWebApp;
 git clone https://git.oschina.net/Tech_Query/EasyWebApp.git ./EasyWebApp
 
-node r.js -o build/source.js     #  EasyWebApp.js
-node r.js -o build/release.js    #  EasyWebApp.min.js  EasyWebApp.min.js.map
+node r.js -o build/source.js
+uglifyjs EasyWebApp.js -c -m -o EasyWebApp.min.js --source-map=EasyWebApp.min.map
 ```
 
 ## 【项目缘起】
