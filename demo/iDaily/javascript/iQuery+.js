@@ -2,7 +2,7 @@
 //              >>>  iQuery+  <<<
 //
 //
-//    [Version]    v1.4  (2016-05-13)  Stable
+//    [Version]    v1.4  (2016-05-20)  Stable
 //
 //    [Require]    iQuery  ||  jQuery with jQuery+
 //
@@ -364,18 +364,15 @@
             function (iEvent) {
                 if ( $(iEvent.target).is(':input') )  return;
 
-                var $_This = $(this);
-                var Pseudo_Click = (
-                        iEvent.pageX  &&  (iEvent.pageX < $_This.offset().left)
-                    );
-                if ( Pseudo_Click )  $_This.children('.TreeNode').toggle(200);
+                if ( iEvent.isPseudo() )
+                    $(this).children('.TreeNode').toggle(200);
 
                 $('.ListView_Item.active', _This_.unit.$_View[0]).not(this)
                     .removeClass('active');
 
                 if (typeof onFocus != 'function')  return;
 
-                var $_Target = onFocus.call(this, iEvent, Pseudo_Click);
+                var $_Target = onFocus.apply(this, arguments);
 
                 if ($_Target && _This_.$_Content) {
                     _This_.$_Content.scrollTo( $_Target );

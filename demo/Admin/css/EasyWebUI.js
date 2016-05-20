@@ -2,7 +2,7 @@
 //          >>>  EasyWebUI Component Library  <<<
 //
 //
-//      [Version]     v2.6  (2016-05-06)  Stable
+//      [Version]     v2.6  (2016-05-20)  Stable
 //
 //      [Based on]    iQuery v1  or  jQuery (with jQuery+),
 //
@@ -394,7 +394,7 @@
             onunload:    closeCB,
             frames:      [ ],
             document:    { },
-            locked:      ($.type(iContent) == 'Window')
+            locked:      ($.Type(iContent) == 'Window')
         });
 
         var _This_ = this;
@@ -901,12 +901,17 @@
     }
 
     function inlineEdit() {
-        $(arguments[0].target).one('blur',  function () {
+        var $_Target = $(arguments[0].target);
+
+        $_Target.one('blur',  function () {
             if ( this.textContent ) {
                 this.removeAttribute('contentEditable');
                 $(this).off('click', StopBubble);
             }
-        }).prop('contentEditable', true).on('click', StopBubble).focus();
+        }).prop({
+            contentEditable:    true,
+            defaultValue:       $_Target.text()
+        }).on('click', StopBubble).focus();
 
         return false;
     }
@@ -941,7 +946,7 @@
                             )[0];
 
                         if (! (
-                            arguments[1] &&
+                            arguments[0].isPseudo() &&
                             $(iRule.parentStyleSheet.ownerNode)
                                 .hasClass('iQuery_CSS-Rule')
                         ))

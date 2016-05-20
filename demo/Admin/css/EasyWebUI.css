@@ -1098,6 +1098,7 @@ img.UserLogo {
 .Tree {
     margin:          0;
     padding-left:    2em;
+    outline:         none;
 }
 .Tree li {
     list-style:     none;
@@ -1312,6 +1313,9 @@ img.UserLogo {
 }
 .Icon.Mail:before {
     content:    "\2709";
+}
+.Icon.Search:before {
+    content:    "\1F50D";
 }
 .Icon.Mobile:before {
     content:    "\1F4F1";
