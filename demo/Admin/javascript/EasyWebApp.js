@@ -266,9 +266,11 @@ WebApp = (function (BOM, DOM, $) {
 
         $_BOM.on('popstate',  function () {
             var iState = arguments[0].state;
-            var iHistory = _This_[ (iState || { }).DOM_Index ];
+            var _Index_ = (iState || { }).DOM_Index;
+            var iHistory = _This_[_Index_];
 
-            if (! iHistory)  return;
+            if (! iHistory)
+                return  BOM.history.go(_This_[_Index_ - 1]  ?  -1  :  1);
 
             _This_.move(iState);
             iHistory.show().onReady();
@@ -865,7 +867,7 @@ WebApp = (function (BOM, DOM, $) {
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v2.5  (2016-05-16)  Stable
+//      [Version]    v2.5  (2016-05-21)  Stable
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //

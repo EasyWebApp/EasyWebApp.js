@@ -551,9 +551,9 @@ define('iQuery',  [],function () {
             ))
                 return 'Window';
 
-            if (iVar.location && (
-                iVar.location  ===  (iVar.defaultView || { }).location
-            ))
+            if (iVar.location  &&  (iVar.location === (
+                iVar.defaultView || iVar.parentWindow || { }
+            ).location))
                 return 'Document';
 
             if (
@@ -2302,7 +2302,7 @@ define('iQuery',  [],function () {
         } else
             $.extend(this, iType);
 
-        if (! (iSource instanceof Element))  return;
+        if (! (iSource && (iSource instanceof Element)))  return;
 
         $.extend(this,  $.map(iSource.dataset,  function (iValue) {
             if (typeof iValue == 'string')  try {
@@ -4072,7 +4072,7 @@ define('iQuery',  [],function () {
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v1.0  (2016-05-20)  Stable
+//      [Version]    v1.0  (2016-05-21)  Stable
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.
