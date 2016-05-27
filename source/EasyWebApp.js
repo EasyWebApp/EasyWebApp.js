@@ -2,7 +2,7 @@
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v2.5  (2016-05-21)  Stable
+//      [Version]    v2.6  (2016-05-27)  Alpha
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //
@@ -48,41 +48,5 @@ define(['SPACore', 'jquery'],  function (WebApp, $) {
 
         return iWebApp;
     };
-
-    $.fn.extend($.map(
-        $.makeSet.apply($, $.map([
-            'pageLoad', 'formSubmit', 'apiCall', 'pageRender', 'pageReady', 'appExit'
-        ],  function () {
-            return  ('on-' + arguments[0]).toCamelCase();
-        })),
-        function (iValue, iType) {
-            return  function () {
-                var iArgs = $.makeArray(arguments);
-
-                var iHTML = $.type(iArgs[0]).match(/String|RegExp/i) && iArgs.shift();
-                var iJSON = $.type(iArgs[0]).match(/String|RegExp/i) && iArgs.shift();
-                var iCallback = (typeof iArgs[0] == 'function')  &&  iArgs[0];
-
-                if ((iHTML || iJSON)  &&  iCallback)
-                    this.WebApp().on(iType,  function (This_Page) {
-                        var Page_Match = (iHTML && iJSON)  ?  2  :  1;
-
-                        if (iHTML  &&  (This_Page.HTML || '').match(iHTML))
-                            Page_Match-- ;
-                        if (iJSON  &&  (This_Page.JSON || '').match(iJSON))
-                            Page_Match-- ;
-
-                        if (! Page_Match) {
-                            var iArgs = $.makeArray( arguments );
-                            iArgs.unshift( iArgs.pop() );
-
-                            return  iCallback.apply(this, iArgs);
-                        }
-                    });
-
-                return this;
-            };
-        }
-    ));
 
 });

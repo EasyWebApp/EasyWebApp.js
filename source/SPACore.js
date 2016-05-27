@@ -301,9 +301,7 @@ define(['ViewDataIO'],  function () {
 /* ---------->> WebApp Constructor <<---------- */
 
     function WebApp($_Root, API_Root, Cache_Second, URL_Change) {
-        $.EventInterface.apply(this, [
-            'pageLoad', 'formSubmit', 'apiCall', 'pageRender', 'pageReady', 'appExit'
-        ]);
+        $.Observer.apply(this);
 
         $.extend(this, {
             domRoot:      $($_Root),
@@ -316,7 +314,7 @@ define(['ViewDataIO'],  function () {
         });
     }
 
-    WebApp.prototype = new $.EventInterface();
+    WebApp.prototype = new $.Observer();
     WebApp.prototype.constructor = WebApp;
 
     var RE_Str_Var = /\{(.+?)\}/g;
@@ -350,6 +348,14 @@ define(['ViewDataIO'],  function () {
 
         return iURL;
     };
+
+    function Trig_Event() {
+        var This_Page = this.history.last();
+
+        return this.trigger(
+            arguments[0], This_Page.HTML, This_Page.JSON, arguments[1]
+        );
+    }
 
 /* ---------- Auto Navigation ---------- */
 
@@ -395,8 +401,7 @@ define(['ViewDataIO'],  function () {
                 API_URL = this.getURL('src');
 
             function AJAX_Ready(iData) {
-                iData = This_App.trigger(
-                    'apiCall',
+                iData = Trig_Event.call(This_App, 'apiCall', [
                     {
                         method:    iLink.method,
                         URL:       API_URL || iLink.getURL('action'),
@@ -404,7 +409,7 @@ define(['ViewDataIO'],  function () {
                     },
                     This_App.history.last().HTML,
                     This_App
-                ) || iData;
+                ]) || iData;
 
                 if (typeof Data_Ready == 'function')
                     Data_Ready.call(iLink, iData);
@@ -531,11 +536,10 @@ define(['ViewDataIO'],  function () {
 
     $.extend(PageLink.prototype, {
         loadTemplate:    function () {
-            var iReturn = this.ownApp.trigger(
-                    'pageLoad',
+            var iReturn = Trig_Event.call(this.ownApp, 'pageLoad', [
                     this.ownApp.history.last(),
                     this.ownApp.history.prev()
-                );
+                ]);
             if (iReturn === false)  return;
 
             this.ownApp.loading = true;
@@ -564,12 +568,11 @@ define(['ViewDataIO'],  function () {
             if (Need_HTML)  This_Page.load(this, Page_Load);
         },
         loadPage:        function () {
-            var iReturn = this.ownApp.trigger(
-                    'appExit',
+            var iReturn = Trig_Event.call(this.ownApp, 'appExit', [
                     this.ownApp.history.last().HTML,
                     this.href,
                     this.getData()
-                );
+                ]);
             if (iReturn === false)  return;
 
             this.ownApp.history.move();
@@ -586,12 +589,11 @@ define(['ViewDataIO'],  function () {
 
             iData = Data_Merge(Source_Link && Source_Link.getData(),  iData);
 
-            var iReturn = This_App.trigger(
-                    'pageRender',
+            var iReturn = Trig_Event.call(This_App, 'pageRender', [
                     This_App.history.last(),
                     This_App.history.prev(),
                     iData
-                );
+                ]);
             this.data = iData = iReturn || iData;
 
             if (iReturn !== false) {
@@ -630,12 +632,11 @@ define(['ViewDataIO'],  function () {
 
             This_App.loading = false;
 
-            This_App.trigger(
-                'pageReady',
+            Trig_Event.call(This_App, 'pageReady', [
                 This_App.history.last(),
                 This_App.history.prev(),
                 This_App
-            );
+            ]);
             This_App.domRoot.focus();
 
             $_Body.trigger({
@@ -758,13 +759,12 @@ define(['ViewDataIO'],  function () {
             );
         }).ajaxSubmit(function (iData) {
 
-            var iReturn = This_App.trigger(
-                    'formSubmit',
+            var iReturn = Trig_Event.call(This_App, 'formSubmit', [
                     This_App.history.last().HTML,
                     arguments[2].url,
                     iData,
                     $(this).attr('href')
-                );
+                ]);
 
             if ((iReturn !== false)  &&  this.target)
                 This_App.loadLink(

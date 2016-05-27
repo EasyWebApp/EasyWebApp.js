@@ -41,6 +41,9 @@ EasyWebApp 与其作者开发的 [**EasyWebUI**](http://git.oschina.net/Tech_Que
 
 
 ## 【版本历史】
+ - v2.6   Alpha   —— 2016年5月27日
+   - **多条件事件绑定** jQuery API 基于 `iQuery.Observer()` 重构到 WebApp 对象上
+   - 引擎源代码 AMD 规范化
  - v2.5   Stable  —— 2016年5月13日
    - 独立出 **抽象视图数据读写**方法 `$.fn.dataRender()`、`$.fn.dataReader()`，方便业务逻辑复用
    - 支持 **内页模板文件**中的 **内联 JavaScript** 执行
@@ -157,8 +160,8 @@ EasyWebApp 与其作者开发的 [**EasyWebUI**](http://git.oschina.net/Tech_Que
 <script>
 (function (BOM, $) {
 
-    $('body > section').WebApp().domRoot
-        .onPageRender('page_1.html',  function (iData, This_Page, Prev_Page) {
+    $('body > section').WebApp()
+        .on('PageRender',  'page_1.html',  function (iData, This_Page, Prev_Page) {
             //  iData 是 API 返回的 JSON，格式自定义，默认为 空对象
             if (iData.code == 200)
                 return iData.data;
@@ -341,39 +344,21 @@ $_Iteration.dataRender( iArray );
 ```JavaScript
 var iData = $_Any.dataReader();
 ```
-#### 快捷方法
-```JavaScript
-$_AppRoot
-    .onPageRender(
-        HTML_Match,    //  二选一，String 或 Regexp，匹配 HTML 文件路径
-        JSON_Match,    //  二选一，String 或 Regexp，匹配 JSON API 路径
-        Page_Render    //  必选，本引擎加载 HTML、JSON 后，进行错误处理，
-                       //  并返回开发者自定义数据结构中的内容对象，以便引擎正确地渲染页面
-                       //  （还可以有 更多自定义的逻辑）
-    )
-    .onPageReady(
-        HTML_Match,    // （同上）
-        JSON_Match,    // （同上）
-        Page_Ready     //  必选，本引擎渲染 HTML、JSON 后，执行传统 DOM Ready 回调中的页面逻辑
-    )
-    .onAppExit(
-        HTML_Match,    // （同上）
-        JSON_Match,    // （同上）
-        App_Exit       //  必选，返回 false 可阻止“整页跳转刷新”销毁本 WebApp 实例
-    )
-```
-【注】上述方法的 **回调传参顺序** 是下文“WebApp 自定义事件”中相应事件回调参数的“末位居首”。
-
 
 ### 二、WebApp 对象实例方法
 
 #### 事件绑定
 ```JavaScript
-iWebApp.on('pageRender',  function (This_Page, Prev_Page, iData) {
-    //  数据结构 整理逻辑
+iWebApp.on(
+    'pageRender',                //  （必填）事件名
+    'path/to/InnerPage.html',    //  （选填）String 或 Regexp，匹配当前内页 HTML 文件路径
+    'path/to/Data_JSON',         //  （选填）String 或 Regexp，匹配当前内页 JSON API 路径
+    function (This_Page, Prev_Page, iData) {
+        //  数据结构 整理逻辑
 
-    return iData.data;    //  返回处理过的数据用于渲染
-});
+        return iData.data;    //  返回处理过的数据用于渲染
+    }
+);
 ```
 #### 事件解绑
 ```JavaScript
