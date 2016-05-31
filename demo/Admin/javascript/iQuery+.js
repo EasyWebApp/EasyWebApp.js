@@ -5,6 +5,51 @@ if ((typeof this.define != 'function')  ||  (! this.define.amd))
 
 define('iQuery+',  function () {
 
+
+(function (BOM, DOM, $) {
+
+    function CommonView($_View, onInit) {
+        var _Self_ = arguments.callee;
+
+        if (!  (this instanceof _Self_))
+            return  new _Self_($_View, onInit);
+
+        $_View = $($_View);
+
+        var iView = this.constructor.getInstance($_View) ||
+                $.Observer.call(this, 1);
+
+        if (iView !== this)  return iView;
+
+        this.$_View = $_View.data('CVI_' + this.constructor.name,  this);
+
+        if (typeof onInit == 'function')  onInit.call(this);
+
+        return this;
+    }
+
+    $.extend(CommonView, {
+        getInstance:    function () {
+            var _Instance_ = $(arguments[0]).data('CVI_' + this.name);
+            return  ((_Instance_ instanceof this)  &&  _Instance_);
+        }
+    });
+
+    CommonView.prototype = $.extend(new $.Observer(),  {
+        constructor:    CommonView,
+        render:         function () {
+            this.$_View.dataRender(
+                this.trigger('render', arguments)  ||  arguments[0]
+            );
+            return this;
+        }
+    });
+
+    $.CommonView = CommonView;
+
+})(self, self.document, self.jQuery);
+
+
 /* ---------- ListView Interface  v0.7 ---------- */
 
 //  Thanks "EasyWebApp" Project --- http://git.oschina.net/Tech_Query/EasyWebApp
@@ -20,19 +65,16 @@ define('iQuery+',  function () {
         if (!  (this instanceof _Self_))
             return  new _Self_($_View, $_Item, onInsert);
 
-        $_View = $($_View);
         if (typeof $_Item == 'function') {
             onInsert = $_Item;
             $_Item = null;
         }
 
-        var iView = _Self_.getInstance($_View) || $.Observer.call(this, 1);
+        var iView = $.CommonView.call(this, $_View);
 
-        if (onInsert)  iView.on('insert', onInsert);
+        if (typeof onInsert == 'function')  iView.on('insert', onInsert);
 
         if (iView !== this)  return iView;
-
-        this.$_View = $_View.data('_LVI_', this);
 
         this.selector = $_Item;
         this.length = 0;
@@ -63,10 +105,7 @@ define('iQuery+',  function () {
     }
 
     $.extend(ListView, {
-        getInstance:    function () {
-            var _Instance_ = $(arguments[0]).data('_LVI_');
-            return  ((_Instance_ instanceof this)  &&  _Instance_);
-        },
+        getInstance:    $.CommonView.getInstance,
         findView:       function ($_View, Init_Instance) {
             $_View = $($_View).find(
                 'ul, ol, dl, tbody, select, datalist, *[multiple]'
@@ -76,7 +115,7 @@ define('iQuery+',  function () {
                 for (var i = 0;  i < $_View.length;  i++)
                     if (! this.getInstance($_View[i]))  this( $_View[i] );
             } else if (Init_Instance === false)
-                $_View.data('_LVI_', null);
+                $_View.data('CVI_ListView', null);
 
             return $_View;
         }
@@ -97,7 +136,7 @@ define('iQuery+',  function () {
         return $_Clone;
     }
 
-    ListView.prototype = $.extend(new $.Observer(),  {
+    ListView.prototype = $.extend(new $.CommonView(),  {
         constructor:    ListView,
         getSelector:    function () {
             return  this.selector ?
@@ -241,7 +280,7 @@ define('iQuery+',  function () {
         fork:           function () {
             var $_View = this.$_View.clone(true);
 
-            $_View.data({_LVI_: '',  LV_Model: ''})[0].id = '';
+            $_View.data({CVI_ListView: '',  LV_Model: ''})[0].id = '';
 
             var iFork = ListView($_View.appendTo( arguments[0] ),  this.selector);
             iFork.$_Template = this.$_Template.clone(true);
@@ -267,7 +306,8 @@ define('iQuery+',  function () {
         if (!  (this instanceof _Self_))
             return  new _Self_(iListView, iKey, onFork, onFocus);
 
-        var _This_ = $.Observer.call(this, 1).on('branch', onFork);
+        var _This_ = $.CommonView.call(this, iListView.$_View)
+                .on('branch', onFork);
 
         iKey = iKey || 'list';
 
@@ -301,7 +341,9 @@ define('iQuery+',  function () {
         $.fn.on.apply(iListView.$_View.addClass('TreeNode'), this.listener);
     }
 
-    TreeView.prototype = $.extend(new $.Observer(),  {
+    TreeView.getInstance = $.CommonView.getInstance;
+
+    TreeView.prototype = $.extend(new $.CommonView(),  {
         constructor:    TreeView,
         branch:         function (iListView, $_Item, iData) {
             var iFork = iListView.fork($_Item).clear().render(iData);
@@ -459,7 +501,7 @@ define('iQuery+',  function () {
 //              >>>  iQuery+  <<<
 //
 //
-//    [Version]    v1.5  (2016-5-25)  Stable
+//    [Version]    v1.4  (2016-5-31)  Stable
 //
 //    [Require]    iQuery  ||  jQuery with jQuery+
 //

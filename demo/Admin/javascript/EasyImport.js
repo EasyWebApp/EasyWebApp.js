@@ -3,7 +3,7 @@ if ((typeof this.define != 'function')  ||  (! this.define.amd))
         return  arguments[arguments.length - 1]();
     };
 
-define('iQuery',  [],function () {
+define('iQuery',  function () {
 
     var iQuery = {fn:  { }};
 
@@ -221,32 +221,37 @@ define('iQuery',  [],function () {
         );
     };
 
-    $.isEqual = function (iLeft, iRight) {
+    $.isEqual = function (iLeft, iRight, iDepth) {
+        iDepth = iDepth || 1;
+
         if (!  (iLeft && iRight))
             return  (iLeft == iRight);
 
-        iLeft = iLeft.valueOf();
-        iRight = iRight.valueOf();
+        iLeft = iLeft.valueOf();  iRight = iRight.valueOf();
 
-        if (iLeft == iRight)  return true;
-        if (! (
-            (iLeft instanceof Object)  &&  (iRight instanceof Object)
-        ))
-            return false;
+        if ((typeof iLeft != 'object')  ||  (typeof iRight != 'object'))
+            return  (iLeft == iRight);
 
         var Left_Key = Object.getOwnPropertyNames(iLeft),
             Right_Key = Object.getOwnPropertyNames(iRight);
 
         if (Left_Key.length != Right_Key.length)  return false;
 
+        Left_Key.sort();  Right_Key.sort();  --iDepth;
+
         for (var i = 0, _Key_;  i < Left_Key.length;  i++) {
             _Key_ = Left_Key[i];
 
-            if (! (
-                (_Key_ in iRight)  &&
-                arguments.callee.call(this, iLeft[_Key_], iRight[_Key_])
-            ))
-                return false;
+            if (_Key_ != Right_Key[i])  return false;
+
+            if (! iDepth) {
+                if (iLeft[_Key_] != iRight[_Key_])  return false;
+            } else {
+                if (! arguments.callee.call(
+                    this, iLeft[_Key_], iRight[_Key_], iDepth
+                ))
+                    return false;
+            }
         }
         return true;
     };
@@ -483,17 +488,33 @@ define('iQuery',  [],function () {
                 return  !!(iParent.compareDocumentPosition(iChild) & 16);
             else
                 return  (iParent !== iChild) && iParent.contains(iChild);
-        },
-        proxy:            function (iFunction, iContext) {
-            var iArgs = $.makeArray(arguments).slice(2);
-
-            return  function () {
-                return  iFunction.apply(
-                    iContext || this,  $.merge(iArgs, arguments)
-                );
-            };
         }
     });
+
+/* ---------- Function Wrapper ---------- */
+
+    var ProxyCache = {
+            origin:     [ ],
+            wrapper:    [ ]
+        };
+
+    $.proxy = function (iFunction, iContext) {
+        var iArgs = $.makeArray(arguments);
+
+        for (var i = 0;  i < ProxyCache.origin.length;  i++)
+            if ($.isEqual(ProxyCache.origin[i], iArgs))
+                return ProxyCache.wrapper[i];
+
+        var Index = ProxyCache.origin.push( iArgs ) - 1;
+
+        iArgs = iArgs.slice(2);
+
+        return  ProxyCache.wrapper[Index] = function () {
+            return  iFunction.apply(
+                iContext || this,  $.merge(iArgs, arguments)
+            );
+        };
+    };
 
 })(self,  self.document,  self.iQuery || iQuery);
 
@@ -575,7 +596,7 @@ define('iQuery',  [],function () {
                 /[^\u0021-\u007e\uff61-\uffef]/g,  'xx'
             ).length;
         },
-        paramJSON:        function (Args_Str, iRaw) {
+        paramJSON:        function (Args_Str) {
             Args_Str = (
                 Args_Str  ?  $.split(Args_Str, '?', 2)[1]  :  BOM.location.search
             ).match(/[^\?&\s]+/g);
@@ -589,7 +610,10 @@ define('iQuery',  [],function () {
 
                 iValue = BOM.decodeURIComponent( Args_Str[i][1] );
 
-                if (! iRaw)  try {
+                if (
+                    isNaN(Number( iValue ))  ||
+                    (parseInt(iValue).toString().length < 21)
+                )  try {
                     iValue = $.parseJSON(iValue);
                 } catch (iError) { }
 
@@ -1860,11 +1884,13 @@ define('iQuery',  [],function () {
 
             switch (iEvent.type) {
                 case 'readystatechange':    iEvent.type = 'load';
-    //                Loaded = this.readyState.match(/loaded|complete/);  break;
                 case 'load':
-                    Loaded = (this.readyState == 'loaded');  break;
+                    Loaded = (this.readyState == (
+                        (this.tagName == 'SCRIPT')  ?  'loaded'  :  'complete'
+                    ));
+                    break;
                 case 'propertychange':      {
-                    var iType = iEvent.propertyName.match(/^on(.+)/i);
+                    var iType = iEvent.originalEvent.propertyName.match(/^on(.+)/i);
                     if (iType && (
                         IE_Event.type.call(this, iType[1])  ==  'onpropertychange'
                     ))
@@ -1879,9 +1905,9 @@ define('iQuery',  [],function () {
             if (Loaded)  arguments[0].call(this, iEvent);
         },
         bind:       function () {
-            this.attachEvent(
-                IE_Event.type.call(this, arguments[0]),
-                $.proxy(IE_Event.handler, this, arguments[1])
+            this[((arguments[0] == '+')  ?  'at'  :  'de')  +  'tachEvent'](
+                IE_Event.type.call(this, arguments[1]),
+                $.proxy(IE_Event.handler, this, arguments[2])
             );
         }
     });
@@ -1898,7 +1924,7 @@ define('iQuery',  [],function () {
                     type:      iType,
                     target:    this
                 }))
-                    IE_Event.bind.call(this, iType, Proxy_Handler);
+                    IE_Event.bind.call(this, '+', iType, Proxy_Handler);
             }
             Event_Data[iType].push(iCallback);
 
@@ -1934,8 +1960,12 @@ define('iQuery',  [],function () {
                     else
                         delete Event_Data[iType[i]];
 
-                    if (! Event_Data[iType[i]])
+                    if ( Event_Data[iType[i]] )  continue;
+
+                    if ($.browser.modern)
                         this.removeEventListener(iType[i], Proxy_Handler);
+                    else
+                        IE_Event.bind.call(this, '-', iType[i], Proxy_Handler);
                 }
                 return Event_Data;
             });
@@ -2019,7 +2049,7 @@ define('iQuery',  [],function () {
                             $_New[i].addEventListener(iType, Proxy_Handler, false);
                             continue;
                         }
-                        IE_Event.bind.call($_New[i], iType, Proxy_Handler);
+                        IE_Event.bind.call($_New[i], '+', iType, Proxy_Handler);
                     }
                 }
                 return $_New[0];
@@ -2367,7 +2397,11 @@ define('iQuery',  [],function () {
 
     if ($.browser.modern)  return;
 
-    /* ----- DOM ShortCut ----- */
+    DOM.defaultView = DOM.parentWindow;
+
+
+/* ---------- DOM ShortCut ---------- */
+
     var _Children_ = Object.getOwnPropertyDescriptor(
             Element.prototype,  'children'
         );
@@ -2410,7 +2444,7 @@ define('iQuery',  [],function () {
         });
 
 
-    /* ----- DOM Text Content ----- */
+/* ---------- DOM Text Content ---------- */
 
     Object.defineProperty(Element.prototype, 'textContent', {
         get:    function () {
@@ -2425,7 +2459,7 @@ define('iQuery',  [],function () {
         }
     });
 
-    /* ----- DOM Selector Match ----- */
+/* ---------- DOM Selector Match ---------- */
 
     Element.prototype.matches = function () {
         if (! this.parentNode)  $('<div />')[0].appendChild(this);
@@ -2435,7 +2469,7 @@ define('iQuery',  [],function () {
         ) > -1);
     };
 
-    /* ----- DOM Attribute Name ----- */
+/* ---------- DOM Attribute Name ---------- */
 
     var iAlias = {
             'class':    'className',
@@ -2461,7 +2495,7 @@ define('iQuery',  [],function () {
         }
     });
 
-    /* ----- Computed Style ----- */
+/* ---------- Computed Style ---------- */
 
     function CSSStyleDeclaration() {
         $.extend(this, arguments[0].currentStyle, {
@@ -2565,7 +2599,7 @@ define('iQuery',  [],function () {
         return  new CSSStyleDeclaration(arguments[0]);
     };
 
-    /* ----- DOM Event ----- */
+/* ---------- DOM Event ---------- */
 
     var $_DOM = $(DOM);
 
@@ -2646,7 +2680,7 @@ define('iQuery',  [],function () {
         reset:     $.proxy(Fake_Bubble, null, 'reset', _Reset_)
     });
 
-    /* ----- XML DOM Parser ----- */
+/* ---------- XML DOM Parser ---------- */
 
     var IE_DOMParser = $.map([
             'MSXML2.DOMDocument.6.0',
@@ -2921,7 +2955,7 @@ define('iQuery',  [],function () {
 
         }).attr('src',  ((! iHTML.match(/<.+?>/)) && iHTML.trim())  ||  'about:blank');
 
-        return  $_iFrame[0].parentNode ? this : $_iFrame.appendTo(DOM.body);
+        return  $_iFrame[0].parentElement ? this : $_iFrame.appendTo(DOM.body);
     };
 
 })(self,  self.document,  self.iQuery || iQuery);
@@ -3742,6 +3776,17 @@ define('iQuery',  [],function () {
         });
 
         if (iMethod == 'GET') {
+            var File_Name = $.fileName(iURL);
+
+            if (!  (iOption.jsonp || $.browser.modern || $.map(
+                $('link[rel="next"], link[rel="prefetch"]'),
+                function () {
+                    if ($.fileName( arguments[0].href )  ==  File_Name)
+                        return iURL;
+                }
+            ).length))
+                iOption.data._ = $.now();
+
             iOption.data = $.extend($.paramJSON(iOption.url), iOption.data);
 
             iOption.url = iOption.url.split('?')[0] + (
@@ -3910,7 +3955,7 @@ define('iQuery',  [],function () {
     BOM.DOMHttpRequest = function () {
         this.status = 0;
         this.readyState = 0;
-        this.responseType = 'text/plain';
+        this.responseType = 'text';
     };
     BOM.DOMHttpRequest.JSONP = { };
 
@@ -3985,8 +4030,11 @@ define('iQuery',  [],function () {
                         )
                     ))
                 );
-                this.$_Transport = $('<script />',  {src: this.responseURL})
-                    .appendTo(DOM.head);
+                this.$_Transport = $('<script />', {
+                    type:       'text/javascript',
+                    charset:    'UTF-8',
+                    src:        this.responseURL
+                }).appendTo(DOM.head);
             }
 
             this.readyState = 2;
@@ -4016,6 +4064,11 @@ define('iQuery',  [],function () {
                             {text:  iXHR.responseText},
                             'Content-Type: ' + iXHR.contentType
                         );
+                    };
+                    iXHR.onerror = function () {
+                        iComplete(500, 'Internal Server Error', {
+                            text:    iXHR.responseText
+                        });
                     };
                     iXHR.send(iOption.data);
                 },
@@ -4209,9 +4262,12 @@ define('iQuery',  [],function () {
         if (typeof iTitle != 'string')
             throw TypeError("The History State needs a Title String !");
 
-        _BOM_.document.title = DOM.title = iTitle;
-        _Pushing_ = true;
-        _BOM_.location.search = 'index=' + (_State_.push(arguments) - 1);
+        if (_BOM_) {
+            DOM.title = iTitle;
+            if ($.browser.modern)  _BOM_.document.title = iTitle;
+            _Pushing_ = true;
+            _BOM_.location.search = 'index=' + (_State_.push(arguments) - 1);
+        }
     };
 
     BOM.history.replaceState = function () {
@@ -4226,7 +4282,7 @@ define('iQuery',  [],function () {
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v1.0  (2016-05-27)  Stable
+//      [Version]    v1.0  (2016-05-30)  Stable
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.

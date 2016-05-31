@@ -12,10 +12,16 @@ define(['jquery'],  function ($) {
         if (iData instanceof Array)
             return  ArrayRender.call(this[0], iData, _Self_);
 
+        var iView = $.CommonView.getInstance(this);
+
+        if (iView)  return iView.render(iData);
+
         this.value('name',  function (iName) {
 
             if (iData[iName] instanceof Array)
                 ArrayRender.call(this, iData[iName], _Self_);
+            else if ($.isPlainObject( iData[iName] ))
+                _Self_.call($(this), iData[iName]);
             else
                 return iData[iName];
         });

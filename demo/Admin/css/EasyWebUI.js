@@ -2,7 +2,7 @@
 //          >>>  EasyWebUI Component Library  <<<
 //
 //
-//      [Version]     v2.6  (2016-05-20)  Stable
+//      [Version]     v2.7  (2016-05-31)  Stable
 //
 //      [Based on]    iQuery v1  or  jQuery (with jQuery+),
 //
@@ -894,27 +894,41 @@
         });
     };
 
-/* ---------- 目录树  v0.2 ---------- */
+/* ---------- 普通元素内容编辑  v0.1 ---------- */
 
     function StopBubble() {
         arguments[0].stopPropagation();
     }
 
-    function inlineEdit() {
-        var $_Target = $(arguments[0].target);
+    $.fn.contentEdit = function () {
+        return  this.one('blur',  function () {
 
-        $_Target.one('blur',  function () {
-            if ( this.textContent ) {
-                this.removeAttribute('contentEditable');
-                $(this).off('click', StopBubble);
-            }
-        }).prop({
-            contentEditable:    true,
-            defaultValue:       $_Target.text()
-        }).on('click', StopBubble).focus();
+            var $_This = $(this);
 
-        return false;
-    }
+            this.removeAttribute('contentEditable');
+
+            $_This.off('click', StopBubble).off(
+                'input propertychange paste keyup'
+            );
+            this.value = $_This.text().trim();
+
+            if (! this.value)
+                $_This.text(this.value = this.defaultValue);
+
+        }).input(function () {
+
+            var $_This = $(this);
+
+            return  ($_This.text().trim().length <= $_This.attr('maxlength'));
+
+        }).on('click', StopBubble).prop('defaultValue',  function () {
+
+            return $(this).text().trim();
+
+        }).prop('contentEditable', true).focus();
+    };
+
+/* ---------- 目录树  v0.2 ---------- */
 
     function branchDelete() {
         var iList = $.ListView.getInstance( this.parentNode );
@@ -971,7 +985,9 @@
 
                     return false;
                 })
-                .on('Edit', '.ListView_Item', inlineEdit)
+                .on('Edit',  '.ListView_Item',  function () {
+                    return  (! $(arguments[0].target).contentEdit());
+                })
                 .on('Delete',  '.ListView_Item', branchDelete);
         });
     };
