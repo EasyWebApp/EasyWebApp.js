@@ -43,8 +43,7 @@ define(['ViewDataIO'],  function () {
         ]);
     };
 
-    var Prefetch_Tag = $.browser.modern ? 'prefetch' : 'next',
-        $_Body = $(DOM.body);
+    var Prefetch_Tag = $.browser.modern ? 'prefetch' : 'next';
 
     PageLink.prefetchClear = function () {
         $('head link[rel="' + Prefetch_Tag + '"]').remove();
@@ -61,7 +60,7 @@ define(['ViewDataIO'],  function () {
             var $_Link = $('<button />', $.extend({
                     style:    'display: none',
                     rel:      'nofollow'
-                }, iAttribute, _Argument_)).appendTo($_Body);
+                }, iAttribute, _Argument_)).appendTo(DOM.body);
 
             if ((iData instanceof Array)  ||  $.isPlainObject(iData))
                 $_Link.data('EWA_Model', iData);
@@ -492,7 +491,7 @@ define(['ViewDataIO'],  function () {
                     if ((! not_Fragment)  &&  iSimple)
                         return This_Page.show(iHTML).boot(Page_Load);
 
-                    $_Body.sandBox(iHTML,  (
+                    $(DOM.body).sandBox(iHTML,  (
                         ((iSelector && iSimple) ? iSelector : 'body > *')  +
                             ', link[rel="stylesheet"], link[target]'
                     ),  function ($_Content) {
@@ -600,7 +599,7 @@ define(['ViewDataIO'],  function () {
                 var $_Render = This_App.domRoot;
 
                 if (! (iData instanceof Array))
-                    $_Render = $_Body;
+                    $_Render = $(DOM.body);
                 else if (Source_Link  &&  (Source_Link.target != '_self'))
                     $_Render = Source_Link.getTarget().parent();
 
@@ -612,7 +611,7 @@ define(['ViewDataIO'],  function () {
         findLink:    function (iPrefetch) {
             var $_Link = (
                     this.ownerApp.history.lastIndex ?
-                        this.ownerApp.domRoot : $_Body
+                        this.ownerApp.domRoot : $(DOM.body)
                 ).find('*[target]');
 
             for (var i = 0, iLink;  i < $_Link.length;  i++) {
@@ -623,7 +622,7 @@ define(['ViewDataIO'],  function () {
             return $_Link;
         },
         onReady:     function () {
-            $_Body.find('button[target]:hidden').remove();
+            $('button[target]:hidden', DOM.body).remove();
 
             var This_App = this.ownerApp;
 
@@ -639,7 +638,7 @@ define(['ViewDataIO'],  function () {
             ]);
             This_App.domRoot.focus();
 
-            $_Body.trigger({
+            $(DOM.body).trigger({
                 type:      'loading',
                 detail:    1
             });
@@ -670,31 +669,33 @@ define(['ViewDataIO'],  function () {
         }
     }
 
-    $_Body.on(
-        ($.browser.mobile ? 'tap' : 'click') + ' change',
-        '*[target]',
-        function () {
-            if ( Event_Filter.call(this) )  return;
+    $(DOM).ready(function () {
+        $(this.body).on(
+            ($.browser.mobile ? 'tap' : 'click') + ' change',
+            '*[target]',
+            function () {
+                if ( Event_Filter.call(this) )  return;
 
-            var iLink = $(this).data('EWA_PageLink');
+                var iLink = $(this).data('EWA_PageLink');
 
-            switch (iLink.target) {
-                case '_self':     {
-                    if (iLink.href)  iLink.loadTemplate();
-                    break;
+                switch (iLink.target) {
+                    case '_self':     {
+                        if (iLink.href)  iLink.loadTemplate();
+                        break;
+                    }
+                    case '_blank':    {
+                        if (iLink.src)  iLink.loadData();
+                        break;
+                    }
+                    case '_top':      {
+                        if (iLink.href)  iLink.loadPage();
+                        break;
+                    }
+                    default:          iLink.loadTemplate();
                 }
-                case '_blank':    {
-                    if (iLink.src)  iLink.loadData();
-                    break;
-                }
-                case '_top':      {
-                    if (iLink.href)  iLink.loadPage();
-                    break;
-                }
-                default:          iLink.loadTemplate();
             }
-        }
-    );
+        );
+    });
 /* ---------- Manual Navigation ---------- */
 
     WebApp.prototype.loadLink = function (iAttribute, iArgument, iData) {
@@ -748,7 +749,7 @@ define(['ViewDataIO'],  function () {
         var This_Page = this.history.write(This_Link, This_Link.getTarget()),
             This_App = this;
 
-        $_Body.on('submit',  'form:visible',  function () {
+        $(DOM.body).on('submit',  'form:visible',  function () {
             if (This_App.loading)  return false;
 
             var iLink = $(this).data('EWA_PageLink') ||

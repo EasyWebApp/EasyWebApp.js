@@ -2,7 +2,7 @@
 //          >>>  EasyWebUI Component Library  <<<
 //
 //
-//      [Version]     v2.7  (2016-05-31)  Stable
+//      [Version]     v2.7  (2016-06-01)  Stable
 //
 //      [Based on]    iQuery v1  or  jQuery (with jQuery+),
 //
@@ -258,8 +258,18 @@
             if ( BOM.HTMLDataListElement )
                 return  DL_Change.call($_Input, onChange);
 
+        //  DOM Property Patch
+            $_Input[0].list = $('#' + this.getAttribute('list'))[0];
+
+            var $_List = $( $_Input[0].list.children ).filter('select');
+
+            $_List[0].multiple = $_List[0].multiple || true;
+
+            $_Input[0].list.options = $_List[0].children;
+
             if ($_Input.attr('autocomplete') == 'off')  return;
 
+        //  Get Position
             if ((! iPosition)  ||  (iPosition == 'static'))
                 $(this.parentNode).css({
                     position:    'relative',
@@ -267,13 +277,6 @@
                 });
             iPosition = $_Input.attr('autocomplete', 'off').position();
             iPosition.top += $_Input.height();
-
-        //  DOM Property Patch
-            $_Input[0].list = $('#' + this.getAttribute('list'))[0];
-
-            var $_List = $('select[multiple]', $_Input[0].list);
-
-            $_Input[0].list.options = $_List[0].children;
 
         //  DropDown List
             $_List.css($.extend(iPosition, {
