@@ -1,4 +1,14 @@
-(function (BOM, DOM, $) {
+require([
+    'iQuery+',
+    'http://cdn.bootcss.com/marked/0.3.5/marked.min',
+    '../css/EasyWebUI',
+    'EasyWebApp'
+],  function () {
+
+
+$(document).ready(function () {
+
+    var BOM = self,  DOM = self.document;
 
     var Image_Root = 'http://tnfs.tngou.net/img';
 
@@ -66,4 +76,7 @@
         }
     });
 
-})(self, self.document, self.iQuery);
+});
+
+
+});

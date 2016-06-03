@@ -16,6 +16,14 @@
 //
 
 
+if ((typeof this.define != 'function')  ||  (! this.define.amd))
+    this.define = function () {
+        return  arguments[arguments.length - 1]();
+    };
+
+define('EasyWebUI',  ['iQuery+'],  function () {
+
+
 /* ---------- HTML 5 / CSS 3 补丁 ---------- */
 (function (BOM, DOM, $) {
 
@@ -1086,3 +1094,6 @@
     );
 
 })(self,  self.document,  self.jQuery || self.Zepto);
+
+
+});

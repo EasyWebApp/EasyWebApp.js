@@ -1,4 +1,4 @@
-define(['jquery'],  function ($) {
+define(['jquery', 'iQuery+'],  function ($) {
 
     function ArrayRender(iArray, ValueRender) {
         $.ListView(this,  function () {

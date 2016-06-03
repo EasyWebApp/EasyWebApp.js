@@ -2,7 +2,8 @@
     name:            'EasyWebApp',
     baseUrl:         '../source',
     paths:           {
-        jquery:    'http://cdn.bootcss.com/jquery/1.12.3/jquery.js'
+        jquery:       'http://cdn.bootcss.com/jquery/1.12.3/jquery.js',
+        'iQuery+':    'http://git.oschina.net/Tech_Query/iQuery/raw/master/iQuery+.js'
     },
     out:             '../EasyWebApp.js',
     onBuildWrite:    function (iName) {

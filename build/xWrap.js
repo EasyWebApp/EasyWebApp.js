@@ -4,7 +4,7 @@ if ((typeof this.define != 'function')  ||  (! this.define.amd))
     };
 
 
-define('EasyWebApp',  function () {
+define('EasyWebApp',  ['iQuery+'],  function () {
 
     var WebApp;
 
