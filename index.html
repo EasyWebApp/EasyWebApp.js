@@ -23,13 +23,26 @@
 
                 $(document.body).scrollTo( this.getAttribute('href') );
             });
+
+
+            $('body > .Head form').submit(function () {
+                var $_KeyWord = $('input[type="search"]', this);
+
+                var iValue = $_KeyWord[0].value;
+
+                $_KeyWord.one('blur',  function () {
+
+                    this.value = iValue;
+
+                })[0].value += ' site:tech_query.oschina.io';
+            });
         });
     </script>
 </head><body class="CenterX">
     <div class="Head">
         <div class="PC_Narrow Grid-Row CenterY">
             <div class="Grid-Column">
-                <b>E<font color="red">a</font>syWebApp</b>
+                <b>E<span class="Red">a</span>syWebApp</b>
             </div>
             <ul class="Grid-Column NavBar">
                 <li><a target="_blank" href="doc/">
@@ -45,8 +58,9 @@
                     社区推荐
                 </a></li>
             </ul>
-            <form class="Grid-Column">
-                <input type="search" placeholder="搜索关键词" />
+            <form class="Grid-Column"
+                  target="_blank" action="https://www.sogou.com/web">
+                <input type="search" name="query" placeholder="搜索关键词" />
             </form>
         </div>
     </div>
@@ -61,20 +75,20 @@
         </div>
         <div class="Body">
             <div class="Item-Box visible">
-                <h3>上手快</h3>
+                <h3><i class="Icon Eye"></i>上手快</h3>
                 <ul class="Ellipsis">
                     <li>拓展<em>HTML 5 原生语义</em>，无自创模板语法</li>
                     <li>业务逻辑写在<em>类 jQuery 事件绑定</em>回调中</li>
                 </ul>
             </div>
             <div class="Item-Box visible">
-                <h3>编码少</h3>
+                <h3><i class="Icon Pen"></i>编码少</h3>
                 <ul class="Ellipsis">
                     <li>无需手写 AJAX、pushState，专注内页渲染逻辑</li>
                 </ul>
             </div>
             <div class="Item-Box visible">
-                <h3>兼容佳</h3>
+                <h3><i class="Icon Home"></i>兼容佳</h3>
                 <ul class="Ellipsis">
                     <li>
                         可运行于各种<em>jQuery API</em>实现库之上
@@ -88,7 +102,7 @@
                 </ul>
             </div>
             <div class="Item-Box visible">
-                <h3>进阶易</h3>
+                <h3><i class="Icon Search"></i>进阶易</h3>
                 <ul class="Ellipsis">
                     <li>
                         基于 <a target="_blank" href="//git.oschina.net/Tech_Query/iQuery/blob/master/iQuery+.js">iQuery+</a>

@@ -23,19 +23,24 @@ body > .Body {
 body > .Body > .Head {
     padding:    3em  0;
 }
-body > .Body > .Body > .Item-Box {
+
+
+.Body > .Item-Box {
     width:     450px;
     height:    250px;
 }
-body > .Body > .Body ul {
+.Body > .Item-Box > h3 {
+    padding-right:    1em;
+}
+.Body > .Item-Box > ul {
     list-style:    none;
     padding:       0
 }
-body > .Body > .Body ul > li {
+.Body > .Item-Box > ul > li {
     line-height:    2em;
     max-height:     2em;
 }
-body > .Body > .Body ul > li:hover {
+.Body > .Item-Box > ul > li:hover {
     max-height:     none;
     white-space:    normal;
 }

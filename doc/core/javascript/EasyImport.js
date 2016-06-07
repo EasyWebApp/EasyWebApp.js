@@ -3824,7 +3824,7 @@ define('iQuery',  function () {
                             return;
 
                         var iResponse = {text:  iXHR.responseText};
-                        iResponse[iXHR.responseType || 'text'] = iXHR.response;
+                        iResponse[ iXHR.responseType ] = iXHR.response;
 
                         iComplete(
                             iXHR.status,
@@ -3867,6 +3867,8 @@ define('iQuery',  function () {
         };
     });
 
+    var ResponseType = $.makeSet('html', 'xml', 'json');
+
     function AJAX_Complete(iOption) {
         var iHeader = { };
 
@@ -3877,13 +3879,14 @@ define('iQuery',  function () {
                 iHeader[_Header_[0]] = _Header_[1];
             });
 
+        var iType = (iHeader['Content-Type'] || '').split(';')[0].split('/');
+
         $.extend(this, {
             status:          arguments[1],
             statusText:      arguments[2],
             responseText:    arguments[3].text,
-            responseType:    (
-                (iHeader['Content-Type'] || '').split(';')[0].split('/')[1]
-            )  ||  'text'
+            responseType:
+                ((iType[1] in ResponseType) ? iType[1] : iType[0])  ||  'text'
         });
 
         switch ( this.responseType ) {
