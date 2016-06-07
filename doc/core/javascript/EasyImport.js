@@ -3824,7 +3824,7 @@ define('iQuery',  function () {
                             return;
 
                         var iResponse = {text:  iXHR.responseText};
-                        iResponse[ iXHR.responseType ] = iXHR.response;
+                        iResponse[iXHR.responseType || 'text'] = iXHR.response;
 
                         iComplete(
                             iXHR.status,

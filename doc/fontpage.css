@@ -1,0 +1,74 @@
+body > .Head {
+    background:    black;
+    color:         white;
+    position:      fixed;
+    width:         100%;
+}
+body > .Head > .PC_Narrow a,
+body > .Head > .PC_Narrow a:hover {
+    color:    white;
+}
+body > .Head > .PC_Narrow > .NavBar > li {
+    border-bottom:    3px  solid   transparent;
+    line-height:      2.5em;
+}
+body > .Head > .PC_Narrow > .NavBar > li:hover {
+    border-bottom-color:    red;
+}
+
+
+body > .Body {
+    padding-top:    3.5em;
+}
+body > .Body > .Head {
+    padding:    3em  0;
+}
+body > .Body > .Body > .Item-Box {
+    width:     450px;
+    height:    250px;
+}
+body > .Body > .Body ul {
+    list-style:    none;
+    padding:       0
+}
+body > .Body > .Body ul > li {
+    line-height:    2em;
+    max-height:     2em;
+}
+body > .Body > .Body ul > li:hover {
+    max-height:     none;
+    white-space:    normal;
+}
+
+
+.osc_git_box {
+    margin:    3em  6em  !important;
+}
+
+
+a.Item-Box > img.Logo {
+    display:          block;
+    width:            8em;
+    height:           8em;
+    border-radius:    50%;
+}
+a.Item-Box {
+    position:    relative;
+}
+a.Item-Box:after {
+    content:          "V";
+    font-weight:      bold;
+    color:            orange;
+    background:       white;
+    width:            1.5em;
+    line-height:      1.5em;
+    border-radius:    50%;
+    position:         absolute;
+    bottom:           1.5em;
+    right:            1em;
+}
+
+
+body > .Foot {
+    padding-bottom:    2em;
+}

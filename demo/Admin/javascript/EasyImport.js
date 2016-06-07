@@ -91,9 +91,7 @@ define('iQuery',  function () {
     /* ----- Date Extension ----- */
 
     if (! Date.now)
-        Date.now = function () {
-            return  (new Date()).getTime();
-        };
+        Date.now = function () { return  +(new Date()); };
 
     /* ----- JSON Extension  v0.4 ----- */
 
@@ -2705,8 +2703,47 @@ define('iQuery',  function () {
 
 (function (BOM, DOM, $) {
 
-    if (! ($.browser.msie < 11))  return;
+/* ---------- Document Current Script ---------- */
 
+    var Stack_Prefix = {
+            webkit:     'at ',
+            mozilla:    '@',
+            msie:       'at Global code \\('
+        };
+
+    function Script_URL() {
+        try {
+            throw  new Error('AMD_Loader');
+        } catch (iError) {
+            var iURL;
+
+            for (var iCore in Stack_Prefix)
+                if ( $.browser[iCore] ) {
+                    iURL = iError.stack.match(RegExp(
+                        "\\s+" + Stack_Prefix[iCore] + "(http(s)?:\\/\\/\\S+.js)"
+                    ));
+
+                    return  iURL && iURL[1];
+                }
+        }
+    }
+
+    if (! ('currentScript' in DOM))
+        Object.defineProperty(DOM.constructor.prototype, 'currentScript', {
+            get:    function () {
+                var iURL = ($.browser.msie < 10)  ||  Script_URL();
+
+                for (var i = 0;  DOM.scripts[i];  i++)
+                    if ((iURL === true)  ?
+                        (DOM.scripts[i].readyState == 'interactive')  :
+                        (DOM.scripts[i].src == iURL)
+                    )
+                        return DOM.scripts[i];
+            }
+        });
+
+
+    if (! ($.browser.msie < 11))  return;
 
 /* ---------- Element Data Set ---------- */
 
@@ -4293,7 +4330,7 @@ define('iQuery',  function () {
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v1.0  (2016-06-01)  Stable
+//      [Version]    v1.0  (2016-06-06)  Stable
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.
@@ -4319,7 +4356,7 @@ define('iQuery',  function () {
 //                >>>  EasyImport.js  <<<
 //
 //
-//      [Version]    v1.3  (2016-06-03)  Alpha
+//      [Version]    v1.3  (2016-06-06)  Alpha
 //
 //      [Usage]      A Asynchronous & Responsive Loader
 //                   for Resource File in Web Browser.
@@ -4332,15 +4369,7 @@ define('iQuery',  function () {
 
 (function (BOM, DOM, $) {
 
-    function This_Script() {
-        try {
-            throw  new Error('Script_Name');
-        } catch (iError) {
-            return iError.stack.match(/\s+at\s+(http(s)?:\/\/\S+.js)/)[1];
-        }
-    }
-
-    var AMD_Module = { },  Root_Path = This_Script().replace(/[^\/]+$/, '');
+    var AMD_Module = { },  Root_Path = DOM.currentScript.src.replace(/[^\/]+$/, '');
 
     function AbsolutePath(iPath) {
         iPath = (iPath.match(/^(\w+:)?\/\//) ? '' : Root_Path)  +  iPath;
@@ -4415,13 +4444,13 @@ define('iQuery',  function () {
             this.exports = this.defination.apply(BOM, iRequire);
             this.executed = true;
 
-            console.log('AMD load:  ' + iPath + '.js');
+            console.log('[' + Date.now() + '] AMD load:  ' + iPath + '.js');
         }
     }
 
     BOM.define = function () {
         var iArgs = $.makeArray(arguments),
-            iPath = This_Script().replace(/\.js(\?.*)?/, '');
+            iPath = DOM.currentScript.src.replace(/\.js(\?.*)?/, '');
 
         New_Module(
             iPath,

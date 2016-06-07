@@ -9,54 +9,7 @@
     <title>EasyWebApp 官方网站</title>
 
     <link rel="stylesheet" href="doc/core/css/EasyWebUI.css" />
-    <style>
-        body > .Head {
-            background:    black;
-            color:         white;
-            position:      fixed;
-            width:         100%;
-        }
-        body > .Head > .PC_Narrow a,
-        body > .Head > .PC_Narrow a:hover {
-            color:    white;
-        }
-        body > .Head > .PC_Narrow > .NavBar > li {
-            border-bottom:    3px  solid   transparent;
-            line-height:      2.5em;
-        }
-        body > .Head > .PC_Narrow > .NavBar > li:hover {
-            border-bottom-color:    red;
-        }
-
-        body > .Body {
-            padding-top:    3.5em;
-        }
-        body > .Body > .Head {
-            padding:    3em  0;
-        }
-        body > .Body > .Body > .Item-Box {
-            width:     450px;
-            height:    250px;
-        }
-        body > .Body > .Body ul {
-            list-style:    none;
-            padding:       0
-        }
-        body > .Body > .Body ul > li {
-            line-height:    2em;
-            max-height:     2em;
-        }
-        body > .Body > .Body ul > li:hover {
-            max-height:     none;
-            white-space:    normal;
-        }
-        .osc_git_box {
-            margin:    3em  6em  !important;
-        }
-        body > .Foot {
-            padding-bottom:    2em;
-        }
-    </style>
+    <link rel="stylesheet" href="doc/fontpage.css" />
 
     <link rel="console" href="console" />
     <script src="doc/core/javascript/EasyImport.js"></script>
@@ -88,6 +41,9 @@
                 <li><a href="#OSC">
                     开放源码
                 </a></li>
+                <li><a href="#Popular">
+                    社区推荐
+                </a></li>
             </ul>
             <form class="Grid-Column">
                 <input type="search" placeholder="搜索关键词" />
@@ -98,6 +54,10 @@
         <div class="Head">
             <h1>EasyWebApp</h1>
             <h2>为 jQuery 程序猿打造的 单页应用引擎！</h2>
+            <a class="Button" target="_blank"
+               href="//git.oschina.net/Tech_Query/EasyWebApp/releases">
+                立即获取
+            </a>
         </div>
         <div class="Body">
             <div class="Item-Box visible">
@@ -161,8 +121,27 @@
                 color:    #4183c4;
             }
         </style>
+        <h3 id="Popular">社区推荐</h3>
+        <p>
+            <a class="Item-Box" target="_blank"
+               href="http://weibo.com/1400220917/CsUjYq66s">
+                <img class="Logo" src="http://tva1.sinaimg.cn/crop.0.0.180.180.180/5375acf5jw1e8qgp5bmzyj2050050aa8.jpg" />
+                @开源中国
+            </a>
+            <a class="Item-Box" target="_blank"
+               href="http://weibo.com/1737987381/Ct0jdrcqw">
+                <img class="Logo" src="http://tva4.sinaimg.cn/crop.0.0.180.180.180/67979535jw1e8qgp5bmzyj2050050aa8.jpg" />
+                @程序员曲
+            </a>
+            <a class="Item-Box" target="_blank"
+               href="http://weibo.com/1092662444/CsUCslTOQ">
+                <img class="Logo" src="http://tva2.sinaimg.cn/crop.0.0.640.640.180/4120b4acjw8eh3spex1ikj20hs0hsgmh.jpg" />
+                @会的不多
+            </a>
+        </p>
     </div>
     <div class="Foot PC_Narrow">
+        <hr />
         (C)2015-2016
         <a target="_blank" href="http://my.oschina.net/TechQuery/">TechQuery</a>
     </div>
