@@ -1,0 +1,175 @@
+<!DocType HTML>
+<html lang="zh-CN"><head>
+    <meta http-equiv="Cache-Control"
+          content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+
+    <meta name="fragment" content="!" />
+
+    <link rel="shortcut icon" type="image/x-icon" href="core/image/favicon.ico" />
+    <link rel="bookmark" type="image/x-icon" href="core/image/favicon.ico" />
+    <title>EasyWiki 易维基 - 简洁、高效的开放内容系统</title>
+
+    <link rel="stylesheet" href="core/css/EasyWebUI.css" />
+    <link rel="stylesheet" href="core/css/index.css" />
+
+    <link rel="console" href="console" />
+    <script src="core/javascript/EasyImport.js"></script><script>
+        ImportJS([
+            {
+                'iQuery+.js':                                           true,
+                'http://cdn.bootcss.com/marked/0.3.5/marked.min.js':    true
+            },
+            {
+                '../css/EasyWebUI.js':    true,
+                'EasyWebApp.js':          true,
+                'http://cdn.bootcss.com/lrsjng.jquery-qrcode/0.12.0/jquery.qrcode.min.js':    true
+            },
+            'index.js'
+        ]);
+
+        var iArgs = $.paramJSON(),  $_Link = $('<link target="content" />');
+
+        if ( iArgs.title ) {
+            self.location.hash = '';
+            $_Link.attr(
+                'href',  'data/' + iArgs.title + '.md'
+            ).appendTo('head');
+        } else if (! self.location.hash.slice(1))
+            $_Link.attr('href', 'data/index.md').appendTo('head');
+    </script>
+
+<!--    <link target="_blank" method="POST" src="core/api.php/online/" />-->
+</head><body class="Grid-Row">
+    <ul id="Main_Nav" class="Grid-Column Column_1-6 No_Select Entry_Only">
+        <li>
+            <a class="Ellipsis" rel="nofollow" href="#"></a>
+        </li>
+    </ul>
+    <div class="Grid-Column">
+        <div id="User_Bar" class="Grid-Row CenterY CenterX No_Select">
+            <h1 class="Grid-Column Column_1-4 No_Mobile" target="_self" href="#_About">
+                EasyWiki
+            </h1>
+            <div class="Grid-Column Column_1-4 No_Mobile Entry_Only"><!--
+                <i class="Icon Cloud" title="标签云"
+                   target="_self" href="core/html/category.html?title=editor">
+                </i>-->
+                <span class="DropDown Head" id="QRcode">
+                    <i class="Icon Mobile"></i>
+                    <div class="DropDown Body"></div>
+                </span><!--
+                <span class="Auth_Control" data-api="entry" data-method="POST">
+                    <i class="Icon" title="创建"
+                       target="_self" href="core/html/editor.html">+</i>
+                </span>
+                <span class="Auth_Control" data-api="entry" data-method="POST">
+                    <i class="Icon Pen" title="编辑"
+                       target="_self" href="core/html/editor.html?modify=true">
+                    </i>
+                </span>-->
+            </div>
+            <form class="Grid-Column Column_1-4"
+                  target="_self" action="core/api.php/entry/"
+                  href="#_Search">
+                <input type="search" name="keyword" placeholder="全文搜索" />
+            </form>
+            <div class="Grid-Column Column_1-4"><!--
+                <span class="Auth_Control" data-api="online" data-method="POST">
+                    <button target="_self" href="#_Login">登录</button>
+                </span>
+                <div id="UserInfo" class="DropDown Head Auth_Control"
+                     data-api="online" data-method="DELETE">
+                    <span name="NickName"></span>
+                    <ul class="DropDown Body">
+                        <li>账号设置</li>
+                        <li class="Red" target="_blank"
+                            method="DELETE" src="core/api.php/online/">
+                            退出系统
+                        </li>
+                        <li class="Separator"></li>
+                        <li class="Auth_Control" data-api="spider" data-method="POST">
+                            <a target="_self" href="core/html/spider.html">
+                                词条导入
+                            </a>
+                        </li>
+                        <li class="Auth_Control" data-api="auth" data-method="POST">
+                            <a target="_self" href="#_Auth" src="core/api.php/auth/">
+                                权限设置
+                            </a>
+                        </li>
+                        <li>帮助</li>
+                    </ul>
+                </div>-->
+            </div>
+        </div>
+        <div id="Main_View" name="content">
+            <h1 class="CenterX">
+                欢迎使用由 EasyWebApp v2 驱动的内容系统！
+            </h1>
+        </div>
+
+    <!---------- 简单内页 ---------->
+
+        <div class="InnerPage" id="_About">
+            <p class="CenterX">
+                感谢<em class="Text">WikiPedia</em>对<em class="Text">EasyWiki</em>框架设计的启迪！
+            </p>
+        </div>
+
+        <div class="InnerPage" id="_Login">
+            <form class="CenterX" target="message"
+                  method="POST" action="core/api.php/online/">
+                <h2>欢迎维基人！</h2>
+                <pre name="message"></pre>
+                <div class="Row CenterX">
+                    <input type="email" name="email" required
+                           placeholder="用户名" />
+                </div>
+                <div class="Row CenterX">
+                    <input type="password" name="password" required
+                           placeholder="密码" />
+                </div>
+                <div class="Row CenterX">
+                    <input type="submit" value="登录" />
+                    <a class="Button" target="_self" href="core/html/signUp.html">
+                        注册
+                    </a>
+                </div>
+            </form>
+        </div>
+
+        <div class="InnerPage" id="_Search">
+            <table>
+                <thead><tr>
+                    <th>词条名</th><th>最后编辑</th><th>创建时间</th>
+                </tr></thead>
+                <tbody class="CenterX"><tr>
+                    <td><a rel="nofollow" name="URL"><span name="title">
+                    </span></a></td>
+                    <td name="mTime"></td>
+                    <td name="cTime"></td>
+                </tr></tbody>
+            </table>
+        </div>
+
+        <div class="InnerPage" id="_Auth">
+            <table>
+                <thead><tr>
+                    <th>权限组</th><th>最后编辑</th><th>创建时间</th>
+                </tr></thead>
+                <tbody class="CenterX">
+                    <tr target="_self" href="core/html/auth.html"
+                        data-group="title">
+                        <td name="title"></td>
+                        <td name="mTime"></td>
+                        <td name="cTime"></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body></html>

@@ -1,0 +1,144 @@
+<!DocType HTML>
+<html><head>
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+
+    <title>EasyWebApp 官方网站</title>
+
+    <link rel="stylesheet" href="doc/core/css/EasyWebUI.css" />
+    <style>
+        body > .Head {
+            background:    black;
+            color:         white;
+            position:      fixed;
+            width:         100%;
+        }
+        body > .Head > .PC_Narrow a,
+        body > .Head > .PC_Narrow a:hover {
+            color:    white;
+        }
+        body > .Head > .PC_Narrow > .NavBar > li {
+            border-bottom:    3px  solid   transparent;
+            line-height:      2.5em;
+        }
+        body > .Head > .PC_Narrow > .NavBar > li:hover {
+            border-bottom-color:    red;
+        }
+
+        body > .Body {
+            padding-top:    3.5em;
+        }
+        body > .Body > .Head {
+            padding:    3em  0;
+        }
+        body > .Body > .Body > .Item-Box {
+            width:     450px;
+            height:    250px;
+        }
+        body > .Body > .Body ul {
+            list-style:    none;
+            padding:       0
+        }
+        body > .Body > .Body ul > li {
+            line-height:    2em;
+            max-height:     2em;
+        }
+        body > .Body > .Body ul > li:hover {
+            max-height:     none;
+            white-space:    normal;
+        }
+    </style>
+
+    <link rel="console" href="console" />
+    <script src="doc/core/javascript/EasyImport.js"></script>
+    <script>
+        ImportJS([
+            'iQuery+.js',
+            {
+                '../css/EasyWebUI.js':    true
+            }
+        ],  function () {
+
+        });
+    </script>
+</head><body class="CenterX">
+    <div class="Head">
+        <div class="PC_Narrow Grid-Row CenterY">
+            <div class="Grid-Column">
+                <b>E<font color="red">a</font>syWebApp</b>
+            </div>
+            <ul class="Grid-Column NavBar">
+                <li><a target="_blank" href="doc/">
+                    使用教程
+                </a></li>
+                <li><a target="_blank" href="demo/Admin/">
+                    演示程序
+                </a></li>
+                <li><a target="_blank" href="//git.oschina.net/Tech_Query/EasyWebApp/">
+                    开放源码
+                </a></li>
+            </ul>
+            <form class="Grid-Column">
+                <input type="search" placeholder="搜索关键词" />
+            </form>
+        </div>
+    </div>
+    <div class="Body PC_Narrow">
+        <div class="Head">
+            <h1>EasyWebApp</h1>
+            <h2>为 jQuery 程序猿打造的 单页应用引擎！</h2>
+        </div>
+        <div class="Body">
+            <div class="Item-Box visible">
+                <h3>上手快</h3>
+                <ul class="Ellipsis">
+                    <li>拓展<em>HTML 5 原生语义</em>，无自创模板语法</li>
+                    <li>业务逻辑写在<em>类 jQuery 事件绑定</em>回调中</li>
+                </ul>
+            </div>
+            <div class="Item-Box visible">
+                <h3>编码少</h3>
+                <ul class="Ellipsis">
+                    <li>无需手写 AJAX、pushState，专注内页渲染逻辑</li>
+                </ul>
+            </div>
+            <div class="Item-Box visible">
+                <h3>兼容佳</h3>
+                <ul class="Ellipsis">
+                    <li>
+                        可运行于各种<em>jQuery API</em>实现库之上
+                        （jQuery v1.9+、Zepto、Mass Framework、
+                        <a target="_blank" href="http://jslite.io/">JSLite</a>、
+                        <a target="_blank" href="//git.oschina.net/Tech_Query/iQuery/">iQuery</a> 等）
+                    </li>
+                    <li>
+                        不排斥现有 jQuery 插件
+                    </li>
+                </ul>
+            </div>
+            <div class="Item-Box visible">
+                <h3>进阶易</h3>
+                <ul class="Ellipsis">
+                    <li>
+                        基于 <a target="_blank" href="//git.oschina.net/Tech_Query/iQuery/blob/master/iQuery+.js">iQuery+</a>
+                        <em>通用视图接口</em>实现<em>组件化开发</em>、
+                        面向对象式的解耦/通信
+                    </li>
+                    <li>
+                        兼容支持上述接口的第三方组件/类库（
+                        <a target="_blank" href="//git.oschina.net/Tech_Query/EasyWebUI/">EasyWebUI</a> 等）
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div class="Foot PC_Narrow">
+        <p>
+            (C)2015-2016
+            <a target="_blank" href="http://my.oschina.net/TechQuery/">TechQuery</a>
+        </p>
+    </div>
+</body></html>

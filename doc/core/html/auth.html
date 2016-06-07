@@ -1,0 +1,22 @@
+<link target="Auth_Group" src="core/api.php/auth/{group}" />
+
+<pre name="message"></pre>
+
+<form target="message" method="POST" action="core/api.php/auth/{group}">
+    <table>
+        <thead><tr>
+            <th>模块</th><th>查/读</th><th>增/改</th><th>删</th>
+        </tr></thead>
+        <tbody class="CenterX" name="Auth_Group"><tr>
+            <td>
+                <label name="API_URL"></label><input type="hidden" />
+            </td>
+            <td><input type="checkbox" name="GET" value="true" /></td>
+            <td><input type="checkbox" name="POST" value="true" /></td>
+            <td><input type="checkbox" name="DELETE" value="true" /></td>
+        </tr></tbody>
+    </table>
+    <div class="Row CenterX">
+        <input type="submit" value="保存设置" />
+    </div>
+</form>

@@ -1,0 +1,125 @@
+/* ---------- 通用样式 ---------- */
+html, body {
+    overflow:    hidden;
+}
+.InnerPage {
+    display:    none;
+}
+.Not_Entry .Entry_Only {
+    display:    none;
+}
+
+
+#Main_Nav {
+    background:    rgb(40, 40, 40);
+    color:         lightgray;
+    max-width:     9.5em;
+}
+@media (max-width: 960px) {
+    #Main_Nav {
+        display:    none  !important;
+    }
+}
+@media (min-width: 1280px) {
+    #Main_Nav {
+        max-width:    15em;
+    }
+}
+#Main_Nav,  #Main_Nav ul  {
+    list-style:    none;
+    padding:       0;
+}
+#Main_Nav li > a {
+    padding:            1em;
+    color:              inherit;
+    text-decoration:    none;
+    display:            block;
+}
+#Main_Nav > li > a {
+    text-align:     center;
+    font-weight:    bold;
+    font-size:      1.4em;
+}
+#Main_Nav > li > ul > li > a {
+        border-left:    0.3em  solid  transparent;
+   -moz-transition:     0.25s;
+     -o-transition:     0.25s;
+-webkit-transition:     0.25s;
+        transition:     0.25s;
+}
+#Main_Nav ul > li:hover > a,
+#Main_Nav ul > li.active > a {
+    border-color:    rgb(100, 150, 240);
+    filter:          progid:DXImageTransform.Microsoft.Gradient(
+        GradientType=0, StartColorStr="#7F6496F0", EndColorStr="#7F6496F0"
+    );
+    background:      rgb(0, 0, 0);    /*  IE 8 滤镜 Hover 背景色抖动 Bug */
+    background:      rgba(100, 150, 240, 0.5);
+    color:           white;
+}
+:root #Main_Nav ul > li:hover > a,
+:root #Main_Nav ul > li.active > a {
+    filter:    none \0;
+}
+#Main_Nav > li > ul > li > ul {
+    font-size:    0.8em;
+}
+#Main_Nav > li > ul > li > ul > li > a {
+    padding-left:    3em;
+}
+
+
+#User_Bar {
+    box-shadow:    0.3em  0.2em  1em  gray;
+    height:        auto;
+}
+#User_Bar > .Grid-Column {
+    padding:    0.5em;
+}
+#UserInfo {
+    float:        right;
+    min-width:    6em;
+}
+#UserInfo > .DropDown.Body > li {
+    padding:    0.5em  1em;
+}
+@media (max-width: 640px) {
+    .DropDown.Head {
+        border:    none;
+    }
+    .DropDown.Head:before {
+        content:    none;
+    }
+    #UserInfo {
+        min-width:    4em;
+    }
+}
+
+#Main_View {
+    padding:     1em  1em  0;
+    height:      93.4%;
+    overflow:    auto;
+}
+form [multiple] label {
+    margin:     0.25em  0.5em;
+    padding:    0.5em;
+}
+form [multiple] label:hover,
+form [multiple] label.active {
+    opacity:    0.7;
+    filter:     Alpha(opacity=70);
+}
+form [multiple] input[type="radio"] {
+    display:    none;
+}
+table td.Background-Image {
+    border:    0.5em  solid  transparent;
+}
+
+
+/* ---------- 打印样式 ---------- */
+@media print {
+    #Main_Nav, #User_Bar {
+        display:    none;
+    }
+}

@@ -1,0 +1,19 @@
+{
+    "entry":       {
+        "GET":       true
+    },
+    "category":    {
+        "GET":    true
+    },
+    "user":        {
+        "GET":       true,
+        "POST":      true
+    },
+    "online":      {
+        "GET":       true,
+        "POST":      true
+    },
+    "image":       {
+        "GET":       true
+    }
+}
