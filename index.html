@@ -50,6 +50,12 @@
             max-height:     none;
             white-space:    normal;
         }
+        .osc_git_box {
+            margin:    3em  6em  !important;
+        }
+        body > .Foot {
+            padding-bottom:    2em;
+        }
     </style>
 
     <link rel="console" href="console" />
@@ -57,11 +63,13 @@
     <script>
         ImportJS([
             'iQuery+.js',
-            {
-                '../css/EasyWebUI.js':    true
-            }
+            '../css/EasyWebUI.js'
         ],  function () {
+            $('a[href^="#"]').click(function () {
+                arguments[0].preventDefault();
 
+                $(document.body).scrollTo( this.getAttribute('href') );
+            });
         });
     </script>
 </head><body class="CenterX">
@@ -77,7 +85,7 @@
                 <li><a target="_blank" href="demo/Admin/">
                     演示程序
                 </a></li>
-                <li><a target="_blank" href="//git.oschina.net/Tech_Query/EasyWebApp/">
+                <li><a href="#OSC">
                     开放源码
                 </a></li>
             </ul>
@@ -134,11 +142,28 @@
                 </ul>
             </div>
         </div>
+        <a id="OSC"></a>
+        <script src="//git.oschina.net/Tech_Query/EasyWebApp/widget_preview"></script>
+        <style>
+            .osc_git_box {
+                background:      #fafafa;
+                border-color:    #ddd;
+            }
+            .osc_git_box .mini-icon, .osc_git_box .row_container {
+                padding:    0.25em  !important;
+            }
+            .osc_git_title, .osc_git_footer,
+            .osc_git_info, .osc_git_issues, .osc_git_commits {
+                padding:       1em  !important;
+                text-align:    left  !important;
+            }
+            .osc_git_main a, .pro_name a {
+                color:    #4183c4;
+            }
+        </style>
     </div>
     <div class="Foot PC_Narrow">
-        <p>
-            (C)2015-2016
-            <a target="_blank" href="http://my.oschina.net/TechQuery/">TechQuery</a>
-        </p>
+        (C)2015-2016
+        <a target="_blank" href="http://my.oschina.net/TechQuery/">TechQuery</a>
     </div>
 </body></html>
