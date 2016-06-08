@@ -8,7 +8,7 @@
  *    and can be used in the Web UI development of
  *    Any Platform.
  *
- *    [Version]    v1.0  (2016-05-11)
+ *    [Version]    v1.0  (2016-06-08)
  *
  *    [Require]    CSS 2.1  (Best Effect with CSS 3),
  *
@@ -108,20 +108,6 @@ table {
 table tr {
     line-height:    2em;
 }
-table th, table td {
-    padding:        0.5em;
-    white-space:    pre-wrap;
-    max-width:      55em;
-}
-@media (max-width: 1280px) {
-    table th, table td {
-        max-width:    25em;
-    }
-}
-table th {
-    white-space:    nowrap;
-    text-align:     center;
-}
 thead tr {
     background:    rgb(93, 92, 96)  !important;
     color:         white  !important;
@@ -144,6 +130,25 @@ tbody tr.focus {
     background-color:    rgb(35, 160, 220)  !important;
     box-shadow:          inset  0  1px  1px  rgba(0, 0, 0, 0.075),
                          0  0  8px  rgba(14, 144, 210, 0.6);
+}
+table th, table td {
+    padding:      0.5em;
+    max-width:    55em;
+}
+table th {
+    white-space:    nowrap;
+    text-align:     center;
+}
+table td {
+    white-space:    pre-line;
+}
+table td > * {
+    white-space:    normal;
+}
+@media (max-width: 1280px) {
+    table th, table td {
+        max-width:    25em;
+    }
 }
 /* ----- Form Elements ----- */
 form {

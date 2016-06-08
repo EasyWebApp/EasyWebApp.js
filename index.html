@@ -42,29 +42,36 @@
     <div class="Head">
         <div class="PC_Narrow Grid-Row CenterY">
             <div class="Grid-Column">
-                <b>E<span class="Red">a</span>syWebApp</b>
+                <a href="#Feature">E<span class="Red">a</span>syWebApp</a>
             </div>
-            <ul class="Grid-Column NavBar">
-                <li><a target="_blank" href="doc/">
-                    使用教程
-                </a></li>
-                <li><a target="_blank" href="demo/Admin/">
-                    演示程序
-                </a></li>
-                <li><a href="#OSC">
-                    开放源码
-                </a></li>
-                <li><a href="#Popular">
-                    社区推荐
-                </a></li>
-            </ul>
+            <div class="Grid-Column Column_1-2">
+                <div class="DropDown Head">
+                    <ul class="NavBar">
+                        <li><a href="#Compare">
+                            竞品比较
+                        </a></li>
+                        <li><a target="_blank" href="doc/">
+                            使用教程
+                        </a></li>
+                        <li><a target="_blank" href="demo/Admin/">
+                            演示程序
+                        </a></li>
+                        <li><a href="#OSC">
+                            开放源码
+                        </a></li>
+                        <li><a href="#Popular">
+                            社区推荐
+                        </a></li>
+                    </ul>
+                </div>
+            </div>
             <form class="Grid-Column"
                   target="_blank" action="https://www.sogou.com/web">
                 <input type="search" name="query" placeholder="搜索关键词" />
             </form>
         </div>
     </div>
-    <div class="Body PC_Narrow">
+    <div class="Body PC_Narrow" id="Feature">
         <div class="Head">
             <h1>EasyWebApp</h1>
             <h2>为 jQuery 程序猿打造的 单页应用引擎！</h2>
@@ -75,20 +82,31 @@
         </div>
         <div class="Body">
             <div class="Item-Box visible">
-                <h3><i class="Icon Eye"></i>上手快</h3>
+                <h3 class="Red">
+                    <i class="Icon Eye"></i>上手快
+                </h3>
                 <ul class="Ellipsis">
                     <li>拓展<em>HTML 5 原生语义</em>，无自创模板语法</li>
+                    <li>
+                        支持加载符合<em>MarkDown 规范</em>的内容页面、
+                        <em>JSON 规范</em>的内容数据
+                    </li>
                     <li>业务逻辑写在<em>类 jQuery 事件绑定</em>回调中</li>
                 </ul>
             </div>
             <div class="Item-Box visible">
-                <h3><i class="Icon Pen"></i>编码少</h3>
+                <h3 class="Red">
+                    <i class="Icon Pen"></i>编码少
+                </h3>
                 <ul class="Ellipsis">
+                    <li>自动监听、代理 用户点击、提交事件</li>
                     <li>无需手写 AJAX、pushState，专注内页渲染逻辑</li>
                 </ul>
             </div>
             <div class="Item-Box visible">
-                <h3><i class="Icon Home"></i>兼容佳</h3>
+                <h3 class="Red">
+                    <i class="Icon Home"></i>兼容佳
+                </h3>
                 <ul class="Ellipsis">
                     <li>
                         可运行于各种<em>jQuery API</em>实现库之上
@@ -99,10 +117,15 @@
                     <li>
                         不排斥现有 jQuery 插件
                     </li>
+                    <li>
+                        支持手写 <code>&lt;script /&gt;</code>、<em>AMD 规范</em>加载器
+                    </li>
                 </ul>
             </div>
             <div class="Item-Box visible">
-                <h3><i class="Icon Search"></i>进阶易</h3>
+                <h3 class="Red">
+                    <i class="Icon Search"></i>进阶易
+                </h3>
                 <ul class="Ellipsis">
                     <li>
                         基于 <a target="_blank" href="//git.oschina.net/Tech_Query/iQuery/blob/master/iQuery+.js">iQuery+</a>
@@ -116,7 +139,67 @@
                 </ul>
             </div>
         </div>
-        <a id="OSC"></a>
+        <h3 id="Compare">竞品比较</h3>
+        <div><table>
+            <thead><tr>
+                <th>SPA 引擎</th>
+                <th>外部依赖</th>
+                <th>浏览器兼容</th>
+                <th>链接元素</th>
+                <th>渲染模式</th>
+                <th>HTML 片段</th>
+                <th>渲染容器</th>
+                <th>自定义事件</th>
+            </tr></thead>
+            <tbody>
+                <tr>
+                    <td>EasyWebApp</td>
+                    <td>jQuery</td>
+                    <td>IE 8+</td>
+                    <td><span>
+                        任何可见元素、<code>&lt;link /&gt;</code>（通过 HTML 属性指定）
+                    </span></td>
+                    <td><ul>
+                        <li>后端渲染好的 HTML</li>
+                        <li>MarkDown 格式文本</li>
+                        <li>HTML 模板 + JSON 数据</li>
+                    </ul></td>
+                    <td>支持</td>
+                    <td>任何可见、有 innerHTML 的元素</td>
+                    <td>
+                        类 jQuery 事件监听 API，
+                        支持<em>多路径条件</em>绑定、
+                        <em>多回调最终有效数据</em>渲染
+                    </td>
+                    <!--基于事件回调-->
+                </tr>
+                <tr>
+                    <td><a target="_blank" href="http://pjax.herokuapp.com/">
+                        jquery-pjax
+                    </a></td>
+                    <td>jQuery</td>
+                    <td>IE 10+</td>
+                    <td>任何可见元素（通过 jQuery 实例方法指定）</td>
+                    <td>后端渲染好的 HTML</td>
+                    <td>支持</td>
+                    <td>任何可见、有 innerHTML 的元素</td>
+                    <td>jQuery 自定义事件</td>
+                </tr>
+                <tr>
+                    <td><a target="_blank" href="https://github.com/turbolinks/turbolinks">
+                        Turbolinks
+                    </a></td>
+                    <td>无，但与 jQuery 配合良好</td>
+                    <td>IE 10+</td>
+                    <td><code>&lt;a href="同域 URL" /&gt;</code></td>
+                    <td>后端渲染好的 HTML</td>
+                    <td>不支持</td>
+                    <td><code>&lt;body /&gt;</code></td>
+                    <td>jQuery 自定义事件</td>
+                </tr>
+            </tbody>
+        </table></div>
+        <h3 id="OSC">开发动态</h3>
         <script src="//git.oschina.net/Tech_Query/EasyWebApp/widget_preview"></script>
         <style>
             .osc_git_box {
@@ -153,10 +236,21 @@
                 @会的不多
             </a>
         </p>
-    </div>
-    <div class="Foot PC_Narrow">
         <hr />
-        (C)2015-2016
-        <a target="_blank" href="http://my.oschina.net/TechQuery/">TechQuery</a>
+    </div>
+    <div class="Foot PC_Narrow Grid-Row">
+        <div class="Grid-Column">
+            (C)2015-2016
+            <a target="_blank" href="http://my.oschina.net/TechQuery/">TechQuery</a>
+        </div>
+        <div class="Grid-Column">
+            Powered by
+            <a target="_blank" href="//git.oschina.net/Tech_Query/EasyImport.js/">
+                EasyImport.js
+            </a>,
+            <a target="_blank" href="//git.oschina.net/Tech_Query/EasyWebUI/">
+                EasyWebUI
+            </a>
+        </div>
     </div>
 </body></html>

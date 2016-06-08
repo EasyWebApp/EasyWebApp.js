@@ -3,17 +3,37 @@ body > .Head {
     color:         white;
     position:      fixed;
     width:         100%;
+    left:          0;
+    top:           0;
+    z-index:       1;
 }
-body > .Head > .PC_Narrow a,
-body > .Head > .PC_Narrow a:hover {
-    color:    white;
+body > .Head a,  body > .Head a:hover  {
+    color:    white  !important;
 }
-body > .Head > .PC_Narrow > .NavBar > li {
+
+
+body > .Head .NavBar > li {
+    border-top:       3px  solid   transparent;
     border-bottom:    3px  solid   transparent;
     line-height:      2.5em;
 }
-body > .Head > .PC_Narrow > .NavBar > li:hover {
-    border-bottom-color:    red;
+body > .Head .NavBar > li:hover {
+    border-top-color:    rgb(245, 80, 80);
+}
+@media (max-width:  640px) {
+    body > .Head .Grid-Column {
+        line-height:    3em;
+    }
+    body > .Head .DropDown.Head {
+        border:    none;
+    }
+    body > .Head .NavBar > li {
+        line-height:    normal;
+    }
+    body > .Head .NavBar > li > a,
+    body > .Head .NavBar > li > a:hover {
+        color:    black;
+    }
 }
 
 
@@ -21,16 +41,26 @@ body > .Body {
     padding-top:    3.5em;
 }
 body > .Body > .Head {
-    padding:    3em  0;
+    padding:    3em  1em;
 }
 
 
 .Body > .Item-Box {
-    width:     450px;
-    height:    250px;
+    width:       24em;
+    height:      14em;
+    overflow:    hidden;
+}
+@media (max-width:  640px) {
+    .Body > .Item-Box {
+        width:     95%;
+        height:    auto;
+    }
 }
 .Body > .Item-Box > h3 {
     padding-right:    1em;
+}
+.Body > .Item-Box > h3 > .Icon:hover {
+    background:    transparent;
 }
 .Body > .Item-Box > ul {
     list-style:    none;
@@ -46,10 +76,44 @@ body > .Body > .Head {
 }
 
 
-.osc_git_box {
-    margin:    3em  6em  !important;
+body > .Body > h3 {
+    margin:    2em;
+}
+body > .Body > h3:before,  body > .Body > h3:after  {
+    color:      darkgray;
+    padding:    0  5px;
+}
+body > .Body > h3:before {
+    content:    "<";
+}
+body > .Body > h3:after {
+    content:    " />";
 }
 
+
+#Compare + div {
+    overflow-x:    auto;
+}
+body > .Body table td:first-child {
+    font-weight:    bold;
+}
+body > .Body table td > * {
+    white-space:    nowrap;
+}
+body > .Body table td ul {
+    text-align:    left;
+}
+
+
+.osc_git_box {
+    margin:    0  6em  !important;
+}
+@media (max-width:  640px) {
+    .osc_git_box {
+        margin-left:     0  !important;
+        margin-right:    0  !important;
+    }
+}
 
 a.Item-Box > img.Logo {
     display:          block;
@@ -74,6 +138,6 @@ a.Item-Box:after {
 }
 
 
-body > .Foot {
+body > .Foot > .Grid-Column {
     padding-bottom:    2em;
 }
