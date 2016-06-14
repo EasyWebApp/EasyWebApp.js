@@ -3699,12 +3699,12 @@ define('iQuery',  function () {
                     if (i < _This_.requireArgs)  return;
 
                 } else if (
-                    (this[i] != iArgs[i])  ||
-                    (! iArgs[i].match(this[i]))  ||  (
-                        (typeof _This_.filter[i] == 'function')  &&
-                        (false === _This_.filter[i].call(
+                    (typeof _This_.filter[i] == 'function')  ?  (
+                        false === _This_.filter[i].call(
                             _This_,  this[i],  iArgs[i]
-                        ))
+                        )
+                    )  :  (
+                        (this[i] != iArgs[i])  &&  (! iArgs[i].match(this[i]))
                     )
                 )
                     return;
@@ -3889,9 +3889,11 @@ define('iQuery',  function () {
                 ((iType[1] in ResponseType) ? iType[1] : iType[0])  ||  'text'
         });
 
+        this.response = this.responseText;
+
         switch ( this.responseType ) {
             case 'text':    ;
-            case 'html':    this.response = this.responseText;
+            case 'html':    ;
             case 'json':
                 try {
                     this.response = $.parseJSON( this.responseText );
@@ -4333,7 +4335,7 @@ define('iQuery',  function () {
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v1.0  (2016-06-06)  Stable
+//      [Version]    v1.0  (2016-06-14)  Stable
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.
@@ -4360,7 +4362,7 @@ define('iQuery',  function () {
 //                >>>  EasyImport.js  <<<
 //
 //
-//      [Version]    v1.2  (2016-06-06)  Stable
+//      [Version]    v1.2  (2016-06-14)  Stable
 //
 //      [Usage]      A Asynchronous & Responsive Loader
 //                   for Resource File in Web Browser.
@@ -4582,10 +4584,10 @@ define('iQuery',  function () {
 
             for (var i = 0;  i < iLazy.length;  i++)
                 if (
-                    ($.inArray(iLazy[i], this.finish)  ==  -1)  &&
-                    (false  ===  _This_.onScroll( iLazy[i] ))
+                    ($.inArray(iLazy[i], _This_.finish)  ==  -1)  &&
+                    (false  !==  _This_.onScroll( iLazy[i] ))
                 ) {
-                    this.finish.push( iLazy[i] );
+                    _This_.finish.push( iLazy[i] );
 
                     if (--_This_.count == 0)
                         _This_.$_ViewPort.unbind('scroll', arguments.callee);

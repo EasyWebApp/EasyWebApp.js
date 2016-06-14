@@ -1,0 +1,43 @@
+<style>
+    div[multiple] > .Item-Box.visible {
+        width:      98%;
+        padding:    0;
+    }
+    div[multiple] > .Item-Box .Background-Image {
+        background-size:    cover;
+        color:              white;
+        text-shadow:        1px  1px  1px  black;
+        position:           relative;
+    }
+    .Item-Box .Background-Image > .Head {
+        font-size:      0.8em;
+        text-align:     right;
+        padding:        0  0.5em;
+    }
+    .Item-Box .Background-Image > .Head > * {
+        vertical-align:    middle;
+        background:        transparent;
+    }
+    .Item-Box .Background-Image > .Foot {
+        position:      absolute;
+        left:          0;
+        bottom:        0;
+        width:         100%;
+        padding:       0.5em;
+        text-align:    left;
+    }
+</style>
+<div class="CenterX" multiple>
+    <div class="Item-Box visible"
+         target="_self" href="html/article.html"
+         src="/show?callback=?" data-id="id">
+        <div class="Background-Image" name="img">
+            <div class="Head">
+                <i class="Icon Eye"></i><span name="count"></span>
+                <i class="Icon Pen"></i><span name="rcount"></span>
+                <i class="Icon Heart"></i><span name="fcount"></span>
+            </div>
+            <div class="Foot Ellipsis" name="title"></div>
+        </div>
+    </div>
+</div>

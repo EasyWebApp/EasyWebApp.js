@@ -1,0 +1,17 @@
+body {
+    background:    white;
+}
+body > .Head {
+    height:    10%;
+}
+body > .Body {
+    height:      80%;
+    overflow:    auto;
+}
+body > .Foot {
+    height:        10%;
+    list-style:    none;
+}
+body > .Foot > li:hover {
+    opacity:    0.7;
+}

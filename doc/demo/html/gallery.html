@@ -1,0 +1,33 @@
+<style>
+    .WaterFall {
+        -webkit-column-width:    17em;
+    }
+    .Item-Box.visible {
+        max-width:    21em;
+    }
+</style>
+<h2 name="title"></h2>
+<div class="Grid-Row CenterX">
+    <div class="Grid-Column">
+        发布时间：<span name="time"></span>
+    </div>
+    <div class="Grid-Column">
+        发布源：
+        <a name="url" rel="nofollow" target="_blank">
+            <span>天狗美阅</span>
+        </a>
+    </div>
+    <div class="Grid-Column">
+        浏览量：<em class="Number" name="count"></em>
+    </div>
+    <div class="Grid-Column">
+        评论量：<em class="Number" name="rcount"></em>
+    </div>
+    <div class="Grid-Column">
+        收藏量：<em class="Number" name="fcount"></em>
+    </div>
+</div>
+<hr />
+<div class="CenterX WaterFall" name="list" multiple>
+    <img class="Item-Box visible" name="src" />
+</div>
