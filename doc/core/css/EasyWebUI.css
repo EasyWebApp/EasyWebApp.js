@@ -1311,6 +1311,12 @@ img.UserLogo {
 .Icon.Remove:before {
     content:    "-";
 }
+.Icon.Check:before {
+    content:    "\2713";
+}
+.Icon.Error:before {
+    content:    "\274C";
+}
 .Icon.Home:before {
     content:    "\1F3E0";
 }

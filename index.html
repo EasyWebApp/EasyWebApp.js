@@ -142,59 +142,86 @@
         <h3 id="Compare">竞品比较</h3>
         <div><table>
             <thead><tr>
-                <th>SPA 引擎</th>
-                <th>外部依赖</th>
-                <th>浏览器兼容</th>
-                <th>链接元素</th>
-                <th>渲染模式</th>
-                <th>HTML 片段</th>
-                <th>渲染容器</th>
-                <th>自定义事件</th>
+                <th>SPA 引擎/框架</th>
+                <th>EasyWebApp</th>
+                <th><a target="_blank" href="http://pjax.herokuapp.com/">
+                    jquery-pjax
+                </a></th>
+                <th><a target="_blank" href="https://github.com/turbolinks/turbolinks">
+                    Turbolinks
+                </a></th>
+                <th><a target="_blank" href="http://m.sui.taobao.org/">
+                    SUI Mobile
+                </a></th>
             </tr></thead>
             <tbody>
                 <tr>
-                    <td>EasyWebApp</td>
-                    <td>jQuery</td>
+                    <td>外部依赖</td>
+                    <td>jQuery API 兼容库</td>
+                    <td>jQuery API 兼容库</td>
+                    <td>无，但与 jQuery 配合良好</td>
+                    <td>无，但内置 jQuery 兼容 API</td>
+                </tr>
+                <tr>
+                    <td>浏览器兼容</td>
                     <td>IE 8+</td>
+                    <td>IE 10+</td>
+                    <td>IE 10+</td>
+                    <td>iOS 6+、Android 4+</td>
+                </tr>
+                <tr>
+                    <td>链接元素</td>
                     <td><span>
                         任何可见元素、<code>&lt;link /&gt;</code>（通过 HTML 属性指定）
                     </span></td>
+                    <td>任何可见元素（通过 jQuery 实例方法指定）</td>
+                    <td><code>&lt;a href="同域 URL" /&gt;</code></td>
+                    <td><code>&lt;a href="URL" /&gt;</code></td>
+                </tr>
+                <tr>
+                    <td>渲染模式</td>
                     <td><ul>
                         <li>后端渲染好的 HTML</li>
                         <li>MarkDown 格式文本</li>
                         <li>HTML 模板 + JSON 数据</li>
                     </ul></td>
-                    <td>支持</td>
+                    <td>后端渲染好的 HTML</td>
+                    <td>后端渲染好的 HTML</td>
+                    <td><ul>
+                        <li>后端渲染好的 HTML</li>
+                        <li>HTML 内联自创模板语法 + JS API</li>
+                    </ul></td>
+                </tr>
+                <tr>
+                    <td>HTML 片段</td>
+                    <td><i class="Icon Check Green"></i></td>
+                    <td><i class="Icon Check Green"></i></td>
+                    <td><i class="Icon Error Red"></i></td>
+                    <td><i class="Icon Check Green"></i></td>
+                </tr>
+                <tr>
+                    <td>内联页面</td>
+                    <td><i class="Icon Check Green"></i></td>
+                    <td><i class="Icon Error Red"></i></td>
+                    <td><i class="Icon Error Red"></i></td>
+                    <td><i class="Icon Check Green"></i></td>
+                </tr>
+                <tr>
+                    <td>渲染容器</td>
                     <td>任何可见、有 innerHTML 的元素</td>
+                    <td>任何可见、有 innerHTML 的元素</td>
+                    <td><code>&lt;body /&gt;</code></td>
+                    <td>任何可见、有 innerHTML 的元素</td>
+                </tr>
+                <tr>
+                    <td>自定义事件</td>
                     <td>
                         类 jQuery 事件监听 API，
                         支持<em>多路径条件</em>绑定、
                         <em>多回调最终有效数据</em>渲染
                     </td>
-                    <!--基于事件回调-->
-                </tr>
-                <tr>
-                    <td><a target="_blank" href="http://pjax.herokuapp.com/">
-                        jquery-pjax
-                    </a></td>
-                    <td>jQuery</td>
-                    <td>IE 10+</td>
-                    <td>任何可见元素（通过 jQuery 实例方法指定）</td>
-                    <td>后端渲染好的 HTML</td>
-                    <td>支持</td>
-                    <td>任何可见、有 innerHTML 的元素</td>
                     <td>jQuery 自定义事件</td>
-                </tr>
-                <tr>
-                    <td><a target="_blank" href="https://github.com/turbolinks/turbolinks">
-                        Turbolinks
-                    </a></td>
-                    <td>无，但与 jQuery 配合良好</td>
-                    <td>IE 10+</td>
-                    <td><code>&lt;a href="同域 URL" /&gt;</code></td>
-                    <td>后端渲染好的 HTML</td>
-                    <td>不支持</td>
-                    <td><code>&lt;body /&gt;</code></td>
+                    <td>jQuery 自定义事件</td>
                     <td>jQuery 自定义事件</td>
                 </tr>
             </tbody>

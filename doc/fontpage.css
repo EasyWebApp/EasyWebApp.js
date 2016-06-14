@@ -32,7 +32,7 @@ body > .Head .NavBar > li:hover {
     }
     body > .Head .NavBar > li > a,
     body > .Head .NavBar > li > a:hover {
-        color:    black;
+        color:    black  !important;
     }
 }
 
@@ -42,6 +42,9 @@ body > .Body {
 }
 body > .Body > .Head {
     padding:    3em  1em;
+}
+body > .Body .Icon:hover {
+    background:    transparent;
 }
 
 
@@ -58,9 +61,6 @@ body > .Body > .Head {
 }
 .Body > .Item-Box > h3 {
     padding-right:    1em;
-}
-.Body > .Item-Box > h3 > .Icon:hover {
-    background:    transparent;
 }
 .Body > .Item-Box > ul {
     list-style:    none;
