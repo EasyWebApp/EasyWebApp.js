@@ -23,19 +23,17 @@
 
 /* ---------- 演示程序 面板 ---------- */
 
-    var $_QRcode = $('#QRcode > .Body').empty();
-
-    var $_Phone = $_QRcode.parentsUntil('.Grid-Row').find('iframe');
-
-    $_QRcode.qrcode({
+    $('#QRcode > .Body').qrcode({
         render:     $.browser.modern ? 'image' : 'div',
         ecLevel:    'H',
         radius:     0.5,
-        text:       $_Phone[0].src
+        mode:       2,
+        label:      'iDaily',
+        text:       $.filePath(DOM.URL) + '/doc/demo/'
     });
 
     if ($.browser.mobile  &&  (! $.browser.pad))
-        $_Phone.remove();
+        $('body > .Body > .Grid-Row iframe').remove();
 
 
     $.ListView('body > .Body > .Grid-Row > .Tab',  function ($_This, iValue) {

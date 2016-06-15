@@ -94,6 +94,10 @@ body > .Body > h3:before,  body > .Body > h3:after  {
 }
 
 
+body > .Body > .Grid-Row .Head > a {
+    display:    inline-block;
+    margin:     0  1em;
+}
 body > .Body > .Grid-Row > .Tab {
     height:    43em;
 }
@@ -107,12 +111,24 @@ body > .Body iframe {
     height:                 36.5em;
 }
 @media (max-width:  640px) {
+    #QRcode {
+        border:    none;
+    }
+    #QRcode:before {
+        content:    none;
+    }
+    #QRcode > .DropDown.Body {
+        left:    -2em;
+    }
     body > .Body > .Grid-Row {
         display:    block  !important;
     }
     body > .Body > .Grid-Row > * {
         display:    inline-block;
         width:      100%;
+    }
+    body > .Body > .Grid-Row > .Tab > pre {
+        height:    75%;
     }
 }
 

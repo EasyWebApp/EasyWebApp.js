@@ -50,7 +50,7 @@ define('iQuery+',  function () {
 })(self, self.document, self.jQuery);
 
 
-/* ---------- ListView Interface  v0.7 ---------- */
+/* ---------- ListView Interface  v0.8 ---------- */
 
 //  Thanks "EasyWebApp" Project --- http://git.oschina.net/Tech_Query/EasyWebApp
 
@@ -78,6 +78,7 @@ define('iQuery+',  function () {
 
         this.selector = $_Item;
         this.length = 0;
+        this.cache = [ ];
 
         for (;  ;  this.length++) {
             $_Item = this.itemOf(this.length);
@@ -135,6 +136,23 @@ define('iQuery+',  function () {
 
         return $_Clone;
     }
+
+    $.fn.isVisible = function () {
+        for (var i = 0, _OS_, $_BOM, BOM_W, BOM_H;  this[i];  i++) {
+            _OS_ = $( this[i] ).offset();
+
+            $_BOM = $( this[i].ownerDocument.defaultView );
+
+            BOM_W = $_BOM.width(),  BOM_H = $_BOM.height();
+
+            if ((_OS_.left > BOM_W)  ||  (_OS_.top > BOM_H))
+                return false;
+        }
+
+        return true;
+    };
+
+    var $_BOM = $(BOM);
 
     ListView.prototype = $.extend(new $.CommonView(),  {
         constructor:    ListView,
@@ -200,10 +218,23 @@ define('iQuery+',  function () {
             return this.indexOf(_Index_);
         },
         render:         function (iData) {
-            iData = $.likeArray(iData) ? iData : [iData];
+            iData = iData ? this.cache.concat(iData) : this.cache;
 
-            for (var i = 0;  i < iData.length;  i++)
-                this.insert(iData[i], i);
+            var _This_ = this;
+
+            for (var i = 0;  iData[i];  i++)
+                if (! this.insert(iData[i], i).isVisible()) {
+
+                    this.cache = iData.slice(++i);
+
+                    $_BOM.scroll(function () {
+                        if (! _This_.cache[0])  return;
+
+                        $_BOM.off('scroll', arguments.callee);
+                        _This_.render();
+                    });
+                    return this;
+                }
 
             this.trigger('afterRender', [iData]);
 
@@ -244,6 +275,7 @@ define('iQuery+',  function () {
         clear:          function () {
             this.splice(0, this.length);
             this.$_View.empty();
+            this.cache.length = 0;
 
             return this;
         },
@@ -501,7 +533,7 @@ define('iQuery+',  function () {
 //              >>>  iQuery+  <<<
 //
 //
-//    [Version]    v1.4  (2016-5-31)  Stable
+//    [Version]    v1.5  (2016-06-15)  Stable
 //
 //    [Require]    iQuery  ||  jQuery with jQuery+
 //
