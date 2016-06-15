@@ -88,7 +88,7 @@ WebApp = (function (BOM, DOM, $) {
         this.$_DOM = $.isPlainObject(Link_DOM) ?
             this.createDOM(Link_DOM, iArgument, iData)  :
             $(Link_DOM);
-        this.$_DOM.data('EWA_PageLink', this);
+        this.$_DOM.data('EWA_PageLink', this).css('cursor', 'pointer');
 
         $.extend(this, arguments.callee.getAttr(this.$_DOM));
 

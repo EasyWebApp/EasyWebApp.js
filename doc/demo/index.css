@@ -7,6 +7,7 @@ body > .Head {
 body > .Body {
     height:      80%;
     overflow:    auto;
+    padding:     0  0.5em;
 }
 body > .Foot {
     height:        10%;

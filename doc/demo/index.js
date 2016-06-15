@@ -1,16 +1,26 @@
 (function (BOM, DOM, $) {
 
     function Data_Fix(iData, Image_Key) {
+        var _Self_ = arguments.callee;
+
         Image_Key = Image_Key || 'img';
 
-        for (var i = 0;  iData[i];  i++) {
-            iData[i].time = (new Date(iData[i].time)).toLocaleString();
+        return  $.each(iData,  function () {
+            this.title = this.title || this.name;
 
-            iData[i][Image_Key] = 'http://tnfs.tngou.net/img' + iData[i][Image_Key];
+            if ( this.time )
+                this.time = (new Date(this.time)).toLocaleString();
 
-            if (iData[i].list)  arguments.callee(iData[i].list, 'src');
-        }
+            this[Image_Key] = 'http://tnfs.tngou.net/img' + this[Image_Key];
+
+            this.fromname = this.fromname || "天狗云平台";
+            this.fromurl = this.fromurl || this.url;
+
+            if (this.list)  _Self_(this.list, 'src');
+        });
     }
+
+    var $_Foot = $('body > .Foot');
 
     $('body > .Body').WebApp('http://www.tngou.net/')
         .on('pageRender',  function (This_Page, Prev_Page, iData) {
@@ -28,8 +38,13 @@
             if (This_Page.HTML.indexOf('list.html') > -1) {
                 iData = iData.tngou;
                 Data_Fix(iData);
-            } else
+                $_Foot.show();
+                this.domRoot.css('height', '80%');
+            } else {
                 Data_Fix([iData]);
+                $_Foot.hide();
+                this.domRoot.css('height', '90%');
+            }
 
             return iData;
         });

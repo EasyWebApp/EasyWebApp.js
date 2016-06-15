@@ -1,29 +1,40 @@
 <style>
+    .CenterX > .Item-Box {
+        padding:      0.5em;
+        font-size:    0.9em;
+    }
     .WaterFall {
         -webkit-column-width:    17em;
     }
-    .Item-Box.visible {
+    .WaterFall > .Item-Box.visible {
         max-width:    21em;
+    }
+    @media (max-width:  640px) {
+        .WaterFall > .Item-Box.visible {
+            width:    98%;
+        }
     }
 </style>
 <h2 name="title"></h2>
-<div class="Grid-Row CenterX">
-    <div class="Grid-Column">
+<div class="CenterX">
+    <div class="Item-Box">
         发布时间：<span name="time"></span>
     </div>
-    <div class="Grid-Column">
+    <div class="Item-Box">
         发布源：
-        <a name="url" rel="nofollow" target="_blank">
-            <span>天狗美阅</span>
+        <a name="fromurl" rel="nofollow" target="_blank">
+            <span name="fromname"></span>
         </a>
     </div>
-    <div class="Grid-Column">
+</div>
+<div class="CenterX">
+    <div class="Item-Box">
         浏览量：<em class="Number" name="count"></em>
     </div>
-    <div class="Grid-Column">
+    <div class="Item-Box">
         评论量：<em class="Number" name="rcount"></em>
     </div>
-    <div class="Grid-Column">
+    <div class="Item-Box">
         收藏量：<em class="Number" name="fcount"></em>
     </div>
 </div>

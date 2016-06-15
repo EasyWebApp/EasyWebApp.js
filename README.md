@@ -3,7 +3,7 @@
 ## 【项目概述】
 **EasyWebApp** 是一个基于 **jQuery API** 的 **轻量级 SPA（单页应用）引擎**， **网页设计、后端接口、前端组件 充分解耦** —— 只用 **原生 HTML** 做模板，对 **JSON 数据**的结构几无硬性要求，完全兼容现有的 **jQuery 插件**。
 
-本引擎广泛使用的最新开源稳定版 v2.4 脱胎于 2 个 **移动端网页应用**（微信公众平台）和 2 个 **桌面端网页系统**（某公司开放平台），是一个有较高 **抽象性**、 **普适性**的 SPA 引擎， **个人独立开发**、 **团队协作开发** 都能轻松胜任~
+本引擎广泛使用的最新开源稳定版 v2.5 脱胎于 3 个 **移动端网页应用**（微信公众平台）和 3 个 **桌面端网页系统**（某公司开放平台），是一个有较高 **抽象性**、 **普适性**的 SPA 引擎， **个人独立开发**、 **团队协作开发** 都能轻松胜任~
 
 
 ## 【核心理念】
@@ -23,16 +23,14 @@ EasyWebApp 与其作者开发的 [**EasyWebUI**](http://git.oschina.net/Tech_Que
 
 ### 一、每日资讯（移动版）
  - 前端页面
-   - 访问网址：http://easywebapp.oschina.cnpaas.io/demo/iDaily
+   - 访问网址：http://tech_query.oschina.io/easywebapp/doc/demo/
    - 因为前期主要演示本引擎的核心特性，Demo 界面暂无美术设计，仅有 EasyWebUI 框架组件的默认样式
  - 后端数据
-   - 主要基于 [方倍工作室 API 100](http://www.cnblogs.com/txw1958/p/weixin-api100.html)，支持 **微信公众平台 AppKey**（URL 形如 `/demo/index.html?wechat_appkey=xxx`）
-   - 还引用了 **淘宝网 IP 地理信息**、[**天狗云平台**](http://www.tngou.net) 的开放 API
-   - 因为上述接口没有开放 **前端跨域访问**，所以引擎作者用一个 PHP 脚本做了一层代理，导致 **API 数据响应**较慢，请稍安勿臊
+   - 引用了 **淘宝网 IP 地理信息**、[**天狗云平台**](http://www.tngou.net) 的开放 API
 
 ### 二、后台管理 UI
  - 前端页面
-   - 访问网址：http://easywebapp.oschina.cnpaas.io/demo/Admin
+   - 访问网址：http://tech_query.oschina.io/easywebapp/demo/Admin/
  - 后端数据
    - 主要基于 [**天狗云平台**](http://www.tngou.net) 的开放 API
 

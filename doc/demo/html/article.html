@@ -1,31 +1,36 @@
 <style>
+    .CenterX > .Item-Box {
+        padding:      0.5em;
+        font-size:    0.9em;
+    }
     *[name="message"] img {
         display:      inline-block;
         max-width:    100%;
     }
 </style>
 <h2 name="title"></h2>
-<div class="Grid-Row CenterX">
-    <div class="Grid-Column">
+<div class="CenterX">
+    <div class="Item-Box">
         发布时间：<span name="time"></span>
     </div>
-    <div class="Grid-Column">
+    <div class="Item-Box">
         发布源：
         <a name="fromurl" rel="nofollow" target="_blank">
             <span name="fromname"></span>
         </a>
     </div>
-    <div class="Grid-Column">
+</div>
+<div class="CenterX">
+    <div class="Item-Box">
         浏览量：<em class="Number" name="count"></em>
     </div>
-    <div class="Grid-Column">
+    <div class="Item-Box">
         评论量：<em class="Number" name="rcount"></em>
     </div>
-    <div class="Grid-Column">
+    <div class="Item-Box">
         收藏量：<em class="Number" name="fcount"></em>
     </div>
 </div>
 <hr />
 <pre name="description"></pre>
-<div name="message">
-</div>
+<div name="message"></div>

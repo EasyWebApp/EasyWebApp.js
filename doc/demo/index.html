@@ -22,20 +22,28 @@
             '../../demo/index.js'
         ]);
     </script>
-</head><body class="Mobile No_Select">
-    <div class="Head Grid-Row CenterY CenterX Blue_O">
-        <span>小日报</span>
+</head><body class="Mobile">
+    <div class="Head Grid-Row CenterX CenterY Blue_O">
+        <span><i class="Icon Return" onclick="history.back()"></i></span>
+        <span class="Column_2-3">小日报</span>
+        <span><i class="Icon Search"></i></span>
     </div>
     <div class="Body"></div>
-    <ul class="Foot Grid-Row CenterX CenterY Blue_O">
+    <ul class="Foot Grid-Row CenterX CenterY Blue_O No_Select">
         <li target="_self" href="html/list.html" src="api/top/list?callback=?">
             新闻
         </li>
         <li target="_self" href="html/list.html" src="tnfs/api/list?callback=?">
-            美图
+            靓图
         </li>
-        <li>乐活</li>
-        <li>医疗</li>
-        <li>农业</li>
+        <li target="_self" href="html/list.html" src="api/lore/list?callback=?">
+            乐活
+        </li>
+        <li target="_self" href="html/list.html" src="api/cook/list?callback=?">
+            美食
+        </li>
+        <li target="_self" href="html/list.html" src="api/news/list?callback=?">
+            农业
+        </li>
     </ul>
 </body></html>
