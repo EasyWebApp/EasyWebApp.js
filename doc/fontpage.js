@@ -1,5 +1,7 @@
 (function (BOM, DOM, $) {
 
+/* ---------- 顶部导航栏 ---------- */
+
     $('a[href^="#"]').click(function () {
         arguments[0].preventDefault();
 
@@ -19,16 +21,32 @@
         })[0].value += ' site:tech_query.oschina.io';
     });
 
-    var Demo_File = ['html', 'css', 'js'];
+/* ---------- 演示程序 面板 ---------- */
 
-    $('body > .Body > .Grid-Row > .Tab > pre').each(function () {
-        var $_This = $(this);
+    var $_QRcode = $('#QRcode > .Body').empty();
 
-        $.get('doc/demo/index.' + Demo_File[arguments[0]],  function () {
-            $_This.text( arguments[0] );
-        });
+    var $_Phone = $_QRcode.parentsUntil('.Grid-Row').find('iframe');
+
+    $_QRcode.qrcode({
+        render:     $.browser.modern ? 'image' : 'div',
+        ecLevel:    'H',
+        radius:     0.5,
+        text:       $_Phone[0].src
     });
 
-    if ($.browser.phone)  $('body > .Body > .Grid-Row iframe').remove();
+    if ($.browser.mobile  &&  (! $.browser.pad))
+        $_Phone.remove();
+
+
+    $.ListView('body > .Body > .Grid-Row > .Tab',  function ($_This, iValue) {
+        $_This.filter('label').text(iValue);
+
+        $.get('doc/demo/' + iValue,  function () {
+            $_This.filter('pre').text( arguments[0] );
+        });
+    }).clear().render([
+        'html/gallery.html', 'index.html', 'index.css', 'index.js',
+        'html/list.html', 'html/article.html'
+    ]);
 
 })(self, self.document, self.jQuery);

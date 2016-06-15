@@ -8,7 +8,7 @@
  *    and can be used in the Web UI development of
  *    Any Platform.
  *
- *    [Version]    v1.0  (2016-06-14)
+ *    [Version]    v1.0  (2016-06-15)
  *
  *    [Require]    CSS 2.1  (Best Effect with CSS 3),
  *
@@ -1133,6 +1133,12 @@ img.UserLogo {
 
 
 /* ----------- Atom View ---------- */
+.Text_Column {
+        writing-mode:    tb-rl;
+-webkit-writing-mode:    vertical-rl;
+        writing-mode:    vertical-rl;
+       *writing-mode:    tb-rl;
+}
 .No_Select {
    -moz-user-select: -moz-none;
  -khtml-user-select:      none;
@@ -1302,6 +1308,9 @@ img.UserLogo {
 .Icon.Return:before {
     content:    "\21e6";
 }
+.Icon.Item:before {
+    content:    "\2AFC";
+}
 .Icon.Add:before {
     content:    "+";
 }
@@ -1325,6 +1334,9 @@ img.UserLogo {
 }
 .Icon.Search:before {
     content:    "\1F50D";
+}
+.Icon.Screen:before {
+    content:    "\239A";
 }
 .Icon.Mobile:before {
     content:    "\1F4F1";

@@ -15,7 +15,10 @@
     <script src="doc/core/javascript/EasyImport.js"></script>
     <script>
         ImportJS([
-            'iQuery+.js',
+            {
+                'iQuery+.js':    true,
+                '//cdn.bootcss.com/lrsjng.jquery-qrcode/0.12.0/jquery.qrcode.min.js':    true
+            },
             '../css/EasyWebUI.js',
             '../../fontpage.js'
         ]);
@@ -117,7 +120,13 @@
         <div class="Grid-Row">
             <div>
                 <div>
-                    <a target="_blank" href="doc/demo/">&gt; 在新窗口打开 &lt;</a>
+                    <a title="在新窗口打开" target="_blank" href="doc/demo/">
+                        <i class="Icon Screen"></i>
+                    </a>
+                    <span class="DropDown Head" id="QRcode">
+                        <i class="Icon Mobile"></i>
+                        <div class="DropDown Body"></div>
+                    </span>
                 </div>
                 <iframe data-src="doc/demo/"></iframe>
                 <p>
@@ -125,11 +134,7 @@
                 </p>
             </div>
             <div class="Column_3-5 Tab">
-                <label>HTML</label>
-                <label>CSS</label>
-                <label>JavaScript</label>
-                <pre class="Body"></pre>
-                <pre class="Body"></pre>
+                <label></label>
                 <pre class="Body"></pre>
             </div>
         </div>

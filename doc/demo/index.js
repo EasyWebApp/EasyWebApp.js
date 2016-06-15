@@ -20,7 +20,8 @@
         });
     }
 
-    var $_Foot = $('body > .Foot');
+    var $_Title = $('body > .Head > [name="title"]'),
+        $_Foot = $('body > .Foot');
 
     $('body > .Body').WebApp('http://www.tngou.net/')
         .on('pageRender',  function (This_Page, Prev_Page, iData) {
@@ -36,14 +37,17 @@
                     });
 
             if (This_Page.HTML.indexOf('list.html') > -1) {
+                $_Title.text("小日报");
+                this.domRoot.css('height', '80%');
+                $_Foot.show();
+
                 iData = iData.tngou;
                 Data_Fix(iData);
-                $_Foot.show();
-                this.domRoot.css('height', '80%');
             } else {
-                Data_Fix([iData]);
                 $_Foot.hide();
                 this.domRoot.css('height', '90%');
+
+                Data_Fix([iData]);
             }
 
             return iData;
