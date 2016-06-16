@@ -2969,6 +2969,23 @@ define('iQuery',  function () {
                 })
             ));
         },
+        inViewport:       function () {
+            for (var i = 0, _OS_, $_BOM, BOM_W, BOM_H;  this[i];  i++) {
+                _OS_ = $( this[i] ).offset();
+
+                $_BOM = $( this[i].ownerDocument.defaultView );
+
+                BOM_W = $_BOM.width(),  BOM_H = $_BOM.height();
+
+                if (
+                    (_OS_.left > BOM_W)  ||
+                    ((_OS_.top - $(DOM).scrollTop())  >  BOM_H)
+                )
+                    return false;
+            }
+
+            return true;
+        },
         scrollTo:         function ($_Target) {
             $_Target = $($_Target);
 
@@ -4335,7 +4352,7 @@ define('iQuery',  function () {
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v1.0  (2016-06-14)  Stable
+//      [Version]    v1.0  (2016-06-16)  Stable
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.
@@ -4356,7 +4373,6 @@ define('iQuery',  function () {
 
 
 });
-
 
 //
 //                >>>  EasyImport.js  <<<

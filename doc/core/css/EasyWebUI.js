@@ -2,7 +2,7 @@
 //          >>>  EasyWebUI Component Library  <<<
 //
 //
-//      [Version]     v2.7  (2016-06-01)  Stable
+//      [Version]     v2.7  (2016-06-16)  Stable
 //
 //      [Based on]    iQuery v1  or  jQuery (with jQuery+),
 //
@@ -122,24 +122,20 @@
             );
     }
 
-    var Need_Fix,
-        _addClass_ = $.fn.addClass;
+    var _addClass_ = $.fn.addClass;
 
-    if (! ($.browser.msie < 10)) {
+    if (!  ('flex' in DOM.documentElement.style)) {
         $.fn.addClass = function () {
             _addClass_.apply(this, arguments);
 
-            if (Need_Fix  &&  ($.inArray('Flex-Box', arguments[0].split(' ')) > -1))
-                return  this.each(FlexFix);
+            if ($.inArray('Flex-Box', arguments[0].split(/\s+/))  >  -1)
+                return this.each(FlexFix);
 
             return this;
         };
 
         $(DOM).ready(function () {
-            if (isNaN(
-                parseInt( $('body').css(CSS_Attribute.Prefix + 'flex') )
-            ))
-                $('.Flex-Box').each(FlexFix);
+            $('.Flex-Box').each(FlexFix);
         });
     }
 
@@ -748,7 +744,7 @@
                 iSelector = ['input[type="radio"]',  'div, section, .Body'];
             iSelector[Label_At ? 'unshift' : 'push']('label');
 
-            $.ListView(this,  iSelector,  function ($_Tab_Item) {
+            $.ListView(this,  iSelector,  true,  function ($_Tab_Item) {
                 var _UUID_ = $.uuid();
 
                 var $_Label = $_Tab_Item.filter('label').attr('for', _UUID_),

@@ -2969,6 +2969,23 @@ define('iQuery',  function () {
                 })
             ));
         },
+        inViewport:       function () {
+            for (var i = 0, _OS_, $_BOM, BOM_W, BOM_H;  this[i];  i++) {
+                _OS_ = $( this[i] ).offset();
+
+                $_BOM = $( this[i].ownerDocument.defaultView );
+
+                BOM_W = $_BOM.width(),  BOM_H = $_BOM.height();
+
+                if (
+                    (_OS_.left > BOM_W)  ||
+                    ((_OS_.top - $(DOM).scrollTop())  >  BOM_H)
+                )
+                    return false;
+            }
+
+            return true;
+        },
         scrollTo:         function ($_Target) {
             $_Target = $($_Target);
 
@@ -3699,12 +3716,12 @@ define('iQuery',  function () {
                     if (i < _This_.requireArgs)  return;
 
                 } else if (
-                    (this[i] != iArgs[i])  ||
-                    (! iArgs[i].match(this[i]))  ||  (
-                        (typeof _This_.filter[i] == 'function')  &&
-                        (false === _This_.filter[i].call(
+                    (typeof _This_.filter[i] == 'function')  ?  (
+                        false === _This_.filter[i].call(
                             _This_,  this[i],  iArgs[i]
-                        ))
+                        )
+                    )  :  (
+                        (this[i] != iArgs[i])  &&  (! iArgs[i].match(this[i]))
                     )
                 )
                     return;
@@ -3867,6 +3884,8 @@ define('iQuery',  function () {
         };
     });
 
+    var ResponseType = $.makeSet('html', 'xml', 'json');
+
     function AJAX_Complete(iOption) {
         var iHeader = { };
 
@@ -3877,18 +3896,21 @@ define('iQuery',  function () {
                 iHeader[_Header_[0]] = _Header_[1];
             });
 
+        var iType = (iHeader['Content-Type'] || '').split(';')[0].split('/');
+
         $.extend(this, {
             status:          arguments[1],
             statusText:      arguments[2],
             responseText:    arguments[3].text,
-            responseType:    (
-                (iHeader['Content-Type'] || '').split(';')[0].split('/')[1]
-            )  ||  'text'
+            responseType:
+                ((iType[1] in ResponseType) ? iType[1] : iType[0])  ||  'text'
         });
+
+        this.response = this.responseText;
 
         switch ( this.responseType ) {
             case 'text':    ;
-            case 'html':    this.response = this.responseText;
+            case 'html':    ;
             case 'json':
                 try {
                     this.response = $.parseJSON( this.responseText );
@@ -4330,7 +4352,7 @@ define('iQuery',  function () {
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v1.0  (2016-06-06)  Stable
+//      [Version]    v1.0  (2016-06-16)  Stable
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.

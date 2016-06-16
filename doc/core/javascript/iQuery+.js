@@ -59,16 +59,17 @@ define('iQuery+',  function () {
 
     var Click_Type = $.browser.mobile ? 'tap' : 'click';
 
-    function ListView($_View, $_Item, onInsert) {
+    function ListView($_View, $_Item, No_Delay, onInsert) {
         var _Self_ = arguments.callee;
 
         if (!  (this instanceof _Self_))
-            return  new _Self_($_View, $_Item, onInsert);
+            return  new _Self_($_View, $_Item, No_Delay, onInsert);
 
-        if (typeof $_Item == 'function') {
-            onInsert = $_Item;
-            $_Item = null;
-        }
+        var iArgs = $.makeArray(arguments).slice(1);
+
+        $_Item = (iArgs[0] instanceof Array)  &&  iArgs.shift();
+        No_Delay = (typeof iArgs[0] == 'boolean')  &&  iArgs.shift();
+        onInsert = (typeof iArgs[0] == 'function')  &&  iArgs[0];
 
         var iView = $.CommonView.call(this, $_View);
 
@@ -78,7 +79,7 @@ define('iQuery+',  function () {
 
         this.selector = $_Item;
         this.length = 0;
-        this.cache = [ ];
+        this.cache = No_Delay || [ ];
 
         for (;  ;  this.length++) {
             $_Item = this.itemOf(this.length);
@@ -137,22 +138,7 @@ define('iQuery+',  function () {
         return $_Clone;
     }
 
-    $.fn.isVisible = function () {
-        for (var i = 0, _OS_, $_BOM, BOM_W, BOM_H;  this[i];  i++) {
-            _OS_ = $( this[i] ).offset();
-
-            $_BOM = $( this[i].ownerDocument.defaultView );
-
-            BOM_W = $_BOM.width(),  BOM_H = $_BOM.height();
-
-            if ((_OS_.left > BOM_W)  ||  (_OS_.top > BOM_H))
-                return false;
-        }
-
-        return true;
-    };
-
-    var $_BOM = $(BOM);
+    var $_DOM = $(DOM);
 
     ListView.prototype = $.extend(new $.CommonView(),  {
         constructor:    ListView,
@@ -218,25 +204,23 @@ define('iQuery+',  function () {
             return this.indexOf(_Index_);
         },
         render:         function (iData) {
-            iData = iData ? this.cache.concat(iData) : this.cache;
+            var iDelay = (this.cache instanceof Array);
 
-            var _This_ = this;
+            if (iDelay)  iData = iData ? this.cache.concat(iData) : this.cache;
 
             for (var i = 0;  iData[i];  i++)
-                if (! this.insert(iData[i], i).isVisible()) {
+                if ((! this.insert(iData[i], i).inViewport())  &&  iDelay) {
 
                     this.cache = iData.slice(++i);
 
-                    $_BOM.scroll(function () {
-                        if (! _This_.cache[0])  return;
+                    if (! this.cache[0])  break;
 
-                        $_BOM.off('scroll', arguments.callee);
-                        _This_.render();
-                    });
+                    $_DOM.one('scroll',  $.proxy(this.render, this, null));
+
                     return this;
                 }
 
-            this.trigger('afterRender', [iData]);
+            if ( iData[0] )  this.trigger('afterRender', [iData]);
 
             return this;
         },
@@ -275,7 +259,9 @@ define('iQuery+',  function () {
         clear:          function () {
             this.splice(0, this.length);
             this.$_View.empty();
-            this.cache.length = 0;
+
+            if (this.cache instanceof Array)
+                this.cache.length = 0;
 
             return this;
         },
@@ -533,7 +519,7 @@ define('iQuery+',  function () {
 //              >>>  iQuery+  <<<
 //
 //
-//    [Version]    v1.5  (2016-06-15)  Stable
+//    [Version]    v1.5  (2016-06-16)  Stable
 //
 //    [Require]    iQuery  ||  jQuery with jQuery+
 //

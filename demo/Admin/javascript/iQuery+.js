@@ -50,7 +50,7 @@ define('iQuery+',  function () {
 })(self, self.document, self.jQuery);
 
 
-/* ---------- ListView Interface  v0.7 ---------- */
+/* ---------- ListView Interface  v0.8 ---------- */
 
 //  Thanks "EasyWebApp" Project --- http://git.oschina.net/Tech_Query/EasyWebApp
 
@@ -59,16 +59,17 @@ define('iQuery+',  function () {
 
     var Click_Type = $.browser.mobile ? 'tap' : 'click';
 
-    function ListView($_View, $_Item, onInsert) {
+    function ListView($_View, $_Item, No_Delay, onInsert) {
         var _Self_ = arguments.callee;
 
         if (!  (this instanceof _Self_))
-            return  new _Self_($_View, $_Item, onInsert);
+            return  new _Self_($_View, $_Item, No_Delay, onInsert);
 
-        if (typeof $_Item == 'function') {
-            onInsert = $_Item;
-            $_Item = null;
-        }
+        var iArgs = $.makeArray(arguments).slice(1);
+
+        $_Item = (iArgs[0] instanceof Array)  &&  iArgs.shift();
+        No_Delay = (typeof iArgs[0] == 'boolean')  &&  iArgs.shift();
+        onInsert = (typeof iArgs[0] == 'function')  &&  iArgs[0];
 
         var iView = $.CommonView.call(this, $_View);
 
@@ -78,6 +79,7 @@ define('iQuery+',  function () {
 
         this.selector = $_Item;
         this.length = 0;
+        this.cache = No_Delay || [ ];
 
         for (;  ;  this.length++) {
             $_Item = this.itemOf(this.length);
@@ -135,6 +137,8 @@ define('iQuery+',  function () {
 
         return $_Clone;
     }
+
+    var $_DOM = $(DOM);
 
     ListView.prototype = $.extend(new $.CommonView(),  {
         constructor:    ListView,
@@ -200,12 +204,23 @@ define('iQuery+',  function () {
             return this.indexOf(_Index_);
         },
         render:         function (iData) {
-            iData = $.likeArray(iData) ? iData : [iData];
+            var iDelay = (this.cache instanceof Array);
 
-            for (var i = 0;  i < iData.length;  i++)
-                this.insert(iData[i], i);
+            if (iDelay)  iData = iData ? this.cache.concat(iData) : this.cache;
 
-            this.trigger('afterRender', [iData]);
+            for (var i = 0;  iData[i];  i++)
+                if ((! this.insert(iData[i], i).inViewport())  &&  iDelay) {
+
+                    this.cache = iData.slice(++i);
+
+                    if (! this.cache[0])  break;
+
+                    $_DOM.one('scroll',  $.proxy(this.render, this, null));
+
+                    return this;
+                }
+
+            if ( iData[0] )  this.trigger('afterRender', [iData]);
 
             return this;
         },
@@ -244,6 +259,9 @@ define('iQuery+',  function () {
         clear:          function () {
             this.splice(0, this.length);
             this.$_View.empty();
+
+            if (this.cache instanceof Array)
+                this.cache.length = 0;
 
             return this;
         },
@@ -501,7 +519,7 @@ define('iQuery+',  function () {
 //              >>>  iQuery+  <<<
 //
 //
-//    [Version]    v1.4  (2016-5-31)  Stable
+//    [Version]    v1.5  (2016-06-16)  Stable
 //
 //    [Require]    iQuery  ||  jQuery with jQuery+
 //

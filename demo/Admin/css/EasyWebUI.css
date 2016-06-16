@@ -8,7 +8,7 @@
  *    and can be used in the Web UI development of
  *    Any Platform.
  *
- *    [Version]    v1.0  (2016-05-11)
+ *    [Version]    v1.0  (2016-06-15)
  *
  *    [Require]    CSS 2.1  (Best Effect with CSS 3),
  *
@@ -76,7 +76,6 @@ hr {
 }
 /* --- Quote --- */
 pre {
-    font-size:        20px;
     text-align:       left;
     white-space:      pre-wrap;
     background:       lightgray;
@@ -108,20 +107,6 @@ table {
 table tr {
     line-height:    2em;
 }
-table th, table td {
-    padding:        0.5em;
-    white-space:    pre-wrap;
-    max-width:      55em;
-}
-@media (max-width: 1280px) {
-    table th, table td {
-        max-width:    25em;
-    }
-}
-table th {
-    white-space:    nowrap;
-    text-align:     center;
-}
 thead tr {
     background:    rgb(93, 92, 96)  !important;
     color:         white  !important;
@@ -144,6 +129,25 @@ tbody tr.focus {
     background-color:    rgb(35, 160, 220)  !important;
     box-shadow:          inset  0  1px  1px  rgba(0, 0, 0, 0.075),
                          0  0  8px  rgba(14, 144, 210, 0.6);
+}
+table th, table td {
+    padding:      0.5em;
+    max-width:    55em;
+}
+table th {
+    white-space:    nowrap;
+    text-align:     center;
+}
+table td {
+    white-space:    pre-line;
+}
+table td > * {
+    white-space:    normal;
+}
+@media (max-width: 1280px) {
+    table th, table td {
+        max-width:    25em;
+    }
 }
 /* ----- Form Elements ----- */
 form {
@@ -522,21 +526,19 @@ html.Fixed > body > .Fix-Top {
     margin:     0  auto  !important;
     padding:    0  !important;
 }
-.Grid-Row > .Grid-Column {
+.Grid-Row > * {
     display:           table-cell;
     vertical-align:    top;
 }
-.Grid-Row.CenterY > .Grid-Column,
-.Grid-Column.CenterY {
+.Grid-Row.CenterY > *,  .Grid-Row > *.CenterY  {
     float:             none  !important;
     vertical-align:    middle;
 }
-.Grid-Row.Bottom > .Grid-Column,
-.Grid-Column.Bottom {
+.Grid-Row.Bottom > *,  .Grid-Row > *.Bottom  {
     float:             none  !important;
     vertical-align:    bottom;
 }
-.Grid-Column > p {
+.Grid-Row > * > p {
     margin:     0;
     padding:    1em  0;
 }
@@ -603,12 +605,13 @@ html.Fixed > body > .Fix-Top {
 }
 /* ----- Item Box ----- */
 .Item-Box {
-    display:    inline-block;
+    display:           inline-block;
+    vertical-align:    middle;
 }
 .Item-Box.visible {
         background-color:    white;
         padding:             1em;
-        margin:              0  2px  0.5em;
+        margin:              0.25em  2px;
         border:              1px  solid  rgb(215, 215, 215);
         box-shadow:          1px  2px  3px  rgb(200, 200, 200);
    -moz-transition:          0.25s;
@@ -740,10 +743,10 @@ form .Row > label[for] + input[type="radio"],
 form .Row > label[for] + input[type="checkbox"] {
     width:    auto;
 }
-form .Row.Grid-Row > .Grid-Column {
+form .Row.Grid-Row > * {
     padding-left:    0.5em;
 }
-form .Row.Grid-Row > .Grid-Column:first-child {
+form .Row.Grid-Row > *:first-child {
     padding:    0;
 }
 
@@ -1130,6 +1133,12 @@ img.UserLogo {
 
 
 /* ----------- Atom View ---------- */
+.Text_Column {
+        writing-mode:    tb-rl;
+-webkit-writing-mode:    vertical-rl;
+        writing-mode:    vertical-rl;
+       *writing-mode:    tb-rl;
+}
 .No_Select {
    -moz-user-select: -moz-none;
  -khtml-user-select:      none;
@@ -1185,11 +1194,11 @@ img.UserLogo {
     border-color:    transparent  !important;
 }
 .Blue {
-    color:           rgb(26, 121, 224)  !important;
-    border-color:    rgb(26, 121, 224)  !important;
+    color:           dodgerblue  !important;
+    border-color:    dodgerblue  !important;
 }
 .Blue_O {
-    background:      rgb(26, 121, 224)  !important;
+    background:      dodgerblue  !important;
     color:           white  !important;
     border-color:    transparent  !important;
 }
@@ -1299,11 +1308,20 @@ img.UserLogo {
 .Icon.Return:before {
     content:    "\21e6";
 }
+.Icon.Item:before {
+    content:    "\2AFC";
+}
 .Icon.Add:before {
     content:    "+";
 }
 .Icon.Remove:before {
     content:    "-";
+}
+.Icon.Check:before {
+    content:    "\2713";
+}
+.Icon.Error:before {
+    content:    "\274C";
 }
 .Icon.Home:before {
     content:    "\1F3E0";
@@ -1316,6 +1334,9 @@ img.UserLogo {
 }
 .Icon.Search:before {
     content:    "\1F50D";
+}
+.Icon.Screen:before {
+    content:    "\239A";
 }
 .Icon.Mobile:before {
     content:    "\1F4F1";
