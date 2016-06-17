@@ -845,12 +845,13 @@ ul.DropDown.Body > li > a {
         text-align:    center;
     }
     ul.NavBar {
-        display:       none;
-        position:      absolute;
-        top:           105%;
-        left:          -5.5em;
-        z-index:       2000000000;
-        box-shadow:    0  1px  2px  gray;
+        display:        none;
+        position:       absolute;
+        top:            105%;
+        left:           -5.5em;
+        z-index:        2000000000;
+        box-shadow:     0  1px  2px  gray;
+        white-space:    normal;
     }
     .DropDown.Head:hover > ul.NavBar {
         display:       block;

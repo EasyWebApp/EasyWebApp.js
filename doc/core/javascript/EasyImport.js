@@ -749,27 +749,25 @@ define('iQuery',  function () {
                     }
                     return  this[iType].get(iElement[0], iName);
                 }
-                var iResult;
 
                 if (typeof iName == 'string') {
                     if (typeof iValue == 'function') {
                         for (var i = 0;  i < iElement.length;  i++)
-                            iResult = this[iType].set(iElement[i], iName, iValue.call(
+                            this[iType].set(iElement[i], iName, iValue.call(
                                 iElement[i],  i,  this[iType].get(iElement[i], iName)
                             ));
-                        return  iResult || iElement;
+                        return iElement;
                     } else {
-                        iResult = { };
-                        iResult[iName] = iValue;
-                        iName = iResult;
-                        iResult = undefined;
+                        var _Value_ = { };
+                        _Value_[iName] = iValue;
+                        iName = _Value_;
                     }
                 }
                 for (var i = 0;  i < iElement.length;  i++)
                     for (var iKey in iName)
-                        iResult = this[iType].set(iElement[i], iKey, iName[iKey]);
+                        this[iType].set(iElement[i], iKey, iName[iKey]);
 
-                return  iResult || iElement;
+                return iElement;
             }
         };
 
@@ -784,8 +782,11 @@ define('iQuery',  function () {
             if (iValue !== null)  return iValue;
         },
         set:      function (iElement, iName, iValue) {
-            return  ($.Type(iElement) in _DOM_.TypeMap.root) ?
-                    false  :  iElement.setAttribute(iName, iValue);
+            if (
+                (! ($.Type(iElement) in _DOM_.TypeMap.root))  &&
+                (iValue !== undefined)
+            )
+                iElement.setAttribute(iName, iValue);
         },
         clear:    function (iElement, iName) {
             iElement.removeAttribute(iName);
@@ -2084,8 +2085,6 @@ define('iQuery',  function () {
     ))
         $.fn[iName] = Event_Method(iName);
 
-    if ($.browser.mobile)  $.fn.click = $.fn.tap;
-
 
 /* ---------- Complex Events ---------- */
 
@@ -2198,61 +2197,61 @@ define('iQuery',  function () {
 
 /* ---------- Single Finger Touch ---------- */
 
+    var $_DOM = $(DOM);
+
     function get_Touch(iEvent) {
-        if (! iEvent.timeStamp)
-            iEvent.timeStamp = $.now();
+        var iTouch = iEvent;
 
-        if (! $.browser.mobile)  return iEvent;
-
-        try {
-            return iEvent.changedTouches[0];
+        if ($.browser.mobile)  try {
+            iTouch = iEvent.changedTouches[0];
         } catch (iError) {
-            return iEvent.touches[0];
+            iTouch = iEvent.touches[0];
         }
-    }
 
-    var Touch_Data,  $_DOM = $(DOM);
+        iTouch.timeStamp = iEvent.timeStamp || $.now();
+
+        return iTouch;
+    }
 
     $_DOM.bind(
         $.browser.mobile ? 'touchstart MSPointerDown' : 'mousedown',
         function (iEvent) {
-            var iTouch = get_Touch(iEvent);
-
-            Touch_Data = {
-                pX:      iTouch.pageX,
-                pY:      iTouch.pageY,
-                time:    iEvent.timeStamp
-            };
+            $(iEvent.target).data('_Gesture_Event_', get_Touch(iEvent));
         }
     ).bind(
         $.browser.mobile ? 'touchend touchcancel MSPointerUp' : 'mouseup',
         function (iEvent) {
-            if (! Touch_Data)  return;
+            var $_Target = $(iEvent.target);
 
-            var iTouch = get_Touch(iEvent);
+            var iStart = $_Target.data('_Gesture_Event_');
 
-            var swipeLeft = Touch_Data.pX - iTouch.pageX,
-                swipeTop = Touch_Data.pY - iTouch.pageY,
-                iDuring = iEvent.timeStamp - Touch_Data.time;
+            if (! iStart)  return;
+
+            $_Target.data('_Gesture_Event_', null);
+
+            var iEnd = get_Touch(iEvent);
+
+            iEvent = {
+                target:    $_Target[0],
+                detail:    iEnd.timeStamp - iStart.timeStamp,
+                deltaX:    iStart.pageX - iEnd.pageX,
+                deltaY:    iStart.pageY - iEnd.pageY
+            };
 
             var iShift = Math.sqrt(
-                    Math.pow(swipeLeft, 2)  +  Math.pow(swipeTop, 2)
-                ),
-                _Event_;
+                    Math.pow(iEvent.deltaX, 2)  +  Math.pow(iEvent.deltaY, 2)
+                );
 
-            if (iDuring > 300)
-                _Event_ = 'press';
+            if (iEvent.detail > 300)
+                iEvent.type = 'press';
             else if (iShift < 22)
-                _Event_ = 'tap';
-            else
-                _Event_ = {
-                    type:      'swipe',
-                    deltaX:    swipeLeft,
-                    deltaY:    swipeTop,
-                    detail:    iShift
-                };
+                iEvent.type = 'tap';
+            else {
+                iEvent.type = 'swipe';
+                iEvent.detail = iShift;
+            }
 
-            $(iEvent.target).trigger(_Event_);
+            $_Target.trigger(iEvent);
         }
     );
 
@@ -2986,25 +2985,19 @@ define('iQuery',  function () {
 
             return true;
         },
-        scrollTo:         function ($_Target) {
-            $_Target = $($_Target);
+        scrollTo:         function () {
+            var $_This = this;
 
-            this.has($_Target).each(function () {
-                var $_Scroll = $(this);
+            $( arguments[0] ).each(function () {
+                var $_Scroll = $_This.has(this);
 
-                var iCoord = $($.map($_Target,  function () {
-                        if ( $.contains($_Scroll[0], arguments[0]) )
-                            return arguments[0];
-                    })).offset(),
-                    _Coord_ = $_Scroll.offset();
+                var iCoord = $(this).offset(),  _Coord_ = $_Scroll.offset();
 
                 if (! $_Scroll.length)  return;
 
                 $_Scroll.animate({
-                    scrollTop:
-                        $_Scroll.scrollTop()  +  (iCoord.top - _Coord_.top),
-                    scrollLeft:
-                        $_Scroll.scrollLeft()  +  (iCoord.left - _Coord_.left)
+                    scrollTop:     iCoord.top - _Coord_.top,
+                    scrollLeft:    iCoord.left - _Coord_.left
                 });
             });
 
