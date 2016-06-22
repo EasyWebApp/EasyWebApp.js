@@ -335,7 +335,7 @@
         }),
         _Instance_ = [ ];
 
-    function ShadowCover($_Container, iContent, CSS_Rule) {
+    function Shade($_Container, iContent, CSS_Rule) {
         var _This_ = this;
 
         this.$_Cover = $('<div class="ShadowCover"><div /></div>');
@@ -351,19 +351,19 @@
         _Instance_.push(this);
     }
 
-    ShadowCover.prototype.close = function () {
+    Shade.prototype.close = function () {
         this.$_Cover.remove();
         if (this.$_Style)  this.$_Style.remove();
 
         _Instance_.splice(_Instance_.indexOf(this), 1);
     };
 
-    ShadowCover.clear = function () {
+    Shade.clear = function () {
         for (var i = _Instance_.length - 1;  i > -1;  i--)
             _Instance_[i].close();
     };
 
-    $.fn.shadowCover = function () {
+    $.fn.shade = function () {
         var iArgs = $.makeArray(arguments).reverse();
 
         var More_Logic = (typeof iArgs[0] == 'function')  &&  iArgs.shift();
@@ -371,14 +371,14 @@
         var iContent = iArgs[0];
 
         for (var i = 0, iCover;  i < this.length;  i++) {
-            iCover = new ShadowCover($(this[i]), iContent, CSS_Rule);
+            iCover = new Shade($(this[i]), iContent, CSS_Rule);
 
             if (More_Logic)  More_Logic.call(this[i], iCover);
         }
         return this;
     };
 
-    $.shadowCover = ShadowCover;
+    $.shade = Shade;
 
 
 /* ---------- DOM/BOM 模态框  v0.4 ---------- */
@@ -398,8 +398,8 @@
 
         var _This_ = this;
 
-        $('body').shadowCover(this.locked ? null : iContent,  iStyle,  function () {
-            _This_.__ShadowCover__ = arguments[0];
+        $('body').shade(this.locked ? null : iContent,  iStyle,  function () {
+            _This_.__Shade__ = arguments[0];
 
             _This_.document.body = arguments[0].$_Cover.click(function () {
                 if (! _This_.locked) {
@@ -428,7 +428,7 @@
     BOM.ModalWindow.prototype.close = function () {
         if (this.closed)  return;
 
-        this.__ShadowCover__.close();
+        this.__Shade__.close();
         this.closed = true;
 
         if (typeof this.onunload == 'function')
@@ -663,6 +663,32 @@
                 $_Panel.removeClass('closed');
             }
         });
+    };
+
+/* ---------- 滚动悬停  v0.1 ---------- */
+
+    var Fixed_List = [ ];
+
+    $_DOM.scroll(function () {
+        for (var i = 0, $_Fixed;  Fixed_List[i];  i++) {
+            $_Fixed = $( Fixed_List[i] );
+
+            if (
+                (! $_Fixed.inViewport())  &&
+                ($_Fixed.css('position') != 'fixed')
+            )
+                $_Fixed.css({
+                    position:     'fixed',
+                    top:          0,
+                    'z-index':    100
+                });
+        }
+    });
+
+    $.fn.scrollFixed = function () {
+        $.merge(Fixed_List, this);
+
+        return this;
     };
 
 /* ---------- 数据表 控件  v0.1 ---------- */
@@ -1047,9 +1073,7 @@
         $('*:button,  a.Button,  .No_Select,  .Panel > .Head,  .Tab > label')
             .noSelect();
 
-        $.ListView.findView(
-            $(DOM.body).addClass('Loaded'),  true
-        ).each(function () {
+        $.ListView.findView(this.body, true).each(function () {
             var iView = $.ListView.getInstance(this);
 
             if ( $(this).children('.ListView_Item').length )  return;

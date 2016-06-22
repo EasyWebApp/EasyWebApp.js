@@ -411,15 +411,12 @@ define('iQuery',  function () {
                 iSource = this.makeArray(iSource);
 
             for (var i = 1;  i < arguments.length;  i++)
-                iSource = Array.prototype.concat.apply(
-                    iSource,
-                    this.likeArray( arguments[i] )  ?
-                        (
-                            $.browser.modern ?
-                                arguments[i] : this.makeArray(arguments[i])
-                        )  :
-                        [arguments[i]]
-                );
+                Array.prototype.splice.apply(iSource, Array.prototype.concat.apply(
+                    [iSource.length, 0],
+                    ($.likeArray( arguments[i] )  &&  (! $.browser.modern))  ?
+                        $.makeArray( arguments[i] )  :  arguments[i]
+                ));
+
             return iSource;
         },
         unique:           function (iArray) {
@@ -509,7 +506,7 @@ define('iQuery',  function () {
 
         return  ProxyCache.wrapper[Index] = function () {
             return  iFunction.apply(
-                iContext || this,  $.merge(iArgs, arguments)
+                iContext || this,  $.merge([ ], iArgs, arguments)
             );
         };
     };
@@ -1279,7 +1276,7 @@ define('iQuery',  function () {
     $.fn.extend({
         splice:             Array.prototype.splice,
         jquery:             '1.9.1',
-        iquery:             '1.0',
+        iquery:             2.0,
         pushStack:          function ($_New) {
             $_New = $(DOM_Sort(
                 ($_New instanceof Array)  ?  $_New  :  $.makeArray($_New)
@@ -2831,56 +2828,6 @@ define('iQuery',  function () {
         }
     });
 
-    /* ----- History API ----- */
-
-    var _BOM_,      $_BOM = $(BOM),
-        _Pushing_,  _State_ = [[null, DOM.title, DOM.URL]];
-
-    $(DOM).ready(function () {
-        var iFrame = $('#_iQuery_SandBox_')[0];
-
-        _BOM_ = iFrame.contentWindow;
-
-        iFrame.onload = function () {
-            if (_Pushing_) {
-                _Pushing_ = false;
-                return;
-            }
-
-            var iState = _State_[ _BOM_.location.search.slice(7) ];
-            if (! iState)  return;
-
-            BOM.history.state = iState[0];
-            DOM.title = iState[1];
-
-            $_BOM.trigger({
-                type:     'popstate',
-                state:    iState[0]
-            });
-        };
-    });
-
-    BOM.history.pushState = function (iState, iTitle, iURL) {
-        for (var iKey in iState)
-            if (! $.isData(iState[iKey]))
-                throw ReferenceError("The History State can't be Complex Object !");
-
-        if (typeof iTitle != 'string')
-            throw TypeError("The History State needs a Title String !");
-
-        if (_BOM_) {
-            DOM.title = iTitle;
-            if ($.browser.modern)  _BOM_.document.title = iTitle;
-            _Pushing_ = true;
-            _BOM_.location.search = 'index=' + (_State_.push(arguments) - 1);
-        }
-    };
-
-    BOM.history.replaceState = function () {
-        _State_ = [ ];
-        this.pushState.apply(this, arguments);
-    };
-
 })(self,  self.document,  self.iQuery || iQuery);
 
 
@@ -2909,16 +2856,6 @@ define('iQuery',  function () {
             return  $.map(this,  function () {
                 return  $( arguments[0] )[iMethod](iKey);
             }).reduce(iCallback);
-        },
-        refresh:          function () {
-            if (! this.selector)  return this;
-
-            var $_New = $(this.selector, this.context);
-
-            if (this.prevObject instanceof $)
-                $_New = this.prevObject.pushStack($_New);
-
-            return $_New;
         },
         sameParents:      function () {
             if (this.length < 2)  return this.parents();
@@ -2971,14 +2908,14 @@ define('iQuery',  function () {
         inViewport:       function () {
             for (var i = 0, _OS_, $_BOM, BOM_W, BOM_H;  this[i];  i++) {
                 _OS_ = $( this[i] ).offset();
+                _OS_.top -= $( this[i].ownerDocument ).scrollTop();
 
                 $_BOM = $( this[i].ownerDocument.defaultView );
-
                 BOM_W = $_BOM.width(),  BOM_H = $_BOM.height();
 
                 if (
-                    (_OS_.left > BOM_W)  ||
-                    ((_OS_.top - $(DOM).scrollTop())  >  BOM_H)
+                    (_OS_.left < 0)  ||  (_OS_.left > BOM_W)  ||
+                    (_OS_.top < 0)  ||  (_OS_.top > BOM_H)
                 )
                     return false;
             }
@@ -3435,19 +3372,17 @@ define('iQuery',  function () {
         return 0;
     }
 
-    var Tag_Style = { },
-        $_SandBox = $('<iframe />', {
-            id:       '_iQuery_SandBox_',
+    var Tag_Style = { },  _BOM_;
+
+    $(DOM).ready(function () {
+        _BOM_ = $('<iframe />', {
+            id:       '_CSS_SandBox_',
             style:    'display: none',
             src:      ($.browser.msie < 10)  ?  'blank.html'  :  'about:blank'
-        });
-    $(DOM).ready(function () {
-        $_SandBox.appendTo( this.body );
+        }).appendTo(this.body)[0].contentWindow;
     });
 
     function Tag_Default_CSS(iTagName) {
-        var _BOM_ = $_SandBox[0].contentWindow;
-
         if (! Tag_Style[iTagName]) {
             var $_Default = $('<' + iTagName + ' />').appendTo(
                     _BOM_.document.body
@@ -4345,7 +4280,7 @@ define('iQuery',  function () {
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v1.0  (2016-06-16)  Stable
+//      [Version]    v2.0  (2016-06-20)  Stable
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.

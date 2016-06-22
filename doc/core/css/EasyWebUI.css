@@ -1373,7 +1373,7 @@ img.UserLogo {
 }
 
 /* ----------- App Framework ---------- */
-body:before {
+.Shade:before {
     content:       " ";
     position:      fixed;
     left:          0;
@@ -1382,9 +1382,6 @@ body:before {
     width:         100%;
     height:        100%;
     background:    darkgray;
-}
-body.Loaded:before {
-    content:    none;
 }
 body .Session {
     display:    none  !important;

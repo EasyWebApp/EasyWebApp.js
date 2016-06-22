@@ -29,7 +29,7 @@
         radius:     0.5,
         mode:       2,
         label:      'iDaily',
-        text:       $.filePath(DOM.URL) + '/doc/demo/'
+        text:       $.urlDomain() + '/iDaily/'
     });
 
     if ($.browser.mobile  &&  (! $.browser.pad))
@@ -37,13 +37,13 @@
 
 
     $.ListView('body > .Body > .Grid-Row > .Tab',  function ($_This, iValue) {
-        $_This.filter('label').text(iValue);
+        $_This.filter('label').text( $.fileName(iValue) )[0].title = iValue;
 
-        $.get('doc/demo/' + iValue,  function () {
+        $.get('../iDaily/' + iValue,  function () {
             $_This.filter('pre').text( arguments[0] );
         });
     }).clear().render([
-        'html/gallery.html', 'index.html', 'index.css', 'index.js',
+        'html/gallery.html', 'index.html', 'css/index.css', 'javascript/index.js',
         'html/list.html', 'html/article.html'
     ]);
 

@@ -155,10 +155,9 @@ body > .Body table td ul {
 }
 
 a.Item-Box > img.Logo {
-    display:          block;
-    width:            8em;
-    height:           8em;
-    border-radius:    50%;
+    display:    block;
+    width:      8em;
+    height:     8em;
 }
 a.Item-Box {
     position:    relative;
