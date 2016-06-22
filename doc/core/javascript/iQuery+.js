@@ -203,23 +203,31 @@ define('iQuery+',  function () {
 
             return this.indexOf(_Index_);
         },
-        render:         function (iData) {
-            var iDelay = (this.cache instanceof Array);
+        render:         function (iData, iFrom) {
+            var iDelay = (this.cache instanceof Array),  $_Scroll;
 
             if (iDelay)  iData = iData ? this.cache.concat(iData) : this.cache;
 
-            for (var i = 0;  iData[i];  i++)
-                if ((! this.insert(iData[i], i).inViewport())  &&  iDelay) {
+            iFrom = iFrom || 0;
+
+            for (var i = 0, $_Item;  iData[i];  i++) {
+                $_Item = this.insert(iData[i],  i + iFrom);
+
+                $_Scroll = $_Scroll  ||  $( $_Item.scrollParents()[0] );
+
+                if ((! $_Item.inViewport())  &&  iDelay) {
 
                     this.cache = iData.slice(++i);
 
                     if (! this.cache[0])  break;
 
-                    $_DOM.one('scroll',  $.proxy(this.render, this, null));
+                    $_Scroll.one('scroll', $.proxy(
+                        this.render,  this,  null,  i + iFrom
+                    ));
 
                     return this;
                 }
-
+            }
             if ( iData[0] )  this.trigger('afterRender', [iData]);
 
             return this;
@@ -581,7 +589,7 @@ define('iQuery+',  function () {
 //              >>>  iQuery+  <<<
 //
 //
-//    [Version]    v1.6  (2016-06-20)  Stable
+//    [Version]    v1.6  (2016-06-22)  Stable
 //
 //    [Require]    iQuery  ||  jQuery with jQuery+
 //

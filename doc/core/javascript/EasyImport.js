@@ -349,6 +349,9 @@ define('iQuery',  function () {
                 Object.prototype.toString.call(iValue)
                     .split(' ')[1].slice(0, -1).toLowerCase();
         },
+        isNumeric:        function () {
+            return  (! isNaN(Number( arguments[0] )));
+        },
         isEmptyObject:    function () {
             for (var iKey in arguments[0])
                 return false;
@@ -606,7 +609,7 @@ define('iQuery',  function () {
                 iValue = BOM.decodeURIComponent( Args_Str[i][1] );
 
                 if (
-                    isNaN(Number( iValue ))  ||
+                    (! $.isNumeric(iValue))  ||
                     (parseInt(iValue).toString().length < 21)
                 )  try {
                     iValue = $.parseJSON(iValue);
@@ -825,7 +828,7 @@ define('iQuery',  function () {
         set:           function (iElement, iName, iValue) {
             if ($.Type(iElement) in _DOM_.TypeMap.root)  return false;
 
-            if ((! isNaN( Number(iValue) ))  &&  iName.match($.cssPX))
+            if ($.isNumeric(iValue) && iName.match($.cssPX))
                 iValue += 'px';
 
             iElement.style[this.Set_Method](iName, String(iValue), 'important');
@@ -2843,7 +2846,7 @@ define('iQuery',  function () {
             }
         },
         Array_Reverse = Array.prototype.reverse,
-        Rolling_Style = $.makeSet('auto', 'scroll', 'hidden');
+        Rolling_Style = $.makeSet('auto', 'scroll');
 
     $.fn.extend({
         reduce:           function (iMethod, iKey, iCallback) {
@@ -2885,30 +2888,30 @@ define('iQuery',  function () {
         },
         scrollParents:    function () {
             return Array_Reverse.call(this.pushStack(
-                $.map(this.parents(),  function (_DOM_) {
-                    var iCSS = $(_DOM_).css([
-                            'width', 'max-width', 'height', 'max-height',
-                            'overflow-x', 'overflow-y'
+                $.map(this.parents(),  function ($_Parent) {
+                    $_Parent = $($_Parent);
+
+                    var iCSS = $_Parent.css([
+                            'max-width', 'max-height', 'overflow-x', 'overflow-y'
                         ]);
 
                     if (
                         (
-                            (iCSS.width || iCSS['max-width'])  &&
+                            ($_Parent.width() || parseFloat(iCSS['max-width']))  &&
                             (iCSS['overflow-x'] in Rolling_Style)
                         )  ||
                         (
-                            (iCSS.height || iCSS['max-height'])  &&
+                            ($_Parent.height() || parseFloat(iCSS['max-height']))  &&
                             (iCSS['overflow-y'] in Rolling_Style)
                         )
                     )
-                        return _DOM_;
+                        return $_Parent[0];
                 })
             ));
         },
         inViewport:       function () {
             for (var i = 0, _OS_, $_BOM, BOM_W, BOM_H;  this[i];  i++) {
-                _OS_ = $( this[i] ).offset();
-                _OS_.top -= $( this[i].ownerDocument ).scrollTop();
+                _OS_ = this[i].getBoundingClientRect();
 
                 $_BOM = $( this[i].ownerDocument.defaultView );
                 BOM_W = $_BOM.width(),  BOM_H = $_BOM.height();
@@ -3080,7 +3083,7 @@ define('iQuery',  function () {
     var Code_Indent = $.browser.modern ? '' : ' '.repeat(4);
 
     function CSS_Attribute(iName, iValue) {
-        if ((! isNaN( Number(iValue) ))  &&  iName.match($.cssPX))
+        if ($.isNumeric(iValue) && iName.match($.cssPX))
             iValue += 'px';
 
         return  [iName, ':', Code_Indent, iValue].join('');
@@ -3464,7 +3467,7 @@ define('iQuery',  function () {
         var $_This = this.data('_Animate_', 0);
 
         $.each(CSS_Final,  function (iName) {
-            if (isNaN( Number(this) ))  return  $_This.css(iName, this);
+            if (! $.isNumeric(this))  return  $_This.css(iName, this);
 
             $_This.data('_Animate_',  $_This.data('_Animate_') + 1);
 
@@ -3542,7 +3545,7 @@ define('iQuery',  function () {
             ).call(
                 this,
                 CSS_Final,
-                isNaN(Number( iArgs[0] ))  ?  0.4  :  (iArgs.shift() / 1000),
+                $.isNumeric( iArgs[0] )  ?  (iArgs.shift() / 1000)  :  0.4,
                 (typeof iArgs[0] == 'string')  ?  iArgs.shift()  :  '',
                 (typeof iArgs[0] == 'function')  &&  iArgs[0]
             );
@@ -4280,7 +4283,7 @@ define('iQuery',  function () {
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v2.0  (2016-06-20)  Stable
+//      [Version]    v2.0  (2016-06-22)  Stable
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.

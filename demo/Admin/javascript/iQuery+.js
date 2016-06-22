@@ -203,23 +203,31 @@ define('iQuery+',  function () {
 
             return this.indexOf(_Index_);
         },
-        render:         function (iData) {
-            var iDelay = (this.cache instanceof Array);
+        render:         function (iData, iFrom) {
+            var iDelay = (this.cache instanceof Array),  $_Scroll;
 
             if (iDelay)  iData = iData ? this.cache.concat(iData) : this.cache;
 
-            for (var i = 0;  iData[i];  i++)
-                if ((! this.insert(iData[i], i).inViewport())  &&  iDelay) {
+            iFrom = iFrom || 0;
+
+            for (var i = 0, $_Item;  iData[i];  i++) {
+                $_Item = this.insert(iData[i],  i + iFrom);
+
+                $_Scroll = $_Scroll  ||  $( $_Item.scrollParents()[0] );
+
+                if ((! $_Item.inViewport())  &&  iDelay) {
 
                     this.cache = iData.slice(++i);
 
                     if (! this.cache[0])  break;
 
-                    $_DOM.one('scroll',  $.proxy(this.render, this, null));
+                    $_Scroll.one('scroll', $.proxy(
+                        this.render,  this,  null,  i + iFrom
+                    ));
 
                     return this;
                 }
-
+            }
             if ( iData[0] )  this.trigger('afterRender', [iData]);
 
             return this;
@@ -429,6 +437,68 @@ define('iQuery+',  function () {
 })(self, self.document, self.jQuery);
 
 
+/* ---------- HTML 5  History API  Polyfill ---------- */
+
+
+(function (BOM, DOM, $) {
+
+    if (! ($.browser.msie < 10))  return;
+
+    var _BOM_,  _Pushing_,  _State_ = [[null, DOM.title, DOM.URL]];
+
+    $(DOM).ready(function () {
+        var $_iFrame = $('<iframe />', {
+                id:       '_HTML5_History_',
+                style:    'display: none',
+                src:      'blank.html'
+            }).appendTo(this.body),
+            $_Parent = $(BOM);
+
+        _BOM_ = $_iFrame[0].contentWindow;
+
+        $_iFrame.on('load',  function () {
+            if (_Pushing_) {
+                _Pushing_ = false;
+                return;
+            }
+
+            var iState = _State_[ _BOM_.location.search.slice(7) ];
+            if (! iState)  return;
+
+            BOM.history.state = iState[0];
+            DOM.title = iState[1];
+
+            $_Parent.trigger({
+                type:     'popstate',
+                state:    iState[0]
+            });
+        });
+    });
+
+    BOM.history.pushState = function (iState, iTitle, iURL) {
+        for (var iKey in iState)
+            if (! $.isData(iState[iKey]))
+                throw ReferenceError("The History State can't be Complex Object !");
+
+        if (typeof iTitle != 'string')
+            throw TypeError("The History State needs a Title String !");
+
+        if (_BOM_) {
+            DOM.title = iTitle;
+            if ($.browser.modern)  _BOM_.document.title = iTitle;
+            _Pushing_ = true;
+            _BOM_.location.search = 'index=' + (_State_.push(arguments) - 1);
+        }
+    };
+
+    BOM.history.replaceState = function () {
+        _State_ = [ ];
+        this.pushState.apply(this, arguments);
+    };
+
+})(self, self.document, self.jQuery);
+
+
 
 (function (BOM, DOM, $) {
 
@@ -519,7 +589,7 @@ define('iQuery+',  function () {
 //              >>>  iQuery+  <<<
 //
 //
-//    [Version]    v1.5  (2016-06-16)  Stable
+//    [Version]    v1.6  (2016-06-22)  Stable
 //
 //    [Require]    iQuery  ||  jQuery with jQuery+
 //

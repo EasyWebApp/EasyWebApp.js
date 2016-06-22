@@ -349,6 +349,9 @@ define('iQuery',  function () {
                 Object.prototype.toString.call(iValue)
                     .split(' ')[1].slice(0, -1).toLowerCase();
         },
+        isNumeric:        function () {
+            return  (! isNaN(Number( arguments[0] )));
+        },
         isEmptyObject:    function () {
             for (var iKey in arguments[0])
                 return false;
@@ -411,15 +414,12 @@ define('iQuery',  function () {
                 iSource = this.makeArray(iSource);
 
             for (var i = 1;  i < arguments.length;  i++)
-                iSource = Array.prototype.concat.apply(
-                    iSource,
-                    this.likeArray( arguments[i] )  ?
-                        (
-                            $.browser.modern ?
-                                arguments[i] : this.makeArray(arguments[i])
-                        )  :
-                        [arguments[i]]
-                );
+                Array.prototype.splice.apply(iSource, Array.prototype.concat.apply(
+                    [iSource.length, 0],
+                    ($.likeArray( arguments[i] )  &&  (! $.browser.modern))  ?
+                        $.makeArray( arguments[i] )  :  arguments[i]
+                ));
+
             return iSource;
         },
         unique:           function (iArray) {
@@ -509,7 +509,7 @@ define('iQuery',  function () {
 
         return  ProxyCache.wrapper[Index] = function () {
             return  iFunction.apply(
-                iContext || this,  $.merge(iArgs, arguments)
+                iContext || this,  $.merge([ ], iArgs, arguments)
             );
         };
     };
@@ -609,7 +609,7 @@ define('iQuery',  function () {
                 iValue = BOM.decodeURIComponent( Args_Str[i][1] );
 
                 if (
-                    isNaN(Number( iValue ))  ||
+                    (! $.isNumeric(iValue))  ||
                     (parseInt(iValue).toString().length < 21)
                 )  try {
                     iValue = $.parseJSON(iValue);
@@ -749,27 +749,25 @@ define('iQuery',  function () {
                     }
                     return  this[iType].get(iElement[0], iName);
                 }
-                var iResult;
 
                 if (typeof iName == 'string') {
                     if (typeof iValue == 'function') {
                         for (var i = 0;  i < iElement.length;  i++)
-                            iResult = this[iType].set(iElement[i], iName, iValue.call(
+                            this[iType].set(iElement[i], iName, iValue.call(
                                 iElement[i],  i,  this[iType].get(iElement[i], iName)
                             ));
-                        return  iResult || iElement;
+                        return iElement;
                     } else {
-                        iResult = { };
-                        iResult[iName] = iValue;
-                        iName = iResult;
-                        iResult = undefined;
+                        var _Value_ = { };
+                        _Value_[iName] = iValue;
+                        iName = _Value_;
                     }
                 }
                 for (var i = 0;  i < iElement.length;  i++)
                     for (var iKey in iName)
-                        iResult = this[iType].set(iElement[i], iKey, iName[iKey]);
+                        this[iType].set(iElement[i], iKey, iName[iKey]);
 
-                return  iResult || iElement;
+                return iElement;
             }
         };
 
@@ -784,8 +782,11 @@ define('iQuery',  function () {
             if (iValue !== null)  return iValue;
         },
         set:      function (iElement, iName, iValue) {
-            return  ($.Type(iElement) in _DOM_.TypeMap.root) ?
-                    false  :  iElement.setAttribute(iName, iValue);
+            if (
+                (! ($.Type(iElement) in _DOM_.TypeMap.root))  &&
+                (iValue !== undefined)
+            )
+                iElement.setAttribute(iName, iValue);
         },
         clear:    function (iElement, iName) {
             iElement.removeAttribute(iName);
@@ -827,7 +828,7 @@ define('iQuery',  function () {
         set:           function (iElement, iName, iValue) {
             if ($.Type(iElement) in _DOM_.TypeMap.root)  return false;
 
-            if ((! isNaN( Number(iValue) ))  &&  iName.match($.cssPX))
+            if ($.isNumeric(iValue) && iName.match($.cssPX))
                 iValue += 'px';
 
             iElement.style[this.Set_Method](iName, String(iValue), 'important');
@@ -1278,7 +1279,7 @@ define('iQuery',  function () {
     $.fn.extend({
         splice:             Array.prototype.splice,
         jquery:             '1.9.1',
-        iquery:             '1.0',
+        iquery:             2.0,
         pushStack:          function ($_New) {
             $_New = $(DOM_Sort(
                 ($_New instanceof Array)  ?  $_New  :  $.makeArray($_New)
@@ -2084,8 +2085,6 @@ define('iQuery',  function () {
     ))
         $.fn[iName] = Event_Method(iName);
 
-    if ($.browser.mobile)  $.fn.click = $.fn.tap;
-
 
 /* ---------- Complex Events ---------- */
 
@@ -2198,61 +2197,61 @@ define('iQuery',  function () {
 
 /* ---------- Single Finger Touch ---------- */
 
+    var $_DOM = $(DOM);
+
     function get_Touch(iEvent) {
-        if (! iEvent.timeStamp)
-            iEvent.timeStamp = $.now();
+        var iTouch = iEvent;
 
-        if (! $.browser.mobile)  return iEvent;
-
-        try {
-            return iEvent.changedTouches[0];
+        if ($.browser.mobile)  try {
+            iTouch = iEvent.changedTouches[0];
         } catch (iError) {
-            return iEvent.touches[0];
+            iTouch = iEvent.touches[0];
         }
-    }
 
-    var Touch_Data,  $_DOM = $(DOM);
+        iTouch.timeStamp = iEvent.timeStamp || $.now();
+
+        return iTouch;
+    }
 
     $_DOM.bind(
         $.browser.mobile ? 'touchstart MSPointerDown' : 'mousedown',
         function (iEvent) {
-            var iTouch = get_Touch(iEvent);
-
-            Touch_Data = {
-                pX:      iTouch.pageX,
-                pY:      iTouch.pageY,
-                time:    iEvent.timeStamp
-            };
+            $(iEvent.target).data('_Gesture_Event_', get_Touch(iEvent));
         }
     ).bind(
         $.browser.mobile ? 'touchend touchcancel MSPointerUp' : 'mouseup',
         function (iEvent) {
-            if (! Touch_Data)  return;
+            var $_Target = $(iEvent.target);
 
-            var iTouch = get_Touch(iEvent);
+            var iStart = $_Target.data('_Gesture_Event_');
 
-            var swipeLeft = Touch_Data.pX - iTouch.pageX,
-                swipeTop = Touch_Data.pY - iTouch.pageY,
-                iDuring = iEvent.timeStamp - Touch_Data.time;
+            if (! iStart)  return;
+
+            $_Target.data('_Gesture_Event_', null);
+
+            var iEnd = get_Touch(iEvent);
+
+            iEvent = {
+                target:    $_Target[0],
+                detail:    iEnd.timeStamp - iStart.timeStamp,
+                deltaX:    iStart.pageX - iEnd.pageX,
+                deltaY:    iStart.pageY - iEnd.pageY
+            };
 
             var iShift = Math.sqrt(
-                    Math.pow(swipeLeft, 2)  +  Math.pow(swipeTop, 2)
-                ),
-                _Event_;
+                    Math.pow(iEvent.deltaX, 2)  +  Math.pow(iEvent.deltaY, 2)
+                );
 
-            if (iDuring > 300)
-                _Event_ = 'press';
+            if (iEvent.detail > 300)
+                iEvent.type = 'press';
             else if (iShift < 22)
-                _Event_ = 'tap';
-            else
-                _Event_ = {
-                    type:      'swipe',
-                    deltaX:    swipeLeft,
-                    deltaY:    swipeTop,
-                    detail:    iShift
-                };
+                iEvent.type = 'tap';
+            else {
+                iEvent.type = 'swipe';
+                iEvent.detail = iShift;
+            }
 
-            $(iEvent.target).trigger(_Event_);
+            $_Target.trigger(iEvent);
         }
     );
 
@@ -2832,56 +2831,6 @@ define('iQuery',  function () {
         }
     });
 
-    /* ----- History API ----- */
-
-    var _BOM_,      $_BOM = $(BOM),
-        _Pushing_,  _State_ = [[null, DOM.title, DOM.URL]];
-
-    $(DOM).ready(function () {
-        var iFrame = $('#_iQuery_SandBox_')[0];
-
-        _BOM_ = iFrame.contentWindow;
-
-        iFrame.onload = function () {
-            if (_Pushing_) {
-                _Pushing_ = false;
-                return;
-            }
-
-            var iState = _State_[ _BOM_.location.search.slice(7) ];
-            if (! iState)  return;
-
-            BOM.history.state = iState[0];
-            DOM.title = iState[1];
-
-            $_BOM.trigger({
-                type:     'popstate',
-                state:    iState[0]
-            });
-        };
-    });
-
-    BOM.history.pushState = function (iState, iTitle, iURL) {
-        for (var iKey in iState)
-            if (! $.isData(iState[iKey]))
-                throw ReferenceError("The History State can't be Complex Object !");
-
-        if (typeof iTitle != 'string')
-            throw TypeError("The History State needs a Title String !");
-
-        if (_BOM_) {
-            DOM.title = iTitle;
-            if ($.browser.modern)  _BOM_.document.title = iTitle;
-            _Pushing_ = true;
-            _BOM_.location.search = 'index=' + (_State_.push(arguments) - 1);
-        }
-    };
-
-    BOM.history.replaceState = function () {
-        _State_ = [ ];
-        this.pushState.apply(this, arguments);
-    };
-
 })(self,  self.document,  self.iQuery || iQuery);
 
 
@@ -2897,7 +2846,7 @@ define('iQuery',  function () {
             }
         },
         Array_Reverse = Array.prototype.reverse,
-        Rolling_Style = $.makeSet('auto', 'scroll', 'hidden');
+        Rolling_Style = $.makeSet('auto', 'scroll');
 
     $.fn.extend({
         reduce:           function (iMethod, iKey, iCallback) {
@@ -2910,16 +2859,6 @@ define('iQuery',  function () {
             return  $.map(this,  function () {
                 return  $( arguments[0] )[iMethod](iKey);
             }).reduce(iCallback);
-        },
-        refresh:          function () {
-            if (! this.selector)  return this;
-
-            var $_New = $(this.selector, this.context);
-
-            if (this.prevObject instanceof $)
-                $_New = this.prevObject.pushStack($_New);
-
-            return $_New;
         },
         sameParents:      function () {
             if (this.length < 2)  return this.parents();
@@ -2949,62 +2888,56 @@ define('iQuery',  function () {
         },
         scrollParents:    function () {
             return Array_Reverse.call(this.pushStack(
-                $.map(this.parents(),  function (_DOM_) {
-                    var iCSS = $(_DOM_).css([
-                            'width', 'max-width', 'height', 'max-height',
-                            'overflow-x', 'overflow-y'
+                $.map(this.parents(),  function ($_Parent) {
+                    $_Parent = $($_Parent);
+
+                    var iCSS = $_Parent.css([
+                            'max-width', 'max-height', 'overflow-x', 'overflow-y'
                         ]);
 
                     if (
                         (
-                            (iCSS.width || iCSS['max-width'])  &&
+                            ($_Parent.width() || parseFloat(iCSS['max-width']))  &&
                             (iCSS['overflow-x'] in Rolling_Style)
                         )  ||
                         (
-                            (iCSS.height || iCSS['max-height'])  &&
+                            ($_Parent.height() || parseFloat(iCSS['max-height']))  &&
                             (iCSS['overflow-y'] in Rolling_Style)
                         )
                     )
-                        return _DOM_;
+                        return $_Parent[0];
                 })
             ));
         },
         inViewport:       function () {
             for (var i = 0, _OS_, $_BOM, BOM_W, BOM_H;  this[i];  i++) {
-                _OS_ = $( this[i] ).offset();
+                _OS_ = this[i].getBoundingClientRect();
 
                 $_BOM = $( this[i].ownerDocument.defaultView );
-
                 BOM_W = $_BOM.width(),  BOM_H = $_BOM.height();
 
                 if (
-                    (_OS_.left > BOM_W)  ||
-                    ((_OS_.top - $(DOM).scrollTop())  >  BOM_H)
+                    (_OS_.left < 0)  ||  (_OS_.left > BOM_W)  ||
+                    (_OS_.top < 0)  ||  (_OS_.top > BOM_H)
                 )
                     return false;
             }
 
             return true;
         },
-        scrollTo:         function ($_Target) {
-            $_Target = $($_Target);
+        scrollTo:         function () {
+            var $_This = this;
 
-            this.has($_Target).each(function () {
-                var $_Scroll = $(this);
+            $( arguments[0] ).each(function () {
+                var $_Scroll = $_This.has(this);
 
-                var iCoord = $($.map($_Target,  function () {
-                        if ( $.contains($_Scroll[0], arguments[0]) )
-                            return arguments[0];
-                    })).offset(),
-                    _Coord_ = $_Scroll.offset();
+                var iCoord = $(this).offset(),  _Coord_ = $_Scroll.offset();
 
                 if (! $_Scroll.length)  return;
 
                 $_Scroll.animate({
-                    scrollTop:
-                        $_Scroll.scrollTop()  +  (iCoord.top - _Coord_.top),
-                    scrollLeft:
-                        $_Scroll.scrollLeft()  +  (iCoord.left - _Coord_.left)
+                    scrollTop:     iCoord.top - _Coord_.top,
+                    scrollLeft:    iCoord.left - _Coord_.left
                 });
             });
 
@@ -3150,7 +3083,7 @@ define('iQuery',  function () {
     var Code_Indent = $.browser.modern ? '' : ' '.repeat(4);
 
     function CSS_Attribute(iName, iValue) {
-        if ((! isNaN( Number(iValue) ))  &&  iName.match($.cssPX))
+        if ($.isNumeric(iValue) && iName.match($.cssPX))
             iValue += 'px';
 
         return  [iName, ':', Code_Indent, iValue].join('');
@@ -3442,19 +3375,17 @@ define('iQuery',  function () {
         return 0;
     }
 
-    var Tag_Style = { },
-        $_SandBox = $('<iframe />', {
-            id:       '_iQuery_SandBox_',
+    var Tag_Style = { },  _BOM_;
+
+    $(DOM).ready(function () {
+        _BOM_ = $('<iframe />', {
+            id:       '_CSS_SandBox_',
             style:    'display: none',
             src:      ($.browser.msie < 10)  ?  'blank.html'  :  'about:blank'
-        });
-    $(DOM).ready(function () {
-        $_SandBox.appendTo( this.body );
+        }).appendTo(this.body)[0].contentWindow;
     });
 
     function Tag_Default_CSS(iTagName) {
-        var _BOM_ = $_SandBox[0].contentWindow;
-
         if (! Tag_Style[iTagName]) {
             var $_Default = $('<' + iTagName + ' />').appendTo(
                     _BOM_.document.body
@@ -3536,7 +3467,7 @@ define('iQuery',  function () {
         var $_This = this.data('_Animate_', 0);
 
         $.each(CSS_Final,  function (iName) {
-            if (isNaN( Number(this) ))  return  $_This.css(iName, this);
+            if (! $.isNumeric(this))  return  $_This.css(iName, this);
 
             $_This.data('_Animate_',  $_This.data('_Animate_') + 1);
 
@@ -3614,7 +3545,7 @@ define('iQuery',  function () {
             ).call(
                 this,
                 CSS_Final,
-                isNaN(Number( iArgs[0] ))  ?  0.4  :  (iArgs.shift() / 1000),
+                $.isNumeric( iArgs[0] )  ?  (iArgs.shift() / 1000)  :  0.4,
                 (typeof iArgs[0] == 'string')  ?  iArgs.shift()  :  '',
                 (typeof iArgs[0] == 'function')  &&  iArgs[0]
             );
@@ -4352,7 +4283,7 @@ define('iQuery',  function () {
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v1.0  (2016-06-16)  Stable
+//      [Version]    v2.0  (2016-06-22)  Stable
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.

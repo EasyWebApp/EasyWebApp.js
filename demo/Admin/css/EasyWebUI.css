@@ -8,7 +8,7 @@
  *    and can be used in the Web UI development of
  *    Any Platform.
  *
- *    [Version]    v1.0  (2016-06-15)
+ *    [Version]    v1.0  (2016-06-22)
  *
  *    [Require]    CSS 2.1  (Best Effect with CSS 3),
  *
@@ -845,12 +845,13 @@ ul.DropDown.Body > li > a {
         text-align:    center;
     }
     ul.NavBar {
-        display:       none;
-        position:      absolute;
-        top:           105%;
-        left:          -5.5em;
-        z-index:       2000000000;
-        box-shadow:    0  1px  2px  gray;
+        display:        none;
+        position:       absolute;
+        top:            105%;
+        left:           -5.5em;
+        z-index:        2000000000;
+        box-shadow:     0  1px  2px  gray;
+        white-space:    normal;
     }
     .DropDown.Head:hover > ul.NavBar {
         display:       block;
@@ -1372,7 +1373,7 @@ img.UserLogo {
 }
 
 /* ----------- App Framework ---------- */
-body:before {
+.Shade:before {
     content:       " ";
     position:      fixed;
     left:          0;
@@ -1381,9 +1382,6 @@ body:before {
     width:         100%;
     height:        100%;
     background:    darkgray;
-}
-body.Loaded:before {
-    content:    none;
 }
 body .Session {
     display:    none  !important;
