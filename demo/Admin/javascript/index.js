@@ -12,9 +12,9 @@ $(document).ready(function () {
 
     var Image_Root = 'http://tnfs.tngou.net/img';
 
-    function Data_Page(iSum) {
+    function Data_Page(iSum, iUnit) {
         if (iSum > -1)
-            return  $.map(Array(Math.ceil(iSum / 10)),  function () {
+            return  $.map(Array(Math.ceil(iSum / iUnit)),  function () {
                 return  {index:  arguments[1] + 1};
             });
     }
@@ -55,7 +55,10 @@ $(document).ready(function () {
             case 'list':         {
                 if (! iData._Data_Name_) {
                     iData = {
-                        page:    Data_Page(iData.total),
+                        page:    Data_Page(
+                            iData.total,
+                            $.paramJSON( this.domRoot.find('form')[0].action ).rows
+                        ),
                         list:    Data_Fix(iData.tngou)
                     };
 

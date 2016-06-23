@@ -10,9 +10,14 @@ define(['ViewDataIO'],  function () {
         this.$_DOM = $.isPlainObject(Link_DOM) ?
             this.createDOM(Link_DOM, iArgument, iData)  :
             $(Link_DOM);
-        this.$_DOM.data('EWA_PageLink', this);
 
-        $.extend(this, arguments.callee.getAttr(this.$_DOM));
+        var _Self_ = arguments.callee,  iLink = this.$_DOM.data('EWA_PageLink');
+
+        if (iLink instanceof _Self_)  return iLink;
+
+        this.$_DOM.data('EWA_PageLink', this).css('cursor', 'pointer');
+
+        $.extend(this, _Self_.getAttr(this.$_DOM));
 
         switch (this.target) {
             case '_top':      this.type = 'Outer';  break;
@@ -32,6 +37,12 @@ define(['ViewDataIO'],  function () {
             _File_Name_:    iFileName[0],
             _Ext_Name_:     iFileName[1]
         });
+
+        if (this.src)
+            $.extend(this.data, {
+                _Data_Path_:    $.filePath(this.src),
+                _Data_Name_:    $.fileName(this.src)
+            });
 
         if ((this.href || '').indexOf('?')  >  -1)
             this.data = $.extend($.paramJSON(this.href), this.data);
@@ -676,7 +687,7 @@ define(['ViewDataIO'],  function () {
             function () {
                 if ( Event_Filter.call(this) )  return;
 
-                var iLink = $(this).data('EWA_PageLink');
+                var iLink = new PageLink($('.EWA_Container').WebApp(), this);
 
                 switch (iLink.target) {
                     case '_self':     {

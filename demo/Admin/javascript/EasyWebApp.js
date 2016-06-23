@@ -88,9 +88,14 @@ WebApp = (function (BOM, DOM, $) {
         this.$_DOM = $.isPlainObject(Link_DOM) ?
             this.createDOM(Link_DOM, iArgument, iData)  :
             $(Link_DOM);
-        this.$_DOM.data('EWA_PageLink', this);
 
-        $.extend(this, arguments.callee.getAttr(this.$_DOM));
+        var _Self_ = arguments.callee,  iLink = this.$_DOM.data('EWA_PageLink');
+
+        if (iLink instanceof _Self_)  return iLink;
+
+        this.$_DOM.data('EWA_PageLink', this).css('cursor', 'pointer');
+
+        $.extend(this, _Self_.getAttr(this.$_DOM));
 
         switch (this.target) {
             case '_top':      this.type = 'Outer';  break;
@@ -760,7 +765,7 @@ WebApp = (function (BOM, DOM, $) {
             function () {
                 if ( Event_Filter.call(this) )  return;
 
-                var iLink = $(this).data('EWA_PageLink');
+                var iLink = new PageLink($('.EWA_Container').WebApp(), this);
 
                 switch (iLink.target) {
                     case '_self':     {
@@ -880,7 +885,7 @@ WebApp = (function (BOM, DOM, $) {
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v2.6  (2016-05-31)  Alpha
+//      [Version]    v2.6  (2016-06-23)  Alpha
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //
