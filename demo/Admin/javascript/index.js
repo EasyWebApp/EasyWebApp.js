@@ -19,21 +19,27 @@ $(document).ready(function () {
             });
     }
 
-    function Data_Fix(iArray) {
-        var Image_Key = iArray[0].src ? 'src' : 'img';
+    function Data_Fix(iData, Image_Key) {
+        var _Self_ = arguments.callee;
 
-        return  $.map(iArray,  function (iValue) {
-            if (iValue.time)
-                iValue.time = (new Date(iValue.time)).toLocaleString();
+        Image_Key = Image_Key || 'img';
 
-            if ( (iValue[Image_Key] || '').indexOf('http') )
-                iValue[Image_Key] = Image_Root + iValue[Image_Key];
+        return  $.each(iData,  function () {
+            this.title = this.title || this.name;
 
-            return iValue;
+            if ( this.time )
+                this.time = (new Date(this.time)).toLocaleString();
+
+            this[Image_Key] = 'http://tnfs.tngou.net/img' + this[Image_Key];
+
+            this.fromname = this.fromname || "天狗云平台";
+            this.fromurl = this.fromurl || this.url;
+
+            if (this.list)  _Self_(this.list, 'src');
         });
     }
 
-    var iWebApp = $('#Main_View').WebApp({ }, 'http://www.tngou.net');
+    var iWebApp = $('#Main_View').WebApp({ }, 'http://www.tngou.net/');
 
     iWebApp.on('pageRender',  function (This_Page, Prev_Page, iData) {
         var _TP_ = $.fileName(This_Page.HTML);
@@ -46,13 +52,27 @@ $(document).ready(function () {
                 iData.page = Data_Page(iData.total);
                 return iData;
             }
-            case 'news':         ;
-            case 'image':        {
-                if (This_Page.JSON)
-                    return {
+            case 'list':         {
+                if (! iData._Data_Name_) {
+                    iData = {
                         page:    Data_Page(iData.total),
                         list:    Data_Fix(iData.tngou)
                     };
+
+                    var tBody = $.ListView.getInstance('tbody');
+                    var $_tHead = tBody.$_View.prevAll('thead').find('th');
+
+                    $.each(tBody.$_Template[0].children,  function () {
+                        var iKey = this.getAttribute('name') || (
+                                $('[name]', this)[0].getAttribute('name')
+                            );
+                        var iAction = (iKey in iData.list[0])  ?  'show'  :  'hide';
+
+                        $($_tHead[ $(this)[iAction]().index() ])[iAction]();
+                    });
+
+                    return iData;
+                }
 
                 $.ListView(
                     $.ListView.findView( this.domRoot.find('form') ),
@@ -68,6 +88,7 @@ $(document).ready(function () {
                 $('table', this.domRoot[0]).iTable();
 
                 return {
+                    _Data_Path_:     iData._Data_Path_,
                     content_type:    iData.tngou
                 };
             }

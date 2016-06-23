@@ -23,7 +23,7 @@ EasyWebApp 与其作者开发的 [**EasyWebUI**](http://git.oschina.net/Tech_Que
 
 ### 一、每日资讯（移动版）
  - 前端页面
-   - 访问网址：http://tech_query.oschina.io/easywebapp/doc/demo/
+   - 项目代码：http://git.oschina.net/Tech_Query/iDaily
    - 因为前期主要演示本引擎的核心特性，Demo 界面暂无美术设计，仅有 EasyWebUI 框架组件的默认样式
  - 后端数据
    - 引用了 **淘宝网 IP 地理信息**、[**天狗云平台**](http://www.tngou.net) 的开放 API

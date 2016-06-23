@@ -1,8 +1,5 @@
-<head>
-    <link target="content_type" src="/api/top/classify?callback=?" />
-</head>
-<body>
-    <form target="content" method="GET" action="/api/top/list?rows=10&callback=?">
+    <form target="content" method="GET" action="{_Data_Path_}/list?rows=30&callback=?">
+        <input type="hidden" name="_Data_Path_" />
         <div class="Grid-Row CenterY No_Select">
             <div class="Grid-Column Column_1-6">
                 内容分类：
@@ -18,15 +15,23 @@
     <div name="content">
         <table>
             <thead><tr>
-                <th>主配图</th><th>关键词</th><th>浏览量</th><th>评论量</th><th>收藏量</th><th>发布时间</th><th>发布源</th>
+                <th>主配图</th>
+                <th style="min-width: 8em">标题</th>
+                <th>内容量</th>
+                <th>浏览量</th>
+                <th>评论量</th>
+                <th>收藏量</th>
+                <th>发布时间</th>
+                <th>发布源</th>
             </tr></thead>
             <tbody name="list">
                 <tr target="_self" href="html/news_text.html"
-                    src="/api/top/show?callback=?" data-id="id">
+                    src="{_Data_Path_}/show?callback=?" data-id="id">
                     <td name="img" class="Background-Image" />
                         <i></i>
                     </td>
-                    <td name="keywords"></td>
+                    <td name="title"></td>
+                    <td name="size"></td>
                     <td name="count"></td>
                     <td name="rcount"></td>
                     <td name="fcount"></td>
@@ -37,9 +42,9 @@
             </tbody>
         </table>
         <ul class="NavBar" name="page">
-            <li name="index" target="content" src="/api/top/list?rows=10&callback=?"
+            <li name="index"
+                target="content" src="{_Data_Path_}/list?rows=10&callback=?"
                 data-id="id" data-page="index">
             </li>
         </ul>
     </div>
-</body>

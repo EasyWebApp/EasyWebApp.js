@@ -111,6 +111,12 @@ WebApp = (function (BOM, DOM, $) {
             _Ext_Name_:     iFileName[1]
         });
 
+        if (this.src)
+            $.extend(this.data, {
+                _Data_Path_:    $.filePath(this.src),
+                _Data_Name_:    $.fileName(this.src)
+            });
+
         if ((this.href || '').indexOf('?')  >  -1)
             this.data = $.extend($.paramJSON(this.href), this.data);
     }
