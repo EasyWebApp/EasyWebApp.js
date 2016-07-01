@@ -8,6 +8,12 @@ define('iQuery+',  function () {
 
 (function (BOM, DOM, $) {
 
+    function FuncName(iFunc) {
+        var iName = iFunc.name;
+
+        return  (typeof iName == 'function')  ?  iName.call(iFunc)  :  iName;
+    }
+
     function CommonView($_View, onInit) {
         var _Self_ = arguments.callee;
 
@@ -21,7 +27,7 @@ define('iQuery+',  function () {
 
         if (iView !== this)  return iView;
 
-        this.$_View = $_View.data('CVI_' + this.constructor.name,  this);
+        this.$_View = $_View.data('CVI_' + FuncName(this.constructor),  this);
 
         if (typeof onInit == 'function')  onInit.call(this);
 
@@ -30,7 +36,7 @@ define('iQuery+',  function () {
 
     $.extend(CommonView, {
         getInstance:    function () {
-            var _Instance_ = $(arguments[0]).data('CVI_' + this.name);
+            var _Instance_ = $(arguments[0]).data('CVI_' + FuncName(this));
             return  ((_Instance_ instanceof this)  &&  _Instance_);
         }
     });
@@ -38,9 +44,8 @@ define('iQuery+',  function () {
     CommonView.prototype = $.extend(new $.Observer(),  {
         constructor:    CommonView,
         render:         function () {
-            this.$_View.dataRender(
-                this.trigger('render', arguments)  ||  arguments[0]
-            );
+            this.trigger('render', arguments);
+
             return this;
         }
     });

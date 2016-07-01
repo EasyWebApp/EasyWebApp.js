@@ -2,7 +2,7 @@
 //                >>>  EasyWiki  <<<
 //
 //
-//      [Version]    v0.9  (2016-05-06)  Beta
+//      [Version]    v0.9  (2016-07-01)  Beta
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //
@@ -233,7 +233,14 @@
                     TP_Param.category ? 1 : 0;
             }
         }
-        $_MainView.trigger($_Body.hasClass('Not_Entry') ? 'Clear' : 'Refresh');
+        if ($_Body.hasClass('Not_Entry'))
+            $_MainView.trigger('Clear');
+        else {
+            $_MainView.find(':header').each(function () {
+                this.id = $.uuid('Header');
+            });
+            $_MainView.trigger('Refresh');
+        }
 
         $('table', this.domRoot[0]).iTable();
     });
