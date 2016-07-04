@@ -128,21 +128,6 @@ define('iQuery+',  function () {
         }
     });
 
-    function New_Item($_Item, Index) {
-        var $_Clone = this.$_Template.clone(true);
-
-        if (! Index)
-            this.$_View.prepend($_Clone);
-        else {
-            if (! $_Item.length)
-                this.itemOf(Index - 1).slice(-1).after($_Clone);
-            else
-                $_Item.eq(0).before($_Clone);
-        }
-
-        return $_Clone;
-    }
-
     var $_DOM = $(DOM);
 
     ListView.prototype = $.extend(new $.CommonView(),  {
@@ -170,7 +155,7 @@ define('iQuery+',  function () {
         },
         slice:          Array.prototype.slice,
         indexOf:        function (Index, getInstance) {
-            if (! isNaN(Number( Index )))
+            if ($.isNumeric( Index ))
                 return  this.slice(Index,  (Index + 1) || undefined)[0];
 
             var $_Item = $(Index);
@@ -189,22 +174,33 @@ define('iQuery+',  function () {
             Index = (Index < this.length)  ?  Index  :  this.length;
 
             var $_Item = this.itemOf(Index);
-            var _Insert_ = (
-                    (! $_Item.length)  ||  $_Item.hasClass('ListView_Item')
-                );
-            if (_Insert_)  $_Item = New_Item.call(this, $_Item, Index);
+
+            var _Append_ = (! $_Item.length),
+                _Insert_ = $_Item.hasClass('ListView_Item');
+
+            var $_Clone = (_Append_ || _Insert_)  ?
+                    this.$_Template.clone(true)  :  $_Item;
 
             var _Index_ = (Index < 0)  ?  (Index - 1)  :  Index;
 
-            var iReturn = this.trigger('insert',  [$_Item, iValue, _Index_]);
+            var iReturn = this.trigger('insert',  [$_Clone, iValue, _Index_]);
 
-            if (_Insert_) {
-                $_Item = this.itemOf(_Index_);
-                this.splice(Index, 0, $_Item);
+            $_Clone = iReturn.length  ?
+                $($.merge.call($, [ ], iReturn))  :  $_Clone;
+
+            if (_Append_ || _Insert_) {
+                if (! Index)
+                    this.$_View.prepend($_Clone);
+                else {
+                    if (_Append_)
+                        this.itemOf(Index - 1).slice(-1).after($_Clone);
+                    else
+                        $_Item.eq(0).before($_Clone);
+                }
+                this.splice(Index, 0, $_Clone);
             }
-            iValue = (iReturn === undefined) ? iValue : iReturn;
 
-            $_Item.addClass('ListView_Item').data('LV_Model', iValue);
+            $_Clone.addClass('ListView_Item').data('LV_Model', iValue);
 
             return this.indexOf(_Index_);
         },
@@ -263,7 +259,7 @@ define('iQuery+',  function () {
                 $_Item.length  &&
                 (false  !==  this.trigger('remove', [
                     $_Item,  this.valueOf(Index),  Index
-                ]))
+                ])[0])
             )
                 this.splice(Index, 1)[0].remove();
 
@@ -309,7 +305,7 @@ define('iQuery+',  function () {
             return iLV;
         },
         fork:           function () {
-            var $_View = this.$_View.clone(true);
+            var $_View = this.$_View.clone(true).append( this.$_Template );
 
             $_View.data({CVI_ListView: '',  LV_Model: ''})[0].id = '';
 
@@ -594,7 +590,7 @@ define('iQuery+',  function () {
 //              >>>  iQuery+  <<<
 //
 //
-//    [Version]    v1.6  (2016-06-22)  Stable
+//    [Version]    v1.6  (2016-07-04)  Stable
 //
 //    [Require]    iQuery  ||  jQuery with jQuery+
 //

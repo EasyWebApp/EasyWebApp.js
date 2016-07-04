@@ -362,8 +362,17 @@ define('iQuery',  function () {
                 Object.prototype.toString.call(iValue)
                     .split(' ')[1].slice(0, -1).toLowerCase();
         },
-        isNumeric:        function () {
-            return  (! isNaN(Number( arguments[0] )));
+        isNumeric:        function (iValue) {
+            if ((iValue === '')  ||  (iValue === Infinity)  ||  isNaN(iValue))
+                return false;
+
+            switch (typeof iValue) {
+                case 'string':    break;
+                case 'number':    break;
+                default:          return false;
+            }
+
+            return  (typeof +iValue == 'number');
         },
         isEmptyObject:    function () {
             for (var iKey in arguments[0])
@@ -3748,14 +3757,14 @@ define('iQuery',  function () {
             return this;
         },
         trigger:    function () {
-            var iArgs = $.makeArray(arguments),  iReturn;
+            var iArgs = $.makeArray(arguments),  iReturn = [ ];
 
             var iData = $.likeArray(iArgs[iArgs.length - 1])  &&  iArgs.pop();
 
             iArgs.push(function () {
                 var _Return_ = arguments[0].apply(this, iData);
 
-                iReturn = $.isData(_Return_) ? _Return_ : iReturn;
+                if ($.isData(_Return_))  iReturn.push(_Return_);
             });
 
             Each_Row.apply(this, iArgs);
@@ -3956,7 +3965,7 @@ define('iQuery',  function () {
 
         iAJAX.trigger('prefilter', iArgs);
 
-        iXHR = iAJAX.trigger('transport', iOption.dataType, iArgs);
+        iXHR = iAJAX.trigger('transport', iOption.dataType, iArgs).slice(-1)[0];
 
         iXHR.send({ },  $.proxy(AJAX_Complete, iXHR, iOption));
 
@@ -4322,7 +4331,7 @@ define('iQuery',  function () {
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v2.0  (2016-07-01)  Stable
+//      [Version]    v2.0  (2016-07-04)  Stable
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.

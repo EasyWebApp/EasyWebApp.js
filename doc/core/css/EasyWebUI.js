@@ -2,7 +2,7 @@
 //          >>>  EasyWebUI Component Library  <<<
 //
 //
-//      [Version]     v2.7  (2016-06-16)  Stable
+//      [Version]     v2.8  (2016-07-04)  Stable
 //
 //      [Based on]    iQuery v1  or  jQuery (with jQuery+),
 //
@@ -756,8 +756,7 @@
 
         }).each(function () {
 
-            var $_Tab_Box = $(this),  $_Tab_Head,
-                iName = $.uuid('iTab'),  iType;
+            var $_Tab_Box = $(this),  iName = $.uuid('iTab'),  iType;
 
             for (var i = 0;  i < Tab_Type.length;  i++)
                 if ($_Tab_Box.hasClass( Tab_Type[i] )) {
@@ -777,14 +776,6 @@
                     $_Radio = $([
                         '<input type="radio" name=',  iName,  ' id=',  _UUID_,  ' />'
                     ].join('"'));
-                var $_Tab_Body = $_Tab_Item.not($_Label).before($_Radio);
-
-                $_Tab_Head = $($.map(
-                    this.$_View.children('input[type="radio"]'),
-                    function () {
-                        return  $('label[for="' + arguments[0].id + '"]')[0];
-                    }
-                ))[Label_At ? 'prependTo' : 'appendTo']( this.$_View );
 
                 if (! $.browser.modern)
                     $_Radio.change(function () {
@@ -793,6 +784,9 @@
                         else
                             this.removeAttribute('checked');
                     });
+
+                return  [$_Label[0], $_Radio[0], $_Tab_Item.not($_Label)[0]];
+
             }).on('remove',  function () {
 
                 var $_Label = arguments[0].filter('label');
@@ -802,6 +796,13 @@
                 Tab_Active.call(this.$_View, $_Label);
 
             }).on('afterRender',  function () {
+
+                var $_Tab_Head = $($.map(
+                        this.$_View.children('input[type="radio"]'),
+                        function () {
+                            return  $('label[for="' + arguments[0].id + '"]')[0];
+                        }
+                    ))[Label_At ? 'prependTo' : 'appendTo']( this.$_View );
 
                 Tab_Active.call( this.$_View );
 
