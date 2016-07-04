@@ -364,7 +364,7 @@ define(['ViewDataIO'],  function () {
 
         return this.trigger(
             arguments[0], This_Page.HTML, This_Page.JSON, arguments[1]
-        );
+        ).slice(-1)[0];
     }
 
 /* ---------- Auto Navigation ---------- */

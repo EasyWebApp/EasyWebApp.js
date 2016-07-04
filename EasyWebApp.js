@@ -1,10 +1,11 @@
-if ((typeof this.define != 'function')  ||  (! this.define.amd))
-    this.define = function () {
-        return  arguments[arguments.length - 1]();
-    };
+(function () {
 
+    if ((typeof this.define != 'function')  ||  (! this.define.amd))
+        arguments[0]();
+    else
+        this.define('EasyWebApp', ['iQuery+'], arguments[0]);
 
-define('EasyWebApp',  ['iQuery+'],  function () {
+})(function () {
 
     var WebApp;
 
@@ -442,7 +443,7 @@ WebApp = (function (BOM, DOM, $) {
 
         return this.trigger(
             arguments[0], This_Page.HTML, This_Page.JSON, arguments[1]
-        );
+        ).slice(-1)[0];
     }
 
 /* ---------- Auto Navigation ---------- */
@@ -885,7 +886,7 @@ WebApp = (function (BOM, DOM, $) {
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v2.6  (2016-06-23)  Alpha
+//      [Version]    v2.6  (2016-07-04)  Alpha
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //

@@ -16,12 +16,14 @@
 //
 
 
-if ((typeof this.define != 'function')  ||  (! this.define.amd))
-    this.define = function () {
-        return  arguments[arguments.length - 1]();
-    };
+(function () {
 
-define('EasyWebUI',  ['iQuery+'],  function () {
+    if ((typeof this.define != 'function')  ||  (! this.define.amd))
+        arguments[0]();
+    else
+        this.define('EasyWebUI', ['iQuery+'], arguments[0]);
+
+})(function () {
 
 
 /* ---------- HTML 5 / CSS 3 补丁 ---------- */

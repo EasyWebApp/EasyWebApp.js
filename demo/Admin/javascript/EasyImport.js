@@ -1,9 +1,11 @@
-if ((typeof this.define != 'function')  ||  (! this.define.amd))
-    this.define = function () {
-        return  arguments[arguments.length - 1]();
-    };
+(function () {
 
-define('iQuery',  function () {
+    if ((typeof this.define != 'function')  ||  (! this.define.amd))
+        arguments[0]();
+    else
+        this.define('iQuery', arguments[0]);
+
+})(function () {
 
     var iQuery = {fn:  { }};
 
