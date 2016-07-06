@@ -39,7 +39,7 @@ EasyWebApp 与其作者开发的 [**EasyWebUI**](http://git.oschina.net/Tech_Que
 
 
 ## 【版本历史】
- - v2.6   Alpha   —— 2016年5月31日
+ - v2.6   Alpha   —— 2016年7月4日
    - **多条件事件绑定** jQuery API 基于 `iQuery.Observer()` 重构到 WebApp 对象上
    - 支持 iQuery+ v1.4 新增的 `$.CommonView()` **抽象视图接口**
    - 引擎源代码 AMD 规范化

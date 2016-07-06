@@ -101,6 +101,8 @@
         this.$_Template = this[0].clone(true);
 
         this.$_View.on(Click_Type,  '.ListView_Item',  function (iEvent) {
+            if (iView.$_View[0] !== this.parentNode)  return;
+
             var $_This = $(this);
 
             if (
@@ -172,39 +174,27 @@
         insert:         function (iValue, Index) {
             iValue = (iValue === undefined)  ?  { }  :  iValue;
 
-            Index = parseInt(Index) || 0;
-            Index = (Index < this.length)  ?  Index  :  this.length;
+            Index = Math.min(parseInt(Index) || 0,  this.length);
+            Index = (Index < 0)  ?  (this.length - Index)  :  Index;
 
             var $_Item = this.itemOf(Index);
 
-            var _Append_ = (! $_Item.length),
-                _Insert_ = $_Item.hasClass('ListView_Item');
+            var _New_ = (! $_Item.length)  ||  $_Item.hasClass('ListView_Item');
 
-            var $_Clone = (_Append_ || _Insert_)  ?
-                    this.$_Template.clone(true)  :  $_Item;
+            $_Item = _New_ ? this.$_Template.clone(true) : $_Item;
 
-            var _Index_ = (Index < 0)  ?  (Index - 1)  :  Index;
+            var iReturn = this.trigger('insert',  [$_Item, iValue, Index]);
 
-            var iReturn = this.trigger('insert',  [$_Clone, iValue, _Index_]);
+            $_Item = iReturn.length  ?
+                $($.merge.call($, [ ], iReturn))  :  $_Item;
 
-            $_Clone = iReturn.length  ?
-                $($.merge.call($, [ ], iReturn))  :  $_Clone;
+            if (_New_)
+                this.splice(Index, 0, $_Item);
+            else
+                this[Index] = $_Item;
 
-            if (_Append_ || _Insert_) {
-                if (! Index)
-                    this.$_View.prepend($_Clone);
-                else {
-                    if (_Append_)
-                        this.itemOf(Index - 1).slice(-1).after($_Clone);
-                    else
-                        $_Item.eq(0).before($_Clone);
-                }
-                this.splice(Index, 0, $_Clone);
-            }
-
-            $_Clone.addClass('ListView_Item').data('LV_Model', iValue);
-
-            return this.indexOf(_Index_);
+            return  $_Item.addClass('ListView_Item').data('LV_Model', iValue)
+                .insertTo(this.$_View,  Index * $_Item.length);
         },
         render:         function (iData, iFrom) {
             var iDelay = (this.cache instanceof Array),  $_Scroll;
@@ -213,7 +203,7 @@
 
             iFrom = iFrom || 0;
 
-            for (var i = 0, $_Item;  iData[i];  i++) {
+            for (var i = 0, $_Item;  i < iData.length;  i++) {
                 $_Item = this.insert(iData[i],  i + iFrom);
 
                 $_Scroll = $_Scroll  ||  $( $_Item.scrollParents()[0] );
@@ -592,7 +582,7 @@
 //              >>>  iQuery+  <<<
 //
 //
-//    [Version]    v1.6  (2016-07-04)  Stable
+//    [Version]    v1.6  (2016-07-06)  Stable
 //
 //    [Require]    iQuery  ||  jQuery with jQuery+
 //

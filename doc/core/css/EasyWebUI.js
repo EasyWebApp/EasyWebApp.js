@@ -812,7 +812,7 @@
                         function () {
                             return  $('label[for="' + arguments[0].id + '"]')[0];
                         }
-                    ))[Label_At ? 'prependTo' : 'appendTo']( this.$_View );
+                    ))[Label_At ? 'insertTo' : 'appendTo']( this.$_View );
 
                 Tab_Active.call( this.$_View );
 

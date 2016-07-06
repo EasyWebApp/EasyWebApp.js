@@ -43,8 +43,8 @@
             $_This.filter('pre').text( arguments[0] );
         });
     }).clear().render([
-        'html/gallery.html', 'index.html', 'css/index.css', 'javascript/index.js',
-        'html/list.html', 'html/article.html'
+        'index.html', 'css/index.css', 'javascript/index.js',
+        'html/list.html', 'html/article.html', 'html/gallery.html'
     ]);
 
 })(self, self.document, self.jQuery);
