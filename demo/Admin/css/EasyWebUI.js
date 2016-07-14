@@ -2,7 +2,7 @@
 //          >>>  EasyWebUI Component Library  <<<
 //
 //
-//      [Version]     v2.8  (2016-07-04)  Stable
+//      [Version]     v2.9  (2016-07-12)  Stable
 //
 //      [Based on]    iQuery v1  or  jQuery (with jQuery+),
 //
@@ -701,7 +701,7 @@
         return this;
     };
 
-/* ---------- 数据表 控件  v0.1 ---------- */
+/* ---------- 数据表 控件  v0.2 ---------- */
 
     var Sort_Class = {
             '':            'SortDown',
@@ -709,32 +709,42 @@
             'SortDown':    'SortUp'
         };
 
-    $.fn.iTable = function () {
-        return  this.each(function () {
-            var iLV = $.ListView( $('tbody', this) );
+    $.fn.iTable = function (DataURL) {
+        var iLV = $.ListView( $('tbody', this[0]) );
 
-            $('th', $(this).children('thead')[0]).click(function () {
-                var $_This = $(this);
+        $('th', this[0]).click(function () {
+            var $_This = $(this);
 
-                var iClass = ($_This.attr('class') || '').match(
-                        /\s?(Sort(Up|Down))\s?/
-                    );
-                iClass = iClass ? iClass[1] : '';
+            var iClass = ($_This.attr('class') || '').match(
+                    /\s?(Sort(Up|Down))\s?/
+                );
+            iClass = iClass ? iClass[1] : '';
 
-                $_This.removeClass(iClass).addClass( Sort_Class[iClass] );
+            $_This.removeClass(iClass).addClass( Sort_Class[iClass] );
 
-                var iNO = (Sort_Class[iClass] == 'SortUp')  ?  0.5  :  -0.5,
-                    Index = $_This.index();
+            var iNO = (Sort_Class[iClass] == 'SortUp')  ?  0.5  :  -0.5,
+                Index = $_This.index();
 
-                iLV.sort(function () {
-                    var A = $( arguments[2.5 - iNO][0].children[Index] ).text(),
-                        B = $( arguments[2.5 + iNO][0].children[Index] ).text();
+            iLV.sort(function () {
+                var A = $( arguments[2.5 - iNO][0].children[Index] ).text(),
+                    B = $( arguments[2.5 + iNO][0].children[Index] ).text();
 
-                    return  isNaN(parseFloat( A ))  ?
-                        A.localeCompare( B )  :  (parseFloat(A) - parseFloat(B));
-                });
+                return  isNaN(parseFloat( A ))  ?
+                    A.localeCompare( B )  :  (parseFloat(A) - parseFloat(B));
             });
         });
+
+        if (typeof DataURL != 'string')  return this.eq(0);
+
+        var $_tFoot = $('tfoot', this[0]);
+        $_tFoot = $_tFoot[0]  ?  $_tFoot  :  $('<tfoot />').appendTo( this[0] );
+
+        $('<tr><td><ol><li></li></ol></td></tr>').appendTo( $_tFoot )
+            .children('td').attr(
+                'colspan',  $('tbody > tr', this[0])[0].children.length
+            );
+
+        return this.eq(0);
     };
 
 /* ---------- 标签页 控件  v0.5 ---------- */

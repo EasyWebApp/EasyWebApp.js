@@ -40,7 +40,7 @@
         $_This.filter('label').text( $.fileName(iValue) )[0].title = iValue;
 
         $.get('../idaily/' + iValue,  function () {
-            $_This.filter('pre').text( arguments[0] );
+            $_This.filter('pre').text( arguments[2].responseText );
         });
     }).clear().render([
         'index.html', 'css/index.css', 'javascript/index.js',

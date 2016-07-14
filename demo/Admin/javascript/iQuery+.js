@@ -82,7 +82,8 @@
 
         if (typeof onInsert == 'function')  iView.on('insert', onInsert);
 
-        if (iView !== this)  return iView;
+        if ((iView !== this)  ||  (! iView.$_View[0].children[0]))
+            return iView;
 
         this.selector = $_Item;
         this.length = 0;
@@ -194,7 +195,7 @@
                 this[Index] = $_Item;
 
             return  $_Item.addClass('ListView_Item').data('LV_Model', iValue)
-                .insertTo(this.$_View, Index);
+                .insertTo(this.$_View,  Index * $_Item.length);
         },
         render:         function (iData, iFrom) {
             var iDelay = (this.cache instanceof Array),  $_Scroll;
@@ -441,9 +442,9 @@
 
     $(DOM).ready(function () {
         var $_iFrame = $('<iframe />', {
-                id:       '_HTML5_History_',
-                style:    'display: none',
-                src:      'blank.html'
+                id:     '_HTML5_History_',
+                src:    'blank.html',
+                css:    {display:  'none'}
             }).appendTo(this.body),
             $_Parent = $(BOM);
 

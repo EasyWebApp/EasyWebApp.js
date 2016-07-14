@@ -82,7 +82,8 @@
 
         if (typeof onInsert == 'function')  iView.on('insert', onInsert);
 
-        if (iView !== this)  return iView;
+        if ((iView !== this)  ||  (! iView.$_View[0].children[0]))
+            return iView;
 
         this.selector = $_Item;
         this.length = 0;
@@ -441,9 +442,9 @@
 
     $(DOM).ready(function () {
         var $_iFrame = $('<iframe />', {
-                id:       '_HTML5_History_',
-                style:    'display: none',
-                src:      'blank.html'
+                id:     '_HTML5_History_',
+                src:    'blank.html',
+                css:    {display:  'none'}
             }).appendTo(this.body),
             $_Parent = $(BOM);
 

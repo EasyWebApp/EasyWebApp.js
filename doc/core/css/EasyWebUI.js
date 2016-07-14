@@ -812,7 +812,7 @@
                         function () {
                             return  $('label[for="' + arguments[0].id + '"]')[0];
                         }
-                    ))[Label_At ? 'insertTo' : 'appendTo']( this.$_View );
+                    ))[Label_At ? 'prependTo' : 'appendTo']( this.$_View );
 
                 Tab_Active.call( this.$_View );
 
@@ -979,7 +979,7 @@
     $.fn.iTree = function (Sub_Key, onInsert) {
         return  this.each(function () {
             var iOrgTree = $.TreeView(
-                    $.ListView(this, onInsert),
+                    $.ListView(this, true, onInsert),
                     Sub_Key,
                     function () {
                         arguments[0].$_View.parent().cssRule({
@@ -1061,8 +1061,8 @@
         }
 
         $_Load_Tips = $('<h1 />', {
-            text:     iEvent.data,
-            style:    'color: white'
+            text:    iEvent.data,
+            css:     {color:  'white'}
         });
 
         try {

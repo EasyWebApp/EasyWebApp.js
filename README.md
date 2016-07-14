@@ -443,7 +443,7 @@ UNIX-Shell、Windows-CMD 通用脚本 ——
 npm install -g requirejs
 npm install -g uglify-js
 
-mkdir ./EasyWebApp;
+mkdir ./EasyWebApp
 git clone https://git.oschina.net/Tech_Query/EasyWebApp.git ./EasyWebApp
 
 node r.js -o build/source.js
