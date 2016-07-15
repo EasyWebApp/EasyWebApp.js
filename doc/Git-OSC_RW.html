@@ -1,0 +1,42 @@
+<!--
+        Git@OSC Repository-Widget  v0.3
+
+          (C)2016  shiy2008@gmail.com
+-->
+<style>
+    .osc_git_box {
+        background:      #fafafa;
+        border-color:    #ddd;
+    }
+    .osc_git_box .mini-icon, .osc_git_box .row_container {
+        padding:    0.25em  !important;
+    }
+    .osc_git_title, .osc_git_footer,
+    .osc_git_info, .osc_git_issues, .osc_git_commits {
+        padding:       1em  !important;
+        text-align:    left  !important;
+    }
+    .osc_git_main a, .pro_name a {
+        color:    #4183c4;
+    }
+</style>
+<script>
+    try {
+        self.parent.name || self.frameElement.id;
+
+        self.onload = self.onresize = function () {
+            self.frameElement.height = Math.max(
+                document.documentElement.offsetHeight,
+                document.documentElement.scrollHeight
+            );
+        };
+    } catch (iError) { }
+
+    var iName = self.location.search.match(/repository=([^&]+)/);
+
+    document.write(
+        '<script src="//git.oschina.net/'  +
+        (iName ? iName[1] : 'Tech_Query/Git-OSC_Repository-Widget')  +
+        '/widget_preview"></script\>'
+    );
+</script>

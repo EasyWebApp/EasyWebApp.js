@@ -501,20 +501,27 @@ define(['ViewDataIO'],  function () {
                     ))
                         return This_Page.show(iHTML).boot(Page_Load);
 
-                    var $_Page = $(iHTML.children || iHTML);
+                    var $_Content = $(iHTML.children || iHTML),  $_Page = [ ];
 
-                    var $_Content = $_Page.not('script[src]'),
-                        $_Script = $_Page.filter('script');
+                    for (var i = 0, j = 0;  $_Content[i];  i++)
+                        switch ( $_Content[i].tagName.toLowerCase() ) {
+                            case 'link':      {
+                                if (
+                                    ($_Content[i].rel == 'stylesheet')  ||
+                                    $_Content[i].getAttribute('target')
+                                )
+                                    DOM.head.appendChild( $_Content[i] );
+                                break;
+                            }
+                            case 'script':    {
+                                if ( $_Content[i].text.trim() )
+                                    $.globalEval( $_Content[i].text );
+                                break;
+                            }
+                            default:          $_Page[j++] = $_Content[i];
+                        }
 
-                    $_Content.filter(
-                        'link[rel="stylesheet"], link[target]'
-                    ).appendTo('head');
-
-                    for (var i = 0;  $_Script[i];  i++)
-                        $.globalEval( $_Script[i].text );
-
-                    This_Page.show( $_Content.not('link, script') )
-                        .boot(Page_Load);
+                    This_Page.show($_Page).boot(Page_Load);
                 } :
                 function (iMarkDown) {
                     iMarkDown = (arguments[2] || '').responseText  ||  iMarkDown;
@@ -618,10 +625,12 @@ define(['ViewDataIO'],  function () {
             return this;
         },
         findLink:    function (iPrefetch) {
-            var $_Link = (
-                    this.ownerApp.history.lastIndex ?
-                        this.ownerApp.domRoot : $(DOM.body)
-                ).find('*[target]');
+            var $_Root = this.ownerApp.history.lastIndex ?
+                    this.ownerApp.domRoot : $(DOM.body);
+
+            var $_Link = $_Root.find('*[target]').not(
+                    $.ListView.findView($_Root).find('*[target]')
+                );
 
             for (var i = 0, iLink;  i < $_Link.length;  i++) {
                 iLink = new PageLink(this.ownerApp, $_Link[i]);
