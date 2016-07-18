@@ -416,9 +416,10 @@ WebApp = (function (BOM, DOM, $) {
         iJSONP = iJSONP && iJSONP[1];
 
         var URL_Param = $.param(
-                $.extend(iArgs || { },  $.paramJSON(
-                    '?'  +  iURL[1].replace(iJSONP + '=?',  '')
-                ))
+                $.extend(
+                    $.paramJSON('?'  +  iURL[1].replace(iJSONP + '=?',  '')),
+                    iArgs || { }
+                )
             );
         iURL = [
             BOM.decodeURIComponent(iURL[0]).replace(RE_Str_Var,  function () {
@@ -570,7 +571,7 @@ WebApp = (function (BOM, DOM, $) {
                     this.show(this.getTemplate( iLink.href.slice(1) )).ownerApp
                 );
 
-            $.get(iLink.href,  (! iLink.href.match(MarkDown_File)) ?
+            $.get(iLink.getURL('href'),  (! iLink.href.match(MarkDown_File)) ?
                 function (iHTML) {
                     iHTML = (arguments[2] || '').responseText  ||  iHTML;
 
@@ -585,11 +586,13 @@ WebApp = (function (BOM, DOM, $) {
                     for (var i = 0, j = 0;  $_Content[i];  i++)
                         switch ( $_Content[i].tagName.toLowerCase() ) {
                             case 'link':      {
-                                if (
-                                    ($_Content[i].rel == 'stylesheet')  ||
-                                    $_Content[i].getAttribute('target')
-                                )
+                                if ($_Content[i].rel == 'stylesheet')
+                                    $('<link rel="stylesheet" />')
+                                        .attr('href', $_Content[i].href)
+                                        .appendTo( DOM.head );
+                                else if ($_Content[i].getAttribute('target'))
                                     DOM.head.appendChild( $_Content[i] );
+
                                 break;
                             }
                             case 'script':    {
@@ -893,7 +896,7 @@ WebApp = (function (BOM, DOM, $) {
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v2.6  (2016-07-15)  Alpha
+//      [Version]    v2.6  (2016-07-18)  Alpha
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //

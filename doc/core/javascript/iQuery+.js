@@ -222,7 +222,7 @@
                     return this;
                 }
             }
-            if ( iData[0] )  this.trigger('afterRender', [iData]);
+            if ( iData.length )  this.trigger('afterRender', [iData]);
 
             return this;
         },
@@ -281,14 +281,19 @@
         sort:           function (iCallback) {
             var iLV = this;
 
-            Array.prototype.sort.call(
-                iLV,
-                function ($_A, $_B) {
+            Array.prototype.sort.call(iLV,  function ($_A, $_B) {
+                if (typeof iCallback == 'function')
                     return  iCallback.apply(iLV, [
                         $_A.data('LV_Model'),  $_B.data('LV_Model'),  $_A,  $_B
                     ]);
-                }
-            );
+
+                var A = $_A.text(),  B = $_B.text();
+                var nA = parseFloat(A),  nB = parseFloat(B);
+
+                return  (isNaN(nA) || isNaN(nB))  ?
+                    A.localeCompare(B)  :  (nA - nB);
+            });
+
             Array.prototype.unshift.call(iLV, [ ]);
 
             $($.merge.apply($, iLV)).detach().appendTo( iLV.$_View );
@@ -298,13 +303,14 @@
             return iLV;
         },
         fork:           function () {
-            var $_View = this.$_View.clone(true).append( this.$_Template );
-
+            var $_View = this.$_View.clone(true).empty().append(
+                    this.$_Template.clone(true)
+                );
             $_View.data({CVI_ListView: '',  LV_Model: ''})[0].id = '';
 
             var iFork = ListView($_View.appendTo( arguments[0] ),  this.selector);
-            iFork.$_Template = this.$_Template.clone(true);
             iFork.table = this.table;
+            iFork.parentView = this;
 
             return iFork;
         }
@@ -315,25 +321,36 @@
 })(self, self.document, self.jQuery);
 
 
-/* ---------- TreeView Interface  v0.3 ---------- */
+/* ---------- TreeView Interface  v0.4 ---------- */
 
 
 (function (BOM, DOM, $) {
 
-    function TreeView(iListView, iKey, onFork, onFocus) {
+    function TreeView(iListView, iKey, Init_Depth, onFork, onFocus) {
         var _Self_ = arguments.callee;
 
         if (!  (this instanceof _Self_))
-            return  new _Self_(iListView, iKey, onFork, onFocus);
+            return  new _Self_(iListView, iKey, Init_Depth, onFork, onFocus);
+
+        var iArgs = $.makeArray( arguments ).slice(1);
+
+        iKey = (typeof iArgs[0] == 'string')  ?  iArgs.shift()  :  'list';
+        this.initDepth = (typeof iArgs[0] == 'number')  ?
+            iArgs.shift()  :  Infinity;
 
         var _This_ = $.CommonView.call(this, iListView.$_View)
-                .on('branch', onFork);
+                .on('branch',  (typeof iArgs[0] == 'function')  &&  iArgs.shift());
 
-        iKey = iKey || 'list';
+        this.depth = 0;
+        onFocus = iArgs[0];
 
         this.unit = iListView.on('insert',  function ($_Item, iValue) {
+            var iParent = this;
+
             if ($.likeArray( iValue[iKey] )  &&  iValue[iKey][0])
-                _This_.branch(this, $_Item, iValue[iKey]);
+                $.wait(0.01,  function () {
+                    _This_.branch(iParent.fork($_Item), iValue[iKey]);
+                });
         });
 
         this.listener = [
@@ -342,8 +359,14 @@
             function (iEvent) {
                 if ( $(iEvent.target).is(':input') )  return;
 
-                if ( iEvent.isPseudo() )
-                    $(this).children('.TreeNode').toggle(200);
+                var $_Fork = $(this).children('.TreeNode');
+
+                if (iEvent.isPseudo() && $_Fork[0]) {
+                    if ( $_Fork[0].firstElementChild )
+                        $_Fork.toggle(200);
+                    else
+                        _This_.render($_Fork);
+                }
 
                 $('.ListView_Item.active', _This_.unit.$_View[0]).not(this)
                     .removeClass('active');
@@ -365,14 +388,28 @@
 
     TreeView.prototype = $.extend(new $.CommonView(),  {
         constructor:    TreeView,
-        branch:         function (iListView, $_Item, iData) {
-            var iFork = iListView.fork($_Item).clear().render(iData);
+        render:         function ($_Fork, iData) {
+            $_Fork = $($_Fork);
 
-            iFork.$_View.children().removeClass('active');
+            $.ListView.getInstance( $_Fork ).render(
+                iData || $_Fork.data('TV_Model')
+            ).$_View.children().removeClass('active');
 
-            this.depth = iFork.$_View.parentsUntil( this.unit.$_View )
-                .filter('TreeNode').length + 1;
-            this.trigger('branch',  [iFork, iData, this.depth]);
+            return this;
+        },
+        branch:         function (iFork, iData) {
+            this.depth = Math.max(
+                this.depth,  $.trace(iFork, 'parentView').length + 1
+            );
+            iFork.clear();
+
+            if (this.initDepth < this.depth) {
+                iFork.$_View.data('TV_Model', iData);
+                iData = null;
+            } else
+                this.render(iFork.$_View, iData);
+
+            this.trigger('branch',  [iFork, this.depth, iData]);
 
             $.fn.off.apply(iFork.$_View.addClass('TreeNode'), this.listener);
 
@@ -383,23 +420,29 @@
             this.data = [ ];
 
             for (
-                var  i = 0,  _Tree_ = this.data,  _Level_ = 0,  _Parent_;
+                var  i = 0,  _Tree_ = this.data,  _Level_ = 0,  _This_,  _Parent_;
                 i < $_Item.length;
                 i++
             ) {
                 if (i > 0)
                     _Level_ = Depth_Sort.call(this,  $_Item[i - 1],  $_Item[i]);
 
-                if (_Level_ > 0)
-                    _Tree_ = _Tree_.slice(-1)[0].list = $.extend([ ], {
-                        parent:    _Tree_
-                    });
-                else if (_Level_ < 0) {
+                if (_Level_ > 0) {
+                    _This_ = _Tree_.slice(-1)[0].list = [ ];
+                    _This_.parent = _Tree_;
+                    _Tree_ = _This_;
+                } else if (_Level_ < 0) {
                     _Parent_ = _Tree_.parent;
                     delete _Tree_.parent;
                     _Tree_ = _Parent_;
                 }
                 _Tree_.push( Data_Filter.call($_Item[i]) );
+            }
+
+            while (_Tree_.parent) {
+                _Parent_ = _Tree_.parent;
+                delete _Tree_.parent;
+                _Tree_ = _Parent_;
             }
 
             this.unit.clear().render( this.data );
@@ -583,7 +626,7 @@
 //              >>>  iQuery+  <<<
 //
 //
-//    [Version]    v1.6  (2016-07-06)  Stable
+//    [Version]    v1.7  (2016-07-18)  Stable
 //
 //    [Require]    iQuery  ||  jQuery with jQuery+
 //

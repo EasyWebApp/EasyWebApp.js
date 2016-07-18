@@ -337,9 +337,10 @@ define(['ViewDataIO'],  function () {
         iJSONP = iJSONP && iJSONP[1];
 
         var URL_Param = $.param(
-                $.extend(iArgs || { },  $.paramJSON(
-                    '?'  +  iURL[1].replace(iJSONP + '=?',  '')
-                ))
+                $.extend(
+                    $.paramJSON('?'  +  iURL[1].replace(iJSONP + '=?',  '')),
+                    iArgs || { }
+                )
             );
         iURL = [
             BOM.decodeURIComponent(iURL[0]).replace(RE_Str_Var,  function () {
@@ -491,7 +492,7 @@ define(['ViewDataIO'],  function () {
                     this.show(this.getTemplate( iLink.href.slice(1) )).ownerApp
                 );
 
-            $.get(iLink.href,  (! iLink.href.match(MarkDown_File)) ?
+            $.get(iLink.getURL('href'),  (! iLink.href.match(MarkDown_File)) ?
                 function (iHTML) {
                     iHTML = (arguments[2] || '').responseText  ||  iHTML;
 
@@ -506,11 +507,13 @@ define(['ViewDataIO'],  function () {
                     for (var i = 0, j = 0;  $_Content[i];  i++)
                         switch ( $_Content[i].tagName.toLowerCase() ) {
                             case 'link':      {
-                                if (
-                                    ($_Content[i].rel == 'stylesheet')  ||
-                                    $_Content[i].getAttribute('target')
-                                )
+                                if ($_Content[i].rel == 'stylesheet')
+                                    $('<link rel="stylesheet" />')
+                                        .attr('href', $_Content[i].href)
+                                        .appendTo( DOM.head );
+                                else if ($_Content[i].getAttribute('target'))
                                     DOM.head.appendChild( $_Content[i] );
+
                                 break;
                             }
                             case 'script':    {

@@ -2,7 +2,7 @@
 //          >>>  EasyWebUI Component Library  <<<
 //
 //
-//      [Version]     v2.8  (2016-07-04)  Stable
+//      [Version]     v2.8  (2016-07-18)  Stable
 //
 //      [Based on]    iQuery v1  or  jQuery (with jQuery+),
 //
@@ -267,7 +267,7 @@
         //  DOM Property Patch
             $_Input[0].list = $('#' + this.getAttribute('list'))[0];
 
-            var $_List = $( $_Input[0].list.children ).filter('select');
+            var $_List = $( $_Input[0].list.children.item(0) );
 
             $_List[0].multiple = $_List[0].multiple || true;
 
@@ -878,7 +878,6 @@
                             '#' + iValue.id;
                         $_Item.attr('title', iValue.text);
                     }),
-                    null,
                     function () {
                         arguments[0].$_View.attr('class', '');
                     },
@@ -981,11 +980,12 @@
             var iOrgTree = $.TreeView(
                     $.ListView(this, true, onInsert),
                     Sub_Key,
-                    function () {
-                        arguments[0].$_View.parent().cssRule({
-                            ':before':    {
-                                content:    '"-"  !important'
-                            }
+                    2,
+                    function (iFork, iDepth, iData) {
+                        iFork.$_View.parent().cssRule({
+                            ':before':    {content:  (
+                                '"'  +  (iData ? '-' : '+')  +  '"  !important'
+                            )}
                         });
                     },
                     function () {

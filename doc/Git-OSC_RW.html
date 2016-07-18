@@ -1,5 +1,5 @@
 <!--
-        Git@OSC Repository-Widget  v0.3
+        Git@OSC Repository-Widget  v0.4
 
           (C)2016  shiy2008@gmail.com
 -->
@@ -19,20 +19,55 @@
     .osc_git_main a, .pro_name a {
         color:    #4183c4;
     }
+    @media (max-width:  640px) {
+        .row_left a {
+            display:          inline-block;
+            width:            auto  !important;
+            text-overflow:    ellipsis;
+        }
+        .osc_git_issues .row_left a {
+            max-width:    90%;
+        }
+        .osc_git_commits .row_left a {
+            max-width:    70%;
+        }
+    }
 </style>
 <script>
+    function Add_Event(iType, iHandler) {
+        iType = iType.split(/\s+/);
+
+        for (var i = 0;  iType[i];  i++)
+            if (this.addEventListener)
+                this.addEventListener(iType[i], iHandler, false);
+            else
+                this.attachEvent('on' + iType[i],  iHandler);
+    }
+
+    var iParameter = self.location.search.slice(1);
+
+    var iName = iParameter.match(/&?repository=([^&]+)/),
+        iHidden = iParameter.match(/&?hidden=([^&]+)/);
+
+    if ((iHidden || '')[1])
+        Add_Event.call(self,  'load',  function () {
+            iHidden = iHidden[1].split(',');
+
+            for (var i = 0;  iHidden[i];  i++)
+                document.querySelector('.osc_git_' + iHidden[i] + 's')
+                    .style.display = 'none';
+        });
+
     try {
         self.parent.name || self.frameElement.id;
 
-        self.onload = self.onresize = function () {
+        Add_Event.call(self, 'load resize',  function Resize() {
             self.frameElement.height = Math.max(
                 document.documentElement.offsetHeight,
                 document.documentElement.scrollHeight
             );
-        };
+        });
     } catch (iError) { }
-
-    var iName = self.location.search.match(/repository=([^&]+)/);
 
     document.write(
         '<script src="//git.oschina.net/'  +
