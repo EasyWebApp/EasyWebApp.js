@@ -8,7 +8,7 @@
  *    and can be used in the Web UI development of
  *    Any Platform.
  *
- *    [Version]    v1.0  (2016-07-07)
+ *    [Version]    v1.0  (2016-07-21)
  *
  *    [Require]    CSS 2.1  (Best Effect with CSS 3),
  *
@@ -1266,6 +1266,7 @@ img.UserLogo {
 }
 /* ----- Background ----- */
 .Background-Image {
+    background-image:       url();
     background-position:    center;
     background-repeat:      no-repeat;
     background-size:        contain;

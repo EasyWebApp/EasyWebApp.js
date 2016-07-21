@@ -2,7 +2,7 @@
 //          >>>  EasyWebUI Component Library  <<<
 //
 //
-//      [Version]     v2.9  (2016-07-12)  Stable
+//      [Version]     v3.0  (2016-07-20)  Stable
 //
 //      [Based on]    iQuery v1  or  jQuery (with jQuery+),
 //
@@ -267,7 +267,7 @@
         //  DOM Property Patch
             $_Input[0].list = $('#' + this.getAttribute('list'))[0];
 
-            var $_List = $( $_Input[0].list.children ).filter('select');
+            var $_List = $( $_Input[0].list.children.item(0) );
 
             $_List[0].multiple = $_List[0].multiple || true;
 
@@ -789,7 +789,7 @@
                 iSelector = ['input[type="radio"]',  'div, section, .Body'];
             iSelector[Label_At ? 'unshift' : 'push']('label');
 
-            $.ListView(this,  iSelector,  true,  function ($_Tab_Item) {
+            $.ListView(this,  iSelector,  function ($_Tab_Item) {
                 var _UUID_ = $.uuid();
 
                 var $_Label = $_Tab_Item.filter('label').attr('for', _UUID_),
@@ -877,7 +877,34 @@
         });
     };
 
-/* ---------- 阅读导航栏  v0.1 ---------- */
+/* ---------- 阅读导航栏  v0.3 ---------- */
+
+    function toTreeData() {
+        var iTree = [ ],  $_Tree = this;
+
+        var _This_ = iTree,  _Parent_;
+
+        this.each(function (Index) {
+            var _Level_ = Index && (
+                    this.tagName[1]  -  $_Tree[Index - 1].tagName[1]
+                );
+
+            if (_Level_ > 0) {
+                _Parent_ = _This_;
+                _This_ = _This_.slice(-1)[0].list = [ ];
+            } else if (_Level_ < 0)
+                _This_ = _Parent_;
+
+            if (! this.id.match(/\w/))  this.id = $.uuid('Header');
+
+            _This_.push({
+                id:      this.id,
+                text:    this.textContent
+            });
+        });
+
+        return iTree;
+    }
 
     $.fn.iReadNav = function ($_Context) {
         return  this.each(function () {
@@ -888,54 +915,50 @@
                             '#' + iValue.id;
                         $_Item.attr('title', iValue.text);
                     }),
-                    null,
                     function () {
                         arguments[0].$_View.attr('class', '');
-                    },
-                    function () {
-                        var iTarget = arguments[0].target;
-
-                        if (iTarget.tagName.toLowerCase() == 'a')
-                            return (
-                                '*[id="'  +  iTarget.href.split('#')[1]  +  '"]'
-                            );
                     }
-                );
-            iMainNav.linkage($_Context,  function ($_Anchor) {
-                $_Anchor = $_Anchor.prevAll('h1, h2, h3');
+                ).on('focus',  function (iEvent) {
+                    if (iEvent.target.tagName.toLowerCase() != 'a')  return;
+
+                    var $_Target = $(
+                            '*[id="' + iEvent.target.href.split('#')[1] + '"]'
+                        );
+                    $_Target.scrollParents().eq(0).scrollTo( $_Target );
+                }),
+                _DOM_ = $_Context[0].ownerDocument;
+
+            $_Context.scroll(function () {
+                if (arguments[0].target !== this)  return;
+
+                var iAnchor = $_Context.offset(),
+                    iFontSize = $(_DOM_.body).css('font-size') / 2;
+
+                var $_Anchor = $(_DOM_.elementFromPoint(
+                        iAnchor.left + $_Context.css('padding-left') + iFontSize,
+                        iAnchor.top + $_Context.css('padding-top') + iFontSize
+                    )).prevAll('h1, h2, h3');
 
                 if (! $.contains(this, $_Anchor[0]))  return;
 
                 $_Anchor = $(
-                    'a[href="#' + $_Anchor[0].id + '"]',  iMainNav.unit.$_View[0]
+                    'a[href="#' + $_Anchor[0].id + '"]',  iMainNav.$_View[0]
                 );
-                $('.ListView_Item.active', iMainNav.unit.$_View[0])
+                $('.ListView_Item.active', iMainNav.$_View[0])
                     .removeClass('active');
 
                 $.ListView.getInstance( $_Anchor.parents('.TreeNode')[0] )
                     .focus( $_Anchor[0].parentNode );
-            });
 
-            $_Context.on('Refresh',  function () {
+            }).on('Refresh',  function () {
 
-                iMainNav.bind(
-                    $('h1, h2, h3', this),
-                    function ($_A, $_B) {
-                        return  $_B.tagName[1] - $_A.tagName[1];
-                    },
-                    function () {
-                        if (! this.id.match(/\w/))  this.id = $.uuid('Header');
-
-                        return {
-                            id:      this.id,
-                            text:    $(this).text()
-                        };
-                    }
+                iMainNav.clear().render(
+                    toTreeData.call( $('h1, h2, h3', this) )
                 );
                 return false;
 
             }).on('Clear',  function () {
-                return  (! iMainNav.unit.clear());
+                return  (! iMainNav.clear());
             });
         });
     };
@@ -991,50 +1014,53 @@
             var iOrgTree = $.TreeView(
                     $.ListView(this, onInsert),
                     Sub_Key,
-                    function () {
-                        arguments[0].$_View.parent().cssRule({
-                            ':before':    {
-                                content:    '"-"  !important'
-                            }
+                    2,
+                    function (iFork, iDepth, iData) {
+                        iFork.$_View.parent().cssRule({
+                            ':before':    {content:  (
+                                '"'  +  (iData ? '-' : '+')  +  '"  !important'
+                            )}
                         });
-                    },
-                    function () {
-                        $(':input', this).focus();
-
-                        var iRule = Array.prototype.slice.call(
-                                BOM.getMatchedCSSRules(this, ':before'),  -1
-                            )[0];
-
-                        if (! (
-                            arguments[0].isPseudo() &&
-                            $(iRule.parentStyleSheet.ownerNode)
-                                .hasClass('iQuery_CSS-Rule')
-                        ))
-                            return;
-
-                        iRule.style.setProperty('content', (
-                            (iRule.style.content[1] == '-')  ?  '"+"'  :  '"-"'
-                        ), 'important');
                     }
-                );
-            iOrgTree.unit.$_View
-                .on('Insert',  '.ListView_Item',  function () {
-                    var iList = $.ListView.getInstance( this.parentNode );
-                    var iSub = $.ListView.getInstance(
-                            $(this).children('.TreeNode')
-                        );
+                ).on('focus',  function (iEvent) {
+                    var _This_ = iEvent.currentTarget;
 
-                    if ( iSub )
-                        iSub.insert( arguments[1] );
-                    else
-                        iOrgTree.branch(iList, this, arguments[1]);
+                    $(':input', _This_).focus();
 
-                    return false;
-                })
-                .on('Edit',  '.ListView_Item',  function () {
-                    return  (! $(arguments[0].target).contentEdit());
-                })
-                .on('Delete',  '.ListView_Item', branchDelete);
+                    var iRule = Array.prototype.slice.call(
+                            BOM.getMatchedCSSRules(_This_, ':before'),  -1
+                        )[0];
+
+                    if (! (
+                        iEvent.isPseudo() &&
+                        $(iRule.parentStyleSheet.ownerNode)
+                            .hasClass('iQuery_CSS-Rule')
+                    ))
+                        return;
+
+                    iRule.style.setProperty('content', (
+                        (iRule.style.content[1] == '-')  ?  '"+"'  :  '"-"'
+                    ), 'important');
+                });
+
+            iOrgTree.$_View.on('Insert',  '.ListView_Item',  function () {
+
+                var iSub = $.ListView.getInstance(
+                        $(this).children('.TreeNode')
+                    );
+
+                if ( iSub )
+                    iSub.insert( arguments[1] );
+                else
+                    iOrgTree.branch(this, arguments[1]);
+
+                return false;
+
+            }).on('Edit',  '.ListView_Item',  function () {
+
+                return  (! $(arguments[0].target).contentEdit());
+
+            }).on('Delete',  '.ListView_Item', branchDelete);
         });
     };
 
@@ -1071,8 +1097,8 @@
         }
 
         $_Load_Tips = $('<h1 />', {
-            text:     iEvent.data,
-            style:    'color: white'
+            text:    iEvent.data,
+            css:     {color:  'white'}
         });
 
         try {

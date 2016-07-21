@@ -1629,12 +1629,10 @@
                 return  new_Class.join(' ');
             });
         },
-        hasClass:           function () {
-            try {
-                return this[0].classList.contains(arguments[0]);
-            } catch (iError) {
-                return false;
-            }
+        hasClass:           function (iName) {
+            return  (!!  $.map(this,  function () {
+                return arguments[0].classList.contains(iName);
+            })[0]);
         },
         val:                function () {
             if (! $.isData(arguments[0]))
@@ -3352,6 +3350,29 @@
             });
 
             return this;
+        },
+        isMedia:         function () {
+            if (this.filter('iframe, object, embed, audio, video')[0])
+                return true;
+
+            return  (!!  $.map(this,  function () {
+                var $_Image = $( arguments[0] );
+
+                if (
+                    ($_Image[0].tagName != 'IMG')  &&
+                    ($_Image.css('background-image') == 'none')
+                )
+                    return;
+
+                var iSize = $.map($_Image.css([
+                        'width', 'height', 'min-width', 'min-height'
+                    ]), parseFloat);
+
+                return (
+                    (Math.max(iSize.width, iSize['min-width']) > 240)  ||
+                    (Math.max(iSize.height, iSize['min-height']) > 160)
+                );
+            })[0]);
         }
     });
 
@@ -4463,7 +4484,7 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v2.0  (2016-07-18)  Beta
+//      [Version]    v2.0  (2016-07-21)  Beta
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.
