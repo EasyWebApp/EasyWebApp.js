@@ -2,7 +2,7 @@
 //          >>>  EasyWebUI Component Library  <<<
 //
 //
-//      [Version]     v3.0  (2016-07-20)  Stable
+//      [Version]     v3.1  (2016-07-22)  Stable
 //
 //      [Based on]    iQuery v1  or  jQuery (with jQuery+),
 //
@@ -709,6 +709,13 @@
             'SortDown':    'SortUp'
         };
 
+    function Data_Page(iSum, iUnit) {
+        if (iSum > -1)
+            return  $.map(Array(Math.ceil(iSum / iUnit)),  function () {
+                return  {index:  arguments[1] + 1};
+            });
+    }
+
     $.fn.iTable = function (DataURL) {
         var iLV = $.ListView( $('tbody', this[0]) );
 
@@ -743,6 +750,30 @@
             .children('td').attr(
                 'colspan',  $('tbody > tr', this[0])[0].children.length
             );
+
+        var iPage = $.ListView($('ol', $_tFoot[0])[0],  false,  function () {
+                arguments[0].text( arguments[2] );
+            });
+
+        iPage.$_View.on('click',  'li',  function () {
+            var Index = $(this).index() + 1;
+
+            $.getJSON(
+                DataURL.replace(/^([^\?]+\??)(.*)/,  function () {
+                    return  arguments[1] + 'page=' + Index + (
+                        arguments[2]  ?  ('&' + arguments[2])  :  ''
+                    );
+                }),
+                function (iData) {
+                    iLV.clear().render(iData.tngou);
+
+                    iPage.clear().render(
+                        Data_Page(iData.total, 10)
+                    );
+                }
+            );
+        });
+        iPage[0].click();
 
         return this.eq(0);
     };

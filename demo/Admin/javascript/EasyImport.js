@@ -1169,7 +1169,7 @@
     $ = BOM.iQuery = $.extend(iQuery, $, {
         parseHTML:        function (iHTML, AttrList) {
             var iTag = iHTML.match(
-                    /^\s*<([^\s\/]+)\s*([^<]*?)\s*(\/?)>([^<]*)((<\/\1>)?)([\s\S]*)/
+                    /^\s*<([^\s\/\>]+)\s*([^<]*?)\s*(\/?)>([^<]*)((<\/\1>)?)([\s\S]*)/
                 ) || [ ];
 
             if (iTag[5] === undefined)  iTag[5] = '';
@@ -1186,7 +1186,8 @@
             if (! iWrapper)
                 iNew.innerHTML = iHTML;
             else {
-                iNew = iWrapper.before  +  iHTML  +  (iWrapper.after || '');
+                iNew.innerHTML =
+                    iWrapper.before  +  iHTML  +  (iWrapper.after || '');
                 iNew = $.trace(iNew,  'firstChild',  iWrapper.depth || 1)
                     .slice(-1)[0];
             }

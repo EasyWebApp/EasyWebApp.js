@@ -88,7 +88,9 @@ $(document).ready(function () {
                     this.$_View.children('label')[0].click();
                 });
 
-                $('table', this.domRoot[0]).iTable();
+                $('table', this.domRoot[0]).iTable(
+                    'http://www.tngou.net/' + iData._Data_Path_ + '/list?rows=10&callback=?'
+                );
 
                 return {
                     _Data_Path_:     iData._Data_Path_,

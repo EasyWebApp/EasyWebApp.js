@@ -77,12 +77,13 @@ form [multiple] input[type="radio"] {
 table td.Background-Image {
     border:    0.5em  solid  transparent;
 }
-#Main_View .NavBar {
-    max-height:    5em;
+table > tfoot ol {
+    padding:       0;
+    max-height:    4em;
     overflow:      hidden;
     position:      relative;
 }
-#Main_View .NavBar:after {
+table > tfoot ol:after {
     content:        "...";
     font-size:      inherit;
     line-height:    normal;
@@ -91,18 +92,22 @@ table td.Background-Image {
     visibility:     visible;
     position:       absolute;
     right:          0;
-    bottom:         1.25em;
+    bottom:         0.7em;
 }
-#Main_View .NavBar:hover {
+table > tfoot ol:hover {
     max-height:    none;
 }
-#Main_View .NavBar:hover:after {
+table > tfoot ol:hover:after {
     font-size:      0;
     line-height:    0;
     height:         0;
     width:          0;
     visibility:     hidden;
 }
-#Main_View .NavBar > li:hover {
+table > tfoot ol > li {
+    display:    inline-block;
+    padding:    0  0.7em;
+}
+table > tfoot ol > li:hover {
     background:    white;
 }
