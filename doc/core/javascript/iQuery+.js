@@ -101,7 +101,7 @@
         this.$_Template = this[0].clone(true);
 
         iDelay = (iDelay !== false)  ?
-            $('*', this[0][0]).add( this[0][0] ).isMedia()  :  iDelay;
+            $('*', this[0][0]).add( this[0][0] ).filter(':media')[0]  :  iDelay;
 
         this.cache = iDelay && [ ];
 
@@ -123,9 +123,8 @@
     $.extend(ListView, {
         getInstance:    $.CommonView.getInstance,
         findView:       function ($_View, Init_Instance) {
-            $_View = $($_View).find(
-                'ul, ol, dl, tbody, select, datalist, *[multiple]'
-            ).not('input[type="file"]');
+            $_View = $($_View).find('*:list, *[multiple]')
+                .not('input[type="file"]');
 
             if (Init_Instance === true) {
                 for (var i = 0;  i < $_View.length;  i++)

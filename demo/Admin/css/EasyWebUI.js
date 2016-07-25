@@ -752,7 +752,7 @@
             );
 
         var iPage = $.ListView($('ol', $_tFoot[0])[0],  false,  function () {
-                arguments[0].text( arguments[2] );
+                arguments[0].text( ++arguments[2] );
             });
 
         iPage.$_View.on('click',  'li',  function () {

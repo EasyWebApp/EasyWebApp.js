@@ -899,112 +899,7 @@
             }
         }
     };
-
 /* ---------- DOM Selector ---------- */
-    var iPseudo = {
-            ':header':     {
-                filter:    function () {
-                    return  (arguments[0] instanceof HTMLHeadingElement);
-                }
-            },
-            ':image':      {
-                feature:    $.extend($.makeSet(
-                    'img', 'svg', 'canvas'
-                ), {
-                    input:    {type:  'image'},
-                    link:     {type:  'image/x-icon'}
-                }),
-                filter:    function (iElement) {
-                    var iTag = iElement.tagName.toLowerCase();
-
-                    if (iTag in this.feature)
-                        return  (this.feature[iTag] instanceof Boolean) ? true : (
-                            this.feature[iTag].type == iElement.type.toLowerCase()
-                        );
-                }
-            },
-            ':button':     {
-                feature:    $.makeSet(
-                    'button', 'image', 'submit', 'reset'
-                ),
-                filter:     function (iElement) {
-                    var iTag = iElement.tagName.toLowerCase();
-
-                    return  ((iTag == 'button') || (
-                        (iTag == 'input') &&
-                        (iElement.type.toLowerCase() in this.feature)
-                    ));
-                }
-            },
-            ':input':      {
-                feature:    $.makeSet(
-                    'input', 'textarea', 'button', 'select'
-                ),
-                filter:     function (iDOM) {
-                    return (
-                        (iDOM.tagName.toLowerCase() in this.feature)  ||
-                        (typeof iDOM.getAttribute('contentEditable') == 'string')  ||
-                        iDOM.designMode
-                    );
-                }
-            },
-            ':list':       {
-                feature:    $.makeSet('ul', 'ol', 'dl', 'datalist'),
-                filter:     function () {
-                    return  (arguments[0].tagName.toLowerCase() in this.feature);
-                }
-            },
-            ':data':       {
-                filter:    function () {
-                    return  (! $.isEmptyObject(arguments[0].dataset));
-                }
-            },
-            ':visible':    {
-                feature:    {
-                    display:    'none',
-                    width:      0,
-                    height:     0
-                },
-                filter:     function (iElement) {
-                    var iStyle = _DOM_.operate('Style', [iElement], [
-                            'display', 'width', 'height'
-                        ]);
-
-                    for (var iKey in iStyle)
-                        if (iStyle[iKey] === this.feature[iKey])
-                            return;
-                    return true;
-                }
-            },
-            ':parent':      {
-                filter:    function () {
-                    var iNode = arguments[0].childNodes;
-
-                    if (! arguments[0].children.length) {
-                        for (var i = 0;  i < iNode.length;  i++)
-                            if (iNode[i].nodeType == 3)
-                                return true;
-                    } else  return true;
-                }
-            }
-        };
-    $.extend(iPseudo, {
-        ':hidden':    {
-            filter:    function () {
-                return  (! iPseudo[':visible'].filter(arguments[0]));
-            }
-        },
-        ':empty':     {
-            filter:    function () {
-                return  (! iPseudo[':parent'].filter(arguments[0]));
-            }
-        }
-    });
-
-    for (var _Pseudo_ in iPseudo)
-        iPseudo[_Pseudo_].regexp = RegExp(
-            '(.*?)' + _Pseudo_ + "([>\\+~\\s]*.*)"
-        );
 
     function QuerySelector(iPath) {
         var iRoot = this;
@@ -1031,31 +926,32 @@
     function DOM_Search(iRoot, iSelector) {
         var _Self_ = arguments.callee;
 
-        return  $.map(iSelector.split(/\s*,\s*/),  function () {
-            try {
-                return $.makeArray(
-                    QuerySelector.call(iRoot,  arguments[0] || '*')
-                );
-            } catch (iError) {
-                var _Selector_;
-                for (var _Pseudo_ in iPseudo) {
-                    _Selector_ = arguments[0].match(iPseudo[_Pseudo_].regexp);
-                    if (_Selector_)  break;
-                };
-                if (! _Selector_)  return;
+        return  $.map(iSelector.split(/\s*,\s*/),  function (_Selector_) {
+            var iPseudo = [ ],  _Before_,  _After_ = _Selector_;
 
-                _Selector_[1] = _Selector_[1] || '*';
-                _Selector_[1] += (_Selector_[1].match(/[\s>\+~]\s*$/) ? '*' : '');
+            while (! (iPseudo[1] in $.expr[':'])) {
+                iPseudo = _After_.match(/:(\w+)(\(('|")?([^'"]*)\3?\))?/);
 
-                return $.map(
-                    QuerySelector.call(iRoot, _Selector_[1]),
-                    function (iDOM) {
-                        if ( iPseudo[_Pseudo_].filter(iDOM) )
-                            return  _Selector_[2]  ?
-                                _Self_(iDOM,  '*' + _Selector_[2])  :  iDOM;
-                    }
-                );
+                if (! iPseudo)
+                    return  $.makeArray(QuerySelector.call(iRoot, _Selector_));
+
+                _Before_ = iPseudo.index  ?
+                    _After_.slice(0, iPseudo.index)  :  '*';
+
+                _After_ = _After_.slice(iPseudo.index + iPseudo[0].length)
             }
+
+            if (_Before_.match(/[\s>\+~]\s*$/))  _Before_ += '*';
+
+            iPseudo.splice(2, 1);
+
+            return $.map(
+                QuerySelector.call(iRoot, _Before_),
+                function (iDOM, Index) {
+                    if ($.expr[':'][iPseudo[1]](iDOM, Index, iPseudo))
+                        return  _Self_(iDOM, _After_);
+                }
+            );
         });
     }
     var DOM_Sort = $.browser.msie ?
@@ -1263,6 +1159,122 @@
     });
 
     return $;
+
+})(self,  self.document,  self.iQuery || iQuery);
+
+
+
+(function (BOM, DOM, $) {
+
+    $.expr = { };
+
+    var pVisible = {
+            display:    'none',
+            width:      0,
+            height:     0
+        };
+
+    $.expr[':'] = $.expr.filters = {
+        visible:    function () {
+            var iStyle = BOM.getComputedStyle( arguments[0] );
+
+            for (var iKey in pVisible)
+                if (iStyle[iKey] === pVisible[iKey])  return;
+
+            return true;
+        },
+        hidden:    function () {
+            return  (! this.visible(arguments[0]));
+        },
+        header:      function () {
+            return  (arguments[0] instanceof HTMLHeadingElement);
+        },
+        parent:      function (iDOM) {
+            if (iDOM.children.length)  return true;
+
+            iDOM = iDOM.childNodes;
+
+            for (var i = 0;  iDOM[i];  i++)
+                if (iDOM[i].nodeType == 3)  return true;
+        },
+        empty:       function () {
+            return  (! this.parent(arguments[0]));
+        },
+        contains:    function (iDOM, Index, iMatch) {
+            return  (iDOM.textContent.indexOf(iMatch[3]) > -1);
+        }
+    };
+
+})(self,  self.document,  self.iQuery || iQuery);
+
+
+
+(function (BOM, DOM, $) {
+
+/* ---------- Enhanced :image ---------- */
+
+    var pImage = $.extend($.makeSet('IMG', 'SVG', 'CANVAS'), {
+            INPUT:    {type:  'image'},
+            LINK:     {type:  'image/x-icon'}
+        });
+
+    $.expr[':'].image = function (iDOM) {
+        if (iDOM.tagName in pImage)
+            return  (pImage[iDOM.tagName] === true)  ||
+                (pImage[iDOM.tagName].type == iDOM.type.toLowerCase());
+
+        return  ($(iDOM).css('background-image') != 'none');
+    };
+
+/* ---------- Enhanced :button ---------- */
+
+    var pButton = $.makeSet('button', 'image', 'submit', 'reset');
+
+    $.expr[':'].button = function (iDOM) {
+        return  (iDOM.tagName == 'BUTTON')  ||  (
+            (iDOM.tagName == 'INPUT')  &&  (iDOM.type.toLowerCase() in pButton)
+        );
+    };
+
+/* ---------- Enhanced :input ---------- */
+
+    var pInput = $.makeSet('INPUT', 'TEXTAREA', 'BUTTON', 'SELECT');
+
+    $.expr[':'].input = function (iDOM) {
+        return  (iDOM.tagName in pInput)  ||
+            (typeof iDOM.getAttribute('contentEditable') == 'string')  ||
+            iDOM.designMode;
+    };
+
+/* ---------- iQuery Extended Pseudo ---------- */
+
+    var pList = $.makeSet('UL', 'OL', 'DL', 'TBODY', 'SELECT', 'DATALIST');
+
+    $.extend($.expr[':'], {
+        list:    function () {
+            return  (arguments[0].tagName in pList);
+        },
+        data:    function () {
+            return  (! $.isEmptyObject(arguments[0].dataset));
+        }
+    });
+
+    var pMedia = $.makeSet('IFRAME', 'OBJECT', 'EMBED', 'AUDIO', 'VIDEO');
+
+    $.expr[':'].media = function (iDOM) {
+        if (iDOM.tagName in pMedia)  return true;
+
+        if (! this.image(iDOM))  return;
+
+        var iSize = $.map($(iDOM).css([
+                'width', 'height', 'min-width', 'min-height'
+            ]), parseFloat);
+
+        return (
+            (Math.max(iSize.width, iSize['min-width']) > 240)  ||
+            (Math.max(iSize.height, iSize['min-height']) > 160)
+        );
+    };
 
 })(self,  self.document,  self.iQuery || iQuery);
 
@@ -3351,29 +3363,6 @@
             });
 
             return this;
-        },
-        isMedia:         function () {
-            if (this.filter('iframe, object, embed, audio, video')[0])
-                return true;
-
-            return  (!!  $.map(this,  function () {
-                var $_Image = $( arguments[0] );
-
-                if (
-                    ($_Image[0].tagName != 'IMG')  &&
-                    ($_Image.css('background-image') == 'none')
-                )
-                    return;
-
-                var iSize = $.map($_Image.css([
-                        'width', 'height', 'min-width', 'min-height'
-                    ]), parseFloat);
-
-                return (
-                    (Math.max(iSize.width, iSize['min-width']) > 240)  ||
-                    (Math.max(iSize.height, iSize['min-height']) > 160)
-                );
-            })[0]);
         }
     });
 
@@ -4485,7 +4474,7 @@
 //                >>>  iQuery.js  <<<
 //
 //
-//      [Version]    v2.0  (2016-07-21)  Beta
+//      [Version]    v2.0  (2016-07-25)  Beta
 //
 //      [Usage]      A Light-weight jQuery Compatible API
 //                   with IE 8+ compatibility.
