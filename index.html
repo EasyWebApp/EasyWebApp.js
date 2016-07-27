@@ -1,0 +1,72 @@
+<!DocType HTML>
+<html><head>
+    <meta charset="utf-8" />
+
+    <title>Next SPA Engine</title>
+
+    <link rel="stylesheet" href="http://tech_query.oschina.io/iquery/doc/core/css/EasyWebUI.css" />
+    <style>
+        body {
+            background:     rgb(230, 230, 230);
+            padding-top:    4em;
+        }
+        body > .Head {
+            position:    fixed;
+            left:        0;
+            top:         0;
+            width:       100%;
+            height:      4em;
+        }
+    </style>
+
+    <script src="//cdn.bootcss.com/require.js/2.2.0/require.min.js"></script>
+    <script>
+    require.config({baseUrl:  'javascript/'});
+
+    require(['jquery', 'EasyWebApp'],  function ($) {
+        $.ajaxSetup({
+            crossDomain:    true,
+            dataType:       'jsonp'
+        });
+
+        function DataFilter() {
+            return  $.map(arguments[1].tngou,  function (iValue) {
+                if (iValue.img)
+                    iValue.img = 'http://tnfs.tngou.net/img' + iValue.img;
+
+                if (iValue.time)
+                    iValue.time = (new Date(iValue.time)).toLocaleString();
+
+                return iValue;
+            });
+        }
+
+        $(document).ready(function () {
+            $.ListView('body > .Head > .NavBar',  false,  function ($_Item, iValue) {
+                $_Item.text( iValue.name.slice(0, 2) )[0]
+                    .setAttribute(
+                        'src',  $_Item[0].getAttribute('src') + iValue.id
+                    );
+            }).$_View.on('data', DataFilter);
+
+            $('body > .PC_Narrow').on('data', DataFilter);
+
+            $('body > .Head > h1')[0].click();
+        });
+    });
+    </script>
+</head><body>
+    <div class="Head Grid-Row Black_O CenterX CenterY">
+        <h1 target="_Main_" href="list.html"
+            src="http://www.tngou.net/api/top/list">
+            小日报
+        </h1>
+        <ul class="NavBar" src="http://www.tngou.net/api/top/classify">
+            <li target="_Main_" href="list.html"
+                src="http://www.tngou.net/api/top/list?id=">
+            </li>
+        </ul>
+    </div>
+    <div class="PC_Narrow" name="_Main_">
+    </div>
+</body></html>
