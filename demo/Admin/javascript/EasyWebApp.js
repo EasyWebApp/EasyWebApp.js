@@ -221,16 +221,15 @@ var InnerPage = (function (BOM, DOM, $, PageLink) {
 
     function InnerPage(App_Instance, iLink) {
         $.extend(this, {
-            ownerApp:         App_Instance,
-            sourceLink:       iLink,
-            title:            iLink.title || DOM.title,
-            URL:              iLink.alt || BOM.location.href,
-            HTML:             iLink.href || DOM.URL,
-            method:           iLink.method,
-            JSON:             iLink.src || iLink.action,
-            time:             $.now(),
-            innerLink:        [ ],
-            innerTemplate:    [ ]
+            ownerApp:      App_Instance,
+            sourceLink:    iLink,
+            title:         iLink.title || DOM.title,
+            URL:           iLink.alt || BOM.location.href,
+            HTML:          iLink.href || DOM.URL,
+            method:        iLink.method,
+            JSON:          iLink.src || iLink.action,
+            time:          $.now(),
+            innerLink:     [ ]
         });
     }
 
@@ -415,13 +414,15 @@ var WebApp = (function (BOM, DOM, $, PageLink, InnerPage, InnerHistory) {
         $.Observer.apply(this);
 
         $.extend(this, {
-            domRoot:      $($_Root),
-            apiRoot:      API_Root || '',
-            cache:        (Cache_Second || (Cache_Second == 0))  ?
-                Cache_Second  :  Infinity,
-            urlChange:    URL_Change,
-            history:      new InnerHistory(this, $_Root),
-            loading:      false
+            domRoot:          $($_Root),
+            apiRoot:          API_Root || '',
+            cache:
+                (Cache_Second || (Cache_Second == 0))  ?
+                    Cache_Second  :  Infinity,
+            urlChange:        URL_Change,
+            history:          new InnerHistory(this, $_Root),
+            loading:          false,
+            innerTemplate:    { }
         });
     }
 
@@ -430,36 +431,56 @@ var WebApp = (function (BOM, DOM, $, PageLink, InnerPage, InnerHistory) {
 
     var RE_Str_Var = /\{(.+?)\}/g;
 
-    WebApp.prototype.makeURL = function (iURL, iData, iArgs) {
-        iURL = $.split(iURL, '?', 2);
-        iData = $.extend(this.history.getData(),  iData || { });
+    $.extend(WebApp.prototype, {
+        makeURL:        function (iURL, iData, iArgs) {
+            iURL = $.split(iURL, '?', 2);
+            iData = $.extend(this.history.getData(),  iData || { });
 
-        var iJSONP = ('&' + iURL[1]).match(/&([^=]+)=\?/);
-        iJSONP = iJSONP && iJSONP[1];
+            var iJSONP = ('&' + iURL[1]).match(/&([^=]+)=\?/);
+            iJSONP = iJSONP && iJSONP[1];
 
-        var URL_Param = $.param(
-                $.extend(
-                    $.paramJSON('?'  +  iURL[1].replace(iJSONP + '=?',  '')),
-                    iArgs || { }
-                )
-            );
-        iURL = [
-            BOM.decodeURIComponent(iURL[0]).replace(RE_Str_Var,  function () {
-                return iData[arguments[1]];
-            }),
-            (! iJSONP)  ?  URL_Param  :  [
-                URL_Param,  URL_Param ? '&' : '',  iJSONP,  '=?'
-            ].join('')
-        ].join('?');
+            var URL_Param = $.param(
+                    $.extend(
+                        $.paramJSON('?'  +  iURL[1].replace(iJSONP + '=?',  '')),
+                        iArgs || { }
+                    )
+                );
+            iURL = [
+                BOM.decodeURIComponent(iURL[0]).replace(RE_Str_Var,  function () {
+                    return iData[arguments[1]];
+                }),
+                (! iJSONP)  ?  URL_Param  :  [
+                    URL_Param,  URL_Param ? '&' : '',  iJSONP,  '=?'
+                ].join('')
+            ].join('?');
 
-        if (! (
-            iURL.match(/^(\w+:)?\/\/[\w\d]+/) ||
-            $.fileName(iURL).match(/\.(htm|html|md|markdown)$/)
-        ))
-            iURL = this.apiRoot + iURL;
+            if (! (
+                iURL.match(/^(\w+:)?\/\/[\w\d]+/) ||
+                $.fileName(iURL).match(/\.(htm|html|md|markdown)$/)
+            ))
+                iURL = this.apiRoot + iURL;
 
-        return iURL;
-    };
+            return iURL;
+        },
+        getTemplate:    function (DOM_ID) {
+            if (DOM_ID)
+                return this.innerTemplate[DOM_ID].children().clone(true);
+
+            var $_Link = $('body *[target="_self"][href^="#"]');
+
+            for (var i = 0;  $_Link[i];  i++) {
+                DOM_ID = $_Link[i].getAttribute('href').slice(1);
+
+                if (this.innerTemplate[DOM_ID])  continue;
+
+                this.innerTemplate[DOM_ID] =
+                    $(DOM.getElementById(DOM_ID)).detach();
+                $.ListView.findView(this.innerTemplate[DOM_ID], false);
+            }
+
+            return this;
+        }
+    });
 
     function Trig_Event() {
         var This_Page = this.history.last();
@@ -547,6 +568,8 @@ var WebApp = (function (BOM, DOM, $, PageLink, InnerPage, InnerHistory) {
                 $_Page = $('head link[target][href]'),
                 $_API = $('head link[src]');
 
+            this.ownerApp.getTemplate();
+
             if ( $_Page.length )
                 this.ownerApp.one('pageReady',  function () {
                     return  arguments[2].loadLink(
@@ -571,20 +594,13 @@ var WebApp = (function (BOM, DOM, $, PageLink, InnerPage, InnerHistory) {
             for (var i = 0;  i < $_API.length;  i++)
                 (new PageLink(this.ownerApp, $_API[i])).loadData(API_Load);
         },
-        getTemplate:    function (DOM_ID) {
-            if (! this.innerTemplate[DOM_ID]) {
-                this.innerTemplate[DOM_ID] = $('*[id="' + DOM_ID + '"]').remove();
-                $.ListView.findView(this.innerTemplate[DOM_ID], false);
-            }
-            return this.innerTemplate[DOM_ID].children().clone(true);
-        },
         load:    function (iLink, Page_Load) {
             var MarkDown_File = /\.(md|markdown)\??/i,
                 This_Page = this,  This_App = this.ownerApp;
 
             if (iLink.href[0] == '#')
                 return Page_Load.call(
-                    this.show(this.getTemplate( iLink.href.slice(1) )).ownerApp
+                    this.show(This_App.getTemplate( iLink.href.slice(1) )).ownerApp
                 );
 
             $.get(iLink.getURL('href'),  (! iLink.href.match(MarkDown_File)) ?

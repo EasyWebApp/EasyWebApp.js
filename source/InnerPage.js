@@ -6,16 +6,15 @@ define(['jquery', 'PageLink'],  function ($, PageLink) {
 
     function InnerPage(App_Instance, iLink) {
         $.extend(this, {
-            ownerApp:         App_Instance,
-            sourceLink:       iLink,
-            title:            iLink.title || DOM.title,
-            URL:              iLink.alt || BOM.location.href,
-            HTML:             iLink.href || DOM.URL,
-            method:           iLink.method,
-            JSON:             iLink.src || iLink.action,
-            time:             $.now(),
-            innerLink:        [ ],
-            innerTemplate:    [ ]
+            ownerApp:      App_Instance,
+            sourceLink:    iLink,
+            title:         iLink.title || DOM.title,
+            URL:           iLink.alt || BOM.location.href,
+            HTML:          iLink.href || DOM.URL,
+            method:        iLink.method,
+            JSON:          iLink.src || iLink.action,
+            time:          $.now(),
+            innerLink:     [ ]
         });
     }
 

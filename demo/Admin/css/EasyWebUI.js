@@ -717,6 +717,8 @@
     }
 
     $.fn.iTable = function (DataURL) {
+        if (! this[0])  return this;
+
         var iLV = $.ListView( $('tbody', this[0]) );
 
         $('th', this[0]).click(function () {
@@ -820,7 +822,7 @@
                 iSelector = ['input[type="radio"]',  'div, section, .Body'];
             iSelector[Label_At ? 'unshift' : 'push']('label');
 
-            $.ListView(this,  iSelector,  function ($_Tab_Item) {
+            $.ListView(this,  iSelector,  false,  function ($_Tab_Item) {
                 var _UUID_ = $.uuid();
 
                 var $_Label = $_Tab_Item.filter('label').attr('for', _UUID_),
@@ -940,7 +942,7 @@
     $.fn.iReadNav = function ($_Context) {
         return  this.each(function () {
             var iMainNav = $.TreeView(
-                    $.ListView(this,  function ($_Item, iValue) {
+                    $.ListView(this,  false,  function ($_Item, iValue) {
 
                         $('a', $_Item[0]).text(iValue.text)[0].href =
                             '#' + iValue.id;
@@ -1043,7 +1045,7 @@
     $.fn.iTree = function (Sub_Key, onInsert) {
         return  this.each(function () {
             var iOrgTree = $.TreeView(
-                    $.ListView(this, onInsert),
+                    $.ListView(this, false, onInsert),
                     Sub_Key,
                     2,
                     function (iFork, iDepth, iData) {
