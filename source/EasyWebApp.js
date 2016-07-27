@@ -2,7 +2,7 @@
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v2.6  (2016-07-18)  Alpha
+//      [Version]    v2.6  (2016-07-27)  Beta
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //
@@ -18,7 +18,7 @@
 //
 
 
-define(['SPACore', 'jquery'],  function (WebApp, $) {
+define(['jquery', 'WebApp', 'PageLink'],  function ($, WebApp, PageLink) {
 
 /* ---------->> jQuery Wrapper <<---------- */
 
@@ -49,4 +49,51 @@ define(['SPACore', 'jquery'],  function (WebApp, $) {
         return iWebApp;
     };
 
+/* ---------- User Event Switcher ---------- */
+
+    var No_Hook = $.makeSet('form', 'input', 'textarea', 'select');
+
+    function Event_Filter() {
+        var iTagName = this.tagName.toLowerCase(),
+            iEvent = arguments.callee.caller.arguments[0];
+
+        switch (iEvent.type) {
+            case 'click':     ;
+            case 'tap':       {
+                if (iTagName == 'a') {
+                    if (this.matches('a[rel*="nofollow"]'))  return true;
+
+                    iEvent.preventDefault();
+                }
+                return  (iTagName in No_Hook);
+            }
+            case 'change':    return  (this !== iEvent.target);
+        }
+    }
+
+    $(DOM).on(
+        ($.browser.mobile ? 'tap' : 'click') + ' change',
+        '*[target]',
+        function () {
+            if ( Event_Filter.call(this) )  return;
+
+            var iLink = new PageLink($('.EWA_Container').WebApp(), this);
+
+            switch (iLink.target) {
+                case '_self':     {
+                    if (iLink.href)  iLink.loadTemplate();
+                    break;
+                }
+                case '_blank':    {
+                    if (iLink.src)  iLink.loadData();
+                    break;
+                }
+                case '_top':      {
+                    if (iLink.href)  iLink.loadPage();
+                    break;
+                }
+                default:          iLink.loadTemplate();
+            }
+        }
+    );
 });

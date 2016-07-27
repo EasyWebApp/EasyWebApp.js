@@ -39,9 +39,11 @@ EasyWebApp 与其作者开发的 [**EasyWebUI**](http://git.oschina.net/Tech_Que
 
 
 ## 【版本历史】
- - v2.6   Alpha   —— 2016年7月4日
+ - v2.6   Beta    —— 2016年7月27日
    - **多条件事件绑定** jQuery API 基于 `iQuery.Observer()` 重构到 WebApp 对象上
    - 支持 iQuery+ v1.4 新增的 `$.CommonView()` **抽象视图接口**
+   - 新增两个 **内页环境数据** `_Data_Path_`、`_Data_Name_`
+   - **复杂内页渲染**性能大幅优化
    - 引擎源代码 AMD 规范化
  - v2.5   Stable  —— 2016年5月13日
    - 独立出 **抽象视图数据读写**方法 `$.fn.dataRender()`、`$.fn.dataReader()`，方便业务逻辑复用

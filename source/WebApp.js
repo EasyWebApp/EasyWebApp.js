@@ -1,222 +1,8 @@
-define(['ViewDataIO'],  function () {
+define([
+    'jquery', 'PageLink', 'InnerPage', 'InnerHistory'
+],  function ($, PageLink, InnerPage, InnerHistory) {
 
     var BOM = self,  DOM = self.document;
-
-
-/* ---------- [object PageLink] ---------- */
-
-    function PageLink(This_App, Link_DOM, iArgument, iData) {
-        this.ownApp = This_App;
-        this.$_DOM = $.isPlainObject(Link_DOM) ?
-            this.createDOM(Link_DOM, iArgument, iData)  :
-            $(Link_DOM);
-
-        var _Self_ = arguments.callee,  iLink = this.$_DOM.data('EWA_PageLink');
-
-        if (iLink instanceof _Self_)  return iLink;
-
-        this.$_DOM.data('EWA_PageLink', this).css('cursor', 'pointer');
-
-        $.extend(this, _Self_.getAttr(this.$_DOM));
-
-        switch (this.target) {
-            case '_top':      this.type = 'Outer';  break;
-            case '_blank':    this.type = 'Data';   break;
-            case '_self':     ;
-            default:          if (this.href)  this.type = 'Inner';
-        }
-        this.method = (this.method || 'Get').toLowerCase();
-        this.data = { };
-        this.href = this.href || this.ownApp.history.last().HTML;
-        this.href = this.getURL('href');
-
-        var iFileName = $.fileName( this.href ).split('.');
-
-        $.extend(this.data, {
-            _File_Path_:    $.filePath( this.href ),
-            _File_Name_:    iFileName[0],
-            _Ext_Name_:     iFileName[1]
-        });
-
-        if (this.src)
-            $.extend(this.data, {
-                _Data_Path_:    $.filePath(this.src),
-                _Data_Name_:    $.fileName(this.src)
-            });
-
-        if ((this.href || '').indexOf('?')  >  -1)
-            this.data = $.extend($.paramJSON(this.href), this.data);
-    }
-
-    PageLink.getAttr = function () {
-        return arguments[0].attr([
-            'target', 'title', 'alt', 'href', 'method', 'src', 'action'
-        ]);
-    };
-
-    var Prefetch_Tag = $.browser.modern ? 'prefetch' : 'next';
-
-    PageLink.prefetchClear = function () {
-        $('head link[rel="' + Prefetch_Tag + '"]').remove();
-    };
-
-    $.extend(PageLink.prototype, {
-        createDOM:    function (iAttribute, iArgument, iData) {
-            var _Argument_ = { };
-
-            if ( $.isPlainObject(iArgument) )
-                for (var iName in iArgument)
-                    _Argument_['data-' + iName] = iArgument[iName];
-
-            var $_Link = $('<button />', $.extend({
-                    rel:    'nofollow',
-                    css:    {display:  'none'}
-                }, iAttribute, _Argument_)).appendTo(DOM.body);
-
-            if ((iData instanceof Array)  ||  $.isPlainObject(iData))
-                $_Link.data('EWA_Model', iData);
-
-            return $_Link;
-        },
-        getData:      function () {
-            var iData = this.$_DOM.data('EWA_Model');
-
-            if (! iData) {
-                var $_Item = this.$_DOM.hasClass('ListView_Item') ?
-                        this.$_DOM : this.$_DOM.parents('.ListView_Item');
-
-                if ( $_Item[0] )
-                    iData = $.ListView.getInstance( $_Item[0].parentNode )
-                        .valueOf( $_Item );
-            }
-            return  this.data = $.extend(iData || { },  this.data);
-        },
-        getArgs:      function () {
-            var iData = $.extend(this.ownApp.history.getData(), this.getData());
-
-            return  $.map(this.$_DOM[0].dataset,  function (iName) {
-                if (
-                    ((Number(iName) % 1)  !==  0)  &&
-                    (iData[iName] !== undefined)
-                )
-                    return iData[iName];
-
-                return iName;
-            });
-        },
-        getURL:       function (iKey) {
-            if (! this[iKey])  return '';
-
-            if ((iKey != 'href')  ||  (this[iKey][0] != '#')) {
-                this[iKey] = this.ownApp.makeURL(
-                    this[iKey] || '',
-                    this.getData(),
-                    ((iKey == 'href')  ?  (! this.src)  :  (
-                        this.method.toUpperCase() == 'GET'
-                    )) && this.getArgs()
-                );
-                if ((iKey == 'href')  &&  (this[iKey].slice(-1) == '?'))
-                    this[iKey] = this[iKey].slice(0, -1);
-            }
-            return this[iKey];
-        },
-        valueOf:      function () {
-            var iValue = { };
-
-            for (var iKey in this)
-                if (! (typeof this[iKey]).match(/object|function/))
-                    iValue[iKey] = this[iKey];
-
-            return iValue;
-        }
-    });
-
-/* ---------- [object InnerPage] ---------- */
-
-    function InnerPage(App_Instance, iLink) {
-        $.extend(this, {
-            ownerApp:         App_Instance,
-            sourceLink:       iLink,
-            title:            iLink.title || DOM.title,
-            URL:              iLink.alt || BOM.location.href,
-            HTML:             iLink.href || DOM.URL,
-            method:           iLink.method,
-            JSON:             iLink.src || iLink.action,
-            time:             $.now(),
-            innerLink:        [ ],
-            innerTemplate:    [ ]
-        });
-    }
-
-    $.extend(InnerPage.prototype, {
-        show:       function ($_Page) {
-            $_Page = $_Page ? $($_Page) : this.$_Page;
-
-            var iHistory = this.ownerApp.history;
-            var iForward = iHistory.isForward(this);
-
-            if (! $_Page) {
-                if (this.sourceLink.type != 'Inner')
-                    BOM.setTimeout(function () {
-                        BOM.history[iForward ? 'forward' : 'back']();
-                    });
-                else {
-                    this.sourceLink = new PageLink(
-                        this.ownerApp,  this.sourceLink.valueOf()
-                    );
-                    this.sourceLink.$_DOM[0].click();
-                }
-                return this;
-            }
-
-            var $_Target = this.sourceLink.getTarget();
-
-            if (iHistory.length || iForward)  iHistory.move( $_Target );
-
-            this.$_Page = $_Page.appendTo( $_Target ).fadeIn();
-
-            if (! arguments.length) {
-                var Link_DOM = iHistory.last(true).sourceLink.$_DOM[0];
-                var iListView = $.ListView.getInstance( Link_DOM.parentElement );
-
-                if (iListView)
-                    iListView.focus(Link_DOM);
-                else
-                    Link_DOM.scrollIntoView();
-            }
-
-            return this;
-        },
-        valueOf:    PageLink.prototype.valueOf
-    });
-
-/* ---------- [object InnerHistory] ---------- */
-
-    var $_BOM = $(BOM);
-
-    function InnerHistory() {
-        var _This_ = $.extend(this, {
-                length:       0,
-                ownerApp:     arguments[0],
-                root:         arguments[1],
-                lastIndex:    -1
-            });
-
-        $_BOM.on('popstate',  function () {
-            var iState = arguments[0].state;
-            var _Index_ = (iState || { }).DOM_Index;
-            var iHistory = _This_[_Index_];
-
-            if (! iHistory)
-                return  BOM.history.go(_This_[_Index_ - 1]  ?  -1  :  1);
-
-            _This_.move(iState);
-            iHistory.show().onReady();
-
-            _This_.prevIndex = _This_.lastIndex;
-            _This_.lastIndex = iState.DOM_Index;
-        });
-    }
 
     function Data_Merge(iOld, iNew) {
         var iArgs = $.makeArray(arguments);
@@ -227,86 +13,15 @@ define(['ViewDataIO'],  function () {
         return  $.extend.apply($, iArgs);
     }
 
-    $.extend(InnerHistory.prototype, {
-        splice:       Array.prototype.splice,
-        push:         Array.prototype.push,
-        slice:        Array.prototype.slice,
-        indexOf:      Array.prototype.indexOf,
-        move:         function () {
-            if ($.isPlainObject( arguments[0] ))
-                var iState = arguments[0];
-            else {
-                var $_Target = arguments[0];
-                $.ListView.findView(this.root, true);
-            }
-            var $_Page = ($_Target || this.root).children().detach();
+    InnerHistory.prototype.getData = function () {
+        var iData = $.map(this,  function (iPage) {
+                var _Data_ = iPage.data || iPage.sourceLink.data;
 
-            if ((! iState)  ||  ((iState.DOM_Index + 2) == this.length))
-                this[this.length - 1].$_Page =
-                    this[this.length - 1].$_Page  ||  $_Page;
-
-            return $_Page;
-        },
-        write:        function () {
-            this.prevIndex = this.lastIndex++ ;
-            this.splice(this.lastIndex,  this.length);
-
-            var iNew = new InnerPage(this.ownerApp,  arguments[0] || { });
-            this.push(iNew);
-            iNew.$_Page = (this.cache() || { }).$_Page;
-
-            BOM.history.pushState(
-                {DOM_Index:  this.lastIndex},
-                iNew.title,
-                iNew.URL
-            );
-            return iNew;
-        },
-        cache:        function () {
-            var iNew = this[this.lastIndex];
-
-            for (var i = 0;  i < this.lastIndex;  i++)
-                if ((iNew.time - this[i].time)  >  (this.ownerApp.cache * 1000)) {
-                    if (! this[i].sourceLink.action)  this[i].$_Page = null;
-                } else if (
-                    (! iNew.JSON)  &&
-                    $.isEqual(iNew.sourceLink, this[i].sourceLink)
-                )
-                    return this[i];
-        },
-        last:         function () {
-            var iPage = this[this.lastIndex] || { };
-            return  arguments[0] ? iPage : iPage.valueOf();
-        },
-        prev:         function () {
-            var iPage = this[this.prevIndex] || { };
-            return  arguments[0] ? iPage : iPage.valueOf();
-        },
-        isForward:    function () {
-            return (
-                this.indexOf( arguments[0] )  >  this.indexOf( this.last(true) )
-            );
-        },
-        mergeData:    function (iSource, Index) {
-            var iPage = this.slice(Index,  (Index + 1) || undefined)[0];
-
-            iPage.data = $.extend(
-                iPage.data || { },
-                (iSource instanceof $)  ?
-                    $.paramJSON('?' + iSource.serialize())  :  iSource
-            );
-            return iSource;
-        },
-        getData:      function () {
-            var iData = $.map(this,  function (iPage) {
-                    var _Data_ = iPage.data || iPage.sourceLink.data;
-
-                    return  _Data_ && [_Data_];
-                });
-            return  (iData.length < 2)  ?
-                (iData[0] || { })  :  Data_Merge.apply(null, iData);
-        },
-    });
+                return  _Data_ && [_Data_];
+            });
+        return  (iData.length < 2)  ?
+            (iData[0] || { })  :  Data_Merge.apply(null, iData);
+    };
 
 /* ---------->> WebApp Constructor <<---------- */
 
@@ -383,7 +98,7 @@ define(['ViewDataIO'],  function () {
                 ((iHTML[1] || '').indexOf('=') == -1)
             ) {
                 var $_Prefetch = $('<link />', {
-                        rel:     Prefetch_Tag,
+                        rel:     this.constructor.prefetchRel,
                         href:    this.href
                     });
 
@@ -394,7 +109,7 @@ define(['ViewDataIO'],  function () {
                 )
                     $_Prefetch.add(
                         $('<link />', {
-                            rel:     Prefetch_Tag,
+                            rel:     this.constructor.prefetchRel,
                             href:    this.getURL('src')
                         })
                     );
@@ -439,12 +154,6 @@ define(['ViewDataIO'],  function () {
             }
         }
     });
-
-    function Original_Link() {
-        return ($.inArray(
-            'nofollow',  (this.getAttribute('rel') || '').split(/\s+/)
-        ) > -1);
-    }
 
     $.extend(InnerPage.prototype, {
         boot:    function (iRender) {
@@ -534,7 +243,7 @@ define(['ViewDataIO'],  function () {
                             .find('a[href]').attr('target',  function () {
                                 if (! (
                                     this.href.indexOf('#!') ||
-                                    Original_Link.call(this)
+                                    this.matches('a[rel*="nofollow"]')
                                 )) {
                                     this.setAttribute('rel', 'nofollow');
                                     return arguments[1];
@@ -668,55 +377,6 @@ define(['ViewDataIO'],  function () {
         }
     });
 
-/* ---------- User Event Switcher ---------- */
-
-    var No_Hook = $.makeSet('form', 'input', 'textarea', 'select');
-
-    function Event_Filter() {
-        var iTagName = this.tagName.toLowerCase(),
-            iEvent = arguments.callee.caller.arguments[0];
-
-        switch (iEvent.type) {
-            case 'click':     ;
-            case 'tap':       {
-                if (iTagName == 'a') {
-                    if ( Original_Link.call(this) )  return true;
-
-                    iEvent.preventDefault();
-                }
-                return  (iTagName in No_Hook);
-            }
-            case 'change':    return  (this !== iEvent.target);
-        }
-    }
-
-    $(DOM).ready(function () {
-        $(this.body).on(
-            ($.browser.mobile ? 'tap' : 'click') + ' change',
-            '*[target]',
-            function () {
-                if ( Event_Filter.call(this) )  return;
-
-                var iLink = new PageLink($('.EWA_Container').WebApp(), this);
-
-                switch (iLink.target) {
-                    case '_self':     {
-                        if (iLink.href)  iLink.loadTemplate();
-                        break;
-                    }
-                    case '_blank':    {
-                        if (iLink.src)  iLink.loadData();
-                        break;
-                    }
-                    case '_top':      {
-                        if (iLink.href)  iLink.loadPage();
-                        break;
-                    }
-                    default:          iLink.loadTemplate();
-                }
-            }
-        );
-    });
 /* ---------- Manual Navigation ---------- */
 
     WebApp.prototype.loadLink = function (iAttribute, iArgument, iData) {
@@ -803,7 +463,7 @@ define(['ViewDataIO'],  function () {
                 this.render(null, arguments[0]).onReady();
             });
 
-        $_BOM.on('hashchange',  $.proxy(Hash_Path_Load, This_Page));
+        $(BOM).on('hashchange',  $.proxy(Hash_Path_Load, This_Page));
 
         return this;
     };
