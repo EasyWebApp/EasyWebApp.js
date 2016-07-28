@@ -8,10 +8,13 @@ define(['jquery', 'iQuery+'],  function ($) {
         iLink = iLink || this.$_Root[0];
         this.$_Link = $(iLink);
 
+        this.title = iLink.title;
         this.href = iLink.getAttribute('href');
         this.method = iLink.getAttribute('method') || 'get';
         this.src = iLink.getAttribute('src');
         this.action = iLink.getAttribute('action');
+
+        iApp.register(this);
     }
 
     $.extend(UI_Module.prototype, {
@@ -33,6 +36,8 @@ define(['jquery', 'iQuery+'],  function ($) {
                 });
 
             if (iView)  iView.render(iData);
+
+            return this;
         },
         load:      function () {
             var iThis = this,  iJSON = this.src || this.action;
@@ -68,6 +73,18 @@ define(['jquery', 'iQuery+'],  function ($) {
                 },
                 'jsonp'
             );
+
+            return this;
+        },
+        detach:    function () {
+            this.$_Content = this.$_Root.children().detach();
+
+            return this;
+        },
+        attach:    function () {
+            this.$_Root.append( this.$_Content );
+
+            return this;
         }
     });
 
