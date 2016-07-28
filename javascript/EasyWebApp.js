@@ -2,8 +2,16 @@ define(['jquery', 'jQuery+', 'iQuery+'],  function ($) {
 
     var _Link_ = '*[target]:not(a)';
 
-    function UI_Module() {
-        this.$_DOM = $( arguments[0] );
+    function UI_Module(iDOM, iLink) {
+        this.$_DOM = $(iDOM);
+
+        iLink = iLink || iDOM;
+        this.$_Link = $(iLink);
+
+        this.href = iLink.getAttribute('href');
+        this.method = iLink.getAttribute('method') || 'get';
+        this.src = iLink.getAttribute('src');
+        this.action = iLink.getAttribute('action');
     }
 
     $.extend(UI_Module.prototype, {
@@ -25,48 +33,38 @@ define(['jquery', 'jQuery+', 'iQuery+'],  function ($) {
                 });
 
             if (iView)  iView.render(iData);
-        }
-    });
+        },
+        load:      function () {
+            var iThis = this,  iJSON = this.src || this.action;
 
-    function Load_Module() {
-        var iHTML = this.getAttribute('href'),
-            iJSON = this.getAttribute('src') || this.getAttribute('action'),
-            iModule = new UI_Module( arguments[1] );
+            var iReady = (this.href && iJSON)  ?  2  :  1,  iData;
 
-        var $_Module = iModule.$_DOM,
-            iReady = (iHTML && iJSON)  ?  2  :  1,
-            iData;
+            if (this.href)
+                this.$_DOM.load(this.href,  function () {
+                    if (--iReady)  return;
 
-        if (iHTML)
-            $_Module.load(iHTML,  function () {
-                if (--iReady)  return;
+                    if (iData)  iThis.render(iData);
 
-                if (iData)  iModule.render(iData);
+                    iThis.$_DOM.trigger('ready');
+                });
 
-                $_Module.trigger('ready');
-            });
+            if (! iJSON)  return;
 
-        if (! iJSON)  return;
-
-        $[this.getAttribute('method') || 'get'](
-            iJSON,
-            $(this).serialize(),
-            function (_JSON_) {
+            $[this.method](iJSON,  this.$_Link.serialize(),  function (_JSON_) {
                 var _Data_ = $.extend(
                         (_JSON_ instanceof Array)  ?  [ ]  :  { },  _JSON_
                     );
 
-                iData = $_Module.triggerHandler('data', [_JSON_, this])  ||  _Data_;
+                iData = iThis.$_DOM.triggerHandler('data', [_JSON_, this])  ||  _Data_;
 
                 if (--iReady)  return;
 
-                iModule.render(iData);
+                iThis.render(iData);
 
-                $_Module.trigger('ready');
-            },
-            'jsonp'
-        );
-    }
+                iThis.$_DOM.trigger('ready');
+            },  'jsonp');
+        }
+    });
 
     $(document).on('click change submit',  _Link_,  function (iEvent) {
 
@@ -77,13 +75,17 @@ define(['jquery', 'jQuery+', 'iQuery+'],  function ($) {
                 iEvent.preventDefault();
         }
 
-        Load_Module.call(
-            this,  0,  $('*[name="' + this.getAttribute('target') + '"]')
-        );
+        (new UI_Module(
+            $('*[name="' + this.getAttribute('target') + '"]'),  this
+        )).load();
+
     }).ready(function () {
 
-        $('*[href]:not(a), *[src]:not(img, iframe)', this.body).not(_Link_)
-            .each(Load_Module);
+        var $_Module = $('*[href]:not(a), *[src]:not(img, iframe)', this.body)
+                .not(_Link_);
+
+        for (var i = 0;  $_Module[i];  i++)
+            (new UI_Module( $_Module[i] )).load();
     });
 
 });

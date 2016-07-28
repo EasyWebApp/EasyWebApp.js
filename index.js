@@ -1,4 +1,4 @@
-define(['jquery', 'TimePassed', 'EasyWebApp'],  function ($, TimePassed) {
+define(['jquery', 'TimePassed', 'iQuery+', 'EasyWebApp'],  function ($, TimePassed) {
     $.ajaxSetup({
         crossDomain:    true,
         dataType:       'jsonp'
