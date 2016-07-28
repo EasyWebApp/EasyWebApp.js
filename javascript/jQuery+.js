@@ -2320,7 +2320,7 @@
     $.fn.ajaxSubmit = function (iCallback) {
         if (! this.length)  return this;
 
-        function AJAX_Submit(iEvent) {
+        function AJAX_Submit() {
             var $_Form = $(this);
 
             if ((! this.checkValidity())  ||  $_Form.data('_AJAX_Submitting_'))
@@ -2339,7 +2339,7 @@
                         iCallback.apply($_Form[0], arguments);
                     }
                 );
-            return false;
+            arguments[0].preventDefault();
         }
 
         var $_Form = this.filter('form');

@@ -5,11 +5,12 @@ define(['jquery', 'TimePassed', 'EasyWebApp'],  function ($, TimePassed) {
     });
 
     function Object_Filter(iValue) {
-        if (iValue.img == '/top/default.jpg')  return;
+        if (iValue.img) {
+            if (iValue.img.match(/\/top\/default\.jpg$/))  return;
 
-        if (iValue.img)
-            iValue.img = 'http://tnfs.tngou.net/img' + iValue.img;
-
+            if (! iValue.img.match(/^http(s)?:\/\//))
+                iValue.img = 'http://tnfs.tngou.net/img' + iValue.img;
+        }
         if (iValue.time)
             iValue.timePassed = TimePassed(iValue.time);
 

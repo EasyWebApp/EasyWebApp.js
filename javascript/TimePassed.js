@@ -43,7 +43,7 @@ define(['jquery'],  function ($) {
                 break;
         }
 
-        return  iTS.toFixed(0) + TimeUnit[--i].name + "前";
+        return  (! i)  ?  "刚刚"  :  (iTS.toFixed(0) + TimeUnit[--i].name + "前");
     }
 
     return TimePassed;
