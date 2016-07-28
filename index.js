@@ -24,14 +24,16 @@ define(['jquery', 'TimePassed', 'iQuery+', 'EasyWebApp'],  function ($, TimePass
     }
 
     $(document).ready(function () {
+        var $_WebApp = $('body > .PC_Narrow').on('data', Data_Filter);
+
+        $_WebApp.iWebApp('http://www.tngou.net/api/');
+
         $.ListView('body > .Head > .NavBar',  false,  function ($_Item, iValue) {
             $_Item.text( iValue.name.slice(0, 2) )[0]
                 .setAttribute(
                     'src',  $_Item[0].getAttribute('src') + iValue.id
                 );
         }).$_View.on('data', Data_Filter);
-
-        $('body > .PC_Narrow').on('data', Data_Filter);
 
         $('body > .Head > h1')[0].click();
     });
