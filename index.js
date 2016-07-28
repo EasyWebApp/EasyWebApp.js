@@ -5,6 +5,8 @@ define(['jquery', 'TimePassed', 'EasyWebApp'],  function ($, TimePassed) {
     });
 
     function Object_Filter(iValue) {
+        if (iValue.img == '/top/default.jpg')  return;
+
         if (iValue.img)
             iValue.img = 'http://tnfs.tngou.net/img' + iValue.img;
 
@@ -28,17 +30,7 @@ define(['jquery', 'TimePassed', 'EasyWebApp'],  function ($, TimePassed) {
                 );
         }).$_View.on('data', Data_Filter);
 
-        $('body > .PC_Narrow').on('data',  function () {
-            if ($.fileName( arguments[2].url )  !=  'list')  return;
-
-            $.ListView($('ol.CenterX', this),  true,  function ($_Item, iValue) {
-                $_Item.attr({
-                    title:    iValue.description,
-                    src:      $_Item[0].getAttribute('src') + iValue.id
-                }).find('small > span')[0].title =
-                     (new Date(iValue.time)).toLocaleString();
-            });
-        }).on('data', Data_Filter);
+        $('body > .PC_Narrow').on('data', Data_Filter);
 
         $('body > .Head > h1')[0].click();
     });

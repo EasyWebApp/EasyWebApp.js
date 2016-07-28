@@ -7,7 +7,7 @@ define(['jquery'],  function ($) {
             },
             {
                 scale:    60,
-                name:     "分"
+                name:     "分钟"
             },
             {
                 scale:    60,

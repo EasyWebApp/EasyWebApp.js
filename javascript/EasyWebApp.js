@@ -1,6 +1,6 @@
 define(['jquery', 'jQuery+', 'iQuery+'],  function ($) {
 
-    var _Link_ = '*[target]:not(a, form)';
+    var _Link_ = '*[target]:not(a)';
 
     function Load_Module() {
         var iHTML = this.getAttribute('href'),  iJSON = this.getAttribute('src'),
@@ -8,24 +8,7 @@ define(['jquery', 'jQuery+', 'iQuery+'],  function ($) {
 
         var iReady = (iHTML && iJSON)  ?  2  :  1,  iData;
 
-        if (iHTML)
-            $_Module.load(iHTML,  function () {
-                if (--iReady)  return;
-
-                $_Module.trigger('ready');
-            });
-
-        if (! iJSON)  return;
-
-        $[this.getAttribute('method') || 'get'](iJSON,  function (_JSON_) {
-            var _Data_ = $.extend(
-                    (_JSON_ instanceof Array)  ?  [ ]  :  { },  _JSON_
-                );
-
-            iData = $_Module.triggerHandler('data', [_JSON_, this])  ||  _Data_;
-
-            if (--iReady)  return;
-
+        function Render_Data() {
             var iView;
 
             if (iData instanceof Array) {
@@ -43,6 +26,29 @@ define(['jquery', 'jQuery+', 'iQuery+'],  function ($) {
                 });
 
             if (iView)  iView.render(iData);
+        }
+
+        if (iHTML)
+            $_Module.load(iHTML,  function () {
+                if (--iReady)  return;
+
+                if (iData)  Render_Data();
+
+                $_Module.trigger('ready');
+            });
+
+        if (! iJSON)  return;
+
+        $[this.getAttribute('method') || 'get'](iJSON,  function (_JSON_) {
+            var _Data_ = $.extend(
+                    (_JSON_ instanceof Array)  ?  [ ]  :  { },  _JSON_
+                );
+
+            iData = $_Module.triggerHandler('data', [_JSON_, this])  ||  _Data_;
+
+            if (--iReady)  return;
+
+            Render_Data();
 
             $_Module.trigger('ready');
         }, 'jsonp');
@@ -50,12 +56,15 @@ define(['jquery', 'jQuery+', 'iQuery+'],  function ($) {
 
     $(document).on('click change',  _Link_,  function () {
 
+        if (this.tagName == 'FORM')  return;
+
         Load_Module.call(
             this,  0,  $('*[name="' + this.getAttribute('target') + '"]')
         );
     }).ready(function () {
 
-        $('*[href]:not(a), *[src]:not(img, iframe)').not(_Link_).each(Load_Module);
+        $('*[href]:not(a), *[src]:not(img, iframe)', this.body).not(_Link_)
+            .each(Load_Module);
     });
 
 });
