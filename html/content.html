@@ -1,0 +1,52 @@
+<style>
+    .Content {
+        position:    relative;
+    }
+    .Content > .Background-Image {
+        background-size:    cover;
+        height:             25em;
+    }
+    .Content > h1 {
+        position:       absolute;
+        left:           0;
+        top:            9em;
+        width:          100%;
+        padding:        0  0.5em;
+        color:          white;
+        text-shadow:    1px  1px  1px  black;
+    }
+    .Content > pre {
+        background:    transparent;
+        border:        none;
+        padding:       0  5em;
+    }
+    .Content > pre:before,  .Content > pre:after {
+        content:       "";
+        display:       block;
+        margin:        2em  auto;
+        width:         50%;
+        border-top:    1px  solid  gray;
+    }
+    .Content > p img {
+        display:    block;
+        margin:     auto;
+    }
+</style>
+<div class="Content">
+    <div class="Background-Image" name="img">
+        <i></i>
+    </div>
+    <h1 name="title"></h1>
+    <small class="Grid-Row CenterX">
+        <span name="timePassed"></span>
+        <a class="CenterX" target="_blank" name="fromurl">
+            <span name="fromname"></span>
+        </a>
+        <span>
+            <i class="Icon Eye"></i>
+            <em name="count"></em>
+        </span>
+    </small>
+    <pre class="CenterX" name="description"></pre>
+    <p name="message"></p>
+</div>

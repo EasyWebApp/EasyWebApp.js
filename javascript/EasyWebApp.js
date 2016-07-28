@@ -15,35 +15,37 @@ define(['jquery', 'jQuery+', 'iQuery+'],  function ($) {
                 $_Module.trigger('ready');
             });
 
-        if (iJSON)
-            $[this.getAttribute('method') || 'get'](iJSON,  function () {
-                var _Data_ = $.extend(
-                        (arguments[0] instanceof Array)  ?  [ ]  :  { },
-                        arguments[0]
-                    );
+        if (! iJSON)  return;
 
-                iData = $_Module.triggerHandler('data', arguments)  ||  _Data_;
+        $[this.getAttribute('method') || 'get'](iJSON,  function (_JSON_) {
+            var _Data_ = $.extend(
+                    (_JSON_ instanceof Array)  ?  [ ]  :  { },  _JSON_
+                );
 
-                if (--iReady)  return;
+            iData = $_Module.triggerHandler('data', [_JSON_, this])  ||  _Data_;
 
-                var iView;
+            if (--iReady)  return;
 
-                if (iData instanceof Array) {
-                    iView = $.ListView.getInstance( $_Module );
-                    if (! iView) {
-                        iView = $.ListView.findView( $_Module )[0];
-                        if (iView)
-                            iView = $.ListView(iView,  function () {
-                                arguments[0].value('name', arguments[1]);
-                            });
-                    }
-                } else
-                    iView = $.CommonView.getInstance($_Module);
+            var iView;
 
-                if (iView)  iView.clear().render(iData);
+            if (iData instanceof Array) {
+                iView = $.ListView.getInstance( $_Module );
+                if (! iView) {
+                    iView = $.ListView.findView( $_Module )[0];
+                    if (iView)
+                        iView = $.ListView(iView,  function () {
+                            arguments[0].value('name', arguments[1]);
+                        });
+                }
+            } else
+                iView = $.CommonView($_Module).on('render',  function () {
+                    this.$_View.find('*').value('name', arguments[0]);
+                });
 
-                $_Module.trigger('ready');
-            }, 'jsonp');
+            if (iView)  iView.render(iData);
+
+            $_Module.trigger('ready');
+        }, 'jsonp');
     }
 
     $(document).on('click change',  _Link_,  function () {
