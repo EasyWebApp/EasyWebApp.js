@@ -21,48 +21,18 @@
 
     <script src="//cdn.bootcss.com/require.js/2.2.0/require.min.js"></script>
     <script>
-    require.config({baseUrl:  'javascript/'});
+        require.config({baseUrl:  'javascript/'});
 
-    require(['jquery', 'EasyWebApp'],  function ($) {
-        $.ajaxSetup({
-            crossDomain:    true,
-            dataType:       'jsonp'
-        });
-
-        function DataFilter() {
-            return  $.map(arguments[1].tngou,  function (iValue) {
-                if (iValue.img)
-                    iValue.img = 'http://tnfs.tngou.net/img' + iValue.img;
-
-                if (iValue.time)
-                    iValue.time = (new Date(iValue.time)).toLocaleString();
-
-                return iValue;
-            });
-        }
-
-        $(document).ready(function () {
-            $.ListView('body > .Head > .NavBar',  false,  function ($_Item, iValue) {
-                $_Item.text( iValue.name.slice(0, 2) )[0]
-                    .setAttribute(
-                        'src',  $_Item[0].getAttribute('src') + iValue.id
-                    );
-            }).$_View.on('data', DataFilter);
-
-            $('body > .PC_Narrow').on('data', DataFilter);
-
-            $('body > .Head > h1')[0].click();
-        });
-    });
+        require(['../index']);
     </script>
 </head><body>
     <div class="Head Grid-Row Black_O CenterX CenterY">
-        <h1 target="_Main_" href="list.html"
+        <h1 target="_Main_" href="html/list.html"
             src="http://www.tngou.net/api/top/list">
             小日报
         </h1>
         <ul class="NavBar" src="http://www.tngou.net/api/top/classify">
-            <li target="_Main_" href="list.html"
+            <li target="_Main_" href="html/list.html"
                 src="http://www.tngou.net/api/top/list?id=">
             </li>
         </ul>

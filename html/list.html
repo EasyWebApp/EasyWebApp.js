@@ -1,0 +1,44 @@
+<style>
+    ol.CenterX {
+        padding:    0;
+    }
+    ol > .Item-Box.visible {
+        padding:       0;
+        width:         17em;
+        text-align:    left;
+    }
+    ol > .Item-Box > * {
+        margin-bottom:    0.5em  !important;
+    }
+    ol > .Item-Box > .Background-Image {
+        background-size:     cover;
+    }
+    ol > .Item-Box > p {
+        margin:      0;
+        padding:     0  0.5em;
+        height:      3em;
+        overflow:    hidden;
+    }
+    ol > .Item-Box > small > * {
+        text-align:    right;
+        padding:       0  1em;
+    }
+    ol > .Item-Box > small > *:first-child {
+        text-align:    left;
+    }
+</style>
+<script src="html/list.js"></script>
+<ol class="CenterX">
+    <li class="Item-Box visible">
+        <div class="Background-Image" name="img">
+            <i></i>
+        </div>
+        <p name="title"></p>
+        <small class="Grid-Row CenterX">
+            <span name="timePassed"></span>
+            <a target="_blank" name="fromurl">
+                <span name="fromname"></span>
+            </a>
+        </small>
+    </li>
+</ol>
