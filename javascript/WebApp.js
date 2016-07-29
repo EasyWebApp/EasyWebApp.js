@@ -3,9 +3,9 @@ define(['jquery', 'UI_Module'],  function ($, UI_Module) {
     var BOM = self,  DOM = self.document;
 
     function WebApp() {
-        var iApp = $('#EWA_ViewPort').data('_EWA_');
+        var iApp = $('#EWA_ViewPort').data('_EWA_') || this;
 
-        if (iApp instanceof arguments.callee)  return iApp;
+        if (iApp !== this)  return iApp;
 
         this.$_Root = $( arguments[0] ).data('_EWA_', this)
             .prop('id', 'EWA_ViewPort');
@@ -14,6 +14,13 @@ define(['jquery', 'UI_Module'],  function ($, UI_Module) {
 
         this.length = 0;
         this.lastPage = -1;
+
+        $(BOM).on('popstate',  function () {
+            var Index = arguments[0].originalEvent.state.index;
+
+            iApp[iApp.lastPage].detach();
+            iApp[iApp.lastPage = Index].attach();
+        });
 
         this.boot();
     }
@@ -24,20 +31,14 @@ define(['jquery', 'UI_Module'],  function ($, UI_Module) {
         push:        Array.prototype.push,
         splice:      Array.prototype.splice,
         boot:        function () {
-            var iApp = this;
-
-            $(BOM).on('popstate',  function () {
-                var Index = arguments[0].originalEvent.state.index;
-
-                iApp[iApp.lastPage].detach();
-                iApp[iApp.lastPage = Index].attach();
-            });
-
-            var $_Module = $('body').find('*[href]:not(a), *[src]:not(img, iframe)')
-                    .not( this.constructor.$_Link );
+            var $_Module = $(arguments[0] || 'body')
+                    .find('*[href]:not(a, link), *[src]:not(img, iframe, script)')
+                    .not(this.constructor.$_Link + ', *[href]:parent');
 
             for (var i = 0;  $_Module[i];  i++)
                 (new UI_Module(this, $_Module[i])).load();
+
+            return this;
         },
         register:    function (iPage) {
             if (this.$_Root[0] !== iPage.$_Root[0])  return;
@@ -51,6 +52,8 @@ define(['jquery', 'UI_Module'],  function ($, UI_Module) {
                 {index: this.length},  iPage.title || DOM.title,  DOM.URL
             );
             this.push( iPage );
+
+            return this;
         }
     });
 

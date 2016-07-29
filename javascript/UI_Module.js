@@ -26,6 +26,8 @@ define(['jquery', 'iQuery+'],  function ($) {
 
     $.extend(UI_Module.prototype, {
         render:    function (iData) {
+            iData = iData || this.data;
+
             var iView;
 
             if (iData instanceof Array) {
@@ -44,20 +46,22 @@ define(['jquery', 'iQuery+'],  function ($) {
 
             if (iView)  iView.render(iData);
 
+            this.ownerApp.boot( this.$_Root );
+
             return this;
         },
         load:      function () {
             var iThis = this,  iJSON = this.src || this.action;
 
-            var iReady = (this.href && iJSON)  ?  2  :  1,  iData;
+            var iReady = (this.href && iJSON)  ?  2  :  1;
 
             if (this.href)
                 this.$_Root.load(this.href,  function () {
                     if (--iReady)  return;
 
-                    if (iData)  iThis.render(iData);
+                    if (iThis.data)  iThis.render();
 
-                    iThis.$_Root.trigger('ready');
+                    iThis.$_Root.trigger('ready', [iThis]);
                 });
 
             if (! iJSON)  return;
@@ -66,17 +70,18 @@ define(['jquery', 'iQuery+'],  function ($) {
                 this.ownerApp.apiPath + iJSON,
                 this.$_Link.serialize(),
                 function (_JSON_) {
-                    var _Data_ = $.extend(
-                            (_JSON_ instanceof Array)  ?  [ ]  :  { },  _JSON_
-                        );
+                    iThis.data = $.extend(
+                        (_JSON_ instanceof Array)  ?  [ ]  :  { },  _JSON_
+                    );
 
-                    iData = iThis.$_Root.triggerHandler('data', [_JSON_, this])  ||  _Data_;
+                    iThis.data = iThis.$_Root.triggerHandler('data', [iThis])  ||
+                        iThis.data;
 
                     if (--iReady)  return;
 
-                    iThis.render(iData);
+                    iThis.render();
 
-                    iThis.$_Root.trigger('ready');
+                    iThis.$_Root.trigger('ready', [iThis]);
                 },
                 'jsonp'
             );

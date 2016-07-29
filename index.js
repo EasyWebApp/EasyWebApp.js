@@ -1,4 +1,7 @@
 define(['jquery', 'TimePassed', 'iQuery+', 'EasyWebApp'],  function ($, TimePassed) {
+
+    var BOM = self;
+
     $.ajaxSetup({
         crossDomain:    true,
         dataType:       'jsonp'
@@ -17,11 +20,12 @@ define(['jquery', 'TimePassed', 'iQuery+', 'EasyWebApp'],  function ($, TimePass
         return iValue;
     }
 
-    function Data_Filter() {
-        return  arguments[1].tngou  ?
-            $.map(arguments[1].tngou, Object_Filter)  :
-            Object_Filter( arguments[1] );
-    }
+    BOM.Data_Filter = function () {
+        var iData = arguments[1].data;
+
+        return  iData.tngou  ?
+            $.map(iData.tngou, Object_Filter)  :  Object_Filter( iData );
+    };
 
     $(document).ready(function () {
         var $_WebApp = $('body > .PC_Narrow').on('data', Data_Filter);

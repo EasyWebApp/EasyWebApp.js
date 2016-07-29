@@ -17,8 +17,10 @@ EasyWebApp 虽然从 v2.2 “ **ListView 对象**独立”开始支持 **局部�
  2. 只有在“ **UI 模块的容器元素** === **SPA 换页容器**”时才会被记录在 **HTML 5 History** 中
  3. Form 元素提交逻辑大幅简化
  4. InnerHistory 对象的职责融入 **WebApp 单例对象**， **SPA 换页历史维护**逻辑大大简化
+ 5. UI 模块支持 **自加载**，可无需 **SPA 链接元素**触发加载，并支持 **模块嵌套**
 
 
 ## 开发详情
 
  - [迭代记录](http://git.oschina.net/Tech_Query/EasyWebApp/commits/Component)
+ - [为什么我还在用 jQuery？](jQueryLove.md)
