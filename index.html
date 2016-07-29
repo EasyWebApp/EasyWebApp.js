@@ -28,25 +28,51 @@
         .Content > small > *:first-child {
             text-align:    left;
         }
+        body > .Foot > * {
+            padding:    2em;
+        }
+        body > .Foot a:link,  body > .Foot a:visited  {
+            color:    white;
+        }
+        body > .Foot a:hover {
+            color:    rgb(245, 80, 80);
+        }
     </style>
 
     <script src="//cdn.bootcss.com/require.js/2.2.0/require.min.js"></script>
     <script>
-        require.config({baseUrl:  'javascript/'});
+        require.config({
+            baseUrl:    'javascript/',
+            paths:      {
+                jquery:    '//cdn.bootcss.com/jquery/1.12.4/jquery.min'
+            }
+        });
 
         require(['../index']);
     </script>
 </head><body>
     <div class="Head Grid-Row Black_O CenterX CenterY">
-        <h1 target="_Main_" href="html/list.html" src="top/list">
+        <h1 target="_self" href="html/list.html" src="top/list">
             小日报
         </h1>
         <ul class="NavBar" src="top/classify">
-            <li target="_Main_" href="html/list.html" src="top/list?id="></li>
+            <li target="_self" href="html/list.html" src="top/list?id="></li>
         </ul>
-        <form target="_Main_" href="html/list.html" action="search?name=topword">
+        <form target="_self" href="html/list.html" action="search?name=topword">
             <input type="search" name="keyword" required placeholder="搜索关键词" />
         </form>
     </div>
-    <div class="PC_Narrow" name="_Main_"></div>
+    <div class="PC_Narrow"></div>
+    <div class="Foot Black_O Grid-Row CenterX">
+        <span>
+            (C)2016  <a target="_blank" href="https://git.oschina.net/Tech_Query">Tech_Query</a>
+        </span>
+        <span>
+            Thanks <a target="_blank" href="http://www.tngou.net">天狗云</a>
+            for Open Data
+        </span>
+        <span>
+            Powered by <a target="_blank" href="http://tech_query.oschina.io/easywebapp/">EasyWebApp</a>
+        </span>
+    </div>
 </body></html>

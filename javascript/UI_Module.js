@@ -1,9 +1,16 @@
 define(['jquery', 'iQuery+'],  function ($) {
 
-    function UI_Module(iApp, iRoot, iLink) {
+    function UI_Module(iApp, iLink) {
         this.ownerApp = iApp;
 
-        this.$_Root = $(iRoot);
+        this.$_Root = iLink.getAttribute('target') || iLink;
+
+        if (this.$_Root == '_self')
+            this.$_Root = this.ownerApp.$_Root;
+        else if (typeof this.$_Root == 'string')
+            this.$_Root = '*[name="' + this.$_Root + '"]';
+
+        this.$_Root = $(this.$_Root);
 
         iLink = iLink || this.$_Root[0];
         this.$_Link = $(iLink);

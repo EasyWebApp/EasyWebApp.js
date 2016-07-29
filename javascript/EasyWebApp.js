@@ -1,3 +1,23 @@
+//
+//                    >>>  EasyWebApp.js  <<<
+//
+//
+//      [Version]    v3.0  (2016-07-29)  Alpha
+//
+//      [Require]    iQuery  ||  jQuery with jQuery+,
+//
+//                   iQuery+,
+//
+//                   [ marked.js ]  (for MarkDown rendering)
+//
+//      [Usage]      A Light-weight SPA Engine with
+//                   jQuery Compatible API.
+//
+//
+//              (C)2015-2016    shiy2008@gmail.com
+//
+
+
 define(['jquery', 'WebApp', 'UI_Module'],  function ($, WebApp, UI_Module) {
 
     $.fn.iWebApp = function () {
@@ -17,9 +37,7 @@ define(['jquery', 'WebApp', 'UI_Module'],  function ($, WebApp, UI_Module) {
         )
             return;
 
-        (new UI_Module(
-            new WebApp(),  '*[name="' + this.getAttribute('target') + '"]',  this
-        )).load();
+        (new UI_Module(new WebApp(),  this)).load();
     });
 
 });
