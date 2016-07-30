@@ -24,25 +24,16 @@ define(['jquery', 'UI_Module'],  function ($, UI_Module) {
             iApp[iApp.lastPage = Index].attach();
         });
 
-        this.boot();
+        UI_Module.prototype.boot.call({
+            ownerApp:    this,
+            $_Root:      $(DOM.body)
+        });
     }
-
-    WebApp.$_Link = '*[target]:not(a)';
 
     WebApp.prototype = $.extend(new $.Observer(),  {
         constructor:    WebApp,
         push:           Array.prototype.push,
         splice:         Array.prototype.splice,
-        boot:           function () {
-            var $_Module = $(arguments[0] || 'body')
-                    .find('*[href]:not(a, link), *[src]:not(img, iframe, script)')
-                    .not(this.constructor.$_Link + ', *[href]:parent');
-
-            for (var i = 0;  $_Module[i];  i++)
-                (new UI_Module(this, $_Module[i])).load();
-
-            return this;
-        },
         register:       function (iPage) {
             if (this.$_Root[0] !== iPage.$_Root[0])  return;
 

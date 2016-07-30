@@ -24,7 +24,7 @@ define(['jquery', 'WebApp', 'UI_Module'],  function ($, WebApp, UI_Module) {
         return  this[0]  &&  (new WebApp(this[0], arguments[0]));
     };
 
-    $(document).on('click change submit',  WebApp.$_Link,  function (iEvent) {
+    $(document).on('click change submit',  UI_Module.$_Link,  function (iEvent) {
 
         if (this.tagName == 'FORM') {
             if (iEvent.type != 'submit')

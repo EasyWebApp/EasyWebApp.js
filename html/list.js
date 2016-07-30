@@ -1,4 +1,4 @@
-$('body > .PC_Narrow').iWebApp().on('data',  'list.html',  'top/list',  function () {
+$('body > .PC_Narrow').iWebApp().on('data',  'list.html',  function () {
 
     $.ListView(
         $('ol.CenterX', arguments[0].$_Root[0]),

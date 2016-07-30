@@ -8,14 +8,18 @@ define(['jquery', 'TimePassed', 'iQuery+', 'EasyWebApp'],  function ($, TimePass
     });
 
     function Object_Filter(iValue) {
+        iValue.title = iValue.title || iValue.name;
+
+        if ((iValue.name || '').match(/^\S+?（.）/))  return;
+
         if (iValue.img) {
-            if (iValue.img.match(/\/top\/default\.jpg$/))  return;
+            if (iValue.img.indexOf('default.jpg') > -1)  return;
 
             if (! iValue.img.match(/^http(s)?:\/\//))
                 iValue.img = 'http://tnfs.tngou.net/img' + iValue.img;
         }
-        if (iValue.time)
-            iValue.timePassed = TimePassed(iValue.time);
+        iValue.timePassed = iValue.time ?
+            TimePassed(iValue.time) : iValue.keywords;
 
         return iValue;
     }
@@ -32,13 +36,14 @@ define(['jquery', 'TimePassed', 'iQuery+', 'EasyWebApp'],  function ($, TimePass
 
         iApp.on('data', Data_Filter);
 
-        $.ListView('body > .Head > .NavBar',  false,  function ($_Item, iValue) {
-            $_Item.text( iValue.name.slice(0, 2) )[0]
-                .setAttribute(
-                    'src',  $_Item[0].getAttribute('src') + iValue.id
-                );
-        }).$_View.on('data', Data_Filter);
-
+        $('.NavBar > .DropDown > .Body').each(function () {
+            $.ListView(this,  false,  function ($_Item, iValue) {
+                $_Item.text( iValue.name ).attr('title', iValue.title)[0]
+                    .setAttribute('src',  $.extendURL($_Item[0].getAttribute('src'), {
+                        id:    iValue.id
+                    }));
+            });
+        });
         $('body > .Head > h1')[0].click();
     });
 });

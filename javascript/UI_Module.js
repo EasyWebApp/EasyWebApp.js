@@ -24,6 +24,8 @@ define(['jquery', 'iQuery+'],  function ($) {
         iApp.register(this);
     }
 
+    UI_Module.$_Link = '*[target]:not(a)';
+
     $.extend(UI_Module.prototype, {
         valueOf:    function () {
             var iValue = { };
@@ -33,6 +35,16 @@ define(['jquery', 'iQuery+'],  function ($) {
                     iValue[iKey] = this[iKey];
 
             return iValue;
+        },
+        boot:       function () {
+            var $_Module = this.$_Root
+                    .find('*[href]:not(a, link), *[src]:not(img, iframe, script)')
+                    .not(UI_Module.$_Link + ', *[href]:parent');
+
+            for (var i = 0;  $_Module[i];  i++)
+                (new UI_Module(this.ownerApp, $_Module[i])).load();
+
+            return this;
         },
         render:     function (iData) {
             iData = iData || this.data;
@@ -55,7 +67,7 @@ define(['jquery', 'iQuery+'],  function ($) {
 
             if (iView)  iView.render(iData);
 
-            this.ownerApp.boot( this.$_Root );
+            this.boot();
 
             return this;
         },
