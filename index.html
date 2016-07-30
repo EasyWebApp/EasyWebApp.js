@@ -2,7 +2,7 @@
 <html><head>
     <meta charset="utf-8" />
 
-    <title>Next SPA Engine</title>
+    <title>易资讯</title>
 
     <link rel="stylesheet" href="http://tech_query.oschina.io/iquery/doc/core/css/EasyWebUI.css" />
     <style>
@@ -55,9 +55,9 @@
         require.config({
             baseUrl:    'javascript/',
             paths:      {
-                jquery:       '//cdn.bootcss.com/jquery/1.12.4/jquery.min',
-//                'jQuery+':    'http://tech_query.oschina.io/iquery/jQuery+',
-                'iQuery+':    'http://tech_query.oschina.io/iquery/iQuery+'
+                jquery:       '//cdn.bootcss.com/jquery/1.12.4/jquery.min'/*,
+                'jQuery+':    'http://tech_query.oschina.io/iquery/jQuery+',
+                'iQuery+':    'http://tech_query.oschina.io/iquery/iQuery+'*/
             }
         });
 
@@ -66,7 +66,7 @@
 </head><body>
     <div class="Head Grid-Row Black_O CenterX CenterY">
         <h1 target="_self" href="html/list.html" src="top/list">
-            小日报
+            易资讯
         </h1>
         <ul class="NavBar No_Select">
             <li class="DropDown Head">新闻
@@ -75,7 +75,7 @@
                 </ul>
             </li>
             <li class="DropDown Head">靓图
-                <ul class="DropDown Body"  src="../tnfs/api/classify">
+                <ul class="DropDown Body" src="../tnfs/api/classify">
                     <li target="_self" href="html/list.html" src="../tnfs/api/list"></li>
                 </ul>
             </li>

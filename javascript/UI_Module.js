@@ -1,7 +1,10 @@
 define(['jquery', 'iQuery+'],  function ($) {
 
-    function UI_Module(iApp, iLink) {
+    function UI_Module(iApp, iScope, iLink) {
         this.ownerApp = iApp;
+
+        this.data = { };
+        this.inherit(iScope);
 
         this.$_Root = iLink.getAttribute('target') || iLink;
 
@@ -27,6 +30,15 @@ define(['jquery', 'iQuery+'],  function ($) {
     UI_Module.$_Link = '*[target]:not(a)';
 
     $.extend(UI_Module.prototype, {
+        inherit:    function () {
+            function iScope() { }
+            iScope.prototype = arguments[0];
+            iScope.prototype.constructor = iScope;
+
+            this.data = $.extend(new iScope(),  this.data);
+
+            return this;
+        },
         valueOf:    function () {
             var iValue = { };
 
@@ -42,7 +54,7 @@ define(['jquery', 'iQuery+'],  function ($) {
                     .not(UI_Module.$_Link + ', *[href]:parent');
 
             for (var i = 0;  $_Module[i];  i++)
-                (new UI_Module(this.ownerApp, $_Module[i])).load();
+                (new UI_Module(this.ownerApp, this.data, $_Module[i])).load();
 
             return this;
         },
@@ -51,7 +63,7 @@ define(['jquery', 'iQuery+'],  function ($) {
 
             var iView;
 
-            if (iData instanceof Array) {
+            if ($.likeArray( iData )) {
                 iView = $.ListView.getInstance( this.$_Root );
                 if (! iView) {
                     iView = $.ListView.findView( this.$_Root )[0];
@@ -73,7 +85,10 @@ define(['jquery', 'iQuery+'],  function ($) {
         },
         trigger:    function () {
             return this.ownerApp.trigger(
-                arguments[0],  this.href || '',  this.src || '',  [this.valueOf()]
+                arguments[0],
+                this.href || '',
+                this.src || '',
+                [ this.valueOf() ].concat( arguments[1] )
             ).slice(-1)[0];
         },
         load:       function () {
@@ -85,7 +100,7 @@ define(['jquery', 'iQuery+'],  function ($) {
                 this.$_Root.load(this.href,  function () {
                     if (--iReady)  return;
 
-                    if (iThis.data)  iThis.render();
+                    if (! $.isEmptyObject(iThis.data))  iThis.render();
 
                     iThis.trigger('ready');
                 });
@@ -96,11 +111,12 @@ define(['jquery', 'iQuery+'],  function ($) {
                 this.ownerApp.apiPath + iJSON,
                 this.$_Link.serialize(),
                 function (_JSON_) {
-                    iThis.data = $.extend(
-                        (_JSON_ instanceof Array)  ?  [ ]  :  { },  _JSON_
-                    );
+                    _JSON_ = iThis.trigger('data', [_JSON_])  ||  _JSON_;
 
-                    iThis.data = iThis.trigger('data') || iThis.data;
+                    $.extend(iThis.data, _JSON_);
+
+                    if (_JSON_ instanceof Array)
+                        iThis.data.length = _JSON_.length;
 
                     if (--iReady)  return;
 

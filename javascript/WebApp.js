@@ -26,6 +26,7 @@ define(['jquery', 'UI_Module'],  function ($, UI_Module) {
 
         UI_Module.prototype.boot.call({
             ownerApp:    this,
+            data:        { },
             $_Root:      $(DOM.body)
         });
     }

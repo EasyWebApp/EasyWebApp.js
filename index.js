@@ -24,9 +24,7 @@ define(['jquery', 'TimePassed', 'iQuery+', 'EasyWebApp'],  function ($, TimePass
         return iValue;
     }
 
-    BOM.Data_Filter = function () {
-        var iData = arguments[0].data;
-
+    BOM.Data_Filter = function (iModule, iData) {
         return  iData.tngou  ?
             $.map(iData.tngou, Object_Filter)  :  Object_Filter( iData );
     };

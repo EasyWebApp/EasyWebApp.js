@@ -37,7 +37,7 @@ define(['jquery', 'WebApp', 'UI_Module'],  function ($, WebApp, UI_Module) {
         )
             return;
 
-        (new UI_Module(new WebApp(),  this)).load();
+        (new UI_Module(new WebApp(),  { },  this)).load();
     });
 
 });
