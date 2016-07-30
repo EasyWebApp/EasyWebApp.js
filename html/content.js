@@ -1,8 +1,8 @@
-$('body > .PC_Narrow').on('data',  function () {
-    var iComment = $('div[href]', this)[0];
+$('body > .PC_Narrow').iWebApp().on('data',  'content.html',  function (iModule) {
+    var iComment = iModule.$_Root.find('.Content > .Panel > .Body')[0];
 
     iComment.setAttribute('src',  $.extendURL(iComment.getAttribute('src'), {
-        id:    arguments[1].data.id
+        id:    iModule.data.id
     }));
 
     return  Data_Filter.apply(this, arguments);

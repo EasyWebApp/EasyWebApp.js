@@ -7,6 +7,8 @@ define(['jquery', 'UI_Module'],  function ($, UI_Module) {
 
         if (iApp !== this)  return iApp;
 
+        $.Observer.call(this, 1);
+
         this.$_Root = $( arguments[0] ).data('_EWA_', this)
             .prop('id', 'EWA_ViewPort');
 
@@ -27,10 +29,11 @@ define(['jquery', 'UI_Module'],  function ($, UI_Module) {
 
     WebApp.$_Link = '*[target]:not(a)';
 
-    $.extend(WebApp.prototype, {
-        push:        Array.prototype.push,
-        splice:      Array.prototype.splice,
-        boot:        function () {
+    WebApp.prototype = $.extend(new $.Observer(),  {
+        constructor:    WebApp,
+        push:           Array.prototype.push,
+        splice:         Array.prototype.splice,
+        boot:           function () {
             var $_Module = $(arguments[0] || 'body')
                     .find('*[href]:not(a, link), *[src]:not(img, iframe, script)')
                     .not(this.constructor.$_Link + ', *[href]:parent');
@@ -40,7 +43,7 @@ define(['jquery', 'UI_Module'],  function ($, UI_Module) {
 
             return this;
         },
-        register:    function (iPage) {
+        register:       function (iPage) {
             if (this.$_Root[0] !== iPage.$_Root[0])  return;
 
             if (this.lastPage > -1)  this[this.lastPage].detach();

@@ -21,16 +21,16 @@ define(['jquery', 'TimePassed', 'iQuery+', 'EasyWebApp'],  function ($, TimePass
     }
 
     BOM.Data_Filter = function () {
-        var iData = arguments[1].data;
+        var iData = arguments[0].data;
 
         return  iData.tngou  ?
             $.map(iData.tngou, Object_Filter)  :  Object_Filter( iData );
     };
 
     $(document).ready(function () {
-        var $_WebApp = $('body > .PC_Narrow').on('data', Data_Filter);
+        var iApp = $('body > .PC_Narrow').iWebApp('http://www.tngou.net/api/');
 
-        $_WebApp.iWebApp('http://www.tngou.net/api/');
+        iApp.on('data', Data_Filter);
 
         $.ListView('body > .Head > .NavBar',  false,  function ($_Item, iValue) {
             $_Item.text( iValue.name.slice(0, 2) )[0]

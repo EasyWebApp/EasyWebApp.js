@@ -1,6 +1,6 @@
-$('.Content > .Panel > div[href]').on('data',  function () {
+$('body > .PC_Narrow').iWebApp().on('data',  'comment.html',  function () {
 
-    $.ListView($('ol', this));
+    $.ListView($('ol', arguments[0].$_Root[0]));
 
     return  Data_Filter.apply(this, arguments);
 });

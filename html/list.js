@@ -1,10 +1,9 @@
-//define(['jquery'],  function ($) {
+$('body > .PC_Narrow').iWebApp().on('data',  'list.html',  'top/list',  function () {
 
-    $('body > .PC_Narrow').on('data',  function () {
-        if (! $.fileName( arguments[1].src ).match(/list|search/))
-            return;
-
-        $.ListView($('ol.CenterX', this),  true,  function ($_Item, iValue) {
+    $.ListView(
+        $('ol.CenterX', arguments[0].$_Root[0]),
+        true,
+        function ($_Item, iValue) {
             $_Item.attr({
                 title:    iValue.description,
                 src:      $.extendURL($_Item[0].getAttribute('src'), {
@@ -12,6 +11,6 @@
                 })
             }).find('small > span')[0].title =
                  (new Date(iValue.time)).toLocaleString();
-        });
-    });
-//});
+        }
+    );
+});

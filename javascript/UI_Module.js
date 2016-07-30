@@ -25,7 +25,16 @@ define(['jquery', 'iQuery+'],  function ($) {
     }
 
     $.extend(UI_Module.prototype, {
-        render:    function (iData) {
+        valueOf:    function () {
+            var iValue = { };
+
+            for (var iKey in this)
+                if (typeof this[iKey] != 'function')
+                    iValue[iKey] = this[iKey];
+
+            return iValue;
+        },
+        render:     function (iData) {
             iData = iData || this.data;
 
             var iView;
@@ -50,7 +59,12 @@ define(['jquery', 'iQuery+'],  function ($) {
 
             return this;
         },
-        load:      function () {
+        trigger:    function () {
+            return this.ownerApp.trigger(
+                arguments[0],  this.href || '',  this.src || '',  [this.valueOf()]
+            ).slice(-1)[0];
+        },
+        load:       function () {
             var iThis = this,  iJSON = this.src || this.action;
 
             var iReady = (this.href && iJSON)  ?  2  :  1;
@@ -61,7 +75,7 @@ define(['jquery', 'iQuery+'],  function ($) {
 
                     if (iThis.data)  iThis.render();
 
-                    iThis.$_Root.trigger('ready', [iThis]);
+                    iThis.trigger('ready');
                 });
 
             if (! iJSON)  return;
@@ -74,14 +88,13 @@ define(['jquery', 'iQuery+'],  function ($) {
                         (_JSON_ instanceof Array)  ?  [ ]  :  { },  _JSON_
                     );
 
-                    iThis.data = iThis.$_Root.triggerHandler('data', [iThis])  ||
-                        iThis.data;
+                    iThis.data = iThis.trigger('data') || iThis.data;
 
                     if (--iReady)  return;
 
                     iThis.render();
 
-                    iThis.$_Root.trigger('ready', [iThis]);
+                    iThis.trigger('ready');
                 },
                 'jsonp'
             );
