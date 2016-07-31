@@ -13,7 +13,7 @@ define(['jquery', 'iQuery+'],  function ($) {
         else if (typeof this.$_Root == 'string')
             this.$_Root = '*[name="' + this.$_Root + '"]';
 
-        this.$_Root = $(this.$_Root);
+        this.$_Root = $(this.$_Root).data('_UIM_', this);
 
         iLink = iLink || this.$_Root[0];
         this.$_Link = $(iLink);
@@ -29,6 +29,10 @@ define(['jquery', 'iQuery+'],  function ($) {
 
     UI_Module.$_Link = '*[target]:not(a)';
 
+    UI_Module.instanceOf = function () {
+        return  $( arguments[0] ).parents('*:data("_UIM_")').data('_UIM_');
+    };
+
     $.extend(UI_Module.prototype, {
         inherit:    function () {
             function iScope() { }
@@ -38,6 +42,28 @@ define(['jquery', 'iQuery+'],  function ($) {
             this.data = $.extend(new iScope(),  this.data);
 
             return this;
+        },
+        getData:    function () {
+            var pModule = this.constructor.instanceOf( this.$_Link );
+
+            if (! $.likeArray( pModule.data ))  return pModule.data;
+
+            var iLV = $.ListView.instanceOf( this.$_Link );
+
+            var $_Item = this.$_Link.parentsUntil( iLV.$_View );
+
+            return  iLV.valueOf($_Item[0] ? $_Item.slice(-1) : this.$_Link);
+        },
+        getURL:     function (iName) {
+            var iArgs = this.$_Link[0].dataset;
+
+            if ($.isEmptyObject( iArgs ))  return this[iName];
+
+            var iData = this.getData();
+
+            return  $.extendURL(this[iName],  $.map(iArgs,  function (iKey) {
+                return  $.isData( iData[iKey] )  ?  iData[iKey]  :  iKey;
+            }));
         },
         valueOf:    function () {
             var iValue = { };
@@ -92,12 +118,12 @@ define(['jquery', 'iQuery+'],  function ($) {
             ).slice(-1)[0];
         },
         load:       function () {
-            var iThis = this,  iJSON = this.src || this.action;
+            var iThis = this,  iJSON = this.getURL('src') || this.getURL('action');
 
             var iReady = (this.href && iJSON)  ?  2  :  1;
 
             if (this.href)
-                this.$_Root.load(this.href,  function () {
+                this.$_Root.load(this.getURL('href'),  function () {
                     if (--iReady)  return;
 
                     if (! $.isEmptyObject(iThis.data))  iThis.render();

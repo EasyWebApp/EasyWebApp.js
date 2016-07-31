@@ -19,7 +19,14 @@
             height:      4em;
         }
         .NavBar > .DropDown {
-            min-width:    7.25em;
+                width:         3em;
+           -moz-transition:    0.25s;
+             -o-transition:    0.25s;
+        -webkit-transition:    0.25s;
+                transition:    0.25s;
+        }
+        .NavBar > .DropDown:hover {
+            width:    7.25em;
         }
         .NavBar > .DropDown > .Body {
             max-height:    1400%;
@@ -71,7 +78,7 @@
         <ul class="NavBar No_Select">
             <li class="DropDown Head">新闻
                 <ul class="DropDown Body" src="top/classify">
-                    <li target="_self" href="html/list.html" src="top/list"></li>
+                    <li target="_self" href="html/list.html" src="top/list" data-id="id"></li>
                 </ul>
             </li>
             <li class="DropDown Head">靓图

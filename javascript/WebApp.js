@@ -3,14 +3,13 @@ define(['jquery', 'UI_Module'],  function ($, UI_Module) {
     var BOM = self,  DOM = self.document;
 
     function WebApp() {
-        var iApp = $('#EWA_ViewPort').data('_EWA_') || this;
+        var iApp = $('*:data("_EWA_")').data('_EWA_') || this;
 
         if (iApp !== this)  return iApp;
 
         $.Observer.call(this, 1);
 
-        this.$_Root = $( arguments[0] ).data('_EWA_', this)
-            .prop('id', 'EWA_ViewPort');
+        this.$_Root = $( arguments[0] ).data('_EWA_', this);
 
         this.apiPath = arguments[1];
 

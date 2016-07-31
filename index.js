@@ -36,10 +36,7 @@ define(['jquery', 'TimePassed', 'iQuery+', 'EasyWebApp'],  function ($, TimePass
 
         $('.NavBar > .DropDown > .Body').each(function () {
             $.ListView(this,  false,  function ($_Item, iValue) {
-                $_Item.text( iValue.name ).attr('title', iValue.title)[0]
-                    .setAttribute('src',  $.extendURL($_Item[0].getAttribute('src'), {
-                        id:    iValue.id
-                    }));
+                $_Item.text( iValue.name ).attr('title', iValue.title);
             });
         });
         $('body > .Head > h1')[0].click();

@@ -571,8 +571,8 @@
         list:    function () {
             return  (arguments[0].tagName in pList);
         },
-        data:    function () {
-            return  (! $.isEmptyObject(arguments[0].dataset));
+        data:    function (iDOM, Index, iMatch) {
+            return  Boolean($.data(iDOM, iMatch[3]));
         }
     });
 
