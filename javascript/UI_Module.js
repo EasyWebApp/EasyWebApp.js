@@ -1,21 +1,20 @@
-define(['jquery', 'iQuery+'],  function ($) {
+define(['jquery', 'DS_Inherit', 'iQuery+'],  function ($, DS_Inherit) {
 
     function UI_Module(iApp, iScope, iLink) {
         this.ownerApp = iApp;
 
-        this.data = { };
-        this.inherit(iScope);
+        this.data = DS_Inherit(iScope,  { });
 
-        this.$_Root = iLink.getAttribute('target') || iLink;
+        var $_View = iLink.getAttribute('target') || iLink;
 
-        if (this.$_Root == '_self')
-            this.$_Root = this.ownerApp.$_Root;
-        else if (typeof this.$_Root == 'string')
-            this.$_Root = '*[name="' + this.$_Root + '"]';
+        if ($_View == '_self')
+            $_View = this.ownerApp.$_Root;
+        else if (typeof $_View == 'string')
+            $_View = '*[name="' + $_View + '"]';
 
-        this.$_Root = $(this.$_Root).data('_UIM_', this);
+        this.$_View = $($_View).data(this.constructor.getClass(), this);
 
-        iLink = iLink || this.$_Root[0];
+        iLink = iLink || this.$_View[0];
         this.$_Link = $(iLink);
 
         this.title = iLink.title;
@@ -27,45 +26,36 @@ define(['jquery', 'iQuery+'],  function ($) {
         iApp.register(this);
     }
 
-    UI_Module.$_Link = '*[target]:not(a)';
-
-    UI_Module.instanceOf = function () {
-        return  $( arguments[0] ).parents('*:data("_UIM_")').data('_UIM_');
-    };
+    $.extend(UI_Module, {
+        $_Link:      '*[target]:not(a)',
+        getClass:    $.CommonView.getClass
+    });
 
     $.extend(UI_Module.prototype, {
-        inherit:    function () {
-            function iScope() { }
-            iScope.prototype = arguments[0];
-            iScope.prototype.constructor = iScope;
-
-            this.data = $.extend(new iScope(),  this.data);
-
-            return this;
-        },
-        getData:    function () {
-            var pModule = this.constructor.instanceOf( this.$_Link );
-
-            if (! $.likeArray( pModule.data ))  return pModule.data;
-
+        toString:    $.CommonView.prototype.toString,
+        getData:     function () {
             var iLV = $.ListView.instanceOf( this.$_Link );
+
+            if (! iLV)  return this.data;
 
             var $_Item = this.$_Link.parentsUntil( iLV.$_View );
 
-            return  iLV.valueOf($_Item[0] ? $_Item.slice(-1) : this.$_Link);
+            return  ($_Item[0] ? $_Item.slice(-1) : this.$_Link)
+                .data('EWA_DS');
         },
-        getURL:     function (iName) {
+        getURL:      function (iName) {
             var iArgs = this.$_Link[0].dataset;
 
             if ($.isEmptyObject( iArgs ))  return this[iName];
 
-            var iData = this.getData();
+            var iData = this.getData(),  _Args_ = { };
 
-            return  $.extendURL(this[iName],  $.map(iArgs,  function (iKey) {
-                return  $.isData( iData[iKey] )  ?  iData[iKey]  :  iKey;
-            }));
+            for (var iKey in iArgs)
+                _Args_[iKey] = $.isData( iData[iKey] )  ?  iData[iKey]  :  iKey;
+
+            return  $.extendURL(this[iName], _Args_);
         },
-        valueOf:    function () {
+        valueOf:     function () {
             var iValue = { };
 
             for (var iKey in this)
@@ -74,8 +64,8 @@ define(['jquery', 'iQuery+'],  function ($) {
 
             return iValue;
         },
-        boot:       function () {
-            var $_Module = this.$_Root
+        boot:        function () {
+            var $_Module = this.$_View
                     .find('*[href]:not(a, link), *[src]:not(img, iframe, script)')
                     .not(UI_Module.$_Link + ', *[href]:parent');
 
@@ -84,32 +74,33 @@ define(['jquery', 'iQuery+'],  function ($) {
 
             return this;
         },
-        render:     function (iData) {
+        render:      function (iData) {
             iData = iData || this.data;
 
             var iView;
 
             if ($.likeArray( iData )) {
-                iView = $.ListView.getInstance( this.$_Root );
+                iView = $.ListView.getInstance( this.$_View );
                 if (! iView) {
-                    iView = $.ListView.findView( this.$_Root )[0];
-                    if (iView)
-                        iView = $.ListView(iView,  function () {
-                            arguments[0].value('name', arguments[1]);
-                        });
+                    iView = $.ListView.findView( this.$_View )[0];
+                    iView = iView  &&  $.ListView( iView );
                 }
             } else
-                iView = $.CommonView(this.$_Root).on('render',  function () {
+                iView = $.CommonView(this.$_View).on('render',  function () {
                     this.$_View.find('*').value('name', arguments[0]);
                 });
 
-            if (iView)  iView.render(iData);
+            if (iView)
+                iView.on('insert',  function ($_Item, iValue) {
+                    $_Item.data('EWA_DS',  DS_Inherit(iData, iValue))
+                        .value('name', iValue);
+                }).render(iData);
 
             this.boot();
 
             return this;
         },
-        trigger:    function () {
+        trigger:     function () {
             return this.ownerApp.trigger(
                 arguments[0],
                 this.href || '',
@@ -117,13 +108,13 @@ define(['jquery', 'iQuery+'],  function ($) {
                 [ this.valueOf() ].concat( arguments[1] )
             ).slice(-1)[0];
         },
-        load:       function () {
+        load:        function () {
             var iThis = this,  iJSON = this.getURL('src') || this.getURL('action');
 
             var iReady = (this.href && iJSON)  ?  2  :  1;
 
             if (this.href)
-                this.$_Root.load(this.getURL('href'),  function () {
+                this.$_View.load(this.getURL('href'),  function () {
                     if (--iReady)  return;
 
                     if (! $.isEmptyObject(iThis.data))  iThis.render();
@@ -155,13 +146,13 @@ define(['jquery', 'iQuery+'],  function ($) {
 
             return this;
         },
-        detach:    function () {
-            this.$_Content = this.$_Root.children().detach();
+        detach:      function () {
+            this.$_Content = this.$_View.children().detach();
 
             return this;
         },
-        attach:    function () {
-            this.$_Root.append( this.$_Content );
+        attach:      function () {
+            this.$_View.append( this.$_Content );
 
             return this;
         }

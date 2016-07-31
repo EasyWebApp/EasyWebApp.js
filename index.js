@@ -38,7 +38,6 @@ define(['jquery', 'TimePassed', 'iQuery+', 'EasyWebApp'],  function ($, TimePass
             $.ListView(this,  false,  function ($_Item, iValue) {
                 $_Item.text( iValue.name ).attr('title', iValue.title);
             });
-        });
-        $('body > .Head > h1')[0].click();
+        })[0].parentNode.click();
     });
 });

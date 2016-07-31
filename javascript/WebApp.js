@@ -26,7 +26,7 @@ define(['jquery', 'UI_Module'],  function ($, UI_Module) {
         UI_Module.prototype.boot.call({
             ownerApp:    this,
             data:        { },
-            $_Root:      $(DOM.body)
+            $_View:      $(DOM.body)
         });
     }
 
@@ -35,7 +35,7 @@ define(['jquery', 'UI_Module'],  function ($, UI_Module) {
         push:           Array.prototype.push,
         splice:         Array.prototype.splice,
         register:       function (iPage) {
-            if (this.$_Root[0] !== iPage.$_Root[0])  return;
+            if (this.$_Root[0] !== iPage.$_View[0])  return;
 
             if (this.lastPage > -1)  this[this.lastPage].detach();
 
