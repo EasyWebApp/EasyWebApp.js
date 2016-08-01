@@ -17,7 +17,9 @@ define(['jquery', 'UI_Module'],  function ($, UI_Module) {
         this.lastPage = -1;
 
         $(BOM).on('popstate',  function () {
-            var Index = arguments[0].originalEvent.state.index;
+            var Index = (arguments[0].originalEvent.state || '').index;
+
+            if (typeof Index != 'number')  return;
 
             iApp[iApp.lastPage].detach();
             iApp[iApp.lastPage = Index].attach();

@@ -27,8 +27,9 @@ define(['jquery', 'DS_Inherit', 'iQuery+'],  function ($, DS_Inherit) {
     }
 
     $.extend(UI_Module, {
-        $_Link:      '*[target]:not(a)',
-        getClass:    $.CommonView.getClass
+        getClass:      $.CommonView.getClass,
+        $_Link:        '*[target]:not(a)',
+        $_Template:    { }
     });
 
     $.extend(UI_Module.prototype, {
@@ -44,16 +45,21 @@ define(['jquery', 'DS_Inherit', 'iQuery+'],  function ($, DS_Inherit) {
                 .data('EWA_DS');
         },
         getURL:      function (iName) {
-            var iArgs = this.$_Link[0].dataset;
+            var iArgs = this.$_Link[0].dataset,  _Args_ = { },
+                iData = this.getData(),  _Data_;
 
-            if ($.isEmptyObject( iArgs ))  return this[iName];
+            for (var iKey in iArgs) {
+                _Data_ = iData[ iArgs[iKey] ];
 
-            var iData = this.getData(),  _Args_ = { };
+                if ($.isData(_Data_))  _Args_[iKey] = _Data_;
+            }
 
-            for (var iKey in iArgs)
-                _Args_[iKey] = $.isData( iData[iKey] )  ?  iData[iKey]  :  iKey;
-
-            return  $.extendURL(this[iName], _Args_);
+            return $.extendURL(
+                this[iName].replace(/\{(.+?)\}/,  function () {
+                    return  iData[arguments[1]] || '';
+                }),
+                _Args_
+            );
         },
         valueOf:     function () {
             var iValue = { };
@@ -108,13 +114,29 @@ define(['jquery', 'DS_Inherit', 'iQuery+'],  function ($, DS_Inherit) {
                 [ this.valueOf() ].concat( arguments[1] )
             ).slice(-1)[0];
         },
+        loadHTML:    function (HTML_Ready) {
+            var iTemplate = this.constructor.$_Template,
+                iHTML = this.href.split('?')[0];
+
+            if (iTemplate[iHTML]) {
+                this.$_View.append( iTemplate[iHTML].clone(true) );
+
+                return  HTML_Ready.call( this.$_View[0] );
+            }
+
+            this.$_View.load(this.getURL('href'),  function () {
+                iTemplate[iHTML] = $(this.children).not('script').clone(true);
+
+                HTML_Ready.apply(this, arguments);
+            });
+        },
         load:        function () {
             var iThis = this,  iJSON = this.getURL('src') || this.getURL('action');
 
             var iReady = (this.href && iJSON)  ?  2  :  1;
 
             if (this.href)
-                this.$_View.load(this.getURL('href'),  function () {
+                this.loadHTML(function () {
                     if (--iReady)  return;
 
                     if (! $.isEmptyObject(iThis.data))  iThis.render();
