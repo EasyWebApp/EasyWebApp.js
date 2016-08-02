@@ -41,12 +41,23 @@ define([
 
         iEvent.stopPropagation();
 
-        var iLink = new InnerLink(new WebApp(),  this);
+        var iWebApp = new WebApp();
+
+        var iLink = new InnerLink(iWebApp, this);
 
         switch (iLink.target) {
             case null:        ;
             case '':          return;
-            case '_blank':    iLink.loadData();    break;
+            case '_blank':
+                iLink.loadData(
+                    UI_Module.prototype.getData.call({source: iLink}),
+                    function () {
+                        iWebApp.trigger('data',  '',  iLink.src || iLink.action,  [
+                            iLink.valueOf(),  arguments[0]
+                        ]);
+                    }
+                );
+                break;
             case '_self':     ;
             default:          (new UI_Module(iLink, { })).load();
         }
