@@ -1,4 +1,4 @@
-define(['jquery', 'UI_Module'],  function ($, UI_Module) {
+define(['jquery', 'UI_Module', 'InnerLink'],  function ($, UI_Module, InnerLink) {
 
     var BOM = self,  DOM = self.document;
 
@@ -25,11 +25,7 @@ define(['jquery', 'UI_Module'],  function ($, UI_Module) {
             iApp[iApp.lastPage = Index].attach();
         });
 
-        UI_Module.prototype.boot.call({
-            ownerApp:    this,
-            data:        { },
-            $_View:      $(DOM.body)
-        });
+        this.loadViewOf();
     }
 
     WebApp.prototype = $.extend(new $.Observer(),  {
@@ -45,9 +41,23 @@ define(['jquery', 'UI_Module'],  function ($, UI_Module) {
                 this.splice(this.lastPage, this.length);
 
             BOM.history.pushState(
-                {index: this.length},  iPage.title || DOM.title,  DOM.URL
+                {index: this.length},  iPage.source.title || DOM.title,  DOM.URL
             );
             this.push( iPage );
+
+            return this;
+        },
+        loadViewOf:     function (iView) {
+            iView = iView || { };
+
+            var $_Module = (iView.$_View || $(DOM.body))
+                    .find('*[href]:not(a, link), *[src]:not(img, iframe, script)')
+                    .not(InnerLink.selector + ', *[href]:parent');
+
+            for (var i = 0;  $_Module[i];  i++)
+                (new UI_Module(
+                    new InnerLink(this, $_Module[i]),  iView.data
+                )).load();
 
             return this;
         }

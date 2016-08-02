@@ -2,7 +2,7 @@
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v3.0  (2016-07-31)  Alpha
+//      [Version]    v3.0  (2016-08-02)  Alpha
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //
@@ -18,13 +18,15 @@
 //
 
 
-define(['jquery', 'WebApp', 'UI_Module'],  function ($, WebApp, UI_Module) {
+define([
+    'jquery', 'WebApp', 'InnerLink', 'UI_Module'
+],  function ($, WebApp, InnerLink, UI_Module) {
 
     $.fn.iWebApp = function () {
         return  this[0]  &&  (new WebApp(this[0], arguments[0]));
     };
 
-    $(document).on('click change submit',  UI_Module.$_Link,  function (iEvent) {
+    $(document).on('click change submit',  InnerLink.selector,  function (iEvent) {
 
         if (this.tagName == 'FORM') {
             if (iEvent.type != 'submit')
@@ -37,9 +39,16 @@ define(['jquery', 'WebApp', 'UI_Module'],  function ($, WebApp, UI_Module) {
         )
             return;
 
-        (new UI_Module(new WebApp(),  { },  this)).load();
-
         iEvent.stopPropagation();
-    });
 
+        var iLink = new InnerLink(new WebApp(),  this);
+
+        switch (iLink.target) {
+            case null:        ;
+            case '':          return;
+            case '_blank':    iLink.loadData();    break;
+            case '_self':     ;
+            default:          (new UI_Module(iLink, { })).load();
+        }
+    });
 });
