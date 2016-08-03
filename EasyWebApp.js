@@ -89,6 +89,18 @@ var UI_Module = (function (BOM, DOM, $, DS_Inherit) {
             return  ($_Item[0] ? $_Item.slice(-1) : this.source.$_DOM)
                 .data('EWA_DS');
         },
+        findView:    function () {
+            var InnerLink = this.source.constructor;
+
+            var $_Module = this.$_View
+                    .find('*[href]:not(a, link), *[src]:not(img, iframe, script)')
+                    .not(InnerLink.selector + ', *[href]:parent');
+
+            for (var i = 0;  $_Module[i];  i++)
+                (new UI_Module(
+                    new InnerLink(this.ownerApp, $_Module[i])
+                )).load();
+        },
         render:      function (iData) {
             this.lastLoad = $.now();
 
@@ -113,7 +125,7 @@ var UI_Module = (function (BOM, DOM, $, DS_Inherit) {
                         .value('name', iValue);
                 }).render(iData);
 
-            this.ownerApp.loadViewOf(this);
+            this.findView();
 
             return this;
         },
@@ -281,7 +293,8 @@ var WebApp = (function (BOM, DOM, $, UI_Module, InnerLink) {
             iApp[iApp.lastPage = Index].attach();
         });
 
-        this.loadViewOf();
+        (new UI_Module(new InnerLink(this, DOM.body)))
+            .load().render( $.paramJSON() );
     }
 
     WebApp.prototype = $.extend(new $.Observer(),  {
@@ -302,18 +315,6 @@ var WebApp = (function (BOM, DOM, $, UI_Module, InnerLink) {
             this.push( iPage );
 
             return this;
-        },
-        loadViewOf:     function () {
-            var $_Module = ((arguments[0] || { }).$_View  ||  $(DOM.body))
-                    .find('*[href]:not(a, link), *[src]:not(img, iframe, script)')
-                    .not(InnerLink.selector + ', *[href]:parent');
-
-            for (var i = 0;  $_Module[i];  i++)
-                (new UI_Module(
-                    new InnerLink(this, $_Module[i])
-                )).load();
-
-            return this;
         }
     });
 
@@ -326,7 +327,7 @@ var WebApp = (function (BOM, DOM, $, UI_Module, InnerLink) {
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v3.0  (2016-08-03)  Alpha
+//      [Version]    v3.0  (2016-08-04)  Alpha
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //

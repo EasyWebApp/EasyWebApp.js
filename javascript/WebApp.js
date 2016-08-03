@@ -25,7 +25,8 @@ define(['jquery', 'UI_Module', 'InnerLink'],  function ($, UI_Module, InnerLink)
             iApp[iApp.lastPage = Index].attach();
         });
 
-        this.loadViewOf();
+        (new UI_Module(new InnerLink(this, DOM.body)))
+            .load().render( $.paramJSON() );
     }
 
     WebApp.prototype = $.extend(new $.Observer(),  {
@@ -44,18 +45,6 @@ define(['jquery', 'UI_Module', 'InnerLink'],  function ($, UI_Module, InnerLink)
                 {index: this.length},  iPage.source.title || DOM.title,  DOM.URL
             );
             this.push( iPage );
-
-            return this;
-        },
-        loadViewOf:     function () {
-            var $_Module = ((arguments[0] || { }).$_View  ||  $(DOM.body))
-                    .find('*[href]:not(a, link), *[src]:not(img, iframe, script)')
-                    .not(InnerLink.selector + ', *[href]:parent');
-
-            for (var i = 0;  $_Module[i];  i++)
-                (new UI_Module(
-                    new InnerLink(this, $_Module[i])
-                )).load();
 
             return this;
         }

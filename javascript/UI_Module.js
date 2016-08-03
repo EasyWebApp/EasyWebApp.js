@@ -41,6 +41,18 @@ define(['jquery', 'DS_Inherit', 'iQuery+'],  function ($, DS_Inherit) {
             return  ($_Item[0] ? $_Item.slice(-1) : this.source.$_DOM)
                 .data('EWA_DS');
         },
+        findView:    function () {
+            var InnerLink = this.source.constructor;
+
+            var $_Module = this.$_View
+                    .find('*[href]:not(a, link), *[src]:not(img, iframe, script)')
+                    .not(InnerLink.selector + ', *[href]:parent');
+
+            for (var i = 0;  $_Module[i];  i++)
+                (new UI_Module(
+                    new InnerLink(this.ownerApp, $_Module[i])
+                )).load();
+        },
         render:      function (iData) {
             this.lastLoad = $.now();
 
@@ -65,7 +77,7 @@ define(['jquery', 'DS_Inherit', 'iQuery+'],  function ($, DS_Inherit) {
                         .value('name', iValue);
                 }).render(iData);
 
-            this.ownerApp.loadViewOf(this);
+            this.findView();
 
             return this;
         },
