@@ -27,7 +27,8 @@ define(['jquery', 'UI_Module'],  function ($, UI_Module) {
             return iValue;
         },
         getURL:      function (iName, iScope) {
-            if ($.isEmptyObject(iScope))  return this[iName];
+            if ((! this[iName])  ||  $.isEmptyObject(iScope))
+                return this[iName];
 
             var iArgs = this.$_DOM[0].dataset,  _Args_ = { },  _Data_;
 

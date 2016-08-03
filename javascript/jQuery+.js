@@ -154,7 +154,7 @@
 
     var UA = BOM.navigator.userAgent;
 
-    var is_Trident = UA.match(/MSIE (\d+)|Trident[^\)]+rv:(\d+)/i),
+    var is_Trident = UA.match(/MSIE (\d+)|Trident[^\)]+rv:(\d+)|Edge\/(\d+)\./i),
         is_Gecko = UA.match(/; rv:(\d+)[^\/]+Gecko\/\d+/),
         is_Webkit = UA.match(/AppleWebkit\/(\d+\.\d+)/i);
     var IE_Ver = is_Trident ? Number(is_Trident[1] || is_Trident[2]) : NaN,
@@ -465,14 +465,15 @@
 
             return _Args_;
         },
-        extendURL:        function (iURL, iArgs) {
-            if ((! iArgs)  ||  $.isEmptyObject(iArgs))  return iURL;
+        extendURL:        function () {
+            var iArgs = $.makeArray( arguments );
+            var iURL = $.split(iArgs.shift(), '?', 2);
 
-            iURL = $.split(iURL, '?', 2);
+            if (! iArgs[0])  return arguments[0];
 
-            return  iURL[0] + '?' + $.param($.extend(
-                $.paramJSON('?' + iURL[1]),  iArgs
-            ));
+            iArgs.unshift( $.paramJSON('?' + iURL[1]) );
+
+            return  iURL[0]  +  '?'  +  $.param($.extend.apply($, iArgs));
         },
         paramSign:        function (iData) {
             iData = (typeof iData == 'string')  ?  this.paramJSON(iData)  :  iData;
@@ -1758,6 +1759,10 @@
             Children_Define
         );
 
+    if (! DOM.head.children[0])
+        Object.defineProperty(DOM_Proto, 'children', Children_Define);
+
+
 /* ---------- Element CSS Selector Match ---------- */
 
     var DOM_Proto = Element.prototype;
@@ -1806,11 +1811,6 @@
             helpURL:    'https://msdn.microsoft.com/en-us/library/1dk3k160(VS.85).aspx'
         });
     };
-
-/* ---------- Element Children ---------- */
-
-    Object.defineProperty(DOM_Proto, 'children', Children_Define);
-
 
 /* ---------- DOM Class List ---------- */
 
@@ -2368,7 +2368,7 @@
 //              >>>  jQuery+  <<<
 //
 //
-//    [Version]    v7.8  (2016-07-29)
+//    [Version]    v7.8  (2016-08-03)
 //
 //    [Require]    jQuery  v1.9+
 //

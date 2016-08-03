@@ -14,10 +14,28 @@ var DS_Inherit = (function (BOM, DOM, $) {
         if (! $.isEmptyObject(iData))  $.extend(this, iData);
     }
 
-    return  function () {
-        DataScope.prototype = arguments[0];
+    var iPrototype = {
+            constructor:    DataScope,
+            toString:       function () {
+                return  '[object DataScope]';
+            },
+            valueOf:        function () {
+                if (this.hasOwnProperty('length'))  return $.makeArray(this);
 
-        var iData = new DataScope( arguments[1] );
+                var iValue = { };
+
+                for (var iKey in this)
+                    if (! iKey.match(/^(\d+|length)$/))
+                        iValue[iKey] = this[iKey];
+
+                return iValue;
+            }
+        };
+
+    return  function (iSup, iSub) {
+        DataScope.prototype = $.isEmptyObject(iSup) ? iPrototype : iSup;
+
+        var iData = new DataScope(iSub);
 
         DataScope.prototype = null;
 
@@ -30,10 +48,14 @@ var DS_Inherit = (function (BOM, DOM, $) {
 
 var UI_Module = (function (BOM, DOM, $, DS_Inherit) {
 
-    function UI_Module(iLink, iScope) {
+    function UI_Module(iLink) {
         this.ownerApp = iLink.ownerApp;
         this.source = iLink;
-        this.data = DS_Inherit(iScope,  { });
+
+        var iScope = iLink.ownerView && iLink.ownerView.getData();
+        iScope = $.likeArray(iScope)  ?  { }  :  iScope;
+
+        this.data = DS_Inherit(iScope || { },  { });
 
         var $_View = iLink.target || iLink.$_DOM;
 
@@ -43,6 +65,8 @@ var UI_Module = (function (BOM, DOM, $, DS_Inherit) {
             $_View = '*[name="' + $_View + '"]';
 
         this.$_View = $($_View).data(this.constructor.getClass(), this);
+
+        this.lastLoad = 0;
 
         this.ownerApp.register(this);
     }
@@ -66,6 +90,8 @@ var UI_Module = (function (BOM, DOM, $, DS_Inherit) {
                 .data('EWA_DS');
         },
         render:      function (iData) {
+            this.lastLoad = $.now();
+
             iData = iData || this.data;
 
             var iView;
@@ -194,7 +220,8 @@ var InnerLink = (function (BOM, DOM, $, UI_Module) {
             return iValue;
         },
         getURL:      function (iName, iScope) {
-            if ($.isEmptyObject(iScope))  return this[iName];
+            if ((! this[iName])  ||  $.isEmptyObject(iScope))
+                return this[iName];
 
             var iArgs = this.$_DOM[0].dataset,  _Args_ = { },  _Data_;
 
@@ -276,16 +303,14 @@ var WebApp = (function (BOM, DOM, $, UI_Module, InnerLink) {
 
             return this;
         },
-        loadViewOf:     function (iView) {
-            iView = iView || { };
-
-            var $_Module = (iView.$_View || $(DOM.body))
+        loadViewOf:     function () {
+            var $_Module = ((arguments[0] || { }).$_View  ||  $(DOM.body))
                     .find('*[href]:not(a, link), *[src]:not(img, iframe, script)')
                     .not(InnerLink.selector + ', *[href]:parent');
 
             for (var i = 0;  $_Module[i];  i++)
                 (new UI_Module(
-                    new InnerLink(this, $_Module[i]),  iView.data
+                    new InnerLink(this, $_Module[i])
                 )).load();
 
             return this;
@@ -301,7 +326,7 @@ var WebApp = (function (BOM, DOM, $, UI_Module, InnerLink) {
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v3.0  (2016-08-02)  Alpha
+//      [Version]    v3.0  (2016-08-03)  Alpha
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //
@@ -357,7 +382,7 @@ var EasyWebApp = (function (BOM, DOM, $, WebApp, InnerLink, UI_Module) {
                 );
                 break;
             case '_self':     ;
-            default:          (new UI_Module(iLink, { })).load();
+            default:          (new UI_Module(iLink)).load();
         }
     });
 })(self, self.document, self.jQuery, WebApp, InnerLink, UI_Module);

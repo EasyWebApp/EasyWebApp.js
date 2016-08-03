@@ -47,16 +47,14 @@ define(['jquery', 'UI_Module', 'InnerLink'],  function ($, UI_Module, InnerLink)
 
             return this;
         },
-        loadViewOf:     function (iView) {
-            iView = iView || { };
-
-            var $_Module = (iView.$_View || $(DOM.body))
+        loadViewOf:     function () {
+            var $_Module = ((arguments[0] || { }).$_View  ||  $(DOM.body))
                     .find('*[href]:not(a, link), *[src]:not(img, iframe, script)')
                     .not(InnerLink.selector + ', *[href]:parent');
 
             for (var i = 0;  $_Module[i];  i++)
                 (new UI_Module(
-                    new InnerLink(this, $_Module[i]),  iView.data
+                    new InnerLink(this, $_Module[i])
                 )).load();
 
             return this;

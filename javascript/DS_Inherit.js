@@ -4,10 +4,28 @@ define(['jquery'],  function ($) {
         if (! $.isEmptyObject(iData))  $.extend(this, iData);
     }
 
-    return  function () {
-        DataScope.prototype = arguments[0];
+    var iPrototype = {
+            constructor:    DataScope,
+            toString:       function () {
+                return  '[object DataScope]';
+            },
+            valueOf:        function () {
+                if (this.hasOwnProperty('length'))  return $.makeArray(this);
 
-        var iData = new DataScope( arguments[1] );
+                var iValue = { };
+
+                for (var iKey in this)
+                    if (! iKey.match(/^(\d+|length)$/))
+                        iValue[iKey] = this[iKey];
+
+                return iValue;
+            }
+        };
+
+    return  function (iSup, iSub) {
+        DataScope.prototype = $.isEmptyObject(iSup) ? iPrototype : iSup;
+
+        var iData = new DataScope(iSub);
 
         DataScope.prototype = null;
 

@@ -1,9 +1,13 @@
 define(['jquery', 'DS_Inherit', 'iQuery+'],  function ($, DS_Inherit) {
 
-    function UI_Module(iLink, iScope) {
+    function UI_Module(iLink) {
         this.ownerApp = iLink.ownerApp;
         this.source = iLink;
-        this.data = DS_Inherit(iScope,  { });
+
+        var iScope = iLink.ownerView && iLink.ownerView.getData();
+        iScope = $.likeArray(iScope)  ?  { }  :  iScope;
+
+        this.data = DS_Inherit(iScope || { },  { });
 
         var $_View = iLink.target || iLink.$_DOM;
 
@@ -13,6 +17,8 @@ define(['jquery', 'DS_Inherit', 'iQuery+'],  function ($, DS_Inherit) {
             $_View = '*[name="' + $_View + '"]';
 
         this.$_View = $($_View).data(this.constructor.getClass(), this);
+
+        this.lastLoad = 0;
 
         this.ownerApp.register(this);
     }
@@ -36,6 +42,8 @@ define(['jquery', 'DS_Inherit', 'iQuery+'],  function ($, DS_Inherit) {
                 .data('EWA_DS');
         },
         render:      function (iData) {
+            this.lastLoad = $.now();
+
             iData = iData || this.data;
 
             var iView;
