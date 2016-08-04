@@ -12,6 +12,8 @@ define(['jquery', 'TimePassed', 'iQuery+', 'EasyWebApp'],  function ($, TimePass
 
         if ((iValue.name || '').match(/^\S+?（.）/))  return;
 
+        iValue.img = iValue.img || iValue.src;
+
         if (iValue.img) {
             if (iValue.img.indexOf('default.jpg') > -1)  return;
 
@@ -20,6 +22,8 @@ define(['jquery', 'TimePassed', 'iQuery+', 'EasyWebApp'],  function ($, TimePass
         }
         iValue.timePassed = iValue.time ?
             TimePassed(iValue.time) : iValue.keywords;
+
+        iValue.list = $.map(iValue.list, arguments.callee);
 
         return iValue;
     }

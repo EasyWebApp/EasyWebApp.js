@@ -46,6 +46,87 @@ var DS_Inherit = (function (BOM, DOM, $) {
 
 
 
+var ViewDataIO = (function (BOM, DOM, $, DS_Inherit) {
+
+    function ArrayRender(iArray, ValueRender) {
+
+        $.ListView(this,  function ($_Item, iValue) {
+
+            $_Item.data('EWA_DS',  DS_Inherit(iArray, iValue))
+                .value('name', iValue);
+
+            ValueRender.call($_Item, iValue);
+
+        }).clear().render( iArray );
+    }
+
+    function ObjectRender(iData) {
+        var _Self_ = arguments.callee;
+
+        if ($.likeArray( iData ))
+            return  ArrayRender.call(this[0], iData, _Self_);
+
+        var iView = $.CommonView.getInstance(this);
+
+        if (iView)  return iView.render(iData);
+
+        this.value('name',  function (iName) {
+
+            if ($.likeArray( iData[iName] ))
+                ArrayRender.call(this, iData[iName], _Self_);
+            else if ($.isPlainObject( iData[iName] ))
+                _Self_.call($(this), iData[iName]);
+            else
+                return iData[iName];
+        });
+    }
+
+    $.fn.extend({
+        dataRender:    function (iData) {
+            if (! $.likeArray(iData)) {
+                ObjectRender.call(this, iData);
+
+                return this;
+            }
+
+            var iView = $.ListView.getInstance( this );
+
+            ArrayRender.call(
+                iView  ?  iView.$_View[0]  :  $.ListView.findView(this, true)[0],
+                iData,
+                ObjectRender
+            );
+
+            return this;
+        },
+        dataReader:    function () {
+            var $_Key = $('[name]', this[0]).not( $('[name] [name]', this[0]) ),
+                iData = { };
+
+            if (! $_Key[0])  return this.value();
+
+            for (var i = 0, iName, iLV;  i < $_Key.length;  i++) {
+                iName = $_Key[i].getAttribute('name');
+                iLV = $.ListView.getInstance( $_Key[i] );
+
+                if (! iLV)
+                    iData[iName] = arguments.callee.call( $( $_Key[i] ) );
+                else {
+                    iData[iName] = [ ];
+
+                    for (var j = 0;  j < iLV.length;  j++)
+                        iData[iName][j] = $.extend(
+                            iLV.valueOf(j),  arguments.callee.call( iLV[j] )
+                        );
+                }
+            }
+            return iData;
+        }
+    });
+})(self, self.document, self.jQuery, DS_Inherit);
+
+
+
 var UI_Module = (function (BOM, DOM, $, DS_Inherit) {
 
     function UI_Module(iLink) {
@@ -55,7 +136,7 @@ var UI_Module = (function (BOM, DOM, $, DS_Inherit) {
         var iScope = iLink.ownerView && iLink.ownerView.getData();
         iScope = $.likeArray(iScope)  ?  { }  :  iScope;
 
-        this.data = DS_Inherit(iScope || { },  { });
+        this.data = DS_Inherit(iScope || { },  this.getEnv());
 
         var $_View = iLink.target || iLink.$_DOM;
 
@@ -89,6 +170,28 @@ var UI_Module = (function (BOM, DOM, $, DS_Inherit) {
             return  ($_Item[0] ? $_Item.slice(-1) : this.source.$_DOM)
                 .data('EWA_DS');
         },
+        getEnv:      function () {
+            var iData = { },  iHTML = this.source.getURL('href'),
+                iJSON = this.source.getURL('src') || this.source.getURL('action');
+
+            if (iHTML) {
+                var iFileName = $.fileName(iHTML).split('.');
+
+                $.extend(iData, {
+                    _File_Path_:    $.filePath(iHTML),
+                    _File_Name_:    iFileName[0],
+                    _File_Ext_:     iFileName[1]
+                });
+            }
+
+            if (iJSON)
+                $.extend(iData, {
+                    _Data_Path_:    $.filePath(iJSON),
+                    _Data_Name_:    $.fileName(iJSON)
+                });
+
+            return iData;
+        },
         findView:    function () {
             var InnerLink = this.source.constructor;
 
@@ -106,24 +209,7 @@ var UI_Module = (function (BOM, DOM, $, DS_Inherit) {
 
             iData = iData || this.data;
 
-            var iView;
-
-            if ($.likeArray( iData )) {
-                iView = $.ListView.getInstance( this.$_View );
-                if (! iView) {
-                    iView = $.ListView.findView( this.$_View )[0];
-                    iView = iView  &&  $.ListView( iView );
-                }
-            } else
-                iView = $.CommonView(this.$_View).on('render',  function () {
-                    this.$_View.find('*').value('name', arguments[0]);
-                });
-
-            if (iView)
-                iView.on('insert',  function ($_Item, iValue) {
-                    $_Item.data('EWA_DS',  DS_Inherit(iData, iValue))
-                        .value('name', iValue);
-                }).render(iData);
+            if (! $.isEmptyObject(iData))  this.$_View.dataRender(iData);
 
             this.findView();
 

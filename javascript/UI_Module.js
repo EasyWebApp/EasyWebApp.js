@@ -1,4 +1,4 @@
-define(['jquery', 'DS_Inherit', 'iQuery+'],  function ($, DS_Inherit) {
+define(['jquery', 'DS_Inherit', 'ViewDataIO'],  function ($, DS_Inherit) {
 
     function UI_Module(iLink) {
         this.ownerApp = iLink.ownerApp;
@@ -7,7 +7,7 @@ define(['jquery', 'DS_Inherit', 'iQuery+'],  function ($, DS_Inherit) {
         var iScope = iLink.ownerView && iLink.ownerView.getData();
         iScope = $.likeArray(iScope)  ?  { }  :  iScope;
 
-        this.data = DS_Inherit(iScope || { },  { });
+        this.data = DS_Inherit(iScope || { },  this.getEnv());
 
         var $_View = iLink.target || iLink.$_DOM;
 
@@ -41,6 +41,28 @@ define(['jquery', 'DS_Inherit', 'iQuery+'],  function ($, DS_Inherit) {
             return  ($_Item[0] ? $_Item.slice(-1) : this.source.$_DOM)
                 .data('EWA_DS');
         },
+        getEnv:      function () {
+            var iData = { },  iHTML = this.source.getURL('href'),
+                iJSON = this.source.getURL('src') || this.source.getURL('action');
+
+            if (iHTML) {
+                var iFileName = $.fileName(iHTML).split('.');
+
+                $.extend(iData, {
+                    _File_Path_:    $.filePath(iHTML),
+                    _File_Name_:    iFileName[0],
+                    _File_Ext_:     iFileName[1]
+                });
+            }
+
+            if (iJSON)
+                $.extend(iData, {
+                    _Data_Path_:    $.filePath(iJSON),
+                    _Data_Name_:    $.fileName(iJSON)
+                });
+
+            return iData;
+        },
         findView:    function () {
             var InnerLink = this.source.constructor;
 
@@ -58,24 +80,7 @@ define(['jquery', 'DS_Inherit', 'iQuery+'],  function ($, DS_Inherit) {
 
             iData = iData || this.data;
 
-            var iView;
-
-            if ($.likeArray( iData )) {
-                iView = $.ListView.getInstance( this.$_View );
-                if (! iView) {
-                    iView = $.ListView.findView( this.$_View )[0];
-                    iView = iView  &&  $.ListView( iView );
-                }
-            } else
-                iView = $.CommonView(this.$_View).on('render',  function () {
-                    this.$_View.find('*').value('name', arguments[0]);
-                });
-
-            if (iView)
-                iView.on('insert',  function ($_Item, iValue) {
-                    $_Item.data('EWA_DS',  DS_Inherit(iData, iValue))
-                        .value('name', iValue);
-                }).render(iData);
+            if (! $.isEmptyObject(iData))  this.$_View.dataRender(iData);
 
             this.findView();
 

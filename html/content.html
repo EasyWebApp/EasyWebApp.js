@@ -36,6 +36,13 @@
         display:    block;
         margin:     auto;
     }
+    .Content > div[multiple] {
+        padding:       0  1em;
+        text-align:    center;
+    }
+    .Content > div[multiple] > .Item-Box {
+        background-size:    cover;
+    }
 </style>
 <!--
 <script src="html/content.js"></script>
@@ -57,6 +64,11 @@
     </small>
     <pre class="CenterX" name="description"></pre>
     <p name="message"></p>
+    <div multiple name="list">
+        <div class="Item-Box visible Background-Image" name="img">
+            <i></i>
+        </div>
+    </div>
     <div class="Panel">
         <div class="Head">网友评论</div>
         <div class="Body" href="html/comment.html"
