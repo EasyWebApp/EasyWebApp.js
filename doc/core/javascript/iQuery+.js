@@ -3,18 +3,12 @@
     if ((typeof this.define != 'function')  ||  (! this.define.amd))
         arguments[0]();
     else
-        this.define('iQuery+', arguments[0]);
+        this.define('iQuery+', ['jQuery+'], arguments[0]);
 
 })(function () {
 
 
 (function (BOM, DOM, $) {
-
-    function FuncName(iFunc) {
-        var iName = iFunc.name;
-
-        return  (typeof iName == 'function')  ?  iName.call(iFunc)  :  iName;
-    }
 
     function CommonView($_View, onInit) {
         var _Self_ = arguments.callee;
@@ -29,7 +23,7 @@
 
         if (iView !== this)  return iView;
 
-        this.$_View = $_View.data('CVI_' + FuncName(this.constructor),  this);
+        this.$_View = $_View.data(this.constructor.getClass(), this);
 
         if (typeof onInit == 'function')  onInit.call(this);
 
@@ -37,16 +31,40 @@
     }
 
     $.extend(CommonView, {
+        getClass:       function () {
+            return  this.prototype.toString.call({constructor: this});
+        },
         getInstance:    function () {
-            var _Instance_ = $(arguments[0]).data('CVI_' + FuncName(this));
+            var _Instance_ = $( arguments[0] ).data( this.getClass(this) );
             return  ((_Instance_ instanceof this)  &&  _Instance_);
+        },
+        instanceOf:     function (iDOM) {
+            var iName = this.getClass();
+            var Instance = '*:data("' + iName + '")';
+
+            var $_Instance = $(iDOM).parent(Instance);
+
+            return  ($_Instance[0] ? $_Instance : $(iDOM).parents(Instance))
+                .data(iName);
         }
     });
 
     CommonView.prototype = $.extend(new $.Observer(),  {
         constructor:    CommonView,
+        toString:       function () {
+            var iName = this.constructor.name;
+
+            iName = (typeof iName == 'function')  ?  this.constructor.name()  :  iName;
+
+            return  '[object ' + iName + ']';
+        },
         render:         function () {
             this.trigger('render', arguments);
+
+            return this;
+        },
+        clear:          function () {
+            this.$_View.empty();
 
             return this;
         }
@@ -57,7 +75,7 @@
 })(self, self.document, self.jQuery);
 
 
-/* ---------- ListView Interface  v0.8 ---------- */
+/* ---------- ListView Interface  v0.9 ---------- */
 
 //  Thanks "EasyWebApp" Project --- http://git.oschina.net/Tech_Query/EasyWebApp
 
@@ -66,21 +84,21 @@
 
     var Click_Type = $.browser.mobile ? 'tap' : 'click';
 
-    function ListView($_View, $_Item, iDelay, onInsert) {
+    function ListView($_View, $_Item, iDelay, onUpdate) {
         var _Self_ = arguments.callee;
 
         if (!  (this instanceof _Self_))
-            return  new _Self_($_View, $_Item, iDelay, onInsert);
+            return  new _Self_($_View, $_Item, iDelay, onUpdate);
 
         var iArgs = $.makeArray(arguments).slice(1);
 
         $_Item = (iArgs[0] instanceof Array)  &&  iArgs.shift();
         iDelay = (typeof iArgs[0] == 'boolean')  ?  iArgs.shift()  :  null;
-        onInsert = (typeof iArgs[0] == 'function')  &&  iArgs[0];
+        onUpdate = (typeof iArgs[0] == 'function')  &&  iArgs[0];
 
         var iView = $.CommonView.call(this, $_View);
 
-        if (typeof onInsert == 'function')  iView.on('insert', onInsert);
+        if (typeof onUpdate == 'function')  iView.on('update', onUpdate);
 
         if ((iView !== this)  ||  (! iView.$_View[0].children[0]))
             return iView;
@@ -121,7 +139,9 @@
     }
 
     $.extend(ListView, {
+        getClass:       $.CommonView.getClass,
         getInstance:    $.CommonView.getInstance,
+        instanceOf:     $.CommonView.instanceOf,
         findView:       function ($_View, Init_Instance) {
             $_View = $($_View).find('*:list, *[multiple]')
                 .not('input[type="file"]');
@@ -130,7 +150,7 @@
                 for (var i = 0;  i < $_View.length;  i++)
                     if (! this.getInstance($_View[i]))  this( $_View[i] );
             } else if (Init_Instance === false)
-                $_View.data('CVI_ListView', null);
+                $_View.data(this.getClass(), null);
 
             return $_View;
         }
@@ -148,6 +168,7 @@
                     (this.$_Template.attr('class') || '').split(/\s+/)
                 ).join('.').trim('.');
         },
+        //  Retrieve
         itemOf:         function (Index) {
             Index = Index || 0;
 
@@ -162,6 +183,7 @@
             );
         },
         slice:          Array.prototype.slice,
+        //  Retrieve
         indexOf:        function (Index, getInstance) {
             if ($.isNumeric( Index ))
                 return  this.slice(Index,  (Index + 1) || undefined)[0];
@@ -174,7 +196,18 @@
 
             return  getInstance ? $() : -1;
         },
+        //  Update
+        update:         function () {
+            var $_Item = this.indexOf(arguments[0], true);
+
+            this.trigger('update', [
+                $_Item,  arguments[1],  this.indexOf($_Item)
+            ]);
+
+            return this;
+        },
         splice:         Array.prototype.splice,
+        //  Create
         insert:         function (iValue, Index) {
             iValue = (iValue === undefined)  ?  { }  :  iValue;
 
@@ -197,13 +230,16 @@
             else
                 this[Index] = $_Item;
 
+            this.update(Index, iValue);
+
             return  $_Item.addClass('ListView_Item').data('LV_Model', iValue)
                 .insertTo(this.$_View,  Index * $_Item.length);
         },
         render:         function (iData, iFrom) {
             var iDelay = (this.cache instanceof Array),  $_Scroll;
 
-            if (iDelay)  iData = iData ? this.cache.concat(iData) : this.cache;
+            if (iDelay)
+                iData = iData  ?  $.merge(this.cache, iData)  :  this.cache;
 
             iFrom = iFrom || 0;
 
@@ -243,14 +279,10 @@
             }
             return iData;
         },
+        //  Delete
         remove:         function (Index) {
-            var $_Item = this.indexOf(Index);
+            var $_Item = this.indexOf(Index, true);
 
-            if (typeof $_Item == 'number') {
-                if ($_Item < 0)  return this;
-                Index = $_Item;
-                $_Item = this.indexOf(Index);
-            }
             if (
                 $_Item.length  &&
                 (false  !==  this.trigger('remove', [
@@ -309,7 +341,7 @@
             var $_View = this.$_View.clone(true).empty().append(
                     this.$_Template.clone(true)
                 );
-            $_View.data({CVI_ListView: '',  LV_Model: ''})[0].id = '';
+            $_View.data({'[object ListView]': '',  LV_Model: ''})[0].id = '';
 
             var iFork = ListView(
                     $_View.appendTo( arguments[0] ),  false,  this.selector
@@ -387,7 +419,11 @@
         $.fn.on.apply(iListView.$_View.addClass('TreeNode'), this.listener);
     }
 
-    TreeView.getInstance = $.CommonView.getInstance;
+    $.extend(TreeView, {
+        getClass:       $.CommonView.getClass,
+        getInstance:    $.CommonView.getInstance,
+        instanceOf:     $.CommonView.instanceOf
+    });
 
     TreeView.prototype = $.extend(new $.CommonView(),  {
         constructor:    TreeView,
@@ -594,19 +630,11 @@
 //              >>>  iQuery+  <<<
 //
 //
-//    [Version]    v1.4  (2016-07-20)  Stable
+//    [Version]    v1.5  (2016-08-05)  Stable
 //
 //    [Require]    iQuery  ||  jQuery with jQuery+
 //
 //
 //        (C)2015-2016  shiy2008@gmail.com
 //
-
-
-
-(function (BOM, DOM, $) {
-
-})(self, self.document, self.jQuery);
-
-
 });
