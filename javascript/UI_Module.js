@@ -34,7 +34,8 @@ define(['jquery', 'DS_Inherit', 'ViewDataIO'],  function ($, DS_Inherit) {
         getData:     function () {
             var iLV = $.ListView.instanceOf( this.source.$_DOM );
 
-            if (! iLV)  return this.data;
+            if ((! iLV)  ||  (iLV.$_View[0] === this.source.$_DOM[0]))
+                return this.data;
 
             var $_Item = this.source.$_DOM.parentsUntil( iLV.$_View );
 

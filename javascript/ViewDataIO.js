@@ -18,7 +18,7 @@ define(['jquery', 'DS_Inherit', 'iQuery+'],  function ($, DS_Inherit) {
         if ($.likeArray( iData ))
             return  ArrayRender.call(this[0], iData, _Self_);
 
-        var iView = $.CommonView.getInstance(this);
+        var iView = $.CommonView.instanceOf(this, false);
 
         if (iView)  return iView.render(iData);
 
@@ -41,7 +41,7 @@ define(['jquery', 'DS_Inherit', 'iQuery+'],  function ($, DS_Inherit) {
                 return this;
             }
 
-            var iView = $.ListView.getInstance( this );
+            var iView = $.ListView.instanceOf(this, false);
 
             ArrayRender.call(
                 iView  ?  iView.$_View[0]  :  $.ListView.findView(this, true)[0],
@@ -59,7 +59,7 @@ define(['jquery', 'DS_Inherit', 'iQuery+'],  function ($, DS_Inherit) {
 
             for (var i = 0, iName, iLV;  i < $_Key.length;  i++) {
                 iName = $_Key[i].getAttribute('name');
-                iLV = $.ListView.getInstance( $_Key[i] );
+                iLV = $.ListView.instanceOf($_Key[i], false);
 
                 if (! iLV)
                     iData[iName] = arguments.callee.call( $( $_Key[i] ) );

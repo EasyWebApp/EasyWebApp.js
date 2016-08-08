@@ -66,7 +66,7 @@ var ViewDataIO = (function (BOM, DOM, $, DS_Inherit) {
         if ($.likeArray( iData ))
             return  ArrayRender.call(this[0], iData, _Self_);
 
-        var iView = $.CommonView.getInstance(this);
+        var iView = $.CommonView.instanceOf(this, false);
 
         if (iView)  return iView.render(iData);
 
@@ -89,7 +89,7 @@ var ViewDataIO = (function (BOM, DOM, $, DS_Inherit) {
                 return this;
             }
 
-            var iView = $.ListView.getInstance( this );
+            var iView = $.ListView.instanceOf(this, false);
 
             ArrayRender.call(
                 iView  ?  iView.$_View[0]  :  $.ListView.findView(this, true)[0],
@@ -107,7 +107,7 @@ var ViewDataIO = (function (BOM, DOM, $, DS_Inherit) {
 
             for (var i = 0, iName, iLV;  i < $_Key.length;  i++) {
                 iName = $_Key[i].getAttribute('name');
-                iLV = $.ListView.getInstance( $_Key[i] );
+                iLV = $.ListView.instanceOf($_Key[i], false);
 
                 if (! iLV)
                     iData[iName] = arguments.callee.call( $( $_Key[i] ) );
@@ -163,7 +163,8 @@ var UI_Module = (function (BOM, DOM, $, DS_Inherit) {
         getData:     function () {
             var iLV = $.ListView.instanceOf( this.source.$_DOM );
 
-            if (! iLV)  return this.data;
+            if ((! iLV)  ||  (iLV.$_View[0] === this.source.$_DOM[0]))
+                return this.data;
 
             var $_Item = this.source.$_DOM.parentsUntil( iLV.$_View );
 
@@ -401,6 +402,9 @@ var WebApp = (function (BOM, DOM, $, UI_Module, InnerLink) {
             this.push( iPage );
 
             return this;
+        },
+        getModule:      function () {
+            return  UI_Module.instanceOf( arguments[0] );
         }
     });
 
@@ -413,7 +417,7 @@ var WebApp = (function (BOM, DOM, $, UI_Module, InnerLink) {
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v3.0  (2016-08-04)  Alpha
+//      [Version]    v3.0  (2016-08-08)  Alpha
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //

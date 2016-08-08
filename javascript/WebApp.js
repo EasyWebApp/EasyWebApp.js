@@ -47,6 +47,9 @@ define(['jquery', 'UI_Module', 'InnerLink'],  function ($, UI_Module, InnerLink)
             this.push( iPage );
 
             return this;
+        },
+        getModule:      function () {
+            return  UI_Module.instanceOf( arguments[0] );
         }
     });
 

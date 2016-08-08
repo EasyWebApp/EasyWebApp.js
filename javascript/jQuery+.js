@@ -25,23 +25,27 @@
 
     /* ----- String Extension ----- */
 
-    if (! ''.trim)
-        var Blank_Char = /(^\s*)|(\s*$)/g;
-    else
-        var _Trim_ = ''.trim;
+    var _Trim_ = ''.trim;
+
+    var Blank_Char = (! _Trim_)  &&  /(^\s*)|(\s*$)/g;
 
     String.prototype.trim = function (iChar) {
         if (! iChar)
-            return  Blank_Char ? this.replace(Blank_Char, '') : _Trim_.call(this);
-        else {
-            for (var i = 0, a = 0, b;  i < iChar.length;  i++) {
-                if ((this[0] == iChar[i]) && (! a))
-                    a = 1;
-                if ((this[this.length - 1] == iChar[i]) && (! b))
-                    b = -1;
-            }
-            return this.slice(a, b);
+            return  _Trim_  ?  _Trim_.call(this)  :  this.replace(Blank_Char, '');
+
+        var iFrom = 0,  iTo;
+
+        for (var i = 0;  iChar[i];  i++) {
+            if ((! iFrom)  &&  (this[0] == iChar[i]))
+                iFrom = 1;
+
+            if ((! iTo)  &&  (this[this.length - 1] == iChar[i]))
+                iTo = -1;
+
+            if (iFrom && iTo)  break;
         }
+
+        return  this.slice(iFrom, iTo);
     };
 
     if (! ''.repeat)
@@ -1901,7 +1905,8 @@
                 return this.getAttribute('placeholder');
             },
             set:    function () {
-                this.setAttribute('placeholder', arguments[0]);
+                if ($.browser.modern)
+                    this.setAttribute('placeholder', arguments[0]);
 
                 PH_Blur.call(this);
 
@@ -2368,7 +2373,7 @@
 //              >>>  jQuery+  <<<
 //
 //
-//    [Version]    v7.8  (2016-08-03)
+//    [Version]    v7.8  (2016-08-05)
 //
 //    [Require]    jQuery  v1.9+
 //
