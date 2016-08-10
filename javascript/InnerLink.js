@@ -27,8 +27,9 @@ define(['jquery', 'UI_Module'],  function ($, UI_Module) {
             return iValue;
         },
         getURL:      function (iName, iScope) {
-            if ((! this[iName])  ||  $.isEmptyObject(iScope))
-                return this[iName];
+            var iURL = this[iName] = this.$_DOM[0].getAttribute(iName);
+
+            if ((! iURL)  ||  $.isEmptyObject(iScope))  return iURL;
 
             var iArgs = this.$_DOM[0].dataset,  _Args_ = { },  _Data_;
 
@@ -39,7 +40,7 @@ define(['jquery', 'UI_Module'],  function ($, UI_Module) {
             }
 
             return $.extendURL(
-                this[iName].replace(/\{(.+?)\}/,  function () {
+                iURL.replace(/\{(.+?)\}/,  function () {
                     return  iScope[arguments[1]] || '';
                 }),
                 _Args_
@@ -51,7 +52,7 @@ define(['jquery', 'UI_Module'],  function ($, UI_Module) {
                     this.getURL('src', iScope)  ||  this.getURL('action', iScope)
                 ),
                 this.$_DOM.serialize(),
-                Data_Ready,
+                $.proxy(Data_Ready, this),
                 'jsonp'
             );
         }

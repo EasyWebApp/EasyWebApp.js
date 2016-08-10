@@ -15,7 +15,10 @@ define(['jquery'],  function ($) {
                 var iValue = { };
 
                 for (var iKey in this)
-                    if (! iKey.match(/^(\d+|length)$/))
+                    if (
+                        this.hasOwnProperty(iKey)  &&
+                        (! iKey.match(/^(\d+|length)$/))
+                    )
                         iValue[iKey] = this[iKey];
 
                 return iValue;
