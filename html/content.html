@@ -37,11 +37,15 @@
         margin:     auto;
     }
     .Content > div[multiple] {
-        padding:       0  1em;
-        text-align:    center;
+            padding:         0  1em;
+            text-align:      center;
+       -moz-column-width:    15em;
+    -webkit-column-width:    15em;
+            column-width:    15em;
     }
     .Content > div[multiple] > .Item-Box {
         background-size:    cover;
+        width:              100%;
     }
 </style>
 <!--
@@ -65,9 +69,7 @@
     <pre class="CenterX" name="description"></pre>
     <p name="message"></p>
     <div multiple name="list">
-        <div class="Item-Box visible Background-Image" name="img">
-            <i></i>
-        </div>
+        <img class="Item-Box visible" name="img" />
     </div>
     <div class="Panel">
         <div class="Head">网友评论</div>

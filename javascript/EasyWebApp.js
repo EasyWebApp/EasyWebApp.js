@@ -26,7 +26,7 @@ define([
         return  this[0]  &&  (new WebApp(this[0], arguments[0]));
     };
 
-    $(document).on('click change submit',  InnerLink.selector,  function (iEvent) {
+    $(document).on('click submit',  InnerLink.selector,  function (iEvent) {
 
         if (this.tagName == 'FORM') {
             if (iEvent.type != 'submit')
@@ -61,5 +61,11 @@ define([
             case '_self':     ;
             default:          (new UI_Module(iLink)).load();
         }
+    }).change(function () {
+
+        var $_VS = $( arguments[0].target );
+
+        UI_Module.instanceOf( $_VS ).data[ $_VS[0].getAttribute('name') ] =
+            $_VS.val();
     });
 });

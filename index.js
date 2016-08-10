@@ -29,6 +29,9 @@ define(['jquery', 'TimePassed', 'iQuery+', 'EasyWebApp'],  function ($, TimePass
     }
 
     BOM.Data_Filter = function (iModule, iData) {
+        if (! iData.status)
+            return  BOM.alert("【服务器报错】" + iData.msg);
+
         return  iData.tngou  ?
             $.map(iData.tngou, Object_Filter)  :  Object_Filter( iData );
     };
