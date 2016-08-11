@@ -73,7 +73,9 @@ define(['jquery', 'DS_Inherit', 'ViewDataIO'],  function ($, DS_Inherit) {
                 iReady;
 
             if (typeof SyncBack == 'function') {
-                $_Module = $_Module.filter('*[async="false"]');
+                $_Module = $_Module.filter(function () {
+                    return  (this.getAttribute('async') == 'false');
+                });
                 iReady = $_Module.length;
             }
 

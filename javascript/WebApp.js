@@ -3,6 +3,9 @@ define(['jquery', 'UI_Module', 'InnerLink'],  function ($, UI_Module, InnerLink)
     var BOM = self,  DOM = self.document;
 
     function WebApp() {
+        if (this instanceof $)
+            return  new arguments.callee(this[0], arguments[0]);
+
         var iApp = $('*:data("_EWA_")').data('_EWA_') || this;
 
         if (iApp !== this)  return iApp;
@@ -29,7 +32,7 @@ define(['jquery', 'UI_Module', 'InnerLink'],  function ($, UI_Module, InnerLink)
             .load().render( $.paramJSON() );
     }
 
-    WebApp.prototype = $.extend(new $.Observer(),  {
+    WebApp.fn = WebApp.prototype = $.extend(new $.Observer(),  {
         constructor:    WebApp,
         push:           Array.prototype.push,
         splice:         Array.prototype.splice,
@@ -53,6 +56,6 @@ define(['jquery', 'UI_Module', 'InnerLink'],  function ($, UI_Module, InnerLink)
         }
     });
 
-    return WebApp;
+    return  $.fn.iWebApp = WebApp;
 
 });

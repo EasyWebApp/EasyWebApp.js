@@ -2,7 +2,7 @@
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v3.0  (2016-08-10)  Alpha
+//      [Version]    v3.0  (2016-08-11)  Alpha
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //
@@ -21,10 +21,6 @@
 define([
     'jquery', 'WebApp', 'InnerLink', 'UI_Module'
 ],  function ($, WebApp, InnerLink, UI_Module) {
-
-    $.fn.iWebApp = function () {
-        return  this[0]  &&  (new WebApp(this[0], arguments[0]));
-    };
 
     $(document).on('click submit',  InnerLink.selector,  function (iEvent) {
 

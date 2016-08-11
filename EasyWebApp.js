@@ -205,7 +205,9 @@ var UI_Module = (function (BOM, DOM, $, DS_Inherit) {
                 iReady;
 
             if (typeof SyncBack == 'function') {
-                $_Module = $_Module.filter('*[async="false"]');
+                $_Module = $_Module.filter(function () {
+                    return  (this.getAttribute('async') == 'false');
+                });
                 iReady = $_Module.length;
             }
 
@@ -376,6 +378,9 @@ var InnerLink = (function (BOM, DOM, $, UI_Module) {
 var WebApp = (function (BOM, DOM, $, UI_Module, InnerLink) {
 
     function WebApp() {
+        if (this instanceof $)
+            return  new arguments.callee(this[0], arguments[0]);
+
         var iApp = $('*:data("_EWA_")').data('_EWA_') || this;
 
         if (iApp !== this)  return iApp;
@@ -402,7 +407,7 @@ var WebApp = (function (BOM, DOM, $, UI_Module, InnerLink) {
             .load().render( $.paramJSON() );
     }
 
-    WebApp.prototype = $.extend(new $.Observer(),  {
+    WebApp.fn = WebApp.prototype = $.extend(new $.Observer(),  {
         constructor:    WebApp,
         push:           Array.prototype.push,
         splice:         Array.prototype.splice,
@@ -426,7 +431,7 @@ var WebApp = (function (BOM, DOM, $, UI_Module, InnerLink) {
         }
     });
 
-    return WebApp;
+    return  $.fn.iWebApp = WebApp;
 
 })(self, self.document, self.jQuery, UI_Module, InnerLink);
 
@@ -435,7 +440,7 @@ var WebApp = (function (BOM, DOM, $, UI_Module, InnerLink) {
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v3.0  (2016-08-10)  Alpha
+//      [Version]    v3.0  (2016-08-11)  Alpha
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //
@@ -453,10 +458,6 @@ var WebApp = (function (BOM, DOM, $, UI_Module, InnerLink) {
 
 
 var EasyWebApp = (function (BOM, DOM, $, WebApp, InnerLink, UI_Module) {
-
-    $.fn.iWebApp = function () {
-        return  this[0]  &&  (new WebApp(this[0], arguments[0]));
-    };
 
     $(document).on('click submit',  InnerLink.selector,  function (iEvent) {
 
