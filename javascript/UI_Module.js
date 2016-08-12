@@ -16,7 +16,8 @@ define(['jquery', 'DS_Inherit', 'ViewDataIO'],  function ($, DS_Inherit) {
         else if (typeof $_View == 'string')
             $_View = '*[name="' + $_View + '"]';
 
-        this.$_View = $($_View).data(this.constructor.getClass(), this);
+        this.$_View = $($_View);
+        this.attach();
 
         this.lastLoad = 0;
 
@@ -31,6 +32,17 @@ define(['jquery', 'DS_Inherit', 'ViewDataIO'],  function ($, DS_Inherit) {
 
     $.extend(UI_Module.prototype, {
         toString:      $.CommonView.prototype.toString,
+        detach:        function () {
+            this.$_Content = this.$_View.children().detach();
+
+            return this;
+        },
+        attach:        function () {
+            this.$_View.append( this.$_Content )
+                .data(this.constructor.getClass(), this);
+
+            return this;
+        },
         getData:       function () {
             var iLV = $.ListView.instanceOf( this.source.$_DOM );
 
@@ -43,7 +55,8 @@ define(['jquery', 'DS_Inherit', 'ViewDataIO'],  function ($, DS_Inherit) {
                 .data('EWA_DS');
         },
         getEnv:        function () {
-            var iData = { },  iHTML = this.source.getURL('href'),
+            var iData = $.paramJSON( this.source.href ),
+                iHTML = this.source.getURL('href'),
                 iJSON = this.source.getURL('src') || this.source.getURL('action');
 
             if (iHTML) {
@@ -156,16 +169,6 @@ define(['jquery', 'DS_Inherit', 'ViewDataIO'],  function ($, DS_Inherit) {
 
                     Load_Back.call(iThis);
                 });
-
-            return this;
-        },
-        detach:        function () {
-            this.$_Content = this.$_View.children().detach();
-
-            return this;
-        },
-        attach:        function () {
-            this.$_View.append( this.$_Content );
 
             return this;
         }
