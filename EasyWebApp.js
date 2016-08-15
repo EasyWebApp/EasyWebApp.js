@@ -170,8 +170,12 @@ var UI_Module = (function (BOM, DOM, $, DS_Inherit) {
             return this;
         },
         attach:        function () {
-            this.$_View.append( this.$_Content )
-                .data(this.constructor.getClass(), this);
+            this.$_View.data(this.constructor.getClass(), this);
+
+            if (this.$_Content)
+                this.$_View.append( this.$_Content );
+            else
+                this.load();
 
             return this;
         },
@@ -285,23 +289,26 @@ var UI_Module = (function (BOM, DOM, $, DS_Inherit) {
                 if (typeof iCallback == 'function')
                     iCallback.call(iThis);
 
-                this.trigger('ready');
+                iThis.trigger('ready');
             }
 
             if (this.source.href)  this.loadHTML(Load_Back);
 
-            if (iJSON)
-                this.source.loadData(this.getData(),  function (_JSON_) {
-                    _JSON_ = iThis.trigger('data', [_JSON_])  ||  _JSON_;
+            if (iJSON) {
+                if (this.lastLoad)
+                    Load_Back.call(this);
+                else
+                    this.source.loadData(this.getData(),  function (_JSON_) {
+                        _JSON_ = iThis.trigger('data', [_JSON_])  ||  _JSON_;
 
-                    $.extend(iThis.data, _JSON_);
+                        $.extend(iThis.data, _JSON_);
 
-                    if (_JSON_ instanceof Array)
-                        iThis.data.length = _JSON_.length;
+                        if (_JSON_ instanceof Array)
+                            iThis.data.length = _JSON_.length;
 
-                    Load_Back.call(iThis);
-                });
-
+                        Load_Back.call(iThis);
+                    });
+            }
             return this;
         }
     });
@@ -354,7 +361,7 @@ var InnerLink = (function (BOM, DOM, $, UI_Module) {
             }
 
             return $.extendURL(
-                iURL.replace(/\{(.+?)\}/,  function () {
+                iURL.replace(/\{(.+?)\}/g,  function () {
                     return  iScope[arguments[1]] || '';
                 }),
                 _Args_
@@ -366,8 +373,7 @@ var InnerLink = (function (BOM, DOM, $, UI_Module) {
                     this.getURL('src', iScope)  ||  this.getURL('action', iScope)
                 ),
                 this.$_DOM.serialize(),
-                $.proxy(Data_Ready, this),
-                'jsonp'
+                $.proxy(Data_Ready, this)
             );
         }
     });
@@ -380,9 +386,9 @@ var InnerLink = (function (BOM, DOM, $, UI_Module) {
 
 var WebApp = (function (BOM, DOM, $, UI_Module, InnerLink) {
 
-    function WebApp() {
+    function WebApp(Page_Box, API_Path, Cache_Minute) {
         if (this instanceof $)
-            return  new arguments.callee(this[0], arguments[0]);
+            return  new arguments.callee(this[0], Page_Box, API_Path);
 
         var iApp = $('*:data("_EWA_")').data('_EWA_') || this;
 
@@ -390,9 +396,10 @@ var WebApp = (function (BOM, DOM, $, UI_Module, InnerLink) {
 
         $.Observer.call(this, 1);
 
-        this.$_Root = $( arguments[0] ).data('_EWA_', this);
+        this.$_Root = $(Page_Box).data('_EWA_', this);
 
-        this.apiPath = arguments[1];
+        this.apiPath = API_Path;
+        this.cacheMinute = Cache_Minute || 3;
 
         this.length = 0;
         this.lastPage = -1;
@@ -427,7 +434,13 @@ var WebApp = (function (BOM, DOM, $, UI_Module, InnerLink) {
             );
             this.push( iPage );
 
-            return this;
+            var iTimeOut = $.now()  -  (1000 * 60 * this.cacheMinute);
+
+            for (var i = 0;  (i + 2) < this.length;  i++)
+                if ((this[i].lastLoad < iTimeOut)  &&  this[i].$_Content) {
+                    this[i].$_Content.remove();
+                    this[i].$_Content = null;
+                }
         },
         getModule:      function () {
             return  UI_Module.instanceOf( arguments[0] );
@@ -443,7 +456,7 @@ var WebApp = (function (BOM, DOM, $, UI_Module, InnerLink) {
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v3.0  (2016-08-12)  Alpha
+//      [Version]    v3.0  (2016-08-15)  Alpha
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //
@@ -461,6 +474,8 @@ var WebApp = (function (BOM, DOM, $, UI_Module, InnerLink) {
 
 
 var EasyWebApp = (function (BOM, DOM, $, WebApp, InnerLink, UI_Module) {
+
+    $.ajaxSetup({dataType: 'json'});
 
     $(document).on('click submit',  InnerLink.selector,  function (iEvent) {
 

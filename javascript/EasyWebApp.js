@@ -2,7 +2,7 @@
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v3.0  (2016-08-12)  Alpha
+//      [Version]    v3.0  (2016-08-15)  Alpha
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //
@@ -21,6 +21,8 @@
 define([
     'jquery', 'WebApp', 'InnerLink', 'UI_Module'
 ],  function ($, WebApp, InnerLink, UI_Module) {
+
+    $.ajaxSetup({dataType: 'json'});
 
     $(document).on('click submit',  InnerLink.selector,  function (iEvent) {
 

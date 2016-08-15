@@ -3,8 +3,8 @@ define(['jquery', 'TimePassed', 'iQuery+', 'EasyWebApp'],  function ($, TimePass
     var BOM = self;
 
     $.ajaxSetup({
-        crossDomain:    true,
-        dataType:       'jsonp'
+        dataType:    'jsonp',
+        cache:       true
     });
 
     function Object_Filter(iValue) {

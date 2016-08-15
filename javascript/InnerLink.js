@@ -40,7 +40,7 @@ define(['jquery', 'UI_Module'],  function ($, UI_Module) {
             }
 
             return $.extendURL(
-                iURL.replace(/\{(.+?)\}/,  function () {
+                iURL.replace(/\{(.+?)\}/g,  function () {
                     return  iScope[arguments[1]] || '';
                 }),
                 _Args_
@@ -52,8 +52,7 @@ define(['jquery', 'UI_Module'],  function ($, UI_Module) {
                     this.getURL('src', iScope)  ||  this.getURL('action', iScope)
                 ),
                 this.$_DOM.serialize(),
-                $.proxy(Data_Ready, this),
-                'jsonp'
+                $.proxy(Data_Ready, this)
             );
         }
     });

@@ -2,9 +2,9 @@ define(['jquery', 'UI_Module', 'InnerLink'],  function ($, UI_Module, InnerLink)
 
     var BOM = self,  DOM = self.document;
 
-    function WebApp() {
+    function WebApp(Page_Box, API_Path, Cache_Minute) {
         if (this instanceof $)
-            return  new arguments.callee(this[0], arguments[0]);
+            return  new arguments.callee(this[0], Page_Box, API_Path);
 
         var iApp = $('*:data("_EWA_")').data('_EWA_') || this;
 
@@ -12,9 +12,10 @@ define(['jquery', 'UI_Module', 'InnerLink'],  function ($, UI_Module, InnerLink)
 
         $.Observer.call(this, 1);
 
-        this.$_Root = $( arguments[0] ).data('_EWA_', this);
+        this.$_Root = $(Page_Box).data('_EWA_', this);
 
-        this.apiPath = arguments[1];
+        this.apiPath = API_Path;
+        this.cacheMinute = Cache_Minute || 3;
 
         this.length = 0;
         this.lastPage = -1;
@@ -49,7 +50,13 @@ define(['jquery', 'UI_Module', 'InnerLink'],  function ($, UI_Module, InnerLink)
             );
             this.push( iPage );
 
-            return this;
+            var iTimeOut = $.now()  -  (1000 * 60 * this.cacheMinute);
+
+            for (var i = 0;  (i + 2) < this.length;  i++)
+                if ((this[i].lastLoad < iTimeOut)  &&  this[i].$_Content) {
+                    this[i].$_Content.remove();
+                    this[i].$_Content = null;
+                }
         },
         getModule:      function () {
             return  UI_Module.instanceOf( arguments[0] );

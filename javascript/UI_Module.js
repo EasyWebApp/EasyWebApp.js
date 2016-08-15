@@ -38,8 +38,12 @@ define(['jquery', 'DS_Inherit', 'ViewDataIO'],  function ($, DS_Inherit) {
             return this;
         },
         attach:        function () {
-            this.$_View.append( this.$_Content )
-                .data(this.constructor.getClass(), this);
+            this.$_View.data(this.constructor.getClass(), this);
+
+            if (this.$_Content)
+                this.$_View.append( this.$_Content );
+            else
+                this.load();
 
             return this;
         },
@@ -153,23 +157,26 @@ define(['jquery', 'DS_Inherit', 'ViewDataIO'],  function ($, DS_Inherit) {
                 if (typeof iCallback == 'function')
                     iCallback.call(iThis);
 
-                this.trigger('ready');
+                iThis.trigger('ready');
             }
 
             if (this.source.href)  this.loadHTML(Load_Back);
 
-            if (iJSON)
-                this.source.loadData(this.getData(),  function (_JSON_) {
-                    _JSON_ = iThis.trigger('data', [_JSON_])  ||  _JSON_;
+            if (iJSON) {
+                if (this.lastLoad)
+                    Load_Back.call(this);
+                else
+                    this.source.loadData(this.getData(),  function (_JSON_) {
+                        _JSON_ = iThis.trigger('data', [_JSON_])  ||  _JSON_;
 
-                    $.extend(iThis.data, _JSON_);
+                        $.extend(iThis.data, _JSON_);
 
-                    if (_JSON_ instanceof Array)
-                        iThis.data.length = _JSON_.length;
+                        if (_JSON_ instanceof Array)
+                            iThis.data.length = _JSON_.length;
 
-                    Load_Back.call(iThis);
-                });
-
+                        Load_Back.call(iThis);
+                    });
+            }
             return this;
         }
     });
