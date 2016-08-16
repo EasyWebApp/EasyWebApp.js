@@ -42,7 +42,7 @@ define(['jquery', 'DS_Inherit', 'ViewDataIO'],  function ($, DS_Inherit) {
 
             if (this.$_Content)
                 this.$_View.append( this.$_Content );
-            else
+            else if (this.lastLoad)
                 this.load();
 
             return this;
@@ -59,7 +59,7 @@ define(['jquery', 'DS_Inherit', 'ViewDataIO'],  function ($, DS_Inherit) {
                 .data('EWA_DS');
         },
         getEnv:        function () {
-            var iData = $.paramJSON( this.source.href ),
+            var iData = { },
                 iHTML = this.source.getURL('href'),
                 iJSON = this.source.getURL('src') || this.source.getURL('action');
 
@@ -79,7 +79,7 @@ define(['jquery', 'DS_Inherit', 'ViewDataIO'],  function ($, DS_Inherit) {
                     _Data_Name_:    $.fileName(iJSON)
                 });
 
-            return iData;
+            return  $.extend(iData, $.paramJSON(this.source.href));
         },
         loadModule:    function (SyncBack) {
             var InnerLink = this.source.constructor;
@@ -88,6 +88,8 @@ define(['jquery', 'DS_Inherit', 'ViewDataIO'],  function ($, DS_Inherit) {
                     .find('*[href]:not(a, link), *[src]:not(img, iframe, script)')
                     .not(InnerLink.selector + ', *[href]:parent'),
                 iReady;
+
+            //  About this --- https://github.com/jquery/jquery/issues/3270
 
             if (typeof SyncBack == 'function') {
                 $_Module = $_Module.filter(function () {
@@ -119,7 +121,7 @@ define(['jquery', 'DS_Inherit', 'ViewDataIO'],  function ($, DS_Inherit) {
                 return HTML_Ready();
             }
 
-            this.$_View.load(this.source.getURL('href'),  function () {
+            this.$_View.load(this.source.getURL('href', this.data),  function () {
                 iTemplate[iHTML] = $(this.children).not('script').clone(true);
 
                 HTML_Ready();
@@ -129,8 +131,6 @@ define(['jquery', 'DS_Inherit', 'ViewDataIO'],  function ($, DS_Inherit) {
             iData = iData || this.data;
 
             if (! $.isEmptyObject(iData))  this.$_View.dataRender(iData);
-
-            this.loadModule();
 
             return this;
         },
@@ -150,7 +150,7 @@ define(['jquery', 'DS_Inherit', 'ViewDataIO'],  function ($, DS_Inherit) {
             function Load_Back() {
                 if (--iReady)  return;
 
-                if (! $.isEmptyObject(iThis.data))  iThis.render();
+                iThis.render().loadModule();
 
                 iThis.lastLoad = $.now();
 

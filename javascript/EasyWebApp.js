@@ -2,7 +2,7 @@
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v3.0  (2016-08-15)  Alpha
+//      [Version]    v3.0  (2016-08-16)  Alpha
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //
@@ -39,9 +39,7 @@ define([
 
         iEvent.stopPropagation();
 
-        var iWebApp = new WebApp();
-
-        var iLink = new InnerLink(iWebApp, this);
+        var iLink = new InnerLink(new WebApp(), this);
 
         switch (iLink.target) {
             case null:        ;
@@ -50,9 +48,11 @@ define([
                 iLink.loadData(
                     UI_Module.prototype.getData.call({source: iLink}),
                     function () {
-                        iWebApp.trigger('data',  '',  iLink.src || iLink.action,  [
-                            iLink.valueOf(),  arguments[0]
-                        ]);
+                        this.ownerApp.trigger(
+                            'data',  '',  this.src || this.action,  [
+                                this.valueOf(),  arguments[0]
+                            ]
+                        );
                     }
                 );
                 break;
@@ -63,7 +63,7 @@ define([
 
         var $_VS = $( arguments[0].target );
 
-        UI_Module.instanceOf( $_VS ).data[ $_VS[0].getAttribute('name') ] =
-            $_VS.val();
+        UI_Module.instanceOf( $_VS )
+            .data[ $_VS[0].getAttribute('name') ] = $_VS.val();
     });
 });

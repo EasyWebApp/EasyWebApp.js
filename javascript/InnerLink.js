@@ -29,6 +29,8 @@ define(['jquery', 'UI_Module'],  function ($, UI_Module) {
         getURL:      function (iName, iScope) {
             var iURL = this[iName] = this.$_DOM[0].getAttribute(iName);
 
+            iScope = iScope  ||  (this.ownerView || '').data;
+
             if ((! iURL)  ||  $.isEmptyObject(iScope))  return iURL;
 
             var iArgs = this.$_DOM[0].dataset,  _Args_ = { },  _Data_;

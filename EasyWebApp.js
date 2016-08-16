@@ -174,7 +174,7 @@ var UI_Module = (function (BOM, DOM, $, DS_Inherit) {
 
             if (this.$_Content)
                 this.$_View.append( this.$_Content );
-            else
+            else if (this.lastLoad)
                 this.load();
 
             return this;
@@ -191,7 +191,7 @@ var UI_Module = (function (BOM, DOM, $, DS_Inherit) {
                 .data('EWA_DS');
         },
         getEnv:        function () {
-            var iData = $.paramJSON( this.source.href ),
+            var iData = { },
                 iHTML = this.source.getURL('href'),
                 iJSON = this.source.getURL('src') || this.source.getURL('action');
 
@@ -211,7 +211,7 @@ var UI_Module = (function (BOM, DOM, $, DS_Inherit) {
                     _Data_Name_:    $.fileName(iJSON)
                 });
 
-            return iData;
+            return  $.extend(iData, $.paramJSON(this.source.href));
         },
         loadModule:    function (SyncBack) {
             var InnerLink = this.source.constructor;
@@ -220,6 +220,8 @@ var UI_Module = (function (BOM, DOM, $, DS_Inherit) {
                     .find('*[href]:not(a, link), *[src]:not(img, iframe, script)')
                     .not(InnerLink.selector + ', *[href]:parent'),
                 iReady;
+
+            //  About this --- https://github.com/jquery/jquery/issues/3270
 
             if (typeof SyncBack == 'function') {
                 $_Module = $_Module.filter(function () {
@@ -251,7 +253,7 @@ var UI_Module = (function (BOM, DOM, $, DS_Inherit) {
                 return HTML_Ready();
             }
 
-            this.$_View.load(this.source.getURL('href'),  function () {
+            this.$_View.load(this.source.getURL('href', this.data),  function () {
                 iTemplate[iHTML] = $(this.children).not('script').clone(true);
 
                 HTML_Ready();
@@ -261,8 +263,6 @@ var UI_Module = (function (BOM, DOM, $, DS_Inherit) {
             iData = iData || this.data;
 
             if (! $.isEmptyObject(iData))  this.$_View.dataRender(iData);
-
-            this.loadModule();
 
             return this;
         },
@@ -282,7 +282,7 @@ var UI_Module = (function (BOM, DOM, $, DS_Inherit) {
             function Load_Back() {
                 if (--iReady)  return;
 
-                if (! $.isEmptyObject(iThis.data))  iThis.render();
+                iThis.render().loadModule();
 
                 iThis.lastLoad = $.now();
 
@@ -350,6 +350,8 @@ var InnerLink = (function (BOM, DOM, $, UI_Module) {
         getURL:      function (iName, iScope) {
             var iURL = this[iName] = this.$_DOM[0].getAttribute(iName);
 
+            iScope = iScope  ||  (this.ownerView || '').data;
+
             if ((! iURL)  ||  $.isEmptyObject(iScope))  return iURL;
 
             var iArgs = this.$_DOM[0].dataset,  _Args_ = { },  _Data_;
@@ -405,23 +407,70 @@ var WebApp = (function (BOM, DOM, $, UI_Module, InnerLink) {
         this.lastPage = -1;
 
         $(BOM).on('popstate',  function () {
+
             var Index = (arguments[0].originalEvent.state || '').index;
 
-            if (typeof Index != 'number')  return;
+            if ((typeof Index != 'number')  ||  (iApp.lastPage == Index))
+                return;
 
             iApp[iApp.lastPage].detach();
             iApp[iApp.lastPage = Index].attach();
+
+        }).on('blur',  function () {
+
+            iApp.showLocation();
+
+        }).on('focus',  function () {
+
+            this.history.replaceState(
+                {index:  iApp.lastPage},
+                iApp[iApp.lastPage].source.title || DOM.title,
+                this.location.href.split(/\?|#/)[0]
+            );
+
+            this.location.hash = '';
         });
 
-        (new UI_Module(new InnerLink(this, DOM.body)))
-            .load().render( $.paramJSON() );
+        this.init();
+    }
+
+    function First_Page() {
+        var iHash = BOM.location.hash.match(/^#!([^#!]+)/);
+        iHash = iHash && iHash[1];
+
+        if (! iHash)
+            return  $('body *[autofocus]:not(:input)').eq(0).click();
+
+        if (!  $('*[href="' + iHash + '"]').eq(0).click()[0])
+            this.ownerApp.load(iHash);
     }
 
     WebApp.fn = WebApp.prototype = $.extend(new $.Observer(),  {
-        constructor:    WebApp,
-        push:           Array.prototype.push,
-        splice:         Array.prototype.splice,
-        register:       function (iPage) {
+        constructor:     WebApp,
+        push:            Array.prototype.push,
+        splice:          Array.prototype.splice,
+        load:            function (HTML_URL) {
+            $('<span />', {
+                style:     'display: none',
+                target:    '_self',
+                href:      HTML_URL
+            }).appendTo('body').click();
+
+            return this;
+        },
+        init:            function () {
+            var iModule = new UI_Module(new InnerLink(this, DOM.body));
+
+            var iLink = iModule.source;
+
+            $.extend(iModule.data, $.paramJSON());
+
+            if (iLink.href || iLink.src || iLink.action)
+                iModule.load(First_Page);
+            else
+                First_Page.call( iModule.render() );
+        },
+        register:        function (iPage) {
             if (this.$_Root[0] !== iPage.$_View[0])  return;
 
             if (this.lastPage > -1)  this[this.lastPage].detach();
@@ -442,7 +491,26 @@ var WebApp = (function (BOM, DOM, $, UI_Module, InnerLink) {
                     this[i].$_Content = null;
                 }
         },
-        getModule:      function () {
+        showLocation:    function () {
+            var iPage = this[this.lastPage];
+
+            var iLink = iPage.source,  iArgs = { };
+
+            (iLink.src || iLink.action).replace(/\{(.+?)\}/g,  function () {
+                iArgs[ arguments[1] ] = iPage.data[ arguments[1] ];
+            });
+
+            if (! $.isEmptyObject(iArgs))
+                BOM.history.replaceState(
+                    {index: this.lastPage},
+                    iLink.title || DOM.title,
+                    $.extendURL(DOM.URL, iArgs)
+                );
+            BOM.location.hash = '!' + iLink.href;
+
+            return BOM.location.href;
+        },
+        getModule:       function () {
             return  UI_Module.instanceOf( arguments[0] );
         }
     });
@@ -456,7 +524,7 @@ var WebApp = (function (BOM, DOM, $, UI_Module, InnerLink) {
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v3.0  (2016-08-15)  Alpha
+//      [Version]    v3.0  (2016-08-16)  Alpha
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //
@@ -492,9 +560,7 @@ var EasyWebApp = (function (BOM, DOM, $, WebApp, InnerLink, UI_Module) {
 
         iEvent.stopPropagation();
 
-        var iWebApp = new WebApp();
-
-        var iLink = new InnerLink(iWebApp, this);
+        var iLink = new InnerLink(new WebApp(), this);
 
         switch (iLink.target) {
             case null:        ;
@@ -503,9 +569,11 @@ var EasyWebApp = (function (BOM, DOM, $, WebApp, InnerLink, UI_Module) {
                 iLink.loadData(
                     UI_Module.prototype.getData.call({source: iLink}),
                     function () {
-                        iWebApp.trigger('data',  '',  iLink.src || iLink.action,  [
-                            iLink.valueOf(),  arguments[0]
-                        ]);
+                        this.ownerApp.trigger(
+                            'data',  '',  this.src || this.action,  [
+                                this.valueOf(),  arguments[0]
+                            ]
+                        );
                     }
                 );
                 break;
@@ -516,8 +584,8 @@ var EasyWebApp = (function (BOM, DOM, $, WebApp, InnerLink, UI_Module) {
 
         var $_VS = $( arguments[0].target );
 
-        UI_Module.instanceOf( $_VS ).data[ $_VS[0].getAttribute('name') ] =
-            $_VS.val();
+        UI_Module.instanceOf( $_VS )
+            .data[ $_VS[0].getAttribute('name') ] = $_VS.val();
     });
 })(self, self.document, self.jQuery, WebApp, InnerLink, UI_Module);
 
