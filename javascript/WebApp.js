@@ -2,9 +2,13 @@ define(['jquery', 'UI_Module', 'InnerLink'],  function ($, UI_Module, InnerLink)
 
     var BOM = self,  DOM = self.document;
 
-    function WebApp(Page_Box, API_Path, Cache_Minute) {
+    var $_BOM = $(BOM);
+
+    function WebApp(Page_Box, API_Path, Cache_Minute, showLocation) {
+        var _Self_ = arguments.callee;
+
         if (this instanceof $)
-            return  new arguments.callee(this[0], Page_Box, API_Path);
+            return  new _Self_(this[0], Page_Box, API_Path, Cache_Minute);
 
         var iApp = $('*:data("_EWA_")').data('_EWA_') || this;
 
@@ -14,48 +18,55 @@ define(['jquery', 'UI_Module', 'InnerLink'],  function ($, UI_Module, InnerLink)
 
         this.$_Root = $(Page_Box).data('_EWA_', this);
 
-        this.apiPath = API_Path;
-        this.cacheMinute = Cache_Minute || 3;
+        var iArgs = $.makeArray(arguments).slice(1);
+
+        this.apiPath = String( iArgs[0] ).match(/^(\w+:)?\/\//)  ?
+            iArgs.shift()  :  '';
+        this.cacheMinute = $.isNumeric( iArgs[0] )  ?  iArgs.shift()  :  3;
+        this.needLocation = iArgs[0];
 
         this.length = 0;
         this.lastPage = -1;
 
-        $(BOM).on('popstate',  function () {
+        $_BOM.on('popstate',  function () {
 
             var Index = (arguments[0].originalEvent.state || '').index;
 
-            if ((typeof Index != 'number')  ||  (iApp.lastPage == Index))
+            if (typeof Index != 'number')
                 return;
+            else if (iApp.lastPage == Index)
+                return  this.setTimeout(function () {
+                    this.history.back();
+                });
 
             iApp[iApp.lastPage].detach();
             iApp[iApp.lastPage = Index].attach();
 
-        }).on('blur',  function () {
+        }).on('hashchange',  function () {
 
-            iApp.showLocation();
+            if (iApp.hashChange === false)
+                return  iApp.hashChange = null;
 
-        }).on('focus',  function () {
+            var iHash = _Self_.getRoute();
 
-            this.history.replaceState(
-                {index:  iApp.lastPage},
-                iApp[iApp.lastPage].source.title || DOM.title,
-                this.location.href.split(/\?|#/)[0]
-            );
-
-            this.location.hash = '';
+            if (iHash  &&  (!  $('*[href="' + iHash + '"]').eq(0).click()[0]))
+                iApp.load(iHash);
         });
 
         this.init();
     }
 
-    function First_Page() {
+    WebApp.getRoute = function () {
         var iHash = BOM.location.hash.match(/^#!([^#!]+)/);
-        iHash = iHash && iHash[1];
+        return  iHash && iHash[1];
+    };
+
+    function First_Page() {
+        var iHash = WebApp.getRoute();
 
         if (! iHash)
-            return  $('body *[autofocus]:not(:input)').eq(0).click();
-
-        if (!  $('*[href="' + iHash + '"]').eq(0).click()[0])
+            $('body *[autofocus]:not(:input)').eq(0).click();
+        else
             this.ownerApp.load(iHash);
     }
 
@@ -75,14 +86,31 @@ define(['jquery', 'UI_Module', 'InnerLink'],  function ($, UI_Module, InnerLink)
         init:            function () {
             var iModule = new UI_Module(new InnerLink(this, DOM.body));
 
-            var iLink = iModule.source;
+            var iLink = iModule.source,  iApp = this;
 
             $.extend(iModule.data, $.paramJSON());
 
             if (iLink.href || iLink.src || iLink.action)
                 iModule.load(First_Page);
             else
-                First_Page.call( iModule.render() );
+                First_Page.call( iModule.render().loadModule() );
+
+            if (! this.needLocation)  return;
+
+            $_BOM.on('blur',  function () {
+
+                iApp.showLocation();
+
+            }).on('focus',  function () {
+
+                this.history.replaceState(
+                    {index:  iApp.lastPage},
+                    iApp[iApp.lastPage].source.title || DOM.title,
+                    this.location.href.split(/\?|#/)[0]
+                );
+
+                this.location.hash = '';
+            });
         },
         register:        function (iPage) {
             if (this.$_Root[0] !== iPage.$_View[0])  return;
@@ -120,6 +148,8 @@ define(['jquery', 'UI_Module', 'InnerLink'],  function ($, UI_Module, InnerLink)
                     iLink.title || DOM.title,
                     $.extendURL(DOM.URL, iArgs)
                 );
+
+            this.hashChange = false;
             BOM.location.hash = '!' + iLink.href;
 
             return BOM.location.href;

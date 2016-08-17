@@ -37,7 +37,7 @@ define(['jquery', 'TimePassed', 'iQuery+', 'EasyWebApp'],  function ($, TimePass
     };
 
     $(document).ready(function () {
-        var iApp = $('body > .PC_Narrow').iWebApp('http://www.tngou.net/api/');
+        var iApp = $('body > .PC_Narrow').iWebApp('http://www.tngou.net/api/', true);
 
         iApp.on('data', Data_Filter);
 

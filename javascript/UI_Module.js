@@ -108,6 +108,8 @@ define(['jquery', 'DS_Inherit', 'ViewDataIO'],  function ($, DS_Inherit) {
                 )).load(SyncBack && Module_Ready);
 
             if ((! i)  &&  SyncBack)  SyncBack.call(this);
+
+            return this;
         },
         loadHTML:      function (HTML_Ready) {
             var iTemplate = this.constructor.$_Template,
