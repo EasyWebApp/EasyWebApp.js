@@ -75,11 +75,13 @@ define(['jquery', 'UI_Module', 'InnerLink'],  function ($, UI_Module, InnerLink)
         push:            Array.prototype.push,
         splice:          Array.prototype.splice,
         load:            function (HTML_URL) {
-            $('<span />', {
-                style:     'display: none',
-                target:    '_self',
-                href:      HTML_URL
-            }).appendTo('body').click();
+            $('<span />',  $.extend(
+                {style: 'display: none'},
+                (typeof HTML_URL == 'object')  ?  HTML_URL  :  {
+                    target:    '_self',
+                    href:      HTML_URL
+                }
+            )).appendTo('body').click();
 
             return this;
         },
@@ -138,7 +140,7 @@ define(['jquery', 'UI_Module', 'InnerLink'],  function ($, UI_Module, InnerLink)
 
             var iLink = iPage.source,  iArgs = { };
 
-            (iLink.src || iLink.action).replace(/\{(.+?)\}/g,  function () {
+            (iLink.src || iLink.action || '').replace(/\{(.+?)\}/g,  function () {
                 iArgs[ arguments[1] ] = iPage.data[ arguments[1] ];
             });
 

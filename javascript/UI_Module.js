@@ -9,14 +9,7 @@ define(['jquery', 'DS_Inherit', 'ViewDataIO'],  function ($, DS_Inherit) {
 
         this.data = DS_Inherit(iScope || { },  this.getEnv());
 
-        var $_View = iLink.target || iLink.$_DOM;
-
-        if ($_View == '_self')
-            $_View = this.ownerApp.$_Root;
-        else if (typeof $_View == 'string')
-            $_View = '*[name="' + $_View + '"]';
-
-        this.$_View = $($_View);
+        this.$_View = iLink.getTarget() || iLink.$_DOM;
         this.attach();
 
         this.lastLoad = 0;
@@ -130,9 +123,9 @@ define(['jquery', 'DS_Inherit', 'ViewDataIO'],  function ($, DS_Inherit) {
             });
         },
         render:        function (iData) {
-            iData = iData || this.data;
+            if (! $.isEmptyObject(iData))  $.extend(this.data, iData);
 
-            if (! $.isEmptyObject(iData))  this.$_View.dataRender(iData);
+            if (! $.isEmptyObject(this.data))  this.$_View.dataRender(this.data);
 
             return this;
         },

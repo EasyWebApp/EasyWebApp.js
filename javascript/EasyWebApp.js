@@ -45,16 +45,16 @@ define([
             case null:        ;
             case '':          return;
             case '_blank':
-                iLink.loadData(
-                    UI_Module.prototype.getData.call({source: iLink}),
-                    function () {
-                        this.ownerApp.trigger(
-                            'data',  '',  this.src || this.action,  [
-                                this.valueOf(),  arguments[0]
-                            ]
-                        );
-                    }
-                );
+                iLink.loadData((
+                    UI_Module.prototype.getData.call({source: iLink})  ||
+                        UI_Module.instanceOf('body').data
+                ),  function () {
+                    this.ownerApp.trigger(
+                        'data',  '',  this.src || this.action,  [
+                            this.valueOf(),  arguments[0]
+                        ]
+                    );
+                });
                 break;
             case '_self':     ;
             default:          (new UI_Module(iLink)).load();

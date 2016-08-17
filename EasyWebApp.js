@@ -141,14 +141,7 @@ var UI_Module = (function (BOM, DOM, $, DS_Inherit) {
 
         this.data = DS_Inherit(iScope || { },  this.getEnv());
 
-        var $_View = iLink.target || iLink.$_DOM;
-
-        if ($_View == '_self')
-            $_View = this.ownerApp.$_Root;
-        else if (typeof $_View == 'string')
-            $_View = '*[name="' + $_View + '"]';
-
-        this.$_View = $($_View);
+        this.$_View = iLink.getTarget() || iLink.$_DOM;
         this.attach();
 
         this.lastLoad = 0;
@@ -262,9 +255,9 @@ var UI_Module = (function (BOM, DOM, $, DS_Inherit) {
             });
         },
         render:        function (iData) {
-            iData = iData || this.data;
+            if (! $.isEmptyObject(iData))  $.extend(this.data, iData);
 
-            if (! $.isEmptyObject(iData))  this.$_View.dataRender(iData);
+            if (! $.isEmptyObject(this.data))  this.$_View.dataRender(this.data);
 
             return this;
         },
@@ -340,7 +333,7 @@ var InnerLink = (function (BOM, DOM, $, UI_Module) {
     InnerLink.selector = '*[target]:not(a)';
 
     $.extend(InnerLink.prototype, {
-        valueOf:     function () {
+        valueOf:      function () {
             var iValue = { };
 
             for (var iKey in this)
@@ -349,7 +342,17 @@ var InnerLink = (function (BOM, DOM, $, UI_Module) {
 
             return iValue;
         },
-        getURL:      function (iName, iScope) {
+        getTarget:    function () {
+            switch (this.target) {
+                case '_self':      return this.ownerApp.$_Root;
+                case '_blank':     ;
+                case '_parent':    ;
+                case '_top':       return;
+            }
+
+            return  this.target  &&  $('*[name="' + this.target + '"]');
+        },
+        getURL:       function (iName, iScope) {
             var iURL = this[iName] = this.$_DOM[0].getAttribute(iName);
 
             iScope = iScope  ||  (this.ownerView || '').data;
@@ -371,7 +374,7 @@ var InnerLink = (function (BOM, DOM, $, UI_Module) {
                 _Args_
             );
         },
-        loadData:    function (iScope, Data_Ready) {
+        loadData:     function (iScope, Data_Ready) {
             $[this.method](
                 this.ownerApp.apiPath + (
                     this.getURL('src', iScope)  ||  this.getURL('action', iScope)
@@ -463,11 +466,13 @@ var WebApp = (function (BOM, DOM, $, UI_Module, InnerLink) {
         push:            Array.prototype.push,
         splice:          Array.prototype.splice,
         load:            function (HTML_URL) {
-            $('<span />', {
-                style:     'display: none',
-                target:    '_self',
-                href:      HTML_URL
-            }).appendTo('body').click();
+            $('<span />',  $.extend(
+                {style: 'display: none'},
+                (typeof HTML_URL == 'object')  ?  HTML_URL  :  {
+                    target:    '_self',
+                    href:      HTML_URL
+                }
+            )).appendTo('body').click();
 
             return this;
         },
@@ -526,7 +531,7 @@ var WebApp = (function (BOM, DOM, $, UI_Module, InnerLink) {
 
             var iLink = iPage.source,  iArgs = { };
 
-            (iLink.src || iLink.action).replace(/\{(.+?)\}/g,  function () {
+            (iLink.src || iLink.action || '').replace(/\{(.+?)\}/g,  function () {
                 iArgs[ arguments[1] ] = iPage.data[ arguments[1] ];
             });
 
@@ -598,16 +603,16 @@ var EasyWebApp = (function (BOM, DOM, $, WebApp, InnerLink, UI_Module) {
             case null:        ;
             case '':          return;
             case '_blank':
-                iLink.loadData(
-                    UI_Module.prototype.getData.call({source: iLink}),
-                    function () {
-                        this.ownerApp.trigger(
-                            'data',  '',  this.src || this.action,  [
-                                this.valueOf(),  arguments[0]
-                            ]
-                        );
-                    }
-                );
+                iLink.loadData((
+                    UI_Module.prototype.getData.call({source: iLink})  ||
+                        UI_Module.instanceOf('body').data
+                ),  function () {
+                    this.ownerApp.trigger(
+                        'data',  '',  this.src || this.action,  [
+                            this.valueOf(),  arguments[0]
+                        ]
+                    );
+                });
                 break;
             case '_self':     ;
             default:          (new UI_Module(iLink)).load();

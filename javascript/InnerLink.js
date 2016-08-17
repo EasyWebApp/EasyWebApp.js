@@ -17,7 +17,7 @@ define(['jquery', 'UI_Module'],  function ($, UI_Module) {
     InnerLink.selector = '*[target]:not(a)';
 
     $.extend(InnerLink.prototype, {
-        valueOf:     function () {
+        valueOf:      function () {
             var iValue = { };
 
             for (var iKey in this)
@@ -26,7 +26,17 @@ define(['jquery', 'UI_Module'],  function ($, UI_Module) {
 
             return iValue;
         },
-        getURL:      function (iName, iScope) {
+        getTarget:    function () {
+            switch (this.target) {
+                case '_self':      return this.ownerApp.$_Root;
+                case '_blank':     ;
+                case '_parent':    ;
+                case '_top':       return;
+            }
+
+            return  this.target  &&  $('*[name="' + this.target + '"]');
+        },
+        getURL:       function (iName, iScope) {
             var iURL = this[iName] = this.$_DOM[0].getAttribute(iName);
 
             iScope = iScope  ||  (this.ownerView || '').data;
@@ -48,7 +58,7 @@ define(['jquery', 'UI_Module'],  function ($, UI_Module) {
                 _Args_
             );
         },
-        loadData:    function (iScope, Data_Ready) {
+        loadData:     function (iScope, Data_Ready) {
             $[this.method](
                 this.ownerApp.apiPath + (
                     this.getURL('src', iScope)  ||  this.getURL('action', iScope)
