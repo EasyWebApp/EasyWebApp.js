@@ -31,5 +31,6 @@ EasyWebApp 虽然从 v2.2 “ **ListView 对象**独立”开始支持 **局部�
 
 ## 开发详情
 
- - [迭代记录](http://git.oschina.net/Tech_Query/EasyWebApp/commits/Component)
  - [为什么我还在用 jQuery？](jQueryLove.md)
+ - [开发进度](http://git.oschina.net/Tech_Query/EasyWebApp/milestones/1)
+ - [迭代记录](http://git.oschina.net/Tech_Query/EasyWebApp/commits/Component)

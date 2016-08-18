@@ -12,6 +12,8 @@ define(['jquery', 'UI_Module'],  function ($, UI_Module) {
         this.method = (iLink.getAttribute('method') || 'GET').toLowerCase();
         this.src = iLink.getAttribute('src');
         this.action = iLink.getAttribute('action');
+
+        this.data = iLink.dataset;
     }
 
     InnerLink.selector = '*[target]:not(a)';
@@ -31,22 +33,23 @@ define(['jquery', 'UI_Module'],  function ($, UI_Module) {
                 case '_self':      return this.ownerApp.$_Root;
                 case '_blank':     ;
                 case '_parent':    ;
-                case '_top':       return;
+                case '_top':       return $();
             }
 
-            return  this.target  &&  $('*[name="' + this.target + '"]');
+            return  this.target  ?  $('*[name="' + this.target + '"]')  :  $();
         },
         getURL:       function (iName, iScope) {
-            var iURL = this[iName] = this.$_DOM[0].getAttribute(iName);
+            var iURL = this[iName] =
+                    this.$_DOM[0].getAttribute(iName) || this[iName];
 
             iScope = iScope  ||  (this.ownerView || '').data;
 
             if ((! iURL)  ||  $.isEmptyObject(iScope))  return iURL;
 
-            var iArgs = this.$_DOM[0].dataset,  _Args_ = { },  _Data_;
+            var _Args_ = { },  _Data_;
 
-            for (var iKey in iArgs) {
-                _Data_ = iScope[ iArgs[iKey] ];
+            for (var iKey in this.data) {
+                _Data_ = iScope[ this.data[iKey] ];
 
                 if ($.isData(_Data_))  _Args_[iKey] = _Data_;
             }

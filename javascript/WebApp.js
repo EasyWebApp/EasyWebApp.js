@@ -136,23 +136,29 @@ define(['jquery', 'UI_Module', 'InnerLink'],  function ($, UI_Module, InnerLink)
                 }
         },
         showLocation:    function () {
-            var iPage = this[this.lastPage];
+            var iPage = this[this.lastPage],  iArgs = { };
 
-            var iLink = iPage.source,  iArgs = { };
+            var iLink = new InnerLink(
+                    this,  iPage.$_View.children('link[target="_blank"]')[0]
+                ),
+                iData = iPage.getData();
 
             (iLink.src || iLink.action || '').replace(/\{(.+?)\}/g,  function () {
-                iArgs[ arguments[1] ] = iPage.data[ arguments[1] ];
+                iArgs[ arguments[1] ] = iData[ arguments[1] ];
             });
+
+            for (var iKey in iLink.data)
+                iArgs[ iLink.data[iKey] ] = iData[ iLink.data[iKey] ];
 
             if (! $.isEmptyObject(iArgs))
                 BOM.history.replaceState(
                     {index: this.lastPage},
-                    iLink.title || DOM.title,
+                    iPage.source.title || DOM.title,
                     $.extendURL(DOM.URL, iArgs)
                 );
 
             this.hashChange = false;
-            BOM.location.hash = '!' + iLink.href;
+            BOM.location.hash = '!' + iPage.source.href;
 
             return BOM.location.href;
         },
