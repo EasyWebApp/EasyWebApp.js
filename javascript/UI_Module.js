@@ -124,18 +124,23 @@ define(['jquery', 'DS_Inherit', 'ViewDataIO'],  function ($, DS_Inherit) {
 
                 var $_Target = iLink.getTarget();
 
-                var $_Link = $_Target.children('link[target="_blank"]');
+                var $_Link = $_Target.children('link[target="_blank"]')
+                        .attr('href', iLink.href);
+
+                var _Link_ = $_Link[0] && (
+                        new iLink.constructor(iLink.ownerApp, $_Link[0])
+                    ).register(iLink.ownerApp.length - 1);
 
                 if (
                     ((! iLink.href)  ||  iLink.src  ||  iLink.action)  ||
                     ($_Target[0] != _This_.ownerApp.$_Root[0])  ||
-                    (! $_Link[0])
+                    (! _Link_)
                 )
                     return _This_.loadModule(HTML_Ready);
 
-                iLink.method = $_Link[0].getAttribute('method') || iLink.method;
-                iLink.src = $_Link[0].getAttribute('src');
-                iLink.data = $_Link[0].dataset;
+                iLink.method = _Link_.method || iLink.method;
+                iLink.src = _Link_.src;
+                iLink.data = _Link_.data;
 
                 $.extend(_This_.data, _This_.getEnv());
 

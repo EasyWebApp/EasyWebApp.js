@@ -1,5 +1,7 @@
 define(['jquery', 'UI_Module'],  function ($, UI_Module) {
 
+    var BOM = self,  DOM = self.document;
+
     function InnerLink(iApp, iLink) {
         this.ownerApp = iApp;
         this.ownerView = UI_Module.instanceOf(iLink);
@@ -38,6 +40,18 @@ define(['jquery', 'UI_Module'],  function ($, UI_Module) {
 
             return  this.target  ?  $('*[name="' + this.target + '"]')  :  $();
         },
+        getArgs:      function () {
+            var iArgs = { },  iData = this.ownerView.getData();
+
+            (this.src || this.action || '').replace(/\{(.+?)\}/g,  function () {
+                iArgs[ arguments[1] ] = iData[ arguments[1] ];
+            });
+
+            for (var iKey in this.data)
+                iArgs[ this.data[iKey] ] = iData[ this.data[iKey] ];
+
+            return iArgs;
+        },
         getURL:       function (iName, iScope) {
             var iURL = this[iName] =
                     this.$_DOM[0].getAttribute(iName) || this[iName];
@@ -60,6 +74,20 @@ define(['jquery', 'UI_Module'],  function ($, UI_Module) {
                 }),
                 _Args_
             );
+        },
+        register:     function (Index) {
+            DOM.title = this.title || DOM.title;
+
+            BOM.history[
+                (this.$_DOM[0].tagName != 'LINK')  ?
+                    'pushState'  :  'replaceState'
+            ](
+                {index: Index},
+                DOM.title,
+                '#!'  +  $.extendURL(this.href, this.getArgs())
+            );
+
+            return this;
         },
         loadData:     function (iScope, Data_Ready) {
             $[this.method](
