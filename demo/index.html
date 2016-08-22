@@ -4,7 +4,8 @@
 
     <title>易资讯</title>
 
-    <link rel="stylesheet" href="http://tech_query.oschina.io/iquery/doc/core/css/EasyWebUI.css" />
+    <link rel="stylesheet"
+          href="http://tech_query.oschina.io/iquery/doc/core/css/EasyWebUI.css" />
     <style>
         body {
             background:     rgb(230, 230, 230);
@@ -60,15 +61,15 @@
     <script src="//cdn.bootcss.com/require.js/2.2.0/require.min.js"></script>
     <script>
         require.config({
-            baseUrl:    'javascript/',
+            baseUrl:    '../source/',
             paths:      {
-                jquery:       '//cdn.bootcss.com/jquery/1.12.4/jquery.min'/*,
+                jquery:       '//cdn.bootcss.com/jquery/1.12.4/jquery.min',
                 'jQuery+':    'http://tech_query.oschina.io/iquery/jQuery+',
-                'iQuery+':    'http://tech_query.oschina.io/iquery/iQuery+'*/
+                'iQuery+':    'http://tech_query.oschina.io/iquery/iQuery+'
             }
         });
 
-        require(['../index']);
+        require(['../demo/index']);
     </script>
 </head><body>
     <div class="Head Grid-Row Black_O CenterX CenterY">

@@ -1,6 +1,6 @@
 ({
     name:            'EasyWebApp',
-    baseUrl:         '../javascript',
+    baseUrl:         '../source',
     paths:           {
         jquery:       'http://cdn.bootcss.com/jquery/1.12.4/jquery',
         'jQuery+':    'http://tech_query.oschina.io/iquery/jQuery+',

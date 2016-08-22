@@ -1,4 +1,9 @@
-define(['jquery', 'TimePassed', 'iQuery+', 'EasyWebApp'],  function ($, TimePassed) {
+define([
+    'jquery',
+    './javascript/TimePassed',
+    './javascript/iQuery+',
+    'EasyWebApp'
+],  function ($, TimePassed) {
 
     var BOM = self;
 
@@ -37,7 +42,8 @@ define(['jquery', 'TimePassed', 'iQuery+', 'EasyWebApp'],  function ($, TimePass
     };
 
     $(document).ready(function () {
-        var iApp = $('body > .PC_Narrow').iWebApp('http://www.tngou.net/api/', true);
+
+        var iApp = $('body > .PC_Narrow').iWebApp('http://www.tngou.net/api/');
 
         iApp.on('data', Data_Filter);
 

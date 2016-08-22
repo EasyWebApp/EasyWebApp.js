@@ -33,8 +33,8 @@ EasyWebApp 虽然从 v2.2 “ **ListView 对象**独立”开始支持 **局部�
 
 ## 官方插件
 
- 1. selectLoad —— `<select />` 数据项动态加载插件，支持 **多级联动**
- 2. itemDelete —— `$.ListView()` 列表项删除插件
+ 1. [selectLoad](plugin/EWA_selectLoad.js) —— `<select />` 数据项动态加载插件，支持 **多级联动**
+ 2. [itemDelete](plugin/EWA_itemDelete.js) —— `$.ListView()` 列表项删除插件
 
 
 ## 开发详情
