@@ -34,9 +34,10 @@ define(['jquery', 'DS_Inherit', 'ViewDataIO'],  function ($, DS_Inherit) {
         attach:        function () {
             this.$_View.data(this.constructor.getClass(), this);
 
-            if (this.$_Content)
+            if (this.$_Content) {
                 this.$_View.append( this.$_Content );
-            else if (this.lastLoad)
+                this.ownerApp.trigger('attach');
+            } else if (this.lastLoad)
                 this.load();
 
             return this;
@@ -74,6 +75,16 @@ define(['jquery', 'DS_Inherit', 'ViewDataIO'],  function ($, DS_Inherit) {
                 });
 
             return  $.extend(iData, $.paramJSON(this.source.href));
+        },
+        prefetch:      function () {
+            var InnerLink = this.source.constructor;
+
+            var $_Link = this.$_View.find( InnerLink.selector );
+
+            for (var i = 0;  $_Link[i];  i++)
+                (new InnerLink(this.ownerApp, $_Link[i])).prefetch();
+
+            return this;
         },
         loadModule:    function (SyncBack) {
             var InnerLink = this.source.constructor;
@@ -120,7 +131,9 @@ define(['jquery', 'DS_Inherit', 'ViewDataIO'],  function ($, DS_Inherit) {
                 _This_ = this;
 
             function Load_Back() {
-                var iLink = _This_.source;
+                _This_.ownerApp.trigger('attach');
+
+                var iLink = _This_.prefetch().source;
 
                 var $_Target = iLink.getTarget();
 
@@ -153,7 +166,7 @@ define(['jquery', 'DS_Inherit', 'ViewDataIO'],  function ($, DS_Inherit) {
                 return Load_Back();
             }
 
-            this.$_View.load(this.source.getURL('href', this.data),  function () {
+            this.$_View.load(iHTML,  function () {
                 iTemplate[iHTML] = $(this.children).not('script').clone(true);
 
                 Load_Back();

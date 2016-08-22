@@ -18,7 +18,20 @@ define(['jquery', 'UI_Module'],  function ($, UI_Module) {
         this.data = iLink.dataset;
     }
 
-    InnerLink.selector = '*[target]:not(a)';
+    $.extend(InnerLink, {
+        selector:       [
+            '*[target]:not(a)',
+            'a[target="_self"]',
+            'a[target="_blank"][rel="nofollow"]'
+        ].join(', '),
+        reURLVar:       /\{(.+?)\}/g,
+        prefetchRel:    $.browser.modern ? 'prefetch' : 'next'
+    });
+
+    var $_Prefetch = $('<link rel="' + InnerLink.prefetchRel + '" />')
+            .on('load',  function () {
+                $(this).remove();
+            });
 
     $.extend(InnerLink.prototype, {
         valueOf:      function () {
@@ -29,6 +42,20 @@ define(['jquery', 'UI_Module'],  function ($, UI_Module) {
                     iValue[iKey] = this[iKey];
 
             return iValue;
+        },
+        prefetch:     function () {
+            var iHTML = (this.href || '').split('?')[0],
+                iJSON = this.src || this.action || '';
+
+            if (iHTML)
+                $_Prefetch.clone(true).attr('href', iHTML).appendTo('head');
+
+            if (
+                (this.method == 'get')  &&
+                (! iJSON.match(this.constructor.reURLVar))  &&
+                $.isEmptyObject( this.data )
+            )
+                $_Prefetch.clone(true).attr('href', iJSON).appendTo('head');
         },
         getTarget:    function () {
             switch (this.target) {
@@ -43,10 +70,12 @@ define(['jquery', 'UI_Module'],  function ($, UI_Module) {
         getArgs:      function () {
             var iArgs = { },  iData = this.ownerView.getData();
 
-            (this.src || this.action || '').replace(/\{(.+?)\}/g,  function () {
-                iArgs[ arguments[1] ] = iData[ arguments[1] ];
-            });
-
+            (this.src || this.action || '').replace(
+                InnerLink.reURLVar,
+                function () {
+                    iArgs[ arguments[1] ] = iData[ arguments[1] ];
+                }
+            );
             for (var iKey in this.data)
                 iArgs[ this.data[iKey] ] = iData[ this.data[iKey] ];
 
@@ -69,7 +98,7 @@ define(['jquery', 'UI_Module'],  function ($, UI_Module) {
             }
 
             return $.extendURL(
-                iURL.replace(/\{(.+?)\}/g,  function () {
+                iURL.replace(InnerLink.reURLVar,  function () {
                     return  iScope[arguments[1]] || '';
                 }),
                 _Args_

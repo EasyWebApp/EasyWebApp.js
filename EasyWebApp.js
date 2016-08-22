@@ -166,9 +166,10 @@ var UI_Module = (function (BOM, DOM, $, DS_Inherit) {
         attach:        function () {
             this.$_View.data(this.constructor.getClass(), this);
 
-            if (this.$_Content)
+            if (this.$_Content) {
                 this.$_View.append( this.$_Content );
-            else if (this.lastLoad)
+                this.ownerApp.trigger('attach');
+            } else if (this.lastLoad)
                 this.load();
 
             return this;
@@ -206,6 +207,16 @@ var UI_Module = (function (BOM, DOM, $, DS_Inherit) {
                 });
 
             return  $.extend(iData, $.paramJSON(this.source.href));
+        },
+        prefetch:      function () {
+            var InnerLink = this.source.constructor;
+
+            var $_Link = this.$_View.find( InnerLink.selector );
+
+            for (var i = 0;  $_Link[i];  i++)
+                (new InnerLink(this.ownerApp, $_Link[i])).prefetch();
+
+            return this;
         },
         loadModule:    function (SyncBack) {
             var InnerLink = this.source.constructor;
@@ -252,7 +263,9 @@ var UI_Module = (function (BOM, DOM, $, DS_Inherit) {
                 _This_ = this;
 
             function Load_Back() {
-                var iLink = _This_.source;
+                _This_.ownerApp.trigger('attach');
+
+                var iLink = _This_.prefetch().source;
 
                 var $_Target = iLink.getTarget();
 
@@ -369,7 +382,20 @@ var InnerLink = (function (BOM, DOM, $, UI_Module) {
         this.data = iLink.dataset;
     }
 
-    InnerLink.selector = '*[target]:not(a)';
+    $.extend(InnerLink, {
+        selector:       [
+            '*[target]:not(a)',
+            'a[target="_self"]',
+            'a[target="_blank"][rel="nofollow"]'
+        ].join(', '),
+        reURLVar:       /\{(.+?)\}/g,
+        prefetchRel:    $.browser.modern ? 'prefetch' : 'next'
+    });
+
+    var $_Prefetch = $('<link rel="' + InnerLink.prefetchRel + '" />')
+            .on('load',  function () {
+                $(this).remove();
+            });
 
     $.extend(InnerLink.prototype, {
         valueOf:      function () {
@@ -380,6 +406,20 @@ var InnerLink = (function (BOM, DOM, $, UI_Module) {
                     iValue[iKey] = this[iKey];
 
             return iValue;
+        },
+        prefetch:     function () {
+            var iHTML = (this.href || '').split('?')[0],
+                iJSON = this.src || this.action || '';
+
+            if (iHTML)
+                $_Prefetch.clone(true).attr('href', iHTML).appendTo('head');
+
+            if (
+                (this.method == 'get')  &&
+                (! iJSON.match(this.constructor.reURLVar))  &&
+                $.isEmptyObject( this.data )
+            )
+                $_Prefetch.clone(true).attr('href', iJSON).appendTo('head');
         },
         getTarget:    function () {
             switch (this.target) {
@@ -394,10 +434,12 @@ var InnerLink = (function (BOM, DOM, $, UI_Module) {
         getArgs:      function () {
             var iArgs = { },  iData = this.ownerView.getData();
 
-            (this.src || this.action || '').replace(/\{(.+?)\}/g,  function () {
-                iArgs[ arguments[1] ] = iData[ arguments[1] ];
-            });
-
+            (this.src || this.action || '').replace(
+                InnerLink.reURLVar,
+                function () {
+                    iArgs[ arguments[1] ] = iData[ arguments[1] ];
+                }
+            );
             for (var iKey in this.data)
                 iArgs[ this.data[iKey] ] = iData[ this.data[iKey] ];
 
@@ -420,7 +462,7 @@ var InnerLink = (function (BOM, DOM, $, UI_Module) {
             }
 
             return $.extendURL(
-                iURL.replace(/\{(.+?)\}/g,  function () {
+                iURL.replace(InnerLink.reURLVar,  function () {
                     return  iScope[arguments[1]] || '';
                 }),
                 _Args_
@@ -584,7 +626,7 @@ var WebApp = (function (BOM, DOM, $, UI_Module, InnerLink) {
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v3.0  (2016-08-19)  Alpha
+//      [Version]    v3.0  (2016-08-22)  Beta
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //
@@ -607,17 +649,10 @@ var EasyWebApp = (function (BOM, DOM, $, WebApp, InnerLink, UI_Module) {
 
     $(document).on('click submit',  InnerLink.selector,  function (iEvent) {
 
-        if (this.tagName == 'FORM') {
-            if (iEvent.type != 'submit')
-                return;
-            else
-                iEvent.preventDefault();
-        } else if (
-            (this !== iEvent.target)  &&
-            $(iEvent.target).parentsUntil(this).addBack().filter('a')[0]
-        )
-            return;
-
+        switch (this.tagName) {
+            case 'FORM':    if (iEvent.type != 'submit')  return;
+            case 'A':       iEvent.preventDefault();    break;
+        }
         iEvent.stopPropagation();
 
         var iLink = new InnerLink(new WebApp(), this);

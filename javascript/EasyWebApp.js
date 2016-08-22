@@ -2,7 +2,7 @@
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v3.0  (2016-08-19)  Alpha
+//      [Version]    v3.0  (2016-08-22)  Beta
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //
@@ -26,17 +26,10 @@ define([
 
     $(document).on('click submit',  InnerLink.selector,  function (iEvent) {
 
-        if (this.tagName == 'FORM') {
-            if (iEvent.type != 'submit')
-                return;
-            else
-                iEvent.preventDefault();
-        } else if (
-            (this !== iEvent.target)  &&
-            $(iEvent.target).parentsUntil(this).addBack().filter('a')[0]
-        )
-            return;
-
+        switch (this.tagName) {
+            case 'FORM':    if (iEvent.type != 'submit')  return;
+            case 'A':       iEvent.preventDefault();    break;
+        }
         iEvent.stopPropagation();
 
         var iLink = new InnerLink(new WebApp(), this);
