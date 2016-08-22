@@ -9,8 +9,7 @@ define(['jquery', 'EasyWebApp'],  function ($) {
 
                 $('form', this.$_Root[0]).on('change',  'select',  function () {
 
-                    if ((! $.isNumeric(this.value))  ||  (! this.nextElementSibling))
-                        return;
+                    if (! this.nextElementSibling)  return;
 
                     iApp.getModule(
                         $(this.nextElementSibling).attr('src', API_Setter)

@@ -20,8 +20,7 @@ define(['jquery', 'UI_Module', 'InnerLink'],  function ($, UI_Module, InnerLink)
 
         var iArgs = $.makeArray(arguments).slice(1);
 
-        this.apiPath = String( iArgs[0] ).match(/^(\w+:)?\/\//)  ?
-            iArgs.shift()  :  '';
+        this.apiPath = $.urlDomain(iArgs[0] || ' ')  ?  iArgs.shift()  :  '';
         this.cacheMinute = $.isNumeric( iArgs[0] )  ?  iArgs.shift()  :  3;
 
         this.length = 0;

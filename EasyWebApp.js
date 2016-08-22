@@ -298,7 +298,7 @@ var UI_Module = (function (BOM, DOM, $, DS_Inherit) {
                 return Load_Back();
             }
 
-            this.$_View.load(this.source.getURL('href', this.data),  function () {
+            this.$_View.load(iHTML,  function () {
                 iTemplate[iHTML] = $(this.children).not('script').clone(true);
 
                 Load_Back();
@@ -407,20 +407,6 @@ var InnerLink = (function (BOM, DOM, $, UI_Module) {
 
             return iValue;
         },
-        prefetch:     function () {
-            var iHTML = (this.href || '').split('?')[0],
-                iJSON = this.src || this.action || '';
-
-            if (iHTML)
-                $_Prefetch.clone(true).attr('href', iHTML).appendTo('head');
-
-            if (
-                (this.method == 'get')  &&
-                (! iJSON.match(this.constructor.reURLVar))  &&
-                $.isEmptyObject( this.data )
-            )
-                $_Prefetch.clone(true).attr('href', iJSON).appendTo('head');
-        },
         getTarget:    function () {
             switch (this.target) {
                 case '_self':      return this.ownerApp.$_Root;
@@ -451,22 +437,29 @@ var InnerLink = (function (BOM, DOM, $, UI_Module) {
 
             iScope = iScope  ||  (this.ownerView || '').data;
 
-            if ((! iURL)  ||  $.isEmptyObject(iScope))  return iURL;
+            if (! iURL)  return;
 
-            var _Args_ = { },  _Data_;
+            if (! $.isEmptyObject(iScope)) {
+                var _Args_ = { },  _Data_;
 
-            for (var iKey in this.data) {
-                _Data_ = iScope[ this.data[iKey] ];
+                for (var iKey in this.data) {
+                    _Data_ = iScope[ this.data[iKey] ];
 
-                if ($.isData(_Data_))  _Args_[iKey] = _Data_;
+                    if ($.isData(_Data_))  _Args_[iKey] = _Data_;
+                }
+
+                iURL = $.extendURL(
+                    iURL.replace(InnerLink.reURLVar,  function () {
+                        return  iScope[arguments[1]] || '';
+                    }),
+                    _Args_
+                );
             }
 
-            return $.extendURL(
-                iURL.replace(InnerLink.reURLVar,  function () {
-                    return  iScope[arguments[1]] || '';
-                }),
-                _Args_
-            );
+            if ((iName != 'href')  &&  (! $.urlDomain(iURL || ' ')))
+                iURL = this.ownerApp.apiPath + iURL;
+
+            return iURL;
         },
         register:     function (Index) {
             DOM.title = this.title || DOM.title;
@@ -484,12 +477,26 @@ var InnerLink = (function (BOM, DOM, $, UI_Module) {
         },
         loadData:     function (iScope, Data_Ready) {
             $[this.method](
-                this.ownerApp.apiPath + (
-                    this.getURL('src', iScope)  ||  this.getURL('action', iScope)
-                ),
+                this.getURL('src', iScope)  ||  this.getURL('action', iScope),
                 this.$_DOM.serialize(),
                 $.proxy(Data_Ready, this)
             );
+        },
+        prefetch:     function () {
+            var iHTML = (this.href || '').split('?')[0],
+                iJSON = this.src || this.action || '';
+
+            if (iHTML)
+                $_Prefetch.clone(true).attr('href', iHTML).appendTo('head');
+
+            if (
+                (this.method == 'get')  &&
+                (! iJSON.match(this.constructor.reURLVar))  &&
+                $.isEmptyObject( this.data )
+            )
+                $_Prefetch.clone(true).attr(
+                    'href',  this.getURL('src') || this.getURL('action')
+                ).appendTo('head');
         }
     });
 
@@ -519,8 +526,7 @@ var WebApp = (function (BOM, DOM, $, UI_Module, InnerLink) {
 
         var iArgs = $.makeArray(arguments).slice(1);
 
-        this.apiPath = String( iArgs[0] ).match(/^(\w+:)?\/\//)  ?
-            iArgs.shift()  :  '';
+        this.apiPath = $.urlDomain(iArgs[0] || ' ')  ?  iArgs.shift()  :  '';
         this.cacheMinute = $.isNumeric( iArgs[0] )  ?  iArgs.shift()  :  3;
 
         this.length = 0;

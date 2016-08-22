@@ -43,20 +43,6 @@ define(['jquery', 'UI_Module'],  function ($, UI_Module) {
 
             return iValue;
         },
-        prefetch:     function () {
-            var iHTML = (this.href || '').split('?')[0],
-                iJSON = this.src || this.action || '';
-
-            if (iHTML)
-                $_Prefetch.clone(true).attr('href', iHTML).appendTo('head');
-
-            if (
-                (this.method == 'get')  &&
-                (! iJSON.match(this.constructor.reURLVar))  &&
-                $.isEmptyObject( this.data )
-            )
-                $_Prefetch.clone(true).attr('href', iJSON).appendTo('head');
-        },
         getTarget:    function () {
             switch (this.target) {
                 case '_self':      return this.ownerApp.$_Root;
@@ -87,22 +73,29 @@ define(['jquery', 'UI_Module'],  function ($, UI_Module) {
 
             iScope = iScope  ||  (this.ownerView || '').data;
 
-            if ((! iURL)  ||  $.isEmptyObject(iScope))  return iURL;
+            if (! iURL)  return;
 
-            var _Args_ = { },  _Data_;
+            if (! $.isEmptyObject(iScope)) {
+                var _Args_ = { },  _Data_;
 
-            for (var iKey in this.data) {
-                _Data_ = iScope[ this.data[iKey] ];
+                for (var iKey in this.data) {
+                    _Data_ = iScope[ this.data[iKey] ];
 
-                if ($.isData(_Data_))  _Args_[iKey] = _Data_;
+                    if ($.isData(_Data_))  _Args_[iKey] = _Data_;
+                }
+
+                iURL = $.extendURL(
+                    iURL.replace(InnerLink.reURLVar,  function () {
+                        return  iScope[arguments[1]] || '';
+                    }),
+                    _Args_
+                );
             }
 
-            return $.extendURL(
-                iURL.replace(InnerLink.reURLVar,  function () {
-                    return  iScope[arguments[1]] || '';
-                }),
-                _Args_
-            );
+            if ((iName != 'href')  &&  (! $.urlDomain(iURL || ' ')))
+                iURL = this.ownerApp.apiPath + iURL;
+
+            return iURL;
         },
         register:     function (Index) {
             DOM.title = this.title || DOM.title;
@@ -120,12 +113,26 @@ define(['jquery', 'UI_Module'],  function ($, UI_Module) {
         },
         loadData:     function (iScope, Data_Ready) {
             $[this.method](
-                this.ownerApp.apiPath + (
-                    this.getURL('src', iScope)  ||  this.getURL('action', iScope)
-                ),
+                this.getURL('src', iScope)  ||  this.getURL('action', iScope),
                 this.$_DOM.serialize(),
                 $.proxy(Data_Ready, this)
             );
+        },
+        prefetch:     function () {
+            var iHTML = (this.href || '').split('?')[0],
+                iJSON = this.src || this.action || '';
+
+            if (iHTML)
+                $_Prefetch.clone(true).attr('href', iHTML).appendTo('head');
+
+            if (
+                (this.method == 'get')  &&
+                (! iJSON.match(this.constructor.reURLVar))  &&
+                $.isEmptyObject( this.data )
+            )
+                $_Prefetch.clone(true).attr(
+                    'href',  this.getURL('src') || this.getURL('action')
+                ).appendTo('head');
         }
     });
 
