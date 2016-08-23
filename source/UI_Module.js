@@ -68,11 +68,14 @@ define(['jquery', 'DS_Inherit', 'ViewDataIO'],  function ($, DS_Inherit) {
                 });
             }
 
-            if (iJSON)
+            if (iJSON) {
+                iJSON = iJSON.slice( this.ownerApp.apiPath.length );
+
                 $.extend(iData, {
                     _Data_Path_:    $.filePath(iJSON),
                     _Data_Name_:    $.fileName(iJSON)
                 });
+            }
 
             return  $.extend(iData, $.paramJSON(this.source.href));
         },

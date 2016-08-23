@@ -1,7 +1,7 @@
 define([
     'jquery',
     './javascript/TimePassed',
-    './javascript/iQuery+',
+    'iQuery+',
     'EasyWebApp'
 ],  function ($, TimePassed) {
 
@@ -33,7 +33,7 @@ define([
         return iValue;
     }
 
-    BOM.Data_Filter = function (iModule, iData) {
+    BOM.Data_Filter = function (iLink, iData) {
         if (! iData.status)
             return  BOM.alert("【服务器报错】" + iData.msg);
 
