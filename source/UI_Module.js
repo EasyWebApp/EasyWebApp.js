@@ -82,7 +82,7 @@ define(['jquery', 'DS_Inherit', 'ViewDataIO'],  function ($, DS_Inherit) {
         prefetch:      function () {
             var InnerLink = this.source.constructor;
 
-            var $_Link = this.$_View.find( InnerLink.selector );
+            var $_Link = this.$_View.find( InnerLink.selector ).not('link');
 
             for (var i = 0;  $_Link[i];  i++)
                 (new InnerLink(this.ownerApp, $_Link[i])).prefetch();

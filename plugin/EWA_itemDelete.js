@@ -9,12 +9,14 @@ define(['jquery', 'EasyWebApp'],  function ($) {
             var $_Item = $(this).parentsUntil( iLV.$_View ).slice(-1);
 
             return  ConfirmBack() &&
-                iApp.one('data',  '',  iAPI,  function (iLink, iData) {
+                iApp.on('data',  '',  iAPI,  function (iLink, iData) {
                     if (
                         (iLink.method.toUpperCase() != 'DELETE')  ||
                         iData.code
                     )
                         return;
+
+                    this.off('data', '', iAPI, arguments.callee);
 
                     iLV.remove($_Item);
                 });

@@ -2,7 +2,7 @@
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v3.0  (2016-08-22)  Beta
+//      [Version]    v3.0  (2016-08-26)  Beta
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //
@@ -38,7 +38,10 @@ define([
             case null:        ;
             case '':          return;
             case '_blank':
-                UI_Module.prototype.loadJSON.call({source: iLink},  function () {
+                UI_Module.prototype.loadJSON.call({
+                    source:    iLink,
+                    data:      iLink.ownerView.getData()
+                },  function () {
                     iLink.ownerApp.trigger(
                         'data',  '',  iLink.src || iLink.action,  [
                             iLink.valueOf(),  arguments[0]

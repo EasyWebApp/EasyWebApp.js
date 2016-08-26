@@ -29,7 +29,7 @@ define(['jquery', 'UI_Module'],  function ($, UI_Module) {
     });
 
     var $_Prefetch = $('<link rel="' + InnerLink.prefetchRel + '" />')
-            .on('load',  function () {
+            .on('load error',  function () {
                 $(this).remove();
             });
 

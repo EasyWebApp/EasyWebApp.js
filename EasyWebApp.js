@@ -214,7 +214,7 @@ var UI_Module = (function (BOM, DOM, $, DS_Inherit) {
         prefetch:      function () {
             var InnerLink = this.source.constructor;
 
-            var $_Link = this.$_View.find( InnerLink.selector );
+            var $_Link = this.$_View.find( InnerLink.selector ).not('link');
 
             for (var i = 0;  $_Link[i];  i++)
                 (new InnerLink(this.ownerApp, $_Link[i])).prefetch();
@@ -396,7 +396,7 @@ var InnerLink = (function (BOM, DOM, $, UI_Module) {
     });
 
     var $_Prefetch = $('<link rel="' + InnerLink.prefetchRel + '" />')
-            .on('load',  function () {
+            .on('load error',  function () {
                 $(this).remove();
             });
 
@@ -635,7 +635,7 @@ var WebApp = (function (BOM, DOM, $, UI_Module, InnerLink) {
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v3.0  (2016-08-22)  Beta
+//      [Version]    v3.0  (2016-08-26)  Beta
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //
@@ -670,7 +670,10 @@ var EasyWebApp = (function (BOM, DOM, $, WebApp, InnerLink, UI_Module) {
             case null:        ;
             case '':          return;
             case '_blank':
-                UI_Module.prototype.loadJSON.call({source: iLink},  function () {
+                UI_Module.prototype.loadJSON.call({
+                    source:    iLink,
+                    data:      iLink.ownerView.getData()
+                },  function () {
                     iLink.ownerApp.trigger(
                         'data',  '',  iLink.src || iLink.action,  [
                             iLink.valueOf(),  arguments[0]
