@@ -1,0 +1,90 @@
+<!DocType HTML>
+<html><head>
+    <meta http-equiv="Cache-Control"
+          content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+
+    <title>EasyWebApp 官方网站 - EWAwiki</title>
+
+    <link rel="stylesheet"
+          href="http://tech_query.oschina.io/iquery/doc/core/css/EasyWebUI.css" />
+    <style>
+        body > .Head > .Grid-Row > div,
+        body > .Head > .NavBar > li {
+            padding:    1em  2em;
+        }
+        body > .Head > .NavBar {
+            border-top:    1px  dashed  white  !important;
+            left:          0;
+            width:         100%;
+        }
+        body > .Head > .NavBar > li:first-child {
+            width:       0;
+            padding:     0;
+            overflow:    hidden;
+            opacity:     0;
+        }
+        body > .Head > .NavBar > li.focus:first-child {
+            width:      auto;
+            padding:    1em  2em;
+            opacity:    1;
+        }
+
+        body > .Foot {
+            margin-top:    1em  !important;
+        }
+        body > .Foot > * {
+            padding:    2em;
+        }
+        body > .Foot a:link,  body > .Foot a:visited  {
+            color:    white;
+        }
+        body > .Foot a:hover {
+            color:    rgb(245, 80, 80);
+        }
+    </style>
+
+    <script src="//cdn.bootcss.com/require.js/2.2.0/require.min.js"></script>
+    <script>
+        require.config({
+            baseUrl:    'source/',
+            paths:      {
+                jquery:       '//cdn.bootcss.com/jquery/1.12.4/jquery.min',
+                'jQuery+':    'http://tech_query.oschina.io/iquery/jQuery+',
+                'iQuery+':    'http://tech_query.oschina.io/iquery/iQuery+',
+                EasyWebUI:
+                    'http://tech_query.oschina.io/iquery/doc/core/css/EasyWebUI',
+                marked:       '//cdn.bootcss.com/marked/0.3.6/marked.min'
+            }
+        });
+
+        require(['../docs/index']);
+    </script>
+</head><body>
+    <div class="Head CenterX Black_O">
+        <div class="Grid-Row CenterY">
+            <div>
+                <h1>EasyWebApp</h1>
+                <p>为<em>jQuery 程序猿</em>打造的<em>单页应用引擎</em>！~</p>
+            </div>
+        </div>
+        <ul class="NavBar Black_O">
+            <li>EasyWebApp</li>
+            <li target="_self" href="docs/index.md" autofocus>快速入门</li>
+            <li>演示程序</li>
+            <li>开源代码</li>
+        </ul>
+    </div>
+    <div class="PC_Narrow"></div>
+    <div class="Foot Black_O Grid-Row CenterX">
+        <span>
+            (C)2016  <a target="_blank" href="https://git.oschina.net/Tech_Query">Tech_Query</a>
+        </span>
+        <span>
+            Powered by <a target="_blank" href="http://tech_query.oschina.io/easywebapp/">EasyWebApp</a>
+        </span>
+    </div>
+</body></html>

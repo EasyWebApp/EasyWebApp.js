@@ -1,4 +1,4 @@
-# 艾娃入门
+# 艾娃引擎入门
 
 本篇讲解均以 [EasyWebApp v3 官方演示程序](../demo)的代码为例。
 
@@ -262,6 +262,8 @@ $.fn.iWebApp.fn.plugin_x = function () {
 
 ### itemDelete
 
+为一个 **内含 ListView 的 UI 模块** 监听 **请求 DELETE 接口的 SPA 链接**，在用户确认后发送请求，并当响应成功后删除对应项目。
+
 ```JavaScript
 $('#PageBox').iWebApp()
     .itemDelete($_ListBox,  'path/to/delete',  function () {
@@ -270,6 +272,11 @@ $('#PageBox').iWebApp()
 ```
 
 ### selectLoad
+
+【主要功能】
+ 1. 正确设置 `<option value="" />`
+ 2. 数据加载后，选中首项，并触发 `selectElement.onchange`
+ 3. **多级数据联动**加载
 
 ```JavaScript
 var iApp = $('#PageBox').iWebApp();
