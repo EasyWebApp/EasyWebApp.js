@@ -253,11 +253,10 @@ var UI_Module = (function (BOM, DOM, $, DS_Inherit) {
 
             return this;
         },
-        loadJSON:      function (JSON_Ready) {
-            this.source.loadData(
+        loadJSON:      function () {
+            return this.source.loadData(
                 UI_Module.prototype.getData.call(this) ||
-                    UI_Module.instanceOf('body').data,
-                $.proxy(JSON_Ready, this)
+                    UI_Module.instanceOf('body').data
             );
         },
         loadHTML:      function (HTML_Ready) {
@@ -292,7 +291,9 @@ var UI_Module = (function (BOM, DOM, $, DS_Inherit) {
 
                 $.extend(_This_.data, _This_.getEnv());
 
-                _This_.loadJSON($.proxy(_This_.loadModule, null, HTML_Ready));
+                _This_.loadJSON().then(
+                    $.proxy(_This_.loadModule, _This_, HTML_Ready)
+                );
             }
 
             if (iTemplate[iHTML]) {
@@ -355,7 +356,7 @@ var UI_Module = (function (BOM, DOM, $, DS_Inherit) {
 
             if (this.source.href)  this.loadHTML(Load_Back);
 
-            if (iJSON)  this.loadJSON(Load_Back);
+            if (iJSON)  this.loadJSON().then(Load_Back);
 
             return this;
         }
@@ -478,11 +479,19 @@ var InnerLink = (function (BOM, DOM, $, UI_Module) {
 
             return this;
         },
-        loadData:     function (iScope, Data_Ready) {
-            $[this.method](
+        loadData:     function (iScope) {
+            var iOption = {type:  this.method};
+
+            if (! this.$_DOM.find('input[type="file"]')[0])
+                iOption.data = this.$_DOM.serialize();
+            else {
+                iOption.data = new BOM.FormData( this.$_DOM[0] );
+                iOption.contentType = iOption.processData = false;
+            }
+
+            return $.ajax(
                 this.getURL('src', iScope)  ||  this.getURL('action', iScope),
-                this.$_DOM.serialize(),
-                $.proxy(Data_Ready, this)
+                iOption
             );
         },
         prefetch:     function () {
@@ -635,7 +644,7 @@ var WebApp = (function (BOM, DOM, $, UI_Module, InnerLink) {
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v3.0  (2016-08-26)  Beta
+//      [Version]    v3.0  (2016-08-31)  Beta
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //
@@ -673,7 +682,7 @@ var EasyWebApp = (function (BOM, DOM, $, WebApp, InnerLink, UI_Module) {
                 UI_Module.prototype.loadJSON.call({
                     source:    iLink,
                     data:      iLink.ownerView.getData()
-                },  function () {
+                }).then(function () {
                     iLink.ownerApp.trigger(
                         'data',  '',  iLink.src || iLink.action,  [
                             iLink.valueOf(),  arguments[0]

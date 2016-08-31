@@ -33,17 +33,19 @@
             opacity:    1;
         }
 
+        body > .Head a:link,  body > .Head a:visited,
+        body > .Foot a:link,  body > .Foot a:visited  {
+            color:    white;
+        }
+        body > .Head a:hover,  body > .Foot a:hover  {
+            color:    rgb(245, 80, 80)  !important;
+        }
+
         body > .Foot {
             margin-top:    1em  !important;
         }
         body > .Foot > * {
             padding:    2em;
-        }
-        body > .Foot a:link,  body > .Foot a:visited  {
-            color:    white;
-        }
-        body > .Foot a:hover {
-            color:    rgb(245, 80, 80);
         }
     </style>
 
@@ -74,7 +76,7 @@
         <ul class="NavBar Black_O">
             <li>EasyWebApp</li>
             <li target="_self" href="docs/index.md" autofocus>快速入门</li>
-            <li>演示程序</li>
+            <li><a target="_blank" href="demo/">演示程序</a></li>
             <li>开源代码</li>
         </ul>
     </div>

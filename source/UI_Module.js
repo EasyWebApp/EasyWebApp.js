@@ -121,11 +121,10 @@ define(['jquery', 'DS_Inherit', 'ViewDataIO'],  function ($, DS_Inherit) {
 
             return this;
         },
-        loadJSON:      function (JSON_Ready) {
-            this.source.loadData(
+        loadJSON:      function () {
+            return this.source.loadData(
                 UI_Module.prototype.getData.call(this) ||
-                    UI_Module.instanceOf('body').data,
-                $.proxy(JSON_Ready, this)
+                    UI_Module.instanceOf('body').data
             );
         },
         loadHTML:      function (HTML_Ready) {
@@ -160,7 +159,9 @@ define(['jquery', 'DS_Inherit', 'ViewDataIO'],  function ($, DS_Inherit) {
 
                 $.extend(_This_.data, _This_.getEnv());
 
-                _This_.loadJSON($.proxy(_This_.loadModule, null, HTML_Ready));
+                _This_.loadJSON().then(
+                    $.proxy(_This_.loadModule, _This_, HTML_Ready)
+                );
             }
 
             if (iTemplate[iHTML]) {
@@ -223,7 +224,7 @@ define(['jquery', 'DS_Inherit', 'ViewDataIO'],  function ($, DS_Inherit) {
 
             if (this.source.href)  this.loadHTML(Load_Back);
 
-            if (iJSON)  this.loadJSON(Load_Back);
+            if (iJSON)  this.loadJSON().then(Load_Back);
 
             return this;
         }

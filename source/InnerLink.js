@@ -111,11 +111,19 @@ define(['jquery', 'UI_Module'],  function ($, UI_Module) {
 
             return this;
         },
-        loadData:     function (iScope, Data_Ready) {
-            $[this.method](
+        loadData:     function (iScope) {
+            var iOption = {type:  this.method};
+
+            if (! this.$_DOM.find('input[type="file"]')[0])
+                iOption.data = this.$_DOM.serialize();
+            else {
+                iOption.data = new BOM.FormData( this.$_DOM[0] );
+                iOption.contentType = iOption.processData = false;
+            }
+
+            return $.ajax(
                 this.getURL('src', iScope)  ||  this.getURL('action', iScope),
-                this.$_DOM.serialize(),
-                $.proxy(Data_Ready, this)
+                iOption
             );
         },
         prefetch:     function () {
