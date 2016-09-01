@@ -62,7 +62,7 @@ define(['jquery', 'UI_Module', 'InnerLink'],  function ($, UI_Module, InnerLink)
         if (! iHash)
             $('body *[autofocus]:not(:input)').eq(0).click();
         else
-            this.ownerApp.load(iHash);
+            (new WebApp()).load(iHash);
     }
 
     WebApp.fn = WebApp.prototype = $.extend(new $.Observer(),  {
@@ -88,9 +88,9 @@ define(['jquery', 'UI_Module', 'InnerLink'],  function ($, UI_Module, InnerLink)
             $.extend(iModule.data, $.paramJSON());
 
             if (iLink.href || iLink.src || iLink.action)
-                iModule.load(First_Page);
+                iModule.load().then(First_Page);
             else
-                First_Page.call( iModule.render().loadModule() );
+                First_Page( iModule.render().loadModule() );
         },
         register:        function (iPage) {
             if (this.$_Root[0] !== iPage.$_View[0])  return;

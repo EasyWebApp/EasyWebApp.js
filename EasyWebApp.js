@@ -221,37 +221,28 @@ var UI_Module = (function (BOM, DOM, $, DS_Inherit) {
 
             return this;
         },
-        loadModule:    function (SyncBack) {
-            var InnerLink = this.source.constructor;
+        loadModule:    function (iSync, _Data_) {
+            var _This_ = this,  InnerLink = this.source.constructor;
 
             var $_Module = this.$_View
                     .find('*[href]:not(a, link), *[src]:not(img, iframe, script)')
-                    .not(InnerLink.selector + ', *[href]:parent'),
-                iReady,
-                iArgs = $.makeArray(arguments).slice(1);
+                    .not(InnerLink.selector + ', *[href]:parent');
 
-            //  About this --- https://github.com/jquery/jquery/issues/3270
-
-            if (typeof SyncBack == 'function') {
+            if (iSync)
                 $_Module = $_Module.filter(function () {
                     return  (this.getAttribute('async') == 'false');
                 });
-                iReady = $_Module.length;
-            }
+            //  About this --- https://github.com/jquery/jquery/issues/3270
 
-            function Module_Ready() {
-                if (! --iReady)  SyncBack.apply(this, iArgs);
-            }
+            return  Promise.all($.map($_Module,  function () {
 
-            for (var i = 0;  $_Module[i];  i++)
-                (new UI_Module(
-                    new InnerLink(this.ownerApp, $_Module[i])
-                )).load(SyncBack && Module_Ready);
+                return  (new UI_Module(
+                    new InnerLink(_This_.ownerApp, arguments[0])
+                )).load();
 
-            if ((! i)  &&  (typeof SyncBack == 'function'))
-                SyncBack.apply(this, iArgs);
-
-            return this;
+            })).then(function () {
+                return _Data_;
+            });
         },
         loadJSON:      function () {
             return this.source.loadData(
@@ -259,12 +250,23 @@ var UI_Module = (function (BOM, DOM, $, DS_Inherit) {
                     UI_Module.instanceOf('body').data
             );
         },
-        loadHTML:      function (HTML_Ready) {
+        loadHTML:      function () {
             var iTemplate = this.constructor.$_Template,
                 iHTML = this.source.href.split('?')[0],
                 _This_ = this;
 
-            function Load_Back() {
+            return  new Promise(function (iResolved) {
+                if (iTemplate[iHTML])
+                    return iResolved(
+                        iTemplate[iHTML].clone(true).appendTo(_This_.$_View)
+                    );
+
+                _This_.$_View.load(iHTML,  function () {
+                    iResolved(
+                        iTemplate[iHTML] = $(this.children).not('script').clone(true)
+                    );
+                });
+            }).then(function () {
                 _This_.ownerApp.trigger('attach');
 
                 var iLink = _This_.prefetch().source;
@@ -283,7 +285,7 @@ var UI_Module = (function (BOM, DOM, $, DS_Inherit) {
                     ($_Target[0] != _This_.ownerApp.$_Root[0])  ||
                     (! _Link_)
                 )
-                    return _This_.loadModule(HTML_Ready);
+                    return _This_.loadModule(true);
 
                 iLink.method = _Link_.method || iLink.method;
                 iLink.src = _Link_.src;
@@ -291,21 +293,9 @@ var UI_Module = (function (BOM, DOM, $, DS_Inherit) {
 
                 $.extend(_This_.data, _This_.getEnv());
 
-                _This_.loadJSON().then(
-                    $.proxy(_This_.loadModule, _This_, HTML_Ready)
+                return _This_.loadJSON().then(
+                    $.proxy(_This_.loadModule, _This_, true)
                 );
-            }
-
-            if (iTemplate[iHTML]) {
-                this.$_View.append( iTemplate[iHTML].clone(true) );
-
-                return Load_Back();
-            }
-
-            this.$_View.load(iHTML,  function () {
-                iTemplate[iHTML] = $(this.children).not('script').clone(true);
-
-                Load_Back();
             });
         },
         render:        function (iData) {
@@ -333,32 +323,24 @@ var UI_Module = (function (BOM, DOM, $, DS_Inherit) {
                 [ this.source.valueOf() ].concat( arguments[1] )
             ).slice(-1)[0];
         },
-        load:          function (iCallback) {
-            var _This_ = this,  iJSON = this.source.src || this.source.action;
+        load:          function () {
+            var _This_ = this;
 
-            var iReady = (this.source.href && iJSON)  ?  2  :  1,  iData;
+            return Promise.all([
+                (this.source.src || this.source.action)  &&  this.loadJSON(),
+                this.source.href && this.loadHTML()
+            ]).then(function (_Data_) {
+                _Data_ = _Data_[0] || _Data_[1];
 
-            function Load_Back(_JSON_) {
-                if ($.isPlainObject(_JSON_))
-                    iData = _This_.trigger('data', [_JSON_])  ||  _JSON_;
+                if ($.isPlainObject(_Data_))
+                    _This_.render(_This_.trigger('data', [_Data_])  ||  _Data_);
 
-                if (--iReady)  return;
-
-                _This_.render(iData).loadModule();
+                _This_.loadModule();
 
                 _This_.lastLoad = $.now();
 
-                if (typeof iCallback == 'function')
-                    iCallback.call(_This_);
-
                 _This_.trigger('ready');
-            }
-
-            if (this.source.href)  this.loadHTML(Load_Back);
-
-            if (iJSON)  this.loadJSON().then(Load_Back);
-
-            return this;
+            });
         }
     });
 
@@ -580,7 +562,7 @@ var WebApp = (function (BOM, DOM, $, UI_Module, InnerLink) {
         if (! iHash)
             $('body *[autofocus]:not(:input)').eq(0).click();
         else
-            this.ownerApp.load(iHash);
+            (new WebApp()).load(iHash);
     }
 
     WebApp.fn = WebApp.prototype = $.extend(new $.Observer(),  {
@@ -606,9 +588,9 @@ var WebApp = (function (BOM, DOM, $, UI_Module, InnerLink) {
             $.extend(iModule.data, $.paramJSON());
 
             if (iLink.href || iLink.src || iLink.action)
-                iModule.load(First_Page);
+                iModule.load().then(First_Page);
             else
-                First_Page.call( iModule.render().loadModule() );
+                First_Page( iModule.render().loadModule() );
         },
         register:        function (iPage) {
             if (this.$_Root[0] !== iPage.$_View[0])  return;
@@ -644,7 +626,7 @@ var WebApp = (function (BOM, DOM, $, UI_Module, InnerLink) {
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v3.0  (2016-08-31)  Beta
+//      [Version]    v3.0  (2016-09-01)  Beta
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //
