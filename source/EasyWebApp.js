@@ -2,7 +2,7 @@
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v3.0  (2016-09-01)  Beta
+//      [Version]    v3.0  (2016-09-04)  Beta
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //
@@ -22,14 +22,24 @@ define([
     'jquery', 'WebApp', 'InnerLink', 'UI_Module'
 ],  function ($, WebApp, InnerLink, UI_Module) {
 
+    var BOM = self,  DOM = self.document;
+
     $.ajaxSetup({dataType: 'json'});
 
-    $(document).on('click submit',  InnerLink.selector,  function (iEvent) {
+    $(DOM).on('click',  'a[href]:not(a[target="_blank"])',  function () {
 
-        switch (this.tagName) {
-            case 'FORM':    if (iEvent.type != 'submit')  return;
-            case 'A':       iEvent.preventDefault();    break;
+        var iURL = this.href.split('#!');
+
+        if (iURL[1]  &&  (iURL[0] == DOM.URL.split('#!')[0])) {
+            arguments[0].preventDefault();
+
+            (new WebApp()).load( iURL[1] );
         }
+    }).on('click submit',  InnerLink.selector,  function (iEvent) {
+
+        if ((this.tagName == 'FORM')  &&  (iEvent.type != 'submit'))
+            return;
+
         iEvent.stopPropagation();
 
         var iLink = new InnerLink(new WebApp(), this);

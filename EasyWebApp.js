@@ -221,14 +221,14 @@ var UI_Module = (function (BOM, DOM, $, DS_Inherit) {
 
             return this;
         },
-        loadModule:    function (iSync, _Data_) {
+        loadModule:    function (_Data_) {
             var _This_ = this,  InnerLink = this.source.constructor;
 
             var $_Module = this.$_View
                     .find('*[href]:not(a, link), *[src]:not(img, iframe, script)')
                     .not(InnerLink.selector + ', *[href]:parent');
 
-            if (iSync)
+            if (! this.lastLoad)
                 $_Module = $_Module.filter(function () {
                     return  (this.getAttribute('async') == 'false');
                 });
@@ -285,7 +285,7 @@ var UI_Module = (function (BOM, DOM, $, DS_Inherit) {
                     ($_Target[0] != _This_.ownerApp.$_Root[0])  ||
                     (! _Link_)
                 )
-                    return _This_.loadModule(true);
+                    return;
 
                 iLink.method = _Link_.method || iLink.method;
                 iLink.src = _Link_.src;
@@ -293,9 +293,7 @@ var UI_Module = (function (BOM, DOM, $, DS_Inherit) {
 
                 $.extend(_This_.data, _This_.getEnv());
 
-                return _This_.loadJSON().then(
-                    $.proxy(_This_.loadModule, _This_, true)
-                );
+                return _This_.loadJSON();
             });
         },
         render:        function (iData) {
@@ -312,6 +310,8 @@ var UI_Module = (function (BOM, DOM, $, DS_Inherit) {
             }
             if (! $.isEmptyObject(this.data))
                 this.$_View.dataRender(this.data);
+
+            this.lastLoad = $.now();
 
             return this;
         },
@@ -330,14 +330,17 @@ var UI_Module = (function (BOM, DOM, $, DS_Inherit) {
                 (this.source.src || this.source.action)  &&  this.loadJSON(),
                 this.source.href && this.loadHTML()
             ]).then(function (_Data_) {
-                _Data_ = _Data_[0] || _Data_[1];
 
-                if ($.isPlainObject(_Data_))
+                return  _This_.loadModule(_Data_[0] || _Data_[1]);
+
+            }).then(function (_Data_) {
+
+                if ($.isPlainObject(_Data_)  ||  (_Data_ instanceof Array))
                     _This_.render(_This_.trigger('data', [_Data_])  ||  _Data_);
 
-                _This_.loadModule();
-
                 _This_.lastLoad = $.now();
+
+                _This_.loadModule();
 
                 _This_.trigger('ready');
             });
@@ -369,11 +372,7 @@ var InnerLink = (function (BOM, DOM, $, UI_Module) {
     }
 
     $.extend(InnerLink, {
-        selector:       [
-            '*[target]:not(a)',
-            'a[target="_self"]',
-            'a[target="_blank"][rel="nofollow"]'
-        ].join(', '),
+        selector:       '*[target]:not(a)',
         reURLVar:       /\{(.+?)\}/g,
         prefetchRel:    $.browser.modern ? 'prefetch' : 'next'
     });
@@ -556,15 +555,6 @@ var WebApp = (function (BOM, DOM, $, UI_Module, InnerLink) {
         return  iHash && iHash[1];
     };
 
-    function First_Page() {
-        var iHash = WebApp.getRoute();
-
-        if (! iHash)
-            $('body *[autofocus]:not(:input)').eq(0).click();
-        else
-            (new WebApp()).load(iHash);
-    }
-
     WebApp.fn = WebApp.prototype = $.extend(new $.Observer(),  {
         constructor:     WebApp,
         push:            Array.prototype.push,
@@ -587,10 +577,16 @@ var WebApp = (function (BOM, DOM, $, UI_Module, InnerLink) {
 
             $.extend(iModule.data, $.paramJSON());
 
-            if (iLink.href || iLink.src || iLink.action)
-                iModule.load().then(First_Page);
-            else
-                First_Page( iModule.render().loadModule() );
+            ((iLink.href || iLink.src || iLink.action)  ?
+                iModule.load()  :  iModule.render().loadModule()
+            ).then(function () {
+                var iHash = WebApp.getRoute();
+
+                if (! iHash)
+                    $('body *[autofocus]:not(:input)').eq(0).click();
+                else
+                    _This_.load(iHash);
+            });
         },
         register:        function (iPage) {
             if (this.$_Root[0] !== iPage.$_View[0])  return;
@@ -626,7 +622,7 @@ var WebApp = (function (BOM, DOM, $, UI_Module, InnerLink) {
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v3.0  (2016-09-01)  Beta
+//      [Version]    v3.0  (2016-09-04)  Beta
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //
@@ -647,12 +643,20 @@ var EasyWebApp = (function (BOM, DOM, $, WebApp, InnerLink, UI_Module) {
 
     $.ajaxSetup({dataType: 'json'});
 
-    $(document).on('click submit',  InnerLink.selector,  function (iEvent) {
+    $(DOM).on('click',  'a[href]:not(a[target="_blank"])',  function () {
 
-        switch (this.tagName) {
-            case 'FORM':    if (iEvent.type != 'submit')  return;
-            case 'A':       iEvent.preventDefault();    break;
+        var iURL = this.href.split('#!');
+
+        if (iURL[1]  &&  (iURL[0] == DOM.URL.split('#!')[0])) {
+            arguments[0].preventDefault();
+
+            (new WebApp()).load( iURL[1] );
         }
+    }).on('click submit',  InnerLink.selector,  function (iEvent) {
+
+        if ((this.tagName == 'FORM')  &&  (iEvent.type != 'submit'))
+            return;
+
         iEvent.stopPropagation();
 
         var iLink = new InnerLink(new WebApp(), this);

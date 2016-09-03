@@ -56,15 +56,6 @@ define(['jquery', 'UI_Module', 'InnerLink'],  function ($, UI_Module, InnerLink)
         return  iHash && iHash[1];
     };
 
-    function First_Page() {
-        var iHash = WebApp.getRoute();
-
-        if (! iHash)
-            $('body *[autofocus]:not(:input)').eq(0).click();
-        else
-            (new WebApp()).load(iHash);
-    }
-
     WebApp.fn = WebApp.prototype = $.extend(new $.Observer(),  {
         constructor:     WebApp,
         push:            Array.prototype.push,
@@ -87,10 +78,16 @@ define(['jquery', 'UI_Module', 'InnerLink'],  function ($, UI_Module, InnerLink)
 
             $.extend(iModule.data, $.paramJSON());
 
-            if (iLink.href || iLink.src || iLink.action)
-                iModule.load().then(First_Page);
-            else
-                First_Page( iModule.render().loadModule() );
+            ((iLink.href || iLink.src || iLink.action)  ?
+                iModule.load()  :  iModule.render().loadModule()
+            ).then(function () {
+                var iHash = WebApp.getRoute();
+
+                if (! iHash)
+                    $('body *[autofocus]:not(:input)').eq(0).click();
+                else
+                    _This_.load(iHash);
+            });
         },
         register:        function (iPage) {
             if (this.$_Root[0] !== iPage.$_View[0])  return;

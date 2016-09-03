@@ -10,11 +10,21 @@ define(['jquery', 'marked', 'EasyWebUI', 'EasyWebApp'],  function ($, marked) {
     $(document).ready(function () {
 
         $('body > .Head > .NavBar').scrollFixed(function () {
-            this.firstElementChild[
-                (arguments[0] == 'fixed')  ?  'setAttribute'  :  'removeAttribute'
-            ]('class', 'focus');
+            $(this.firstElementChild)[
+                (arguments[0] == 'fixed')  ?  'addClass'  :  'removeClass'
+            ]('focus');
         });
 
-        $('body > .PC_Narrow').iWebApp();
+        $('body > .PC_Narrow').iWebApp()
+            .on('data',  '',  'index.json',  function (iLink, iData) {
+
+                $.ListView(iLink.$_DOM,  false,  function ($_Item, iValue, Index) {
+                    $_Item = $_Item.children().attr(iValue);
+
+                    if (Index != 1)  $_Item[0].removeAttribute('autofocus');
+                });
+
+                return iData;
+            });
     });
 });

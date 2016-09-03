@@ -89,14 +89,14 @@ define(['jquery', 'DS_Inherit', 'ViewDataIO'],  function ($, DS_Inherit) {
 
             return this;
         },
-        loadModule:    function (iSync, _Data_) {
+        loadModule:    function (_Data_) {
             var _This_ = this,  InnerLink = this.source.constructor;
 
             var $_Module = this.$_View
                     .find('*[href]:not(a, link), *[src]:not(img, iframe, script)')
                     .not(InnerLink.selector + ', *[href]:parent');
 
-            if (iSync)
+            if (! this.lastLoad)
                 $_Module = $_Module.filter(function () {
                     return  (this.getAttribute('async') == 'false');
                 });
@@ -153,7 +153,7 @@ define(['jquery', 'DS_Inherit', 'ViewDataIO'],  function ($, DS_Inherit) {
                     ($_Target[0] != _This_.ownerApp.$_Root[0])  ||
                     (! _Link_)
                 )
-                    return _This_.loadModule(true);
+                    return;
 
                 iLink.method = _Link_.method || iLink.method;
                 iLink.src = _Link_.src;
@@ -161,9 +161,7 @@ define(['jquery', 'DS_Inherit', 'ViewDataIO'],  function ($, DS_Inherit) {
 
                 $.extend(_This_.data, _This_.getEnv());
 
-                return _This_.loadJSON().then(
-                    $.proxy(_This_.loadModule, _This_, true)
-                );
+                return _This_.loadJSON();
             });
         },
         render:        function (iData) {
@@ -180,6 +178,8 @@ define(['jquery', 'DS_Inherit', 'ViewDataIO'],  function ($, DS_Inherit) {
             }
             if (! $.isEmptyObject(this.data))
                 this.$_View.dataRender(this.data);
+
+            this.lastLoad = $.now();
 
             return this;
         },
@@ -198,14 +198,17 @@ define(['jquery', 'DS_Inherit', 'ViewDataIO'],  function ($, DS_Inherit) {
                 (this.source.src || this.source.action)  &&  this.loadJSON(),
                 this.source.href && this.loadHTML()
             ]).then(function (_Data_) {
-                _Data_ = _Data_[0] || _Data_[1];
 
-                if ($.isPlainObject(_Data_))
+                return  _This_.loadModule(_Data_[0] || _Data_[1]);
+
+            }).then(function (_Data_) {
+
+                if ($.isPlainObject(_Data_)  ||  (_Data_ instanceof Array))
                     _This_.render(_This_.trigger('data', [_Data_])  ||  _Data_);
 
-                _This_.loadModule();
-
                 _This_.lastLoad = $.now();
+
+                _This_.loadModule();
 
                 _This_.trigger('ready');
             });

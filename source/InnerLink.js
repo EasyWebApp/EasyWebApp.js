@@ -19,11 +19,7 @@ define(['jquery', 'UI_Module'],  function ($, UI_Module) {
     }
 
     $.extend(InnerLink, {
-        selector:       [
-            '*[target]:not(a)',
-            'a[target="_self"]',
-            'a[target="_blank"][rel="nofollow"]'
-        ].join(', '),
+        selector:       '*[target]:not(a)',
         reURLVar:       /\{(.+?)\}/g,
         prefetchRel:    $.browser.modern ? 'prefetch' : 'next'
     });

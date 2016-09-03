@@ -127,7 +127,18 @@ define([
  - `action` —— 相当于 SPA 链接的 `src` 属性
 
 
-### （三）数据填充
+### （三）传统链接
+
+为了兼容 **屏幕阅读器**（视力残障人士）、**后端渲染 SEO**，本引擎也支持 *传统链接*加载内页。
+
+即当上述 SPA 链接的属性为 `target="_self" href="path/to/page.html"` 时，可改写如下 ——
+
+```HTML
+<a href="#!path/to/page.html">加载一个内页</a>
+```
+
+
+### （四）数据填充
 
 ```HTML
 <div class="Background-Image" name="img">
@@ -151,7 +162,7 @@ define([
  - `name` —— API 返回的 **JSON 数据对象**中的 **数值键名**
 
 
-### （四）迭代视图
+### （五）迭代视图
 
 ```HTML
 <ol class="CenterX">
@@ -175,7 +186,7 @@ define([
  - `data-name="key"` —— 该 DOM 元素所在 **SPA 数据作用域**中名为 `key`（驼峰命名法）的数据值，将以 `name` 为参数名去请求 **HTTP API**
 
 
-### （五）模块引用
+### （六）模块引用
 
 ```HTML
 <div class="Panel">
@@ -243,7 +254,7 @@ iApp.load({
 //  获取 DOM 元素所在的 SPA 模块对象，并将其重新加载
 var Module_X = iApp.getModule('#Module_X');
 
-Module_X.load();
+var Promise_X = Module_X.load();
 ```
 
 
