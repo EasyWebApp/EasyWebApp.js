@@ -1,0 +1,49 @@
+body > .Head > .Grid-Row > div,
+body > .Head > .NavBar > li > a {
+    padding:    1em  2em;
+}
+body > .Head > .NavBar {
+    border-top:    1px  dashed  white  !important;
+    left:          0;
+    width:         100%;
+}
+
+body > .Head > .NavBar > li:first-child {
+    width:       0;
+    padding:     0;
+    overflow:    hidden;
+    opacity:     0;
+}
+body > .Head > .NavBar > li.focus:first-child {
+    width:      auto;
+    padding:    1em  2em;
+    opacity:    1;
+}
+body > .Head > .NavBar > li > a {
+    border-top:       4px  solid   transparent;
+    border-bottom:    4px  solid   transparent;
+}
+body > .Head > .NavBar > li > a:hover {
+    border-bottom-color:    rgb(245, 80, 80);
+}
+
+
+body > .Head a:link,  body > .Head a:visited,
+body > .Foot a:link,  body > .Foot a:visited  {
+    color:    white;
+}
+body > .Head a:hover,  body > .Foot a:hover  {
+    color:    rgb(245, 80, 80)  !important;
+}
+
+body > .Foot {
+    margin-top:    1em  !important;
+}
+body > .Foot > * {
+    padding:    2em;
+}
+
+
+body > .PC_Narrow ul a > img {
+    max-width:    10em;
+}

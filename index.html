@@ -9,45 +9,8 @@
 
     <title>EasyWebApp 官方网站 - EWAwiki</title>
 
-    <link rel="stylesheet"
-          href="http://tech_query.oschina.io/iquery/doc/core/css/EasyWebUI.css" />
-    <style>
-        body > .Head > .Grid-Row > div,
-        body > .Head > .NavBar > li {
-            padding:    1em  2em;
-        }
-        body > .Head > .NavBar {
-            border-top:    1px  dashed  white  !important;
-            left:          0;
-            width:         100%;
-        }
-        body > .Head > .NavBar > li:first-child {
-            width:       0;
-            padding:     0;
-            overflow:    hidden;
-            opacity:     0;
-        }
-        body > .Head > .NavBar > li.focus:first-child {
-            width:      auto;
-            padding:    1em  2em;
-            opacity:    1;
-        }
-
-        body > .Head a:link,  body > .Head a:visited,
-        body > .Foot a:link,  body > .Foot a:visited  {
-            color:    white;
-        }
-        body > .Head a:hover,  body > .Foot a:hover  {
-            color:    rgb(245, 80, 80)  !important;
-        }
-
-        body > .Foot {
-            margin-top:    1em  !important;
-        }
-        body > .Foot > * {
-            padding:    2em;
-        }
-    </style>
+    <link rel="stylesheet" href="//tech_query.oschina.io/css/EasyWebUI.css" />
+    <link rel="stylesheet" href="docs/css/index.css" />
 
     <script src="//cdn.bootcss.com/require.js/2.2.0/require.min.js"></script>
     <script>
@@ -55,10 +18,9 @@
             baseUrl:    'source/',
             paths:      {
                 jquery:       '//cdn.bootcss.com/jquery/1.12.4/jquery.min',
-                'jQuery+':    'http://tech_query.oschina.io/iquery/jQuery+',
-                'iQuery+':    'http://tech_query.oschina.io/iquery/iQuery+',
-                EasyWebUI:
-                    'http://tech_query.oschina.io/iquery/doc/core/css/EasyWebUI',
+                'jQuery+':    '//tech_query.oschina.io/iquery/jQuery+',
+                'iQuery+':    '//tech_query.oschina.io/iquery/iQuery+',
+                EasyWebUI:    '//tech_query.oschina.io/css/EasyWebUI',
                 marked:       '//cdn.bootcss.com/marked/0.3.6/marked.min'
             }
         });
@@ -74,16 +36,16 @@
             </div>
         </div>
         <ul class="NavBar Black_O" src="docs/index.json">
-            <li><a name="title" autofocus></a></li>
+            <li><a name="title"></a></li>
         </ul>
     </div>
     <div class="PC_Narrow"></div>
     <div class="Foot Black_O Grid-Row CenterX">
         <span>
-            (C)2016  <a target="_blank" href="https://git.oschina.net/Tech_Query">Tech_Query</a>
+            (C)2016  <a target="_blank" href="https://tech_query.oschina.io/">Tech_Query</a>
         </span>
         <span>
-            Powered by <a target="_blank" href="http://tech_query.oschina.io/easywebapp/">EasyWebApp</a>
+            Powered by <a target="_blank" href="https://tech_query.oschina.io/easywebapp/">EasyWebApp</a>
         </span>
     </div>
 </body></html>

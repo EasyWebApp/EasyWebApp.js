@@ -18,10 +18,9 @@ define(['jquery', 'marked', 'EasyWebUI', 'EasyWebApp'],  function ($, marked) {
         $('body > .PC_Narrow').iWebApp()
             .on('data',  '',  'index.json',  function (iLink, iData) {
 
-                $.ListView(iLink.$_DOM,  false,  function ($_Item, iValue, Index) {
-                    $_Item = $_Item.children().attr(iValue);
+                $.ListView(iLink.$_DOM,  false,  function ($_Item, iValue) {
 
-                    if (Index != 1)  $_Item[0].removeAttribute('autofocus');
+                    $_Item.children().attr(iValue);
                 });
 
                 return iData;
