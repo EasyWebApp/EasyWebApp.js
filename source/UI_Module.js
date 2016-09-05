@@ -89,7 +89,7 @@ define(['jquery', 'DS_Inherit', 'ViewDataIO'],  function ($, DS_Inherit) {
 
             return this;
         },
-        loadModule:    function (_Data_) {
+        loadModule:    function () {
             var _This_ = this,  InnerLink = this.source.constructor;
 
             var $_Module = this.$_View
@@ -107,10 +107,7 @@ define(['jquery', 'DS_Inherit', 'ViewDataIO'],  function ($, DS_Inherit) {
                 return  (new UI_Module(
                     new InnerLink(_This_.ownerApp, arguments[0])
                 )).load();
-
-            })).then(function () {
-                return _Data_;
-            });
+            }));
         },
         loadJSON:      function () {
             return this.source.loadData(
@@ -164,7 +161,7 @@ define(['jquery', 'DS_Inherit', 'ViewDataIO'],  function ($, DS_Inherit) {
                 return _This_.loadJSON();
             });
         },
-        render:        function (iData) {
+        setData:       function (iData) {
             if (! $.isEmptyObject(iData)) {
                 $.extend(this.data, iData);
 
@@ -176,12 +173,18 @@ define(['jquery', 'DS_Inherit', 'ViewDataIO'],  function ($, DS_Inherit) {
                     );
                 }
             }
-            if (! $.isEmptyObject(this.data))
-                this.$_View.dataRender(this.data);
+            return this.data;
+        },
+        render:        function (iData) {
+            iData = this.setData(iData);
+
+            if (! $.isEmptyObject(iData))  this.$_View.dataRender(iData);
 
             this.lastLoad = $.now();
 
-            return this;
+            this.trigger('ready');
+
+            return this.loadModule();
         },
         trigger:       function () {
             return this.ownerApp.trigger(
@@ -192,25 +195,23 @@ define(['jquery', 'DS_Inherit', 'ViewDataIO'],  function ($, DS_Inherit) {
             ).slice(-1)[0];
         },
         load:          function () {
-            var _This_ = this;
+            var _This_ = this,
+                iJSON = this.source.getURL('src') || this.source.getURL('action');
 
             return Promise.all([
-                (this.source.src || this.source.action)  &&  this.loadJSON(),
-                this.source.href && this.loadHTML()
+                iJSON  &&  this.loadJSON(),
+                this.source.href  &&  this.loadHTML()
             ]).then(function (_Data_) {
 
-                return  _This_.loadModule(_Data_[0] || _Data_[1]);
+                _Data_ = _Data_[0] || _Data_[1];
 
-            }).then(function (_Data_) {
+                _This_.setData(_This_.trigger('data', [_Data_])  ||  _Data_);
 
-                if ($.isPlainObject(_Data_)  ||  (_Data_ instanceof Array))
-                    _This_.render(_This_.trigger('data', [_Data_])  ||  _Data_);
+                return _This_.loadModule();
 
-                _This_.lastLoad = $.now();
+            }).then(function () {
 
-                _This_.loadModule();
-
-                _This_.trigger('ready');
+                _This_.render();
             });
         }
     });

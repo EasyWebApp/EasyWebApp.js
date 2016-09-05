@@ -2,13 +2,11 @@
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v3.0  (2016-09-04)  Beta
+//      [Version]    v3.0  (2016-09-05)  Beta
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //
-//                   iQuery+,
-//
-//                   [ marked.js ]  (for MarkDown rendering)
+//                   iQuery+
 //
 //      [Usage]      A Light-weight SPA Engine with
 //                   jQuery Compatible API.
@@ -37,8 +35,11 @@ define([
         }
     }).on('click submit',  InnerLink.selector,  function (iEvent) {
 
-        if ((this.tagName == 'FORM')  &&  (iEvent.type != 'submit'))
-            return;
+        if (this.tagName == 'FORM') {
+            if (iEvent.type != 'submit')  return;
+
+            iEvent.preventDefault();
+        }
 
         iEvent.stopPropagation();
 

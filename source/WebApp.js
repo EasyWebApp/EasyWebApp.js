@@ -78,9 +78,9 @@ define(['jquery', 'UI_Module', 'InnerLink'],  function ($, UI_Module, InnerLink)
 
             $.extend(iModule.data, $.paramJSON());
 
-            ((iLink.href || iLink.src || iLink.action)  ?
-                iModule.load()  :  iModule.render().loadModule()
-            ).then(function () {
+            iModule[
+                (iLink.href || iLink.src || iLink.action)  ?  'load'  :  'render'
+            ]().then(function () {
                 var iHash = WebApp.getRoute();
 
                 if (! iHash)

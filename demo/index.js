@@ -33,19 +33,17 @@ define([
         return iValue;
     }
 
-    BOM.Data_Filter = function (iLink, iData) {
-        if (! iData.status)
-            return  BOM.alert("【服务器报错】" + iData.msg);
-
-        return  iData.tngou  ?
-            $.map(iData.tngou, Object_Filter)  :  Object_Filter( iData );
-    };
-
     $(document).ready(function () {
 
         var iApp = $('body > .PC_Narrow').iWebApp('http://www.tngou.net/api/');
 
-        iApp.on('data', Data_Filter);
+        iApp.on('data',  function (iLink, iData) {
+            if (! iData.status)
+                return  BOM.alert("【服务器报错】" + iData.msg);
+
+            return  iData.tngou  ?
+                $.map(iData.tngou, Object_Filter)  :  Object_Filter( iData );
+        });
 
         $('.NavBar > .DropDown > .Body').each(function () {
             $.ListView(this,  false,  function ($_Item, iValue) {

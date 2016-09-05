@@ -221,7 +221,7 @@ var UI_Module = (function (BOM, DOM, $, DS_Inherit) {
 
             return this;
         },
-        loadModule:    function (_Data_) {
+        loadModule:    function () {
             var _This_ = this,  InnerLink = this.source.constructor;
 
             var $_Module = this.$_View
@@ -239,10 +239,7 @@ var UI_Module = (function (BOM, DOM, $, DS_Inherit) {
                 return  (new UI_Module(
                     new InnerLink(_This_.ownerApp, arguments[0])
                 )).load();
-
-            })).then(function () {
-                return _Data_;
-            });
+            }));
         },
         loadJSON:      function () {
             return this.source.loadData(
@@ -296,7 +293,7 @@ var UI_Module = (function (BOM, DOM, $, DS_Inherit) {
                 return _This_.loadJSON();
             });
         },
-        render:        function (iData) {
+        setData:       function (iData) {
             if (! $.isEmptyObject(iData)) {
                 $.extend(this.data, iData);
 
@@ -308,12 +305,18 @@ var UI_Module = (function (BOM, DOM, $, DS_Inherit) {
                     );
                 }
             }
-            if (! $.isEmptyObject(this.data))
-                this.$_View.dataRender(this.data);
+            return this.data;
+        },
+        render:        function (iData) {
+            iData = this.setData(iData);
+
+            if (! $.isEmptyObject(iData))  this.$_View.dataRender(iData);
 
             this.lastLoad = $.now();
 
-            return this;
+            this.trigger('ready');
+
+            return this.loadModule();
         },
         trigger:       function () {
             return this.ownerApp.trigger(
@@ -324,25 +327,23 @@ var UI_Module = (function (BOM, DOM, $, DS_Inherit) {
             ).slice(-1)[0];
         },
         load:          function () {
-            var _This_ = this;
+            var _This_ = this,
+                iJSON = this.source.getURL('src') || this.source.getURL('action');
 
             return Promise.all([
-                (this.source.src || this.source.action)  &&  this.loadJSON(),
-                this.source.href && this.loadHTML()
+                iJSON  &&  this.loadJSON(),
+                this.source.href  &&  this.loadHTML()
             ]).then(function (_Data_) {
 
-                return  _This_.loadModule(_Data_[0] || _Data_[1]);
+                _Data_ = _Data_[0] || _Data_[1];
 
-            }).then(function (_Data_) {
+                _This_.setData(_This_.trigger('data', [_Data_])  ||  _Data_);
 
-                if ($.isPlainObject(_Data_)  ||  (_Data_ instanceof Array))
-                    _This_.render(_This_.trigger('data', [_Data_])  ||  _Data_);
+                return _This_.loadModule();
 
-                _This_.lastLoad = $.now();
+            }).then(function () {
 
-                _This_.loadModule();
-
-                _This_.trigger('ready');
+                _This_.render();
             });
         }
     });
@@ -577,9 +578,9 @@ var WebApp = (function (BOM, DOM, $, UI_Module, InnerLink) {
 
             $.extend(iModule.data, $.paramJSON());
 
-            ((iLink.href || iLink.src || iLink.action)  ?
-                iModule.load()  :  iModule.render().loadModule()
-            ).then(function () {
+            iModule[
+                (iLink.href || iLink.src || iLink.action)  ?  'load'  :  'render'
+            ]().then(function () {
                 var iHash = WebApp.getRoute();
 
                 if (! iHash)
@@ -622,13 +623,11 @@ var WebApp = (function (BOM, DOM, $, UI_Module, InnerLink) {
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v3.0  (2016-09-04)  Beta
+//      [Version]    v3.0  (2016-09-05)  Beta
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //
-//                   iQuery+,
-//
-//                   [ marked.js ]  (for MarkDown rendering)
+//                   iQuery+
 //
 //      [Usage]      A Light-weight SPA Engine with
 //                   jQuery Compatible API.
@@ -654,8 +653,11 @@ var EasyWebApp = (function (BOM, DOM, $, WebApp, InnerLink, UI_Module) {
         }
     }).on('click submit',  InnerLink.selector,  function (iEvent) {
 
-        if ((this.tagName == 'FORM')  &&  (iEvent.type != 'submit'))
-            return;
+        if (this.tagName == 'FORM') {
+            if (iEvent.type != 'submit')  return;
+
+            iEvent.preventDefault();
+        }
 
         iEvent.stopPropagation();
 
