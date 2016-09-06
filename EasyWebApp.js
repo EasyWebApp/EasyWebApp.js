@@ -228,18 +228,19 @@ var UI_Module = (function (BOM, DOM, $, DS_Inherit) {
                     .find('*[href]:not(a, link), *[src]:not(img, iframe, script)')
                     .not(InnerLink.selector + ', *[href]:parent');
 
-            if (! this.lastLoad)
-                $_Module = $_Module.filter(function () {
+            return Promise.all($.map(
+                $_Module[this.lastLoad ? 'not' : 'filter'](function () {
+
+                //  About this --- https://github.com/jquery/jquery/issues/3270
+
                     return  (this.getAttribute('async') == 'false');
-                });
-            //  About this --- https://github.com/jquery/jquery/issues/3270
-
-            return  Promise.all($.map($_Module,  function () {
-
-                return  (new UI_Module(
-                    new InnerLink(_This_.ownerApp, arguments[0])
-                )).load();
-            }));
+                }),
+                function () {
+                    return  (new UI_Module(
+                        new InnerLink(_This_.ownerApp, arguments[0])
+                    )).load();
+                }
+            ));
         },
         loadJSON:      function () {
             return this.source.loadData(
@@ -337,7 +338,8 @@ var UI_Module = (function (BOM, DOM, $, DS_Inherit) {
 
                 _Data_ = _Data_[0] || _Data_[1];
 
-                _This_.setData(_This_.trigger('data', [_Data_])  ||  _Data_);
+                if ((_Data_ !== undefined)  &&  (_Data_ != null))
+                    _This_.setData(_This_.trigger('data', [_Data_])  ||  _Data_);
 
                 return _This_.loadModule();
 
@@ -560,14 +562,14 @@ var WebApp = (function (BOM, DOM, $, UI_Module, InnerLink) {
         constructor:     WebApp,
         push:            Array.prototype.push,
         splice:          Array.prototype.splice,
-        load:            function (HTML_URL) {
+        load:            function (HTML_URL, $_Sibling) {
             $('<span />',  $.extend(
                 {style: 'display: none'},
                 (typeof HTML_URL == 'object')  ?  HTML_URL  :  {
                     target:    '_self',
                     href:      HTML_URL
                 }
-            )).appendTo('body').click();
+            )).appendTo($_Sibling || 'body').click();
 
             return this;
         },
@@ -623,7 +625,7 @@ var WebApp = (function (BOM, DOM, $, UI_Module, InnerLink) {
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v3.0  (2016-09-05)  Beta
+//      [Version]    v3.0  (2016-09-06)  Beta
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //

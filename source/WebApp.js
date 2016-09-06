@@ -60,14 +60,14 @@ define(['jquery', 'UI_Module', 'InnerLink'],  function ($, UI_Module, InnerLink)
         constructor:     WebApp,
         push:            Array.prototype.push,
         splice:          Array.prototype.splice,
-        load:            function (HTML_URL) {
+        load:            function (HTML_URL, $_Sibling) {
             $('<span />',  $.extend(
                 {style: 'display: none'},
                 (typeof HTML_URL == 'object')  ?  HTML_URL  :  {
                     target:    '_self',
                     href:      HTML_URL
                 }
-            )).appendTo('body').click();
+            )).appendTo($_Sibling || 'body').click();
 
             return this;
         },

@@ -96,18 +96,19 @@ define(['jquery', 'DS_Inherit', 'ViewDataIO'],  function ($, DS_Inherit) {
                     .find('*[href]:not(a, link), *[src]:not(img, iframe, script)')
                     .not(InnerLink.selector + ', *[href]:parent');
 
-            if (! this.lastLoad)
-                $_Module = $_Module.filter(function () {
+            return Promise.all($.map(
+                $_Module[this.lastLoad ? 'not' : 'filter'](function () {
+
+                //  About this --- https://github.com/jquery/jquery/issues/3270
+
                     return  (this.getAttribute('async') == 'false');
-                });
-            //  About this --- https://github.com/jquery/jquery/issues/3270
-
-            return  Promise.all($.map($_Module,  function () {
-
-                return  (new UI_Module(
-                    new InnerLink(_This_.ownerApp, arguments[0])
-                )).load();
-            }));
+                }),
+                function () {
+                    return  (new UI_Module(
+                        new InnerLink(_This_.ownerApp, arguments[0])
+                    )).load();
+                }
+            ));
         },
         loadJSON:      function () {
             return this.source.loadData(
@@ -205,7 +206,8 @@ define(['jquery', 'DS_Inherit', 'ViewDataIO'],  function ($, DS_Inherit) {
 
                 _Data_ = _Data_[0] || _Data_[1];
 
-                _This_.setData(_This_.trigger('data', [_Data_])  ||  _Data_);
+                if ((_Data_ !== undefined)  &&  (_Data_ != null))
+                    _This_.setData(_This_.trigger('data', [_Data_])  ||  _Data_);
 
                 return _This_.loadModule();
 
