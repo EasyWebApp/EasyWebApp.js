@@ -1,5 +1,7 @@
 # EasyWebApp v3
 
+[![Join the chat at https://gitter.im/EasyWebApp-js/Lobby](https://badges.gitter.im/EasyWebApp-js/Lobby.svg)](https://gitter.im/EasyWebApp-js/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 
 **Component 分支**专用于 **亚页面级组件化**实验，基于官方最新版 **jQuery**、jQuery+、iQuery+ 完全重写 **SPA 引擎**、Demo 源码。
 
