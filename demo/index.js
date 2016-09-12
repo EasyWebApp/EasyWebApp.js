@@ -1,9 +1,4 @@
-define([
-    'jquery',
-    './javascript/TimePassed',
-    'iQuery+',
-    'EasyWebApp'
-],  function ($, TimePassed) {
+require(['jquery', 'TimePassed', 'EasyWebApp'],  function ($, TimePassed) {
 
     var BOM = self;
 

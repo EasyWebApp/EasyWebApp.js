@@ -1,4 +1,4 @@
-define(['jquery', 'marked', 'EasyWebUI', 'EasyWebApp'],  function ($, marked) {
+require(['jquery', 'marked', 'EasyWebUI', 'EasyWebApp'],  function ($, marked) {
 
     $.ajaxSetup({
         dataFilter:    function () {

@@ -206,7 +206,7 @@ define(['jquery', 'DS_Inherit', 'ViewDataIO'],  function ($, DS_Inherit) {
 
                 _Data_ = _Data_[0] || _Data_[1];
 
-                if ((_Data_ !== undefined)  &&  (_Data_ != null))
+                if (_Data_ != null)
                     _This_.setData(_This_.trigger('data', [_Data_])  ||  _Data_);
 
                 return _This_.loadModule();
