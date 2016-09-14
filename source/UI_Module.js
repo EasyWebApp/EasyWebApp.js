@@ -4,13 +4,8 @@ define(['jquery', 'DS_Inherit', 'ViewDataIO'],  function ($, DS_Inherit) {
         this.ownerApp = iLink.ownerApp;
         this.source = iLink;
 
-        var iScope = iLink.ownerView && iLink.ownerView.getData();
-        iScope = $.likeArray(iScope)  ?  { }  :  iScope;
+        this.data = DS_Inherit(this.getScope(), this.getEnv());
 
-        this.data = DS_Inherit(
-            iScope  ||  (this.constructor.instanceOf('body') || '').data  ||  { },
-            this.getEnv()
-        );
         this.$_View = iLink.getTarget();
         this.$_View = this.$_View[0] ? this.$_View : iLink.$_DOM;
         this.attach();
@@ -44,7 +39,7 @@ define(['jquery', 'DS_Inherit', 'ViewDataIO'],  function ($, DS_Inherit) {
 
             return this;
         },
-        getData:       function () {
+        getScope:      function () {
             var iLV = $.ListView.instanceOf( this.source.$_DOM ),  iData;
 
             if (iLV  &&  (iLV.$_View[0] !== this.source.$_DOM[0])) {
@@ -54,8 +49,9 @@ define(['jquery', 'DS_Inherit', 'ViewDataIO'],  function ($, DS_Inherit) {
                 iData = ($_Item[0] ? $_Item.slice(-1) : this.source.$_DOM)
                     .data('EWA_DS');
             }
+            iData = iData  ||  (this.source.ownerView || '').data;
 
-            return  iData || this.data;
+            return  $.likeArray(iData) ? { } : iData;
         },
         getEnv:        function () {
             var iData = { },
@@ -115,10 +111,7 @@ define(['jquery', 'DS_Inherit', 'ViewDataIO'],  function ($, DS_Inherit) {
             ));
         },
         loadJSON:      function () {
-            return this.source.loadData(
-                UI_Module.prototype.getData.call(this) ||
-                    UI_Module.instanceOf('body').data
-            );
+            return  this.source.loadData( this.data );
         },
         loadHTML:      function () {
             var iTemplate = this.constructor.$_Template,

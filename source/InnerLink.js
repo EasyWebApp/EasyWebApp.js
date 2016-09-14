@@ -50,7 +50,7 @@ define(['jquery', 'UI_Module'],  function ($, UI_Module) {
             return  this.target  ?  $('*[name="' + this.target + '"]')  :  $();
         },
         getArgs:      function () {
-            var iArgs = { },  iData = this.ownerView.getData();
+            var iArgs = { },  iData = this.ownerView.data;
 
             (this.src || this.action || '').replace(
                 InnerLink.reURLVar,
