@@ -1,11 +1,25 @@
 define(['jquery'],  function ($) {
 
-    function DataScope(iData) {
-        if (! $.isEmptyObject(iData))  $.extend(this, iData);
+    function DataScope() {
+        this.extend( arguments[0] );
     }
 
     var iPrototype = {
             constructor:    DataScope,
+            extend:         function (iData) {
+                if (! $.isEmptyObject(iData)) {
+                    $.extend(this, iData);
+
+                    if ($.likeArray( iData )) {
+                        this.length = iData.length;
+
+                        Array.prototype.splice.call(
+                            this,  iData.length,  iData.length
+                        );
+                    }
+                }
+                return this;
+            },
             toString:       function () {
                 return  '[object DataScope]';
             },
@@ -26,11 +40,12 @@ define(['jquery'],  function ($) {
         };
 
     return  function (iSup, iSub) {
-        DataScope.prototype = $.isEmptyObject(iSup) ? iPrototype : iSup;
+        DataScope.prototype = (iSup instanceof DataScope)  ?
+            iSup  :  $.extend({ }, iSup, iPrototype);
 
         var iData = new DataScope(iSub);
 
-        DataScope.prototype = null;
+        DataScope.prototype = { };
 
         return iData;
     };

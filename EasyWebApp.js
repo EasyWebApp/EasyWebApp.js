@@ -10,12 +10,26 @@
 
 var DS_Inherit = (function (BOM, DOM, $) {
 
-    function DataScope(iData) {
-        if (! $.isEmptyObject(iData))  $.extend(this, iData);
+    function DataScope() {
+        this.extend( arguments[0] );
     }
 
     var iPrototype = {
             constructor:    DataScope,
+            extend:         function (iData) {
+                if (! $.isEmptyObject(iData)) {
+                    $.extend(this, iData);
+
+                    if ($.likeArray( iData )) {
+                        this.length = iData.length;
+
+                        Array.prototype.splice.call(
+                            this,  iData.length,  iData.length
+                        );
+                    }
+                }
+                return this;
+            },
             toString:       function () {
                 return  '[object DataScope]';
             },
@@ -36,11 +50,12 @@ var DS_Inherit = (function (BOM, DOM, $) {
         };
 
     return  function (iSup, iSub) {
-        DataScope.prototype = $.isEmptyObject(iSup) ? iPrototype : iSup;
+        DataScope.prototype = (iSup instanceof DataScope)  ?
+            iSup  :  $.extend({ }, iSup, iPrototype);
 
         var iData = new DataScope(iSub);
 
-        DataScope.prototype = null;
+        DataScope.prototype = { };
 
         return iData;
     };
@@ -286,27 +301,13 @@ var UI_Module = (function (BOM, DOM, $, DS_Inherit) {
                 iLink.src = _Link_.src;
                 iLink.data = _Link_.data;
 
-                $.extend(_This_.data, _This_.getEnv());
+                _This_.data.extend( _This_.getEnv() );
 
                 return _This_.loadJSON();
             });
         },
-        setData:       function (iData) {
-            if (! $.isEmptyObject(iData)) {
-                $.extend(this.data, iData);
-
-                if ($.likeArray( iData )) {
-                    this.data.length = iData.length;
-
-                    Array.prototype.splice.call(
-                        this.data,  iData.length,  iData.length
-                    );
-                }
-            }
-            return this.data;
-        },
         render:        function (iData) {
-            iData = this.setData(iData);
+            iData = this.data.extend(iData);
 
             if (! $.isEmptyObject(iData))  this.$_View.dataRender(iData);
 
@@ -336,7 +337,9 @@ var UI_Module = (function (BOM, DOM, $, DS_Inherit) {
                 _Data_ = _Data_[0] || _Data_[1];
 
                 if (_Data_ != null)
-                    _This_.setData(_This_.trigger('data', [_Data_])  ||  _Data_);
+                    _This_.data.extend(
+                        _This_.trigger('data', [_Data_])  ||  _Data_
+                    );
 
                 return _This_.loadModule();
 
@@ -575,7 +578,7 @@ var WebApp = (function (BOM, DOM, $, UI_Module, InnerLink) {
 
             var iLink = iModule.source,  _This_ = this;
 
-            $.extend(iModule.data, $.paramJSON());
+            iModule.data.extend( $.paramJSON() );
 
             iModule[
                 (iLink.href || iLink.src || iLink.action)  ?  'load'  :  'render'

@@ -154,27 +154,13 @@ define(['jquery', 'DS_Inherit', 'ViewDataIO'],  function ($, DS_Inherit) {
                 iLink.src = _Link_.src;
                 iLink.data = _Link_.data;
 
-                $.extend(_This_.data, _This_.getEnv());
+                _This_.data.extend( _This_.getEnv() );
 
                 return _This_.loadJSON();
             });
         },
-        setData:       function (iData) {
-            if (! $.isEmptyObject(iData)) {
-                $.extend(this.data, iData);
-
-                if ($.likeArray( iData )) {
-                    this.data.length = iData.length;
-
-                    Array.prototype.splice.call(
-                        this.data,  iData.length,  iData.length
-                    );
-                }
-            }
-            return this.data;
-        },
         render:        function (iData) {
-            iData = this.setData(iData);
+            iData = this.data.extend(iData);
 
             if (! $.isEmptyObject(iData))  this.$_View.dataRender(iData);
 
@@ -204,7 +190,9 @@ define(['jquery', 'DS_Inherit', 'ViewDataIO'],  function ($, DS_Inherit) {
                 _Data_ = _Data_[0] || _Data_[1];
 
                 if (_Data_ != null)
-                    _This_.setData(_This_.trigger('data', [_Data_])  ||  _Data_);
+                    _This_.data.extend(
+                        _This_.trigger('data', [_Data_])  ||  _Data_
+                    );
 
                 return _This_.loadModule();
 
