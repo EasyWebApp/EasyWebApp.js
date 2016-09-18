@@ -30,6 +30,23 @@ var DS_Inherit = (function (BOM, DOM, $) {
                 }
                 return this;
             },
+            setValue:       function (iName) {
+                var iScope = this,  _Parent_;
+
+                while (! (
+                    $.isEmptyObject(iScope)  ||  iScope.hasOwnProperty(iName)
+                )) {
+                    _Parent_ = Object.getPrototypeOf( iScope );
+
+                    if (_Parent_ === Object.prototype)  break;
+
+                    iScope = _Parent_;
+                }
+
+                iScope[iName] = arguments[1];
+
+                return iScope;
+            },
             toString:       function () {
                 return  '[object DataScope]';
             },
@@ -51,9 +68,12 @@ var DS_Inherit = (function (BOM, DOM, $) {
 
     return  function (iSup, iSub) {
         DataScope.prototype = (iSup instanceof DataScope)  ?
-            iSup  :  $.extend({ }, iSup, iPrototype);
+            iSup  :  $.extend(iSup, iPrototype);
 
         var iData = new DataScope(iSub);
+
+        if (! $.browser.modern)
+            iData.__proto__ = DataScope.prototype;
 
         DataScope.prototype = { };
 
@@ -328,6 +348,8 @@ var UI_Module = (function (BOM, DOM, $, DS_Inherit) {
         load:          function () {
             var _This_ = this,
                 iJSON = this.source.getURL('src') || this.source.getURL('action');
+
+            this.lastLoad = 0;
 
             return Promise.all([
                 iJSON  &&  this.loadJSON(),
@@ -625,7 +647,7 @@ var WebApp = (function (BOM, DOM, $, UI_Module, InnerLink) {
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v3.0  (2016-09-14)  Beta
+//      [Version]    v3.0  (2016-09-18)  Beta
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //
@@ -689,7 +711,7 @@ var EasyWebApp = (function (BOM, DOM, $, WebApp, InnerLink, UI_Module) {
         var $_VS = $( arguments[0].target );
 
         UI_Module.instanceOf( $_VS )
-            .data[ $_VS[0].getAttribute('name') ] = $_VS.val();
+            .data.setValue($_VS[0].getAttribute('name'), $_VS.val());
     });
 })(self, self.document, self.jQuery, WebApp, InnerLink, UI_Module);
 

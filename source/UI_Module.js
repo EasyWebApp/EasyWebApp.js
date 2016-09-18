@@ -182,6 +182,8 @@ define(['jquery', 'DS_Inherit', 'ViewDataIO'],  function ($, DS_Inherit) {
             var _This_ = this,
                 iJSON = this.source.getURL('src') || this.source.getURL('action');
 
+            this.lastLoad = 0;
+
             return Promise.all([
                 iJSON  &&  this.loadJSON(),
                 this.source.href  &&  this.loadHTML()

@@ -20,6 +20,23 @@ define(['jquery'],  function ($) {
                 }
                 return this;
             },
+            setValue:       function (iName) {
+                var iScope = this,  _Parent_;
+
+                while (! (
+                    $.isEmptyObject(iScope)  ||  iScope.hasOwnProperty(iName)
+                )) {
+                    _Parent_ = Object.getPrototypeOf( iScope );
+
+                    if (_Parent_ === Object.prototype)  break;
+
+                    iScope = _Parent_;
+                }
+
+                iScope[iName] = arguments[1];
+
+                return iScope;
+            },
             toString:       function () {
                 return  '[object DataScope]';
             },
@@ -41,9 +58,12 @@ define(['jquery'],  function ($) {
 
     return  function (iSup, iSub) {
         DataScope.prototype = (iSup instanceof DataScope)  ?
-            iSup  :  $.extend({ }, iSup, iPrototype);
+            iSup  :  $.extend(iSup, iPrototype);
 
         var iData = new DataScope(iSub);
+
+        if (! $.browser.modern)
+            iData.__proto__ = DataScope.prototype;
 
         DataScope.prototype = { };
 
