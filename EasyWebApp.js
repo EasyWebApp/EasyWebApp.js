@@ -86,23 +86,25 @@ var DS_Inherit = (function (BOM, DOM, $) {
 
 var ViewDataIO = (function (BOM, DOM, $, DS_Inherit) {
 
-    function ArrayRender(iArray, ValueRender) {
+    function ArrayRender(iArray, ValueRender, iScope) {
+
+        iArray = iScope  ?  DS_Inherit(iScope, iArray)  :  iArray;
 
         $.ListView(this,  function ($_Item, iValue) {
 
             $_Item.data('EWA_DS',  DS_Inherit(iArray, iValue))
                 .value('name', iValue);
 
-            ValueRender.call($_Item, iValue);
+            ValueRender.call($_Item, iValue, iArray);
 
         }).clear().render( iArray );
     }
 
-    function ObjectRender(iData) {
+    function ObjectRender(iData, iScope) {
         var _Self_ = arguments.callee;
 
         if ($.likeArray( iData ))
-            return  ArrayRender.call(this[0], iData, _Self_);
+            return  ArrayRender.call(this[0], iData, _Self_, iScope);
 
         var iView = $.CommonView.instanceOf(this, false);
 
@@ -111,7 +113,7 @@ var ViewDataIO = (function (BOM, DOM, $, DS_Inherit) {
         this.value('name',  function (iName) {
 
             if ($.likeArray( iData[iName] ))
-                ArrayRender.call(this, iData[iName], _Self_);
+                ArrayRender.call(this, iData[iName], _Self_, iData);
             else if ($.isPlainObject( iData[iName] ))
                 _Self_.call($(this), iData[iName]);
             else
@@ -647,7 +649,7 @@ var WebApp = (function (BOM, DOM, $, UI_Module, InnerLink) {
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v3.0  (2016-09-18)  Beta
+//      [Version]    v3.0  (2016-09-19)  Beta
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //
@@ -713,6 +715,7 @@ var EasyWebApp = (function (BOM, DOM, $, WebApp, InnerLink, UI_Module) {
         UI_Module.instanceOf( $_VS )
             .data.setValue($_VS[0].getAttribute('name'), $_VS.val());
     });
+
 })(self, self.document, self.jQuery, WebApp, InnerLink, UI_Module);
 
 

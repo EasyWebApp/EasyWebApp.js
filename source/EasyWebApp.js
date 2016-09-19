@@ -2,7 +2,7 @@
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v3.0  (2016-09-18)  Beta
+//      [Version]    v3.0  (2016-09-19)  Beta
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //
@@ -71,4 +71,5 @@ define([
         UI_Module.instanceOf( $_VS )
             .data.setValue($_VS[0].getAttribute('name'), $_VS.val());
     });
+
 });

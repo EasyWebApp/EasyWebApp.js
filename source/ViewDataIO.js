@@ -1,22 +1,24 @@
 define(['jquery', 'DS_Inherit', 'iQuery+'],  function ($, DS_Inherit) {
 
-    function ArrayRender(iArray, ValueRender) {
+    function ArrayRender(iArray, ValueRender, iScope) {
+
+        iArray = iScope  ?  DS_Inherit(iScope, iArray)  :  iArray;
 
         $.ListView(this,  function ($_Item, iValue) {
 
             $_Item.data('EWA_DS',  DS_Inherit(iArray, iValue))
                 .value('name', iValue);
 
-            ValueRender.call($_Item, iValue);
+            ValueRender.call($_Item, iValue, iArray);
 
         }).clear().render( iArray );
     }
 
-    function ObjectRender(iData) {
+    function ObjectRender(iData, iScope) {
         var _Self_ = arguments.callee;
 
         if ($.likeArray( iData ))
-            return  ArrayRender.call(this[0], iData, _Self_);
+            return  ArrayRender.call(this[0], iData, _Self_, iScope);
 
         var iView = $.CommonView.instanceOf(this, false);
 
@@ -25,7 +27,7 @@ define(['jquery', 'DS_Inherit', 'iQuery+'],  function ($, DS_Inherit) {
         this.value('name',  function (iName) {
 
             if ($.likeArray( iData[iName] ))
-                ArrayRender.call(this, iData[iName], _Self_);
+                ArrayRender.call(this, iData[iName], _Self_, iData);
             else if ($.isPlainObject( iData[iName] ))
                 _Self_.call($(this), iData[iName]);
             else
