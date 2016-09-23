@@ -8,7 +8,7 @@
  *    and can be used in the Web UI development of
  *    Any Platform.
  *
- *    [Version]    v1.0  (2016-07-21)
+ *    [Version]    v1.0  (2016-08-29)
  *
  *    [Require]    CSS 2.1  (Best Effect with CSS 3),
  *
@@ -157,6 +157,10 @@ label {
     word-spacing:    0.5em;
     cursor:          pointer;
 }
+input[disabled], textarea[disabled], button[disabled], select[disabled] {
+    background:      rgb(230, 230, 230)  !important;
+    border-color:    rgb(230, 230, 230)  !important;
+}
 fieldset {
     margin:     1em  0;
     padding:    1em;
@@ -207,6 +211,17 @@ button > *,  a.Button > *  {
     vertical-align:    middle;
     max-height:        1.5em;
     margin:            0  0.5em;
+}
+button > sup,  a.Button > sup,
+button > sub,  a.Button > sub  {
+    margin:       auto;
+    font-size:    x-small;
+}
+button > sup,  a.Button > sup  {
+    vertical-align:    super;
+}
+button > sub,  a.Button > sub  {
+    vertical-align:    sub;
 }
 input[type="submit"], button[type="submit"] {
     background:      rgb(88, 167, 0);
@@ -757,10 +772,11 @@ ul.NavBar {
     padding:       0;
 }
 ul.NavBar > li {
-    display:       inline-block;
-    padding:       0.5em;
-    text-align:    center;
-    cursor:        pointer;
+    display:           inline-block;
+    padding:           0.5em;
+    text-align:        center;
+    vertical-align:    middle;
+    cursor:            pointer;
 }
 ul.NavBar > li.Separator:before {
     content:    "|";
@@ -1167,6 +1183,7 @@ img.UserLogo {
 .No_Pointer > * {
     pointer-events:    auto;
 }
+
 /* ----- Colour ----- */
 .Black {
     color:           rgb(53, 52, 57)  !important;
@@ -1218,6 +1235,7 @@ img.UserLogo {
     color:           white  !important;
     border-color:    transparent  !important;
 }
+
 /* ----- Shape ----- */
 .Round {
     border-radius:    50%  !important;
@@ -1228,6 +1246,7 @@ img.UserLogo {
 .Halo {
     box-shadow:    0  0  25px  gray;
 }
+
 /* ----- Turning ----- */
 .Rotate-90 {
    -moz-transform:    rotate(90deg);
@@ -1264,6 +1283,7 @@ img.UserLogo {
             from(transparent), to(rgba(250, 250, 250, 0.1))
         );
 }
+
 /* ----- Background ----- */
 .Background-Image {
     background-image:       url();
@@ -1275,6 +1295,7 @@ img.UserLogo {
     min-width:              15em;
     word-break:             break-all;
 }
+
 /* ----- Icon ----- */
 .Icon {
         display:           inline-block;
@@ -1344,6 +1365,27 @@ img.UserLogo {
 .Icon.Mobile:before {
     content:    "\1F4F1";
 }
+
+/* ----- Border ----- */
+.Border-Column > * {
+    border-left:    1px  solid;
+}
+.Border-Column > *:first-child {
+    border-left:    none;
+}
+.Border-Column > *:only-child {
+    border-right:    1px  solid;
+}
+.Border-Row > * {
+    border-top:    1px  solid;
+}
+.Border-Row > *:first-child {
+    border-top:    none;
+}
+.Border-Row > *:only-child {
+    border-bottom:    1px  solid;
+}
+
 /* ----- Responsive Design ----- */
 @media (max-width:  540px) {
     html {

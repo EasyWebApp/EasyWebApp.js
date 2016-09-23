@@ -47,7 +47,7 @@ define(['jquery', 'PageLink'],  function ($, PageLink) {
 
             if (! arguments.length) {
                 var Link_DOM = iHistory.last(true).sourceLink.$_DOM[0];
-                var iListView = $.ListView.getInstance( Link_DOM.parentElement );
+                var iListView = $.ListView.instanceOf( Link_DOM );
 
                 if (iListView)
                     iListView.focus(Link_DOM);

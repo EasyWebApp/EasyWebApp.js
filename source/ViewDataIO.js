@@ -9,16 +9,16 @@ define(['jquery', 'jQuery+', 'iQuery+'],  function ($) {
     function ObjectRender(iData) {
         var _Self_ = arguments.callee;
 
-        if (iData instanceof Array)
+        if ($.likeArray( iData ))
             return  ArrayRender.call(this[0], iData, _Self_);
 
-        var iView = $.CommonView.getInstance(this);
+        var iView = $.CommonView.instanceOf(this, false);
 
         if (iView)  return iView.render(iData);
 
         this.value('name',  function (iName) {
 
-            if (iData[iName] instanceof Array)
+            if ($.likeArray( iData[iName] ))
                 ArrayRender.call(this, iData[iName], _Self_);
             else if ($.isPlainObject( iData[iName] ))
                 _Self_.call($(this), iData[iName]);
@@ -29,7 +29,7 @@ define(['jquery', 'jQuery+', 'iQuery+'],  function ($) {
 
     $.fn.extend({
         dataRender:    function (iData) {
-            if (iData instanceof Array)
+            if ($.likeArray( iData ))
                 ArrayRender.call(
                     $.ListView.findView(this, true)[0],  iData,  ObjectRender
                 );
@@ -46,7 +46,7 @@ define(['jquery', 'jQuery+', 'iQuery+'],  function ($) {
 
             for (var i = 0, iName, iLV;  i < $_Key.length;  i++) {
                 iName = $_Key[i].getAttribute('name');
-                iLV = $.ListView.getInstance( $_Key[i] );
+                iLV = $.ListView.instanceOf($_Key[i], false);
 
                 if (! iLV)
                     iData[iName] = arguments.callee.call( $( $_Key[i] ) );

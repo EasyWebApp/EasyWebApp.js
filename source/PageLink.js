@@ -72,7 +72,7 @@ define(['jquery', 'ViewDataIO'],  function ($) {
                     css:    {display:  'none'}
                 }, iAttribute, _Argument_)).appendTo(DOM.body);
 
-            if ((iData instanceof Array)  ||  $.isPlainObject(iData))
+            if ($.likeArray(iData) || $.isPlainObject(iData))
                 $_Link.data('EWA_Model', iData);
 
             return $_Link;
@@ -85,8 +85,7 @@ define(['jquery', 'ViewDataIO'],  function ($) {
                         this.$_DOM : this.$_DOM.parents('.ListView_Item');
 
                 if ( $_Item[0] )
-                    iData = $.ListView.getInstance( $_Item[0].parentNode )
-                        .valueOf( $_Item );
+                    iData = $.ListView.instanceOf( $_Item ).valueOf( $_Item );
             }
             return  this.data = $.extend(iData || { },  this.data);
         },

@@ -8,7 +8,7 @@ define([
         var iArgs = $.makeArray(arguments);
         iArgs.unshift(true);
 
-        if (iArgs.slice(-1)[0] instanceof Array)  iArgs.splice(1, 0, [ ]);
+        if ($.likeArray( iArgs.slice(-1)[0] ))  iArgs.splice(1, 0, [ ]);
 
         return  $.extend.apply($, iArgs);
     }
@@ -343,7 +343,7 @@ define([
             if (iReturn !== false) {
                 var $_Render = This_App.domRoot;
 
-                if (! (iData instanceof Array))
+                if (! $.likeArray(iData))
                     $_Render = $(DOM.body);
                 else if (Source_Link  &&  (Source_Link.target != '_self'))
                     $_Render = Source_Link.getTarget().parent();

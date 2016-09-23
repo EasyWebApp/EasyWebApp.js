@@ -7,8 +7,6 @@
 
 })(function () {
 
-    var WebApp;
-
 
 var ViewDataIO = (function (BOM, DOM, $) {
 
@@ -21,16 +19,16 @@ var ViewDataIO = (function (BOM, DOM, $) {
     function ObjectRender(iData) {
         var _Self_ = arguments.callee;
 
-        if (iData instanceof Array)
+        if ($.likeArray( iData ))
             return  ArrayRender.call(this[0], iData, _Self_);
 
-        var iView = $.CommonView.getInstance(this);
+        var iView = $.CommonView.instanceOf(this, false);
 
         if (iView)  return iView.render(iData);
 
         this.value('name',  function (iName) {
 
-            if (iData[iName] instanceof Array)
+            if ($.likeArray( iData[iName] ))
                 ArrayRender.call(this, iData[iName], _Self_);
             else if ($.isPlainObject( iData[iName] ))
                 _Self_.call($(this), iData[iName]);
@@ -41,7 +39,7 @@ var ViewDataIO = (function (BOM, DOM, $) {
 
     $.fn.extend({
         dataRender:    function (iData) {
-            if (iData instanceof Array)
+            if ($.likeArray( iData ))
                 ArrayRender.call(
                     $.ListView.findView(this, true)[0],  iData,  ObjectRender
                 );
@@ -58,7 +56,7 @@ var ViewDataIO = (function (BOM, DOM, $) {
 
             for (var i = 0, iName, iLV;  i < $_Key.length;  i++) {
                 iName = $_Key[i].getAttribute('name');
-                iLV = $.ListView.getInstance( $_Key[i] );
+                iLV = $.ListView.instanceOf($_Key[i], false);
 
                 if (! iLV)
                     iData[iName] = arguments.callee.call( $( $_Key[i] ) );
@@ -151,7 +149,7 @@ var PageLink = (function (BOM, DOM, $) {
                     css:    {display:  'none'}
                 }, iAttribute, _Argument_)).appendTo(DOM.body);
 
-            if ((iData instanceof Array)  ||  $.isPlainObject(iData))
+            if ($.likeArray(iData) || $.isPlainObject(iData))
                 $_Link.data('EWA_Model', iData);
 
             return $_Link;
@@ -164,8 +162,7 @@ var PageLink = (function (BOM, DOM, $) {
                         this.$_DOM : this.$_DOM.parents('.ListView_Item');
 
                 if ( $_Item[0] )
-                    iData = $.ListView.getInstance( $_Item[0].parentNode )
-                        .valueOf( $_Item );
+                    iData = $.ListView.instanceOf( $_Item ).valueOf( $_Item );
             }
             return  this.data = $.extend(iData || { },  this.data);
         },
@@ -262,7 +259,7 @@ var InnerPage = (function (BOM, DOM, $, PageLink) {
 
             if (! arguments.length) {
                 var Link_DOM = iHistory.last(true).sourceLink.$_DOM[0];
-                var iListView = $.ListView.getInstance( Link_DOM.parentElement );
+                var iListView = $.ListView.instanceOf( Link_DOM );
 
                 if (iListView)
                     iListView.focus(Link_DOM);
@@ -393,7 +390,7 @@ var WebApp = (function (BOM, DOM, $, PageLink, InnerPage, InnerHistory) {
         var iArgs = $.makeArray(arguments);
         iArgs.unshift(true);
 
-        if (iArgs.slice(-1)[0] instanceof Array)  iArgs.splice(1, 0, [ ]);
+        if ($.likeArray( iArgs.slice(-1)[0] ))  iArgs.splice(1, 0, [ ]);
 
         return  $.extend.apply($, iArgs);
     }
@@ -728,7 +725,7 @@ var WebApp = (function (BOM, DOM, $, PageLink, InnerPage, InnerHistory) {
             if (iReturn !== false) {
                 var $_Render = This_App.domRoot;
 
-                if (! (iData instanceof Array))
+                if (! $.likeArray(iData))
                     $_Render = $(DOM.body);
                 else if (Source_Link  &&  (Source_Link.target != '_self'))
                     $_Render = Source_Link.getTarget().parent();
@@ -879,7 +876,7 @@ var WebApp = (function (BOM, DOM, $, PageLink, InnerPage, InnerHistory) {
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v2.6  (2016-07-27)  Beta
+//      [Version]    v2.6  (2016-09-20)  Beta
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //

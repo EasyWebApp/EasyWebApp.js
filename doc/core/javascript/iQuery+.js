@@ -18,7 +18,7 @@
 
         $_View = $($_View);
 
-        var iView = this.constructor.getInstance($_View) ||
+        var iView = this.constructor.instanceOf($_View, false)  ||
                 $.Observer.call(this, 1);
 
         if (iView !== this)  return iView;
@@ -31,21 +31,20 @@
     }
 
     $.extend(CommonView, {
-        getClass:       function () {
+        getClass:      function () {
             return  this.prototype.toString.call({constructor: this});
         },
-        getInstance:    function () {
-            var _Instance_ = $( arguments[0] ).data( this.getClass(this) );
-            return  ((_Instance_ instanceof this)  &&  _Instance_);
-        },
-        instanceOf:     function (iDOM) {
-            var iName = this.getClass();
-            var Instance = '*:data("' + iName + '")';
+        instanceOf:    function (iDOM, Check_Parent) {
+            var iName = this.getClass(),  _Instance_,  $_Instance = $(iDOM);
 
-            var $_Instance = $(iDOM).parent(Instance);
+            do {
+                _Instance_ = $_Instance.data(iName);
 
-            return  ($_Instance[0] ? $_Instance : $(iDOM).parents(Instance))
-                .data(iName);
+                if (_Instance_ instanceof this)  return _Instance_;
+
+                $_Instance = $_Instance.parent();
+
+            } while ($_Instance[0]  &&  (Check_Parent !== false));
         }
     });
 
@@ -63,8 +62,22 @@
 
             return this;
         },
+        valueOf:        function () {
+            return $.map(
+                this.$_View.find('*').addBack().filter('form'),
+                function () {
+                    return  $.paramJSON('?'  +  $( arguments[0] ).serialize());
+                }
+            );
+        },
         clear:          function () {
-            this.$_View.empty();
+            var $_Data = this.$_View.find('*').addBack().filter('form')
+                    .one('reset',  function () {
+                        arguments[0].stopPropagation();
+                    });
+
+            for (var i = 0;  $_Data[i];  i++)
+                $_Data[i].reset();
 
             return this;
         }
@@ -94,11 +107,8 @@
 
         $_Item = (iArgs[0] instanceof Array)  &&  iArgs.shift();
         iDelay = (typeof iArgs[0] == 'boolean')  ?  iArgs.shift()  :  null;
-        onUpdate = (typeof iArgs[0] == 'function')  &&  iArgs[0];
 
-        var iView = $.CommonView.call(this, $_View);
-
-        if (typeof onUpdate == 'function')  iView.on('update', onUpdate);
+        var iView = $.CommonView.call(this, $_View).on('update', iArgs[0]);
 
         if ((iView !== this)  ||  (! iView.$_View[0].children[0]))
             return iView;
@@ -134,21 +144,21 @@
                     'a[href], *[tabIndex], *[contentEditable]'
                 )
             )
-                _Self_.getInstance(this.parentNode).focus(this);
+                _Self_.instanceOf(this).focus(this);
         });
     }
 
     $.extend(ListView, {
-        getClass:       $.CommonView.getClass,
-        getInstance:    $.CommonView.getInstance,
-        instanceOf:     $.CommonView.instanceOf,
-        findView:       function ($_View, Init_Instance) {
+        getClass:      $.CommonView.getClass,
+        instanceOf:    $.CommonView.instanceOf,
+        findView:      function ($_View, Init_Instance) {
             $_View = $($_View).find('*:list, *[multiple]')
                 .not('input[type="file"]');
 
             if (Init_Instance === true) {
                 for (var i = 0;  i < $_View.length;  i++)
-                    if (! this.getInstance($_View[i]))  this( $_View[i] );
+                    if (! this.instanceOf($_View[i], false))
+                        this( $_View[i] );
             } else if (Init_Instance === false)
                 $_View.data(this.getClass(), null);
 
@@ -281,6 +291,8 @@
         },
         //  Delete
         remove:         function (Index) {
+            Index = $.isNumeric(Index) ? Index : this.indexOf(Index);
+
             var $_Item = this.indexOf(Index, true);
 
             if (
@@ -376,7 +388,10 @@
             iArgs.shift()  :  Infinity;
 
         var _This_ = $.CommonView.call(this, iListView.$_View)
-                .on('branch',  (typeof iArgs[0] == 'function')  &&  iArgs[0]);
+                .on('branch', iArgs[0]);
+
+        if ((_This_ !== this)  ||  (! _This_.$_View[0].children[0]))
+            return _This_;
 
         this.$_View = iListView.$_View;
 
@@ -420,9 +435,8 @@
     }
 
     $.extend(TreeView, {
-        getClass:       $.CommonView.getClass,
-        getInstance:    $.CommonView.getInstance,
-        instanceOf:     $.CommonView.instanceOf
+        getClass:      $.CommonView.getClass,
+        instanceOf:    $.CommonView.instanceOf
     });
 
     TreeView.prototype = $.extend(new $.CommonView(),  {
@@ -435,7 +449,7 @@
                 $_Fork = this.$_View;
             }
 
-            $.ListView.getInstance( $_Fork ).render(
+            $.ListView.instanceOf($_Fork, false).render(
                 iData || $_Fork.data('TV_Model')
             ).$_View.children().removeClass('active');
 
@@ -448,7 +462,7 @@
         },
         branch:         function ($_Item, iData) {
             var iFork = ($_Item instanceof $.ListView)  ?  $_Item  :  (
-                    $.ListView.getInstance( $_Item[0].parentNode ).fork( $_Item )
+                    $.ListView.instanceOf( $_Item ).fork( $_Item )
                 );
             var iDepth = $.trace(iFork, 'parentView').length;
 
@@ -630,7 +644,7 @@
 //              >>>  iQuery+  <<<
 //
 //
-//    [Version]    v1.5  (2016-08-05)  Stable
+//    [Version]    v1.6  (2016-08-25)  Stable
 //
 //    [Require]    iQuery  ||  jQuery with jQuery+
 //
