@@ -2,7 +2,7 @@
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v3.0  (2016-09-19)  Beta
+//      [Version]    v3.0  (2016-09-28)  Beta
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //
@@ -26,13 +26,17 @@ define([
 
     $(DOM).on('click',  'a[href]:not(a[target="_blank"])',  function () {
 
-        var iURL = this.href.split('#!');
+        var iURL = this.href.split('#');
 
-        if (iURL[1]  &&  (iURL[0] == DOM.URL.split('#!')[0])) {
-            arguments[0].preventDefault();
+        if (iURL[0] != DOM.URL.split('#')[0])
+            return  this.target = '_blank';
 
-            (new WebApp()).load( iURL[1] );
-        }
+        arguments[0].preventDefault();
+
+        iURL = (iURL[1][0] == '!')  &&  iURL[1].slice(1);
+
+        if (iURL)  (new WebApp()).load(iURL);
+
     }).on('click submit',  InnerLink.selector,  function (iEvent) {
 
         if (this.tagName == 'FORM') {

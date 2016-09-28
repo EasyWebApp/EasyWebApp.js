@@ -17,8 +17,7 @@ define(['jquery', 'DS_Inherit', 'ViewDataIO'],  function ($, DS_Inherit) {
 
     $.extend(UI_Module, {
         getClass:      $.CommonView.getClass,
-        instanceOf:    $.CommonView.instanceOf,
-        $_Template:    { }
+        instanceOf:    $.CommonView.instanceOf
     });
 
     $.extend(UI_Module.prototype, {
@@ -114,21 +113,13 @@ define(['jquery', 'DS_Inherit', 'ViewDataIO'],  function ($, DS_Inherit) {
             return  this.source.loadData( this.data );
         },
         loadHTML:      function () {
-            var iTemplate = this.constructor.$_Template,
-                iHTML = this.source.href.split('?')[0],
-                _This_ = this;
+            var _This_ = this;
 
-            return  new Promise(function (iResolved) {
-                if (iTemplate[iHTML])
-                    return iResolved(
-                        iTemplate[iHTML].clone(true).appendTo(_This_.$_View)
-                    );
+            return  new Promise(function () {
 
-                _This_.$_View.load(iHTML,  function () {
-                    iResolved(
-                        iTemplate[iHTML] = $(this.children).not('script').clone(true)
-                    );
-                });
+                _This_.$_View.load(
+                    _This_.source.href.split('?')[0],  arguments[0]
+                );
             }).then(function () {
                 _This_.ownerApp.trigger('attach');
 
@@ -160,15 +151,20 @@ define(['jquery', 'DS_Inherit', 'ViewDataIO'],  function ($, DS_Inherit) {
             });
         },
         render:        function (iData) {
-            iData = this.data.extend(iData);
+            iData = this.trigger('data', [iData])  ||  iData;
 
-            if (! $.isEmptyObject(iData))  this.$_View.dataRender(iData);
+            if (! $.isEmptyObject(iData))
+                this.$_View.dataRender( this.data.extend(iData) );
 
-            this.lastLoad = $.now();
+            var _This_ = this;
 
-            this.trigger('ready');
+            return  this.loadModule().then(function () {
+                _This_.lastLoad = $.now();
 
-            return this.loadModule();
+                _This_.trigger('ready');
+
+                return _This_.loadModule();
+            });
         },
         trigger:       function () {
             return this.ownerApp.trigger(
@@ -184,23 +180,14 @@ define(['jquery', 'DS_Inherit', 'ViewDataIO'],  function ($, DS_Inherit) {
 
             this.lastLoad = 0;
 
-            return Promise.all([
+            return  this.domReady = Promise.all([
                 iJSON  &&  this.loadJSON(),
                 this.source.href  &&  this.loadHTML()
             ]).then(function (_Data_) {
-
                 _Data_ = _Data_[0] || _Data_[1];
 
-                if (_Data_ != null)
-                    _This_.data.extend(
-                        _This_.trigger('data', [_Data_])  ||  _Data_
-                    );
-
-                return _This_.loadModule();
-
-            }).then(function () {
-
-                _This_.render();
+                return  _This_.$_View.children('script')[0] ?
+                    _Data_ : _This_.render(_Data_);
             });
         }
     });

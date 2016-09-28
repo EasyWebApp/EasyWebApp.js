@@ -7,17 +7,19 @@ define(['jquery'],  function ($) {
     var iPrototype = {
             constructor:    DataScope,
             extend:         function (iData) {
-                if (! $.isEmptyObject(iData)) {
-                    $.extend(this, iData);
-
-                    if ($.likeArray( iData )) {
+                switch (true) {
+                    case  $.likeArray( iData ): {
                         this.length = iData.length;
 
                         Array.prototype.splice.call(
                             this,  iData.length,  iData.length
                         );
                     }
+                    case  (! $.isEmptyObject(iData)):
+                        $.extend(this, iData);
+                        break;
                 }
+
                 return this;
             },
             setValue:       function (iName) {
@@ -57,7 +59,9 @@ define(['jquery'],  function ($) {
         };
 
     return  function (iSup, iSub) {
-        DataScope.prototype = (iSup instanceof DataScope)  ?
+        DataScope.prototype = (
+            iSup  &&  (iSup.toString() == '[object DataScope]')
+        ) ?
             iSup  :  $.extend(iSup, iPrototype);
 
         var iData = new DataScope(iSub);

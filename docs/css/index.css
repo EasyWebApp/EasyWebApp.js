@@ -16,7 +16,6 @@ body > .Head > .NavBar > li:first-child {
 }
 body > .Head > .NavBar > li.focus:first-child {
     width:      auto;
-    padding:    1em  2em;
     opacity:    1;
 }
 body > .Head > .NavBar > li > a {

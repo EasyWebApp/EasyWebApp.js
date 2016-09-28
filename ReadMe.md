@@ -8,23 +8,23 @@
 
 ## 开发初衷
 
-EasyWebApp 虽然从 v2.2 “ **ListView 对象**独立”开始支持 **局部数据渲染**，但依然把每次 **数据加载**视为一次 **页面切换**（即一次 `history.pushState()`），导致不同类型 **InnerPage 对象**的 *加载、缓存、取值、回退* 逻辑复杂，导致其后几个大版本都只能修修补补，最终代码混乱……
+EasyWebApp 虽然从 v2.2 “ **ListView 对象**独立”开始支持 **局部数据渲染**，但依然把每次 **数据加载**视为一次 **页面切换**（即一次 `history.pushState()`），导致不同类型 **InnerPage 对象**的 *加载、缓存、取值、回退* 逻辑复杂，其后几个大版本都只能修修补补，最终代码混乱……
 
 所以，难以开发出近年来风行业界的 **Web 前端组件化**方案的核心架构只能被推到重来……
 
 
 ## 新版特性
 
- 1. InnerPage 对象抽象为 UI_Module 对象， **SPA UI 构建的基本单位**变为一般性的 UI 模块
- 2. 只有在“ **UI 模块的容器元素** === **SPA 换页容器**”时才会被记录在 **HTML 5 History** 中
- 3. Form 元素提交逻辑大幅简化
- 4. InnerHistory 对象的职责融入 **WebApp 单例对象**， **SPA 换页历史维护**逻辑大大简化
- 5. UI 模块支持 **自加载**，可无需 **SPA 链接元素**触发加载
- 6. UI 模块可嵌套，并支持同步加载
- 7. 嵌套 UI 模块支持 **继承式数据作用域**，并可同步 **表单元素 change 事件**（受 Angular 启发）
- 8. 开放 **WebApp 对象原型**，支持 **jQuery 式插件开发**
- 9. 支持 **内页独立 URL** 直接访问（纯前端路由）
- 10. 内部 AJAX 基于 **Promise/A+** 来调度，代码简洁、可靠
+ 1. InnerPage 对象抽象为 UI_Module 对象， **SPA UI 构建的基本单位**变为一般性的 UI 模块，仅在“ **UI 模块的容器元素** === **SPA 换页容器**”时才会被记录在 **HTML 5 History** 中
+ 2. InnerHistory 对象的职责融入 **WebApp 单例对象**， **SPA 换页历史维护**逻辑大大简化
+ 3. UI 模块支持 **自加载**，可无需 **SPA 链接元素**触发加载
+ 4. UI 模块可嵌套，并支持同步加载
+ 5. 嵌套 UI 模块支持 **继承式数据作用域**，并可同步 **表单元素 change 事件**（受 Angular 启发）
+ 6. Form 元素提交逻辑大幅简化
+ 7. 支持 **内页独立 URL** 直接访问（纯前端路由）
+ 8. 内部 AJAX 基于 **Promise/A+** 来调度，代码简洁、可靠
+ 9. 基于 Promise 对象支持 **UI 模块 JS 异步加载**
+ 10. 开放 **WebApp 对象原型**，支持 **jQuery 式插件开发**
 
 
 ## 移除特性
@@ -43,5 +43,6 @@ EasyWebApp 虽然从 v2.2 “ **ListView 对象**独立”开始支持 **局部�
 ## 开发详情
 
  - [为什么我还在用 jQuery？](jQueryLove.md)
- - [开发进度](http://git.oschina.net/Tech_Query/EasyWebApp/milestones/1)
- - [迭代记录](http://git.oschina.net/Tech_Query/EasyWebApp/commits/Component)
+ - [开发进度](//git.oschina.net/Tech_Query/EasyWebApp/milestones/1)
+ - [迭代记录](//git.oschina.net/Tech_Query/EasyWebApp/commits/Component)
+ - [入门文档](//git.oschina.net/Tech_Query/EasyWebApp/blob/Component/docs/index.md)
