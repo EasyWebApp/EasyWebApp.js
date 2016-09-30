@@ -71,7 +71,7 @@ define(['jquery', 'UI_Module'],  function ($, UI_Module) {
 
             if (! iURL)  return;
 
-            if (! $.isEmptyObject(iScope)) {
+            if (iScope  &&  iScope.isNoValue  &&  (! iScope.isNoValue())) {
                 var _Args_ = { },  _Data_;
 
                 for (var iKey in this.data) {

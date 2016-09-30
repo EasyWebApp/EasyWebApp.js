@@ -151,10 +151,10 @@ define(['jquery', 'DS_Inherit', 'ViewDataIO'],  function ($, DS_Inherit) {
             });
         },
         render:        function (iData) {
-            iData = this.trigger('data', [iData])  ||  iData;
+            this.data.extend(this.trigger('data', [iData])  ||  iData);
 
-            if (! $.isEmptyObject(iData))
-                this.$_View.dataRender( this.data.extend(iData) );
+            if (! this.data.isNoValue())
+                this.$_View.dataRender( this.data );
 
             var _This_ = this;
 

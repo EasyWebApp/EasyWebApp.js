@@ -8,16 +8,14 @@ define(['jquery'],  function ($) {
             constructor:    DataScope,
             extend:         function (iData) {
                 switch (true) {
-                    case  $.likeArray( iData ): {
+                    case  $.likeArray( iData ):    {
                         this.length = iData.length;
 
                         Array.prototype.splice.call(
                             this,  iData.length,  iData.length
                         );
                     }
-                    case  (! $.isEmptyObject(iData)):
-                        $.extend(this, iData);
-                        break;
+                    case  (! $.isEmptyObject(iData)):    $.extend(this, iData);
                 }
 
                 return this;
@@ -50,11 +48,19 @@ define(['jquery'],  function ($) {
                 for (var iKey in this)
                     if (
                         this.hasOwnProperty(iKey)  &&
-                        (! iKey.match(/^(\d+|length)$/))
+                        (! iKey.match(/^(\d+|length)$/))  &&
+                        (typeof this[iKey] != 'function')
                     )
                         iValue[iKey] = this[iKey];
 
                 return iValue;
+            },
+            isNoValue:      function () {
+                for (var iKey in this)
+                    if (typeof this[iKey] != 'function')
+                        return false;
+
+                return true;
             }
         };
 

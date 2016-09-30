@@ -18,16 +18,14 @@ var DS_Inherit = (function (BOM, DOM, $) {
             constructor:    DataScope,
             extend:         function (iData) {
                 switch (true) {
-                    case  $.likeArray( iData ): {
+                    case  $.likeArray( iData ):    {
                         this.length = iData.length;
 
                         Array.prototype.splice.call(
                             this,  iData.length,  iData.length
                         );
                     }
-                    case  (! $.isEmptyObject(iData)):
-                        $.extend(this, iData);
-                        break;
+                    case  (! $.isEmptyObject(iData)):    $.extend(this, iData);
                 }
 
                 return this;
@@ -60,11 +58,19 @@ var DS_Inherit = (function (BOM, DOM, $) {
                 for (var iKey in this)
                     if (
                         this.hasOwnProperty(iKey)  &&
-                        (! iKey.match(/^(\d+|length)$/))
+                        (! iKey.match(/^(\d+|length)$/))  &&
+                        (typeof this[iKey] != 'function')
                     )
                         iValue[iKey] = this[iKey];
 
                 return iValue;
+            },
+            isNoValue:      function () {
+                for (var iKey in this)
+                    if (typeof this[iKey] != 'function')
+                        return false;
+
+                return true;
             }
         };
 
@@ -127,19 +133,22 @@ var ViewDataIO = (function (BOM, DOM, $, DS_Inherit) {
 
     $.fn.extend({
         dataRender:    function (iData) {
-            if (! $.likeArray(iData)) {
-                ObjectRender.call(this, iData);
+            switch (true) {
+                case  $.likeArray( iData ):    {
+                    var iView = $.ListView.instanceOf(this, false);
 
-                return this;
+                    ArrayRender.call(
+                        iView  ?
+                            iView.$_View[0]  :  $.ListView.findView(this, true)[0],
+                        iData,
+                        ObjectRender
+                    );
+
+                    break;
+                }
+                case  (! $.isEmptyObject(iData)):
+                    ObjectRender.call(this, iData);
             }
-
-            var iView = $.ListView.instanceOf(this, false);
-
-            ArrayRender.call(
-                iView  ?  iView.$_View[0]  :  $.ListView.findView(this, true)[0],
-                iData,
-                ObjectRender
-            );
 
             return this;
         },
@@ -324,10 +333,10 @@ var UI_Module = (function (BOM, DOM, $, DS_Inherit) {
             });
         },
         render:        function (iData) {
-            iData = this.trigger('data', [iData])  ||  iData;
+            this.data.extend(this.trigger('data', [iData])  ||  iData);
 
-            if (! $.isEmptyObject(iData))
-                this.$_View.dataRender( this.data.extend(iData) );
+            if (! this.data.isNoValue())
+                this.$_View.dataRender( this.data );
 
             var _This_ = this;
 
@@ -442,7 +451,7 @@ var InnerLink = (function (BOM, DOM, $, UI_Module) {
 
             if (! iURL)  return;
 
-            if (! $.isEmptyObject(iScope)) {
+            if (iScope  &&  iScope.isNoValue  &&  (! iScope.isNoValue())) {
                 var _Args_ = { },  _Data_;
 
                 for (var iKey in this.data) {
@@ -640,7 +649,7 @@ var WebApp = (function (BOM, DOM, $, UI_Module, InnerLink) {
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v3.0  (2016-09-28)  Beta
+//      [Version]    v3.0  (2016-09-30)  Beta
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //

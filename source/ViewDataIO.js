@@ -37,19 +37,22 @@ define(['jquery', 'DS_Inherit', 'iQuery+'],  function ($, DS_Inherit) {
 
     $.fn.extend({
         dataRender:    function (iData) {
-            if (! $.likeArray(iData)) {
-                ObjectRender.call(this, iData);
+            switch (true) {
+                case  $.likeArray( iData ):    {
+                    var iView = $.ListView.instanceOf(this, false);
 
-                return this;
+                    ArrayRender.call(
+                        iView  ?
+                            iView.$_View[0]  :  $.ListView.findView(this, true)[0],
+                        iData,
+                        ObjectRender
+                    );
+
+                    break;
+                }
+                case  (! $.isEmptyObject(iData)):
+                    ObjectRender.call(this, iData);
             }
-
-            var iView = $.ListView.instanceOf(this, false);
-
-            ArrayRender.call(
-                iView  ?  iView.$_View[0]  :  $.ListView.findView(this, true)[0],
-                iData,
-                ObjectRender
-            );
 
             return this;
         },
