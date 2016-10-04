@@ -1,31 +1,72 @@
-body > .Head > .Grid-Row > div,
-body > .Head > .NavBar > li > a {
+#Main_Title,  #Main_Nav > li > a  {
     padding:    1em  2em;
 }
-body > .Head > .NavBar {
+body > .Head > .DropDown {
+    width:    100%;
+}
+@media (max-width: 640px) {
+    body > .Head {
+        position:    fixed;
+        left:        0;
+        top:         0;
+        width:       100%;
+    }
+    body > .Head > .Grid-Row {
+        display:           inline-table  !important;
+        width:             80%;
+        vertical-align:    middle;
+    }
+    body > .Head > .DropDown {
+        width:             15%;
+        vertical-align:    middle;
+    }
+    #Main_Title {
+        padding:    0;
+    }
+    #Main_Title p {
+        display:    none;
+    }
+    #Main_Content {
+        padding:    5em  1em  0;
+    }
+    #Content_Nav {
+        display:    none;
+    }
+}
+
+#Main_Nav {
     border-top:    1px  dashed  white  !important;
     left:          0;
     width:         100%;
 }
-
-body > .Head > .NavBar > li:first-child {
+#Main_Nav > li:first-child {
     width:       0;
     padding:     0;
     overflow:    hidden;
     opacity:     0;
 }
-body > .Head > .NavBar > li.focus:first-child {
+#Main_Nav > li.focus:first-child {
     width:      auto;
     opacity:    1;
 }
-body > .Head > .NavBar > li > a {
+#Main_Nav > li > a {
     border-top:       4px  solid   transparent;
     border-bottom:    4px  solid   transparent;
 }
-body > .Head > .NavBar > li > a:hover {
+#Main_Nav > li > a:hover {
     border-bottom-color:    rgb(245, 80, 80);
 }
-
+@media (max-width: 640px) {
+    #Main_Nav {
+        left:    -240%;
+    }
+    #Main_Nav > li:first-child {
+        display:    none;
+    }
+    #Main_Nav > li > a {
+        padding:    0;
+    }
+}
 
 body > .Head a:link,  body > .Head a:visited,
 body > .Foot a:link,  body > .Foot a:visited  {
@@ -43,6 +84,23 @@ body > .Foot > * {
 }
 
 
-body > .PC_Narrow ul a > img {
+#Main_Content ul a > img {
     max-width:    10em;
+}
+#Content_Nav {
+    list-style:    none;
+    margin-top:    3.85em;
+    padding:       1em;
+    max-height:    70%;
+    overflow:      auto;
+}
+#Content_Nav ul {
+    list-style:    none;
+    padding:       1em  0  1em  1em;
+}
+body > .PC_Narrow > :last-child {
+    opacity:    0;
+}
+body > .PC_Narrow > ul:only-of-type {
+    opacity:    1;
 }

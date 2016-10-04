@@ -9,21 +9,28 @@ require(['jquery', 'marked', 'EasyWebUI', 'EasyWebApp'],  function ($, marked) {
 
     $(document).ready(function () {
 
-        $('body > .Head > .NavBar').scrollFixed(function () {
+        $('#Main_Nav').scrollFixed(function () {
             $(this.firstElementChild)[
                 (arguments[0] == 'fixed')  ?  'addClass'  :  'removeClass'
             ]('focus');
         });
 
-        $('body > .PC_Narrow').iWebApp()
-            .on('data',  '',  'index.json',  function (iLink, iData) {
+        var $_App = $('#Main_Content');
 
-                $.ListView(iLink.$_DOM,  false,  function ($_Item, iValue) {
+        $('#Content_Nav').iReadNav( $_App ).scrollFixed( $.noop );
 
-                    $_Item.children().attr(iValue);
-                });
+        $_App.iWebApp().on('data',  '',  'index.json',  function (iLink, iData) {
 
-                return iData;
+            $.ListView(iLink.$_DOM,  false,  function ($_Item, iValue) {
+
+                $_Item.children().attr(iValue);
             });
+
+            return iData;
+
+        }).on('ready',  '.md',  function () {
+
+            $_App.trigger('Refresh');
+        });
     });
 });
