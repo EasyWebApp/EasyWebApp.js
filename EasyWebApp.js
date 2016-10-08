@@ -204,6 +204,14 @@ var UI_Module = (function (BOM, DOM, $, DS_Inherit) {
 
     $.extend(UI_Module.prototype, {
         toString:      $.CommonView.prototype.toString,
+        trigger:       function () {
+            return this.ownerApp.trigger(
+                arguments[0],
+                this.source.href || '',
+                this.source.src || this.source.action || '',
+                [ this.source.valueOf() ].concat( arguments[1] )
+            ).slice(-1)[0];
+        },
         detach:        function () {
             this.$_Content = this.$_View.children().detach();
 
@@ -214,7 +222,7 @@ var UI_Module = (function (BOM, DOM, $, DS_Inherit) {
 
             if (this.$_Content) {
                 this.$_View.append( this.$_Content );
-                this.ownerApp.trigger('attach');
+                this.trigger('ready');
             } else if (this.lastLoad)
                 this.load();
 
@@ -303,8 +311,6 @@ var UI_Module = (function (BOM, DOM, $, DS_Inherit) {
                     _This_.source.href.split('?')[0],  arguments[0]
                 );
             }).then(function () {
-                _This_.ownerApp.trigger('attach');
-
                 var iLink = _This_.prefetch().source;
 
                 var $_Target = iLink.getTarget();
@@ -347,14 +353,6 @@ var UI_Module = (function (BOM, DOM, $, DS_Inherit) {
 
                 return _This_.loadModule();
             });
-        },
-        trigger:       function () {
-            return this.ownerApp.trigger(
-                arguments[0],
-                this.source.href || '',
-                this.source.src || this.source.action || '',
-                [ this.source.valueOf() ].concat( arguments[1] )
-            ).slice(-1)[0];
         },
         load:          function () {
             var _This_ = this,
@@ -649,7 +647,7 @@ var WebApp = (function (BOM, DOM, $, UI_Module, InnerLink) {
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v3.0  (2016-09-30)  Beta
+//      [Version]    v3.0  (2016-10-09)  Beta
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //
@@ -716,8 +714,14 @@ var EasyWebApp = (function (BOM, DOM, $, WebApp, InnerLink, UI_Module) {
 
         var $_VS = $( arguments[0].target );
 
+        var iValue = $_VS.val();
+
+        try {
+            iValue = $.parseJSON( iValue );
+        } catch (iError) { }
+
         UI_Module.instanceOf( $_VS )
-            .data.setValue($_VS[0].getAttribute('name'), $_VS.val());
+            .data.setValue($_VS[0].getAttribute('name'), iValue);
     });
 
 })(self, self.document, self.jQuery, WebApp, InnerLink, UI_Module);

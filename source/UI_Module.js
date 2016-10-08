@@ -22,6 +22,14 @@ define(['jquery', 'DS_Inherit', 'ViewDataIO'],  function ($, DS_Inherit) {
 
     $.extend(UI_Module.prototype, {
         toString:      $.CommonView.prototype.toString,
+        trigger:       function () {
+            return this.ownerApp.trigger(
+                arguments[0],
+                this.source.href || '',
+                this.source.src || this.source.action || '',
+                [ this.source.valueOf() ].concat( arguments[1] )
+            ).slice(-1)[0];
+        },
         detach:        function () {
             this.$_Content = this.$_View.children().detach();
 
@@ -32,7 +40,7 @@ define(['jquery', 'DS_Inherit', 'ViewDataIO'],  function ($, DS_Inherit) {
 
             if (this.$_Content) {
                 this.$_View.append( this.$_Content );
-                this.ownerApp.trigger('attach');
+                this.trigger('ready');
             } else if (this.lastLoad)
                 this.load();
 
@@ -121,8 +129,6 @@ define(['jquery', 'DS_Inherit', 'ViewDataIO'],  function ($, DS_Inherit) {
                     _This_.source.href.split('?')[0],  arguments[0]
                 );
             }).then(function () {
-                _This_.ownerApp.trigger('attach');
-
                 var iLink = _This_.prefetch().source;
 
                 var $_Target = iLink.getTarget();
@@ -165,14 +171,6 @@ define(['jquery', 'DS_Inherit', 'ViewDataIO'],  function ($, DS_Inherit) {
 
                 return _This_.loadModule();
             });
-        },
-        trigger:       function () {
-            return this.ownerApp.trigger(
-                arguments[0],
-                this.source.href || '',
-                this.source.src || this.source.action || '',
-                [ this.source.valueOf() ].concat( arguments[1] )
-            ).slice(-1)[0];
         },
         load:          function () {
             var _This_ = this,
