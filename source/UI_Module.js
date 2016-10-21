@@ -165,11 +165,17 @@ define(['jquery', 'DS_Inherit', 'ViewDataIO'],  function ($, DS_Inherit) {
             var _This_ = this;
 
             return  this.loadModule().then(function () {
+
                 _This_.lastLoad = $.now();
+                _This_.domReady = null;
 
                 _This_.trigger('ready');
 
                 return _This_.loadModule();
+
+            },  function () {
+
+                _This_.domReady = null;
             });
         },
         load:          function () {

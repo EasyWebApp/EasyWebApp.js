@@ -2,7 +2,7 @@
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v3.0  (2016-10-09)  Beta
+//      [Version]    v3.0  (2016-10-21)  Beta
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //
@@ -66,7 +66,12 @@ define([
                 });
                 break;
             case '_self':     ;
-            default:          (new UI_Module(iLink)).load();
+            default:          {
+                var iModule = iLink.ownerApp.getModule( iLink.$_DOM );
+
+                if ((! iModule)  ||  !(iModule.domReady instanceof Promise))
+                    (new UI_Module(iLink)).load();
+            }
         }
     }).change(function () {
 

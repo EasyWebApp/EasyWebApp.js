@@ -347,11 +347,17 @@ var UI_Module = (function (BOM, DOM, $, DS_Inherit) {
             var _This_ = this;
 
             return  this.loadModule().then(function () {
+
                 _This_.lastLoad = $.now();
+                _This_.domReady = null;
 
                 _This_.trigger('ready');
 
                 return _This_.loadModule();
+
+            },  function () {
+
+                _This_.domReady = null;
             });
         },
         load:          function () {
@@ -647,7 +653,7 @@ var WebApp = (function (BOM, DOM, $, UI_Module, InnerLink) {
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v3.0  (2016-10-09)  Beta
+//      [Version]    v3.0  (2016-10-21)  Beta
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //
@@ -708,7 +714,12 @@ var EasyWebApp = (function (BOM, DOM, $, WebApp, InnerLink, UI_Module) {
                 });
                 break;
             case '_self':     ;
-            default:          (new UI_Module(iLink)).load();
+            default:          {
+                var iModule = iLink.ownerApp.getModule( iLink.$_DOM );
+
+                if ((! iModule)  ||  !(iModule.domReady instanceof Promise))
+                    (new UI_Module(iLink)).load();
+            }
         }
     }).change(function () {
 
