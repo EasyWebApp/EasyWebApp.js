@@ -27,7 +27,7 @@ define(['jquery', 'DS_Inherit', 'ViewDataIO'],  function ($, DS_Inherit) {
                 arguments[0],
                 this.source.href || '',
                 this.source.src || this.source.action || '',
-                [ this.source.valueOf() ].concat( arguments[1] )
+                [ this.source ].concat( arguments[1] )
             ).slice(-1)[0];
         },
         detach:        function () {
