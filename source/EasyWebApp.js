@@ -2,7 +2,7 @@
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v3.0  (2016-11-16)  Beta
+//      [Version]    v3.1  (2016-11-22)  Alpha
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //
@@ -84,8 +84,18 @@ define([
             iValue = $.parseJSON( iValue );
         } catch (iError) { }
 
-        UI_Module.instanceOf( $_VS )
-            .data.setValue($_VS[0].getAttribute('name'), iValue);
+        var iName = $_VS[0].getAttribute('name');
+
+        var iModule = UI_Module.instanceOf( $_VS );
+
+        iModule.data.setValue(iName, iValue);
+
+        if (! iModule.template)  return;
+
+        var iData = { };
+        iData[iName] = iValue;
+
+        iModule.template.render( iData );
     });
 
 });

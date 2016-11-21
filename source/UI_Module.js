@@ -1,4 +1,6 @@
-define(['jquery', 'DS_Inherit', 'ViewDataIO'],  function ($, DS_Inherit) {
+define([
+    'jquery', 'DS_Inherit', 'HTML_Template', 'ViewDataIO'
+],  function ($, DS_Inherit, HTML_Template) {
 
     function UI_Module(iLink) {
         this.ownerApp = iLink.ownerApp;
@@ -121,14 +123,11 @@ define(['jquery', 'DS_Inherit', 'ViewDataIO'],  function ($, DS_Inherit) {
             return  this.source.loadData( this.data );
         },
         loadHTML:      function () {
+            this.template = new HTML_Template( this.source.href );
+
             var _This_ = this;
 
-            return  new Promise(function () {
-
-                _This_.$_View.load(
-                    _This_.source.href.split('?')[0],  arguments[0]
-                );
-            }).then(function () {
+            return  this.template.loadTo( this.$_View ).then(function () {
                 var iLink = _This_.prefetch().source;
 
                 var $_Target = iLink.getTarget();
@@ -159,8 +158,12 @@ define(['jquery', 'DS_Inherit', 'ViewDataIO'],  function ($, DS_Inherit) {
         render:        function (iData) {
             this.data.extend(this.trigger('data', [iData])  ||  iData);
 
-            if (! this.data.isNoValue())
+            if (! this.data.isNoValue()) {
                 this.$_View.dataRender( this.data );
+
+                if (this.template instanceof HTML_Template)
+                    this.template.render( this.data );
+            }
 
             var _This_ = this;
 

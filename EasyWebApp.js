@@ -94,6 +94,48 @@ var DS_Inherit = (function (BOM, DOM, $) {
 
 
 
+var HTML_Template = (function (BOM, DOM, $_View) {
+            var _This_ = this;
+
+            return  new Promise(function () {
+
+                _This_.$_View = $($_View).load(_This_.source,  arguments[0]);
+
+            }).then(function () {
+
+                _This_.parse();
+            });
+        },
+        render:    function (iData) {
+            var iThis, iValue;
+
+            for (var iName in iData) {
+                if (! this.map.hasOwnProperty( iName ))  continue;
+
+                iThis = this.map[ iName ];
+
+                iValue = HTML_Template.eval(iThis.template, iData);
+
+                if (iThis.node.nodeName in iThis.node.ownerElement.constructor.prototype) {
+                    try {
+                        iValue = eval( iValue );
+                    } catch (iError) { }
+
+                    iThis.node.ownerElement[ iThis.node.nodeName ] = iValue;
+                } else
+                    iThis.node.nodeValue = iValue;
+            }
+
+            return this;
+        }
+    });
+
+    return HTML_Template;
+
+})(self, self.document, self.jQuery_View);
+
+
+
 var ViewDataIO = (function (BOM, DOM, $, DS_Inherit) {
 
     function ArrayRender(iArray, ValueRender, iScope) {
@@ -180,7 +222,7 @@ var ViewDataIO = (function (BOM, DOM, $, DS_Inherit) {
 
 
 
-var UI_Module = (function (BOM, DOM, $, DS_Inherit) {
+var UI_Module = (function (BOM, DOM, $, DS_Inherit, HTML_Template) {
 
     function UI_Module(iLink) {
         this.ownerApp = iLink.ownerApp;
@@ -303,14 +345,11 @@ var UI_Module = (function (BOM, DOM, $, DS_Inherit) {
             return  this.source.loadData( this.data );
         },
         loadHTML:      function () {
+            this.template = new HTML_Template( this.source.href );
+
             var _This_ = this;
 
-            return  new Promise(function () {
-
-                _This_.$_View.load(
-                    _This_.source.href.split('?')[0],  arguments[0]
-                );
-            }).then(function () {
+            return  this.template.loadTo( this.$_View ).then(function () {
                 var iLink = _This_.prefetch().source;
 
                 var $_Target = iLink.getTarget();
@@ -341,8 +380,12 @@ var UI_Module = (function (BOM, DOM, $, DS_Inherit) {
         render:        function (iData) {
             this.data.extend(this.trigger('data', [iData])  ||  iData);
 
-            if (! this.data.isNoValue())
+            if (! this.data.isNoValue()) {
                 this.$_View.dataRender( this.data );
+
+                if (this.template instanceof HTML_Template)
+                    this.template.render( this.data );
+            }
 
             var _This_ = this;
 
@@ -380,7 +423,7 @@ var UI_Module = (function (BOM, DOM, $, DS_Inherit) {
 
     return UI_Module;
 
-})(self, self.document, self.jQuery, DS_Inherit);
+})(self, self.document, self.jQuery, DS_Inherit, HTML_Template);
 
 
 
@@ -653,7 +696,7 @@ var WebApp = (function (BOM, DOM, $, UI_Module, InnerLink) {
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v3.0  (2016-11-16)  Beta
+//      [Version]    v3.1  (2016-11-22)  Alpha
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //
@@ -732,8 +775,18 @@ var EasyWebApp = (function (BOM, DOM, $, WebApp, InnerLink, UI_Module) {
             iValue = $.parseJSON( iValue );
         } catch (iError) { }
 
-        UI_Module.instanceOf( $_VS )
-            .data.setValue($_VS[0].getAttribute('name'), iValue);
+        var iName = $_VS[0].getAttribute('name');
+
+        var iModule = UI_Module.instanceOf( $_VS );
+
+        iModule.data.setValue(iName, iValue);
+
+        if (! iModule.template)  return;
+
+        var iData = { };
+        iData[iName] = iValue;
+
+        iModule.template.render( iData );
     });
 
 })(self, self.document, self.jQuery, WebApp, InnerLink, UI_Module);
