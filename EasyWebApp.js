@@ -94,7 +94,91 @@ var DS_Inherit = (function (BOM, DOM, $) {
 
 
 
-var HTML_Template = (function (BOM, DOM, $_View) {
+var HTML_Template = (function (BOM, DOM, $) {
+
+    function HTML_Template(iURL) {
+        this.source = iURL.match(/\.(html?|md)\??/) ? iURL.split('?')[0] : iURL;
+        this.$_View = $();
+        this.map = { };
+    }
+
+    try {
+        eval('``');
+
+        var ES_ST = function () {
+                return  eval('`' + arguments[0] + '`');
+            };
+    } catch (iError) {
+        var Eval_This = function () {
+                return  eval( arguments[0] );
+            };
+    }
+
+    $.extend(HTML_Template, {
+        expression:     /\$\{([\s\S]+?)\}/g,
+        reference:      /this\.(\w+)/,
+        eval:           function (iTemplate, iContext) {
+            return  ES_ST  ?  ES_ST.call(iContext, iTemplate)  :
+                iTemplate.replace(this.expression,  function () {
+
+                    return  Eval_This.call(iContext, arguments[1]);
+                });
+        },
+        getContext:     function (iTemplate, iData) {
+            var iContext = { };
+
+            (iTemplate || '').replace(this.expression,  function () {
+
+                arguments[1].replace(HTML_Template.reference,  function () {
+
+                    iContext[ arguments[1] ] = iData[ arguments[1] ];
+                });
+            });
+
+            return iContext;
+        },
+        getTextNode:    function (iDOM) {
+            return Array.prototype.concat.apply(
+                $.map(iDOM.childNodes,  function (iNode) {
+                    return  (iNode.nodeType == 3)  ?  iNode  :  null;
+                }),
+                iDOM.attributes
+            );
+        }
+    });
+
+    $.extend(HTML_Template.prototype, {
+        parse:     function () {
+            var iMap = this.map,  $_DOM = this.$_View.find('*');
+
+            for (var i = 0;  $_DOM[i];  i++)
+                if ($_DOM[i].outerHTML.match( HTML_Template.expression ))
+                    $.each(HTML_Template.getTextNode( $_DOM[i] ),  function () {
+                        var iNode = this;
+
+                        this.nodeValue = this.nodeValue.replace(
+                            HTML_Template.expression,
+                            function (iName) {
+                                iName = iName.match( HTML_Template.reference );
+                                iName = (iName || '')[1];
+
+                                if ( iName ) {
+                                    iMap[iName] = iMap[iName] || [ ];
+
+                                    iMap[iName].push({
+                                        node:        iNode,
+                                        template:    iNode.nodeValue
+                                    });
+                                }
+
+                                return '';
+                            }
+                        );
+                    });
+
+            return this;
+        },
+        loadTo:    function ($_View) {
             var _This_ = this;
 
             return  new Promise(function () {
@@ -107,24 +191,24 @@ var HTML_Template = (function (BOM, DOM, $_View) {
             });
         },
         render:    function (iData) {
-            var iThis, iValue;
+            for (var iName in iData)
+                if (this.map.hasOwnProperty( iName ))
+                    $.each(this.map[iName],  function () {
+                        var iValue = HTML_Template.eval(this.template, iData),
+                            iNode = this.node;
 
-            for (var iName in iData) {
-                if (! this.map.hasOwnProperty( iName ))  continue;
+                        if (
+                            (iNode.nodeType == 2)  &&
+                            (iNode.nodeName in iNode.ownerElement)
+                        ) {
+                            try {
+                                iValue = eval( iValue );
+                            } catch (iError) { }
 
-                iThis = this.map[ iName ];
-
-                iValue = HTML_Template.eval(iThis.template, iData);
-
-                if (iThis.node.nodeName in iThis.node.ownerElement.constructor.prototype) {
-                    try {
-                        iValue = eval( iValue );
-                    } catch (iError) { }
-
-                    iThis.node.ownerElement[ iThis.node.nodeName ] = iValue;
-                } else
-                    iThis.node.nodeValue = iValue;
-            }
+                            iNode.ownerElement[ iNode.nodeName ] = iValue;
+                        } else
+                            iNode.nodeValue = iValue;
+                    });
 
             return this;
         }
@@ -132,7 +216,7 @@ var HTML_Template = (function (BOM, DOM, $_View) {
 
     return HTML_Template;
 
-})(self, self.document, self.jQuery_View);
+})(self, self.document, self.jQuery);
 
 
 
@@ -345,7 +429,7 @@ var UI_Module = (function (BOM, DOM, $, DS_Inherit, HTML_Template) {
             return  this.source.loadData( this.data );
         },
         loadHTML:      function () {
-            this.template = new HTML_Template( this.source.href );
+            this.template = new HTML_Template( this.source.getURL('href') );
 
             var _This_ = this;
 
@@ -427,7 +511,7 @@ var UI_Module = (function (BOM, DOM, $, DS_Inherit, HTML_Template) {
 
 
 
-var InnerLink = (function (BOM, DOM, $, UI_Module) {
+var InnerLink = (function (BOM, DOM, $, UI_Module, HTML_Template) {
 
     function InnerLink(iApp, iLink) {
         this.ownerApp = iApp;
@@ -477,14 +561,10 @@ var InnerLink = (function (BOM, DOM, $, UI_Module) {
             return  this.target  ?  $('*[name="' + this.target + '"]')  :  $();
         },
         getArgs:      function () {
-            var iArgs = { },  iData = this.ownerView.data;
+            var iData = this.ownerView.data;
 
-            (this.src || this.action || '').replace(
-                InnerLink.reURLVar,
-                function () {
-                    iArgs[ arguments[1] ] = iData[ arguments[1] ];
-                }
-            );
+            var iArgs = HTML_Template.getContext(this.src || this.action,  iData);
+
             for (var iKey in this.data)
                 iArgs[ this.data[iKey] ] = iData[ this.data[iKey] ];
 
@@ -569,7 +649,7 @@ var InnerLink = (function (BOM, DOM, $, UI_Module) {
 
     return InnerLink;
 
-})(self, self.document, self.jQuery, UI_Module);
+})(self, self.document, self.jQuery, UI_Module, HTML_Template);
 
 
 
@@ -772,12 +852,11 @@ var EasyWebApp = (function (BOM, DOM, $, WebApp, InnerLink, UI_Module) {
         var iValue = $_VS.val();
 
         try {
-            iValue = $.parseJSON( iValue );
+            iValue = eval( iValue );
         } catch (iError) { }
 
-        var iName = $_VS[0].getAttribute('name');
-
-        var iModule = UI_Module.instanceOf( $_VS );
+        var iName = $_VS[0].getAttribute('name'),
+            iModule = UI_Module.instanceOf( $_VS );
 
         iModule.data.setValue(iName, iValue);
 

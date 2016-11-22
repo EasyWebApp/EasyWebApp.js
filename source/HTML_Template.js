@@ -1,7 +1,7 @@
-define(['jquery'],  function () {
+define(['jquery'],  function ($) {
 
-    function HTML_Template() {
-        this.source = arguments[0].split('?')[0];
+    function HTML_Template(iURL) {
+        this.source = iURL.match(/\.(html?|md)\??/) ? iURL.split('?')[0] : iURL;
         this.$_View = $();
         this.map = { };
     }
@@ -19,44 +19,68 @@ define(['jquery'],  function () {
     }
 
     $.extend(HTML_Template, {
-        expression:    /\$\{([\s\S]+?)\}/g,
-        reference:     /this\.(\w+)/,
-        eval:          function (iTemplate, iContext) {
+        expression:     /\$\{([\s\S]+?)\}/g,
+        reference:      /this\.(\w+)/,
+        eval:           function (iTemplate, iContext) {
             return  ES_ST  ?  ES_ST.call(iContext, iTemplate)  :
                 iTemplate.replace(this.expression,  function () {
 
                     return  Eval_This.call(iContext, arguments[1]);
                 });
+        },
+        getContext:     function (iTemplate, iData) {
+            var iContext = { };
+
+            (iTemplate || '').replace(this.expression,  function () {
+
+                arguments[1].replace(HTML_Template.reference,  function () {
+
+                    iContext[ arguments[1] ] = iData[ arguments[1] ];
+                });
+            });
+
+            return iContext;
+        },
+        getTextNode:    function (iDOM) {
+            return Array.prototype.concat.apply(
+                $.map(iDOM.childNodes,  function (iNode) {
+                    return  (iNode.nodeType == 3)  ?  iNode  :  null;
+                }),
+                iDOM.attributes
+            );
         }
     });
 
     $.extend(HTML_Template.prototype, {
         parse:     function () {
-            return  $.extend.apply($, [this.map].concat(
-                $.map(this.$_View.find('*'),  function (iDOM) {
-                    return  iDOM.outerHTML.match( HTML_Template.expression )  &&
-                        $.map(iDOM.attributes,  function (iNode) {
-                            var iKey = { };
+            var iMap = this.map,  $_DOM = this.$_View.find('*');
 
-                            iNode.nodeValue.replace(
-                                HTML_Template.expression,
-                                function (iName) {
-                                    iName = iName.match(
-                                        HTML_Template.reference
-                                    );
+            for (var i = 0;  $_DOM[i];  i++)
+                if ($_DOM[i].outerHTML.match( HTML_Template.expression ))
+                    $.each(HTML_Template.getTextNode( $_DOM[i] ),  function () {
+                        var iNode = this;
 
-                                    if ( iName )
-                                        iKey[(iName || '')[1]] = {
-                                            node:        iNode,
-                                            template:    iNode.nodeValue
-                                        };
+                        this.nodeValue = this.nodeValue.replace(
+                            HTML_Template.expression,
+                            function (iName) {
+                                iName = iName.match( HTML_Template.reference );
+                                iName = (iName || '')[1];
+
+                                if ( iName ) {
+                                    iMap[iName] = iMap[iName] || [ ];
+
+                                    iMap[iName].push({
+                                        node:        iNode,
+                                        template:    iNode.nodeValue
+                                    });
                                 }
-                            );
 
-                            return iKey;
-                        });
-                })
-            ));
+                                return '';
+                            }
+                        );
+                    });
+
+            return this;
         },
         loadTo:    function ($_View) {
             var _This_ = this;
@@ -71,24 +95,24 @@ define(['jquery'],  function () {
             });
         },
         render:    function (iData) {
-            var iThis, iValue;
+            for (var iName in iData)
+                if (this.map.hasOwnProperty( iName ))
+                    $.each(this.map[iName],  function () {
+                        var iValue = HTML_Template.eval(this.template, iData),
+                            iNode = this.node;
 
-            for (var iName in iData) {
-                if (! this.map.hasOwnProperty( iName ))  continue;
+                        if (
+                            (iNode.nodeType == 2)  &&
+                            (iNode.nodeName in iNode.ownerElement)
+                        ) {
+                            try {
+                                iValue = eval( iValue );
+                            } catch (iError) { }
 
-                iThis = this.map[ iName ];
-
-                iValue = HTML_Template.eval(iThis.template, iData);
-
-                if (iThis.node.nodeName in iThis.node.ownerElement.constructor.prototype) {
-                    try {
-                        iValue = eval( iValue );
-                    } catch (iError) { }
-
-                    iThis.node.ownerElement[ iThis.node.nodeName ] = iValue;
-                } else
-                    iThis.node.nodeValue = iValue;
-            }
+                            iNode.ownerElement[ iNode.nodeName ] = iValue;
+                        } else
+                            iNode.nodeValue = iValue;
+                    });
 
             return this;
         }

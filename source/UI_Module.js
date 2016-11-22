@@ -123,7 +123,7 @@ define([
             return  this.source.loadData( this.data );
         },
         loadHTML:      function () {
-            this.template = new HTML_Template( this.source.href );
+            this.template = new HTML_Template( this.source.getURL('href') );
 
             var _This_ = this;
 

@@ -1,4 +1,6 @@
-define(['jquery', 'UI_Module'],  function ($, UI_Module) {
+define([
+    'jquery', 'UI_Module', 'HTML_Template'
+],  function ($, UI_Module, HTML_Template) {
 
     var BOM = self,  DOM = self.document;
 
@@ -50,14 +52,10 @@ define(['jquery', 'UI_Module'],  function ($, UI_Module) {
             return  this.target  ?  $('*[name="' + this.target + '"]')  :  $();
         },
         getArgs:      function () {
-            var iArgs = { },  iData = this.ownerView.data;
+            var iData = this.ownerView.data;
 
-            (this.src || this.action || '').replace(
-                InnerLink.reURLVar,
-                function () {
-                    iArgs[ arguments[1] ] = iData[ arguments[1] ];
-                }
-            );
+            var iArgs = HTML_Template.getContext(this.src || this.action,  iData);
+
             for (var iKey in this.data)
                 iArgs[ this.data[iKey] ] = iData[ this.data[iKey] ];
 

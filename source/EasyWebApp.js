@@ -81,12 +81,11 @@ define([
         var iValue = $_VS.val();
 
         try {
-            iValue = $.parseJSON( iValue );
+            iValue = eval( iValue );
         } catch (iError) { }
 
-        var iName = $_VS[0].getAttribute('name');
-
-        var iModule = UI_Module.instanceOf( $_VS );
+        var iName = $_VS[0].getAttribute('name'),
+            iModule = UI_Module.instanceOf( $_VS );
 
         iModule.data.setValue(iName, iValue);
 
