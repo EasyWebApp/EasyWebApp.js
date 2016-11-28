@@ -1,8 +1,11 @@
-define(['jquery'],  function ($) {
+define(['jquery', 'iQuery+'],  function ($) {
 
-    function HTML_Template(iURL) {
-        this.source = iURL.match(/\.(html?|md)\??/) ? iURL.split('?')[0] : iURL;
-        this.$_View = $();
+    function HTML_Template($_View, iURL) {
+
+        this.$_View = $( $_View ).data(this.constructor.getClass(), this);
+
+        this.source = (iURL || '').match(/\.(html?|md)\??/)  ?
+            iURL.split('?')[0] : iURL;
         this.map = { };
     }
 
@@ -19,6 +22,8 @@ define(['jquery'],  function ($) {
     }
 
     $.extend(HTML_Template, {
+        getClass:       $.CommonView.getClass,
+        instanceOf:     $.CommonView.instanceOf,
         expression:     /\$\{([\s\S]+?)\}/g,
         reference:      /this\.(\w+)/,
         eval:           function (iTemplate, iContext) {
@@ -52,51 +57,85 @@ define(['jquery'],  function ($) {
     });
 
     $.extend(HTML_Template.prototype, {
-        parse:     function () {
-            var iMap = this.map,  $_DOM = this.$_View.find('*');
+        toString:    $.CommonView.prototype.toString,
+        pushMap:     function (iName, iNode) {
+            if ( iName )
+                if (iNode instanceof $.ListView)
+                    this.map[iName] = iNode;
+                else {
+                    this.map[iName] = this.map[iName] || [ ];
 
-            for (var i = 0;  $_DOM[i];  i++)
-                if ($_DOM[i].outerHTML.match( HTML_Template.expression ))
-                    $.each(HTML_Template.getTextNode( $_DOM[i] ),  function () {
+                    this.map[iName].push({
+                        node:        iNode,
+                        template:    iNode.nodeValue
+                    });
+                }
+
+            return this;
+        },
+        parse:        function () {
+            var $_DOM = this.$_View.find('*:not([name]:list *)').not(function () {
+
+                    return  (! this.outerHTML.match( HTML_Template.expression ));
+                }),
+                _This_ = this;
+
+            $_DOM.not(
+                $_DOM.not('[name]:list').each(function () {
+
+                    $.each(HTML_Template.getTextNode( this ),  function () {
                         var iNode = this;
 
                         this.nodeValue = this.nodeValue.replace(
                             HTML_Template.expression,
                             function (iName) {
                                 iName = iName.match( HTML_Template.reference );
-                                iName = (iName || '')[1];
 
-                                if ( iName ) {
-                                    iMap[iName] = iMap[iName] || [ ];
-
-                                    iMap[iName].push({
-                                        node:        iNode,
-                                        template:    iNode.nodeValue
-                                    });
-                                }
+                                _This_.pushMap((iName || '')[1],  iNode);
 
                                 return '';
                             }
                         );
                     });
+                })
+            ).each(function () {
+
+                _This_.pushMap(
+                    this.getAttribute('name'),
+                    $.ListView( this ).clear()
+                        .on('insert',  function () {
+
+                            (new HTML_Template( arguments[0] )).parse();
+                        })
+                        .on('update',  function () {
+
+                            HTML_Template.instanceOf( arguments[0] )
+                                .render( arguments[1] );
+                        })
+                );
+            });
 
             return this;
         },
-        loadTo:    function ($_View) {
+        load:         function () {
             var _This_ = this;
 
             return  new Promise(function () {
 
-                _This_.$_View = $($_View).load(_This_.source,  arguments[0]);
+                _This_.$_View.load(_This_.source,  arguments[0]);
 
             }).then(function () {
 
                 _This_.parse();
             });
         },
-        render:    function (iData) {
-            for (var iName in iData)
-                if (this.map.hasOwnProperty( iName ))
+        render:       function (iData) {
+            for (var iName in iData) {
+                if (! this.map.hasOwnProperty( iName ))  continue;
+
+                if (this.map[iName] instanceof $.ListView)
+                    this.map[iName].render( iData[iName] );
+                else
                     $.each(this.map[iName],  function () {
                         var iValue = HTML_Template.eval(this.template, iData),
                             iNode = this.node;
@@ -113,6 +152,7 @@ define(['jquery'],  function ($) {
                         } else
                             iNode.nodeValue = iValue;
                     });
+            }
 
             return this;
         }

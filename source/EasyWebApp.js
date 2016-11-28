@@ -2,7 +2,7 @@
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v3.1  (2016-11-22)  Alpha
+//      [Version]    v3.2  (2016-11-28)  Alpha
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //
@@ -17,12 +17,15 @@
 
 
 define([
-    'jquery', 'WebApp', 'InnerLink', 'UI_Module'
-],  function ($, WebApp, InnerLink, UI_Module) {
+    'jquery', 'WebApp', 'InnerLink', 'UI_Module', 'HTML_Template'
+],  function ($, WebApp, InnerLink, UI_Module, HTML_Template) {
 
     var BOM = self,  DOM = self.document;
 
     $.ajaxSetup({dataType: 'json'});
+
+
+/* ----- SPA 链接事件 ----- */
 
     $(DOM).on('click',  'a[href]:not(a[target="_blank"])',  function () {
 
@@ -74,27 +77,31 @@ define([
                     (new UI_Module(iLink)).load();
             }
         }
-    }).change(function () {
+    });
 
-        var $_VS = $( arguments[0].target );
+/* ----- SPA 链接事件 ----- */
 
-        var iValue = $_VS.val();
+    function Data_Change() {
+        var iValue = $(this).value('name');
 
         try {
             iValue = eval( iValue );
         } catch (iError) { }
 
-        var iName = $_VS[0].getAttribute('name'),
-            iModule = UI_Module.instanceOf( $_VS );
+        iValue = (iValue != null)  ?  iValue  :  '';
 
-        iModule.data.setValue(iName, iValue);
+        var iName = this.getAttribute('name');
 
-        if (! iModule.template)  return;
+        UI_Module.instanceOf( this ).data.setValue(iName, iValue);
 
         var iData = { };
         iData[iName] = iValue;
 
-        iModule.template.render( iData );
-    });
+        HTML_Template.instanceOf( this ).render( iData );
+    }
+
+    $(DOM)
+        .on('change', 'select', Data_Change)
+        .on('keyup paste', ':input:not(select)', Data_Change);
 
 });

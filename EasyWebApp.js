@@ -96,9 +96,12 @@ var DS_Inherit = (function (BOM, DOM, $) {
 
 var HTML_Template = (function (BOM, DOM, $) {
 
-    function HTML_Template(iURL) {
-        this.source = iURL.match(/\.(html?|md)\??/) ? iURL.split('?')[0] : iURL;
-        this.$_View = $();
+    function HTML_Template($_View, iURL) {
+
+        this.$_View = $( $_View ).data(this.constructor.getClass(), this);
+
+        this.source = (iURL || '').match(/\.(html?|md)\??/)  ?
+            iURL.split('?')[0] : iURL;
         this.map = { };
     }
 
@@ -115,6 +118,8 @@ var HTML_Template = (function (BOM, DOM, $) {
     }
 
     $.extend(HTML_Template, {
+        getClass:       $.CommonView.getClass,
+        instanceOf:     $.CommonView.instanceOf,
         expression:     /\$\{([\s\S]+?)\}/g,
         reference:      /this\.(\w+)/,
         eval:           function (iTemplate, iContext) {
@@ -148,51 +153,85 @@ var HTML_Template = (function (BOM, DOM, $) {
     });
 
     $.extend(HTML_Template.prototype, {
-        parse:     function () {
-            var iMap = this.map,  $_DOM = this.$_View.find('*');
+        toString:    $.CommonView.prototype.toString,
+        pushMap:     function (iName, iNode) {
+            if ( iName )
+                if (iNode instanceof $.ListView)
+                    this.map[iName] = iNode;
+                else {
+                    this.map[iName] = this.map[iName] || [ ];
 
-            for (var i = 0;  $_DOM[i];  i++)
-                if ($_DOM[i].outerHTML.match( HTML_Template.expression ))
-                    $.each(HTML_Template.getTextNode( $_DOM[i] ),  function () {
+                    this.map[iName].push({
+                        node:        iNode,
+                        template:    iNode.nodeValue
+                    });
+                }
+
+            return this;
+        },
+        parse:        function () {
+            var $_DOM = this.$_View.find('*:not([name]:list *)').not(function () {
+
+                    return  (! this.outerHTML.match( HTML_Template.expression ));
+                }),
+                _This_ = this;
+
+            $_DOM.not(
+                $_DOM.not('[name]:list').each(function () {
+
+                    $.each(HTML_Template.getTextNode( this ),  function () {
                         var iNode = this;
 
                         this.nodeValue = this.nodeValue.replace(
                             HTML_Template.expression,
                             function (iName) {
                                 iName = iName.match( HTML_Template.reference );
-                                iName = (iName || '')[1];
 
-                                if ( iName ) {
-                                    iMap[iName] = iMap[iName] || [ ];
-
-                                    iMap[iName].push({
-                                        node:        iNode,
-                                        template:    iNode.nodeValue
-                                    });
-                                }
+                                _This_.pushMap((iName || '')[1],  iNode);
 
                                 return '';
                             }
                         );
                     });
+                })
+            ).each(function () {
+
+                _This_.pushMap(
+                    this.getAttribute('name'),
+                    $.ListView( this ).clear()
+                        .on('insert',  function () {
+
+                            (new HTML_Template( arguments[0] )).parse();
+                        })
+                        .on('update',  function () {
+
+                            HTML_Template.instanceOf( arguments[0] )
+                                .render( arguments[1] );
+                        })
+                );
+            });
 
             return this;
         },
-        loadTo:    function ($_View) {
+        load:         function () {
             var _This_ = this;
 
             return  new Promise(function () {
 
-                _This_.$_View = $($_View).load(_This_.source,  arguments[0]);
+                _This_.$_View.load(_This_.source,  arguments[0]);
 
             }).then(function () {
 
                 _This_.parse();
             });
         },
-        render:    function (iData) {
-            for (var iName in iData)
-                if (this.map.hasOwnProperty( iName ))
+        render:       function (iData) {
+            for (var iName in iData) {
+                if (! this.map.hasOwnProperty( iName ))  continue;
+
+                if (this.map[iName] instanceof $.ListView)
+                    this.map[iName].render( iData[iName] );
+                else
                     $.each(this.map[iName],  function () {
                         var iValue = HTML_Template.eval(this.template, iData),
                             iNode = this.node;
@@ -209,6 +248,7 @@ var HTML_Template = (function (BOM, DOM, $) {
                         } else
                             iNode.nodeValue = iValue;
                     });
+            }
 
             return this;
         }
@@ -429,11 +469,13 @@ var UI_Module = (function (BOM, DOM, $, DS_Inherit, HTML_Template) {
             return  this.source.loadData( this.data );
         },
         loadHTML:      function () {
-            this.template = new HTML_Template( this.source.getURL('href') );
+            this.template = new HTML_Template(
+                this.$_View,  this.source.getURL('href')
+            );
 
             var _This_ = this;
 
-            return  this.template.loadTo( this.$_View ).then(function () {
+            return  this.template.load().then(function () {
                 var iLink = _This_.prefetch().source;
 
                 var $_Target = iLink.getTarget();
@@ -776,7 +818,7 @@ var WebApp = (function (BOM, DOM, $, UI_Module, InnerLink) {
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v3.1  (2016-11-22)  Alpha
+//      [Version]    v3.2  (2016-11-28)  Alpha
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //
@@ -791,9 +833,12 @@ var WebApp = (function (BOM, DOM, $, UI_Module, InnerLink) {
 
 
 
-var EasyWebApp = (function (BOM, DOM, $, WebApp, InnerLink, UI_Module) {
+var EasyWebApp = (function (BOM, DOM, $, WebApp, InnerLink, UI_Module, HTML_Template) {
 
     $.ajaxSetup({dataType: 'json'});
+
+
+/* ----- SPA 链接事件 ----- */
 
     $(DOM).on('click',  'a[href]:not(a[target="_blank"])',  function () {
 
@@ -845,30 +890,34 @@ var EasyWebApp = (function (BOM, DOM, $, WebApp, InnerLink, UI_Module) {
                     (new UI_Module(iLink)).load();
             }
         }
-    }).change(function () {
+    });
 
-        var $_VS = $( arguments[0].target );
+/* ----- SPA 链接事件 ----- */
 
-        var iValue = $_VS.val();
+    function Data_Change() {
+        var iValue = $(this).value('name');
 
         try {
             iValue = eval( iValue );
         } catch (iError) { }
 
-        var iName = $_VS[0].getAttribute('name'),
-            iModule = UI_Module.instanceOf( $_VS );
+        iValue = (iValue != null)  ?  iValue  :  '';
 
-        iModule.data.setValue(iName, iValue);
+        var iName = this.getAttribute('name');
 
-        if (! iModule.template)  return;
+        UI_Module.instanceOf( this ).data.setValue(iName, iValue);
 
         var iData = { };
         iData[iName] = iValue;
 
-        iModule.template.render( iData );
-    });
+        HTML_Template.instanceOf( this ).render( iData );
+    }
 
-})(self, self.document, self.jQuery, WebApp, InnerLink, UI_Module);
+    $(DOM)
+        .on('change', 'select', Data_Change)
+        .on('keyup paste', ':input:not(select)', Data_Change);
+
+})(self, self.document, self.jQuery, WebApp, InnerLink, UI_Module, HTML_Template);
 
 
 });

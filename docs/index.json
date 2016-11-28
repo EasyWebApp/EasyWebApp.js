@@ -9,6 +9,10 @@
         "autofocus":    true
     },
     {
+        "title":    "小试牛刀",
+        "href":     "#!docs/try.html"
+    },
+    {
         "title":     "演示程序",
         "target":    "_blank",
         "href":      "demo/"

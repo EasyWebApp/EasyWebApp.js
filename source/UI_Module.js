@@ -123,11 +123,13 @@ define([
             return  this.source.loadData( this.data );
         },
         loadHTML:      function () {
-            this.template = new HTML_Template( this.source.getURL('href') );
+            this.template = new HTML_Template(
+                this.$_View,  this.source.getURL('href')
+            );
 
             var _This_ = this;
 
-            return  this.template.loadTo( this.$_View ).then(function () {
+            return  this.template.load().then(function () {
                 var iLink = _This_.prefetch().source;
 
                 var $_Target = iLink.getTarget();
