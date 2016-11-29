@@ -6,6 +6,8 @@ define(['jquery', 'iQuery+'],  function ($) {
 
         this.source = (iURL || '').match(/\.(html?|md)\??/)  ?
             iURL.split('?')[0] : iURL;
+
+        this.length = 0;
         this.map = { };
     }
 
@@ -46,6 +48,9 @@ define(['jquery', 'iQuery+'],  function ($) {
 
             return iContext;
         },
+        getMaskCode:    function () {
+            return  parseInt(1 + '0'.repeat( arguments[0] ),  2)
+        },
         getTextNode:    function (iDOM) {
             return Array.prototype.concat.apply(
                 $.map(iDOM.childNodes,  function (iNode) {
@@ -58,19 +63,18 @@ define(['jquery', 'iQuery+'],  function ($) {
 
     $.extend(HTML_Template.prototype, {
         toString:    $.CommonView.prototype.toString,
+        push:        Array.prototype.push,
         pushMap:     function (iName, iNode) {
-            if ( iName )
-                if (iNode instanceof $.ListView)
-                    this.map[iName] = iNode;
-                else {
-                    this.map[iName] = this.map[iName] || [ ];
 
-                    this.map[iName].push({
-                        node:        iNode,
-                        template:    iNode.nodeValue,
-                        parent:      iNode.parentNode || iNode.ownerElement
-                    });
-                }
+            var iMask = this.push((iNode instanceof $.ListView)  ?  iNode  :  {
+                    node:        iNode,
+                    template:    iNode.nodeValue,
+                    parent:      iNode.parentNode || iNode.ownerElement
+                });
+
+            this.map[iName] = this.map[iName] || 0;
+
+            this.map[iName] += HTML_Template.getMaskCode(iMask - 1);
 
             return this;
         },
@@ -92,7 +96,9 @@ define(['jquery', 'iQuery+'],  function ($) {
                                 function (iName) {
                                     iName = iName.match( HTML_Template.reference );
 
-                                    _This_.pushMap((iName || '')[1],  iNode);
+                                    iName = (iName || '')[1];
+
+                                    if ( iName )  _This_.pushMap(iName, iNode);
 
                                     return '';
                                 }
@@ -140,43 +146,50 @@ define(['jquery', 'iQuery+'],  function ($) {
             });
         },
         render:       function (iData) {
-            for (var iName in iData) {
-                if (! this.map.hasOwnProperty( iName ))  continue;
+            var iMask = 0,  _This_ = this;
 
-                if (this.map[iName] instanceof $.ListView)
-                    this.map[iName].render( iData[iName] );
-                else
-                    $.each(this.map[iName],  function () {
-                        var iValue = HTML_Template.eval(this.template, iData),
-                            iNode = this.node;
+            for (var iName in iData)
+                if (this.map.hasOwnProperty( iName ))
+                    iMask = iMask  |  this.map[ iName ];
 
-                        switch ( iNode.nodeType ) {
-                            case 3:    {
-                                if (! (iNode.previousSibling || iNode.nextSibling))
-                                    return  this.parent.innerHTML = iValue;
+            $.each(iMask.toString(2).split('').reverse(),  function (i) {
+                if (this == 0)  return;
 
-                                break;
-                            }
-                            case 2:    if (iNode.nodeName in this.parent) {
-                                try {
-                                    iValue = eval( iValue );
-                                } catch (iError) { }
+                if (_This_[i] instanceof $.ListView)
+                    return _This_[i].render(
+                        iData[ _This_[i].$_View[0].getAttribute('name') ]
+                    );
 
-                                return  this.parent[ iNode.nodeName ] = iValue;
+                var iValue = HTML_Template.eval(_This_[i].template, iData),
+                    iNode = _This_[i].node,
+                    iParent = _This_[i].parent;
 
-                            } else if (! iNode.ownerElement) {
-                                if ( iValue )
-                                    this.parent.setAttribute(
-                                        iNode.nodeName,  iValue
-                                    );
+                switch ( iNode.nodeType ) {
+                    case 3:    {
+                        if (! (iNode.previousSibling || iNode.nextSibling))
+                            return  iParent.innerHTML = iValue;
 
-                                return;
-                            }
-                        }
+                        break;
+                    }
+                    case 2:    if (iNode.nodeName in iParent) {
+                        try {
+                            iValue = eval( iValue );
+                        } catch (iError) { }
 
-                        iNode.nodeValue = iValue;
-                    });
-            }
+                        iParent[ iNode.nodeName ] = iValue;
+
+                        return;
+
+                    } else if (! iNode.ownerElement) {
+                        if ( iValue )
+                            iParent.setAttribute(iNode.nodeName, iValue);
+
+                        return;
+                    }
+                }
+
+                iNode.nodeValue = iValue;
+            });
 
             return this;
         }
