@@ -2,7 +2,7 @@
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v3.2  (2016-11-28)  Alpha
+//      [Version]    v3.2  (2016-11-29)  Alpha
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //
@@ -79,7 +79,7 @@ define([
         }
     });
 
-/* ----- SPA 链接事件 ----- */
+/* ----- 视图数据监听 ----- */
 
     function Data_Change() {
         var iValue = $(this).value('name');

@@ -26,19 +26,25 @@
                 marked:       '//cdn.bootcss.com/marked/0.3.6/marked.min'
             }
         });
+
+        require(['../docs/index']);
     </script>
-    <script src="docs/index.js"></script>
-</head><body>
+</head><body src="docs/index.json">
     <div class="Head CenterX Black_O">
         <div class="Grid-Row CenterY">
             <div id="Main_Title">
-                <h1>EasyWebApp</h1>
-                <p>为<em>jQuery 程序猿</em>打造的<em>单页应用引擎</em>！~</p>
+                <h1 target="_self" href="docs/list.html" autofocus>
+                    ${this.Title}
+                </h1>
+                <p>${this.Description}</p>
             </div>
         </div>
         <div class="DropDown Head">
-            <ul class="NavBar Black_O" id="Main_Nav" src="docs/index.json">
-                <li><a name="title"></a></li>
+            <ul class="NavBar Black_O" id="Main_Nav" name="Main_Nav">
+                <li><a target="${this.target || '_self'}" href="${this.href}"
+                       autofocus="${this.autofocus || false}">
+                    ${this.title}
+                </a></li>
             </ul>
         </div>
     </div>

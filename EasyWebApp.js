@@ -163,7 +163,8 @@ var HTML_Template = (function (BOM, DOM, $) {
 
                     this.map[iName].push({
                         node:        iNode,
-                        template:    iNode.nodeValue
+                        template:    iNode.nodeValue,
+                        parent:      iNode.parentNode || iNode.ownerElement
                     });
                 }
 
@@ -182,16 +183,22 @@ var HTML_Template = (function (BOM, DOM, $) {
                     $.each(HTML_Template.getTextNode( this ),  function () {
                         var iNode = this;
 
-                        this.nodeValue = this.nodeValue.replace(
-                            HTML_Template.expression,
-                            function (iName) {
-                                iName = iName.match( HTML_Template.reference );
+                        var iValue = this.nodeValue.replace(
+                                HTML_Template.expression,
+                                function (iName) {
+                                    iName = iName.match( HTML_Template.reference );
 
-                                _This_.pushMap((iName || '')[1],  iNode);
+                                    _This_.pushMap((iName || '')[1],  iNode);
 
-                                return '';
-                            }
-                        );
+                                    return '';
+                                }
+                            );
+                        if (iValue == this.nodeValue)  return;
+
+                        if ((! iValue)  &&  (this.nodeType == 2))
+                            this.ownerElement.removeAttribute( this.nodeName );
+                        else
+                            this.nodeValue = iValue;
                     });
                 })
             ).each(function () {
@@ -218,7 +225,10 @@ var HTML_Template = (function (BOM, DOM, $) {
 
             return  new Promise(function () {
 
-                _This_.$_View.load(_This_.source,  arguments[0]);
+                if (_This_.source)
+                    _This_.$_View.load(_This_.source,  arguments[0]);
+                else
+                    arguments[0]( _This_.$_View[0].innerHTML );
 
             }).then(function () {
 
@@ -236,17 +246,31 @@ var HTML_Template = (function (BOM, DOM, $) {
                         var iValue = HTML_Template.eval(this.template, iData),
                             iNode = this.node;
 
-                        if (
-                            (iNode.nodeType == 2)  &&
-                            (iNode.nodeName in iNode.ownerElement)
-                        ) {
-                            try {
-                                iValue = eval( iValue );
-                            } catch (iError) { }
+                        switch ( iNode.nodeType ) {
+                            case 3:    {
+                                if (! (iNode.previousSibling || iNode.nextSibling))
+                                    return  this.parent.innerHTML = iValue;
 
-                            iNode.ownerElement[ iNode.nodeName ] = iValue;
-                        } else
-                            iNode.nodeValue = iValue;
+                                break;
+                            }
+                            case 2:    if (iNode.nodeName in this.parent) {
+                                try {
+                                    iValue = eval( iValue );
+                                } catch (iError) { }
+
+                                return  this.parent[ iNode.nodeName ] = iValue;
+
+                            } else if (! iNode.ownerElement) {
+                                if ( iValue )
+                                    this.parent.setAttribute(
+                                        iNode.nodeName,  iValue
+                                    );
+
+                                return;
+                            }
+                        }
+
+                        iNode.nodeValue = iValue;
                     });
             }
 
@@ -483,16 +507,17 @@ var UI_Module = (function (BOM, DOM, $, DS_Inherit, HTML_Template) {
                 var $_Link = $_Target.children('link[target="_blank"]')
                         .attr('href', iLink.href);
 
-                var _Link_ = $_Link[0] && (
-                        new iLink.constructor(iLink.ownerApp, $_Link[0])
-                    ).register(iLink.ownerApp.length - 1);
-
                 if (
                     ((! iLink.href)  ||  iLink.src  ||  iLink.action)  ||
                     ($_Target[0] != _This_.ownerApp.$_Root[0])  ||
-                    (! _Link_)
+                    (! $_Link[0])
                 )
                     return;
+
+                _This_.template.render( _This_.data );
+
+                var _Link_ = (new iLink.constructor(iLink.ownerApp, $_Link[0]))
+                        .register(iLink.ownerApp.length - 1);
 
                 iLink.method = _Link_.method || iLink.method;
                 iLink.src = _Link_.src;
@@ -536,8 +561,7 @@ var UI_Module = (function (BOM, DOM, $, DS_Inherit, HTML_Template) {
             this.lastLoad = 0;
 
             return  this.domReady = Promise.all([
-                iJSON  &&  this.loadJSON(),
-                this.source.href  &&  this.loadHTML()
+                iJSON  &&  this.loadJSON(),  this.loadHTML()
             ]).then(function (_Data_) {
                 _Data_ = _Data_[0] || _Data_[1];
 
@@ -818,7 +842,7 @@ var WebApp = (function (BOM, DOM, $, UI_Module, InnerLink) {
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v3.2  (2016-11-28)  Alpha
+//      [Version]    v3.2  (2016-11-29)  Alpha
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //
@@ -892,7 +916,7 @@ var EasyWebApp = (function (BOM, DOM, $, WebApp, InnerLink, UI_Module, HTML_Temp
         }
     });
 
-/* ----- SPA 链接事件 ----- */
+/* ----- 视图数据监听 ----- */
 
     function Data_Change() {
         var iValue = $(this).value('name');

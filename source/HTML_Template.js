@@ -67,7 +67,8 @@ define(['jquery', 'iQuery+'],  function ($) {
 
                     this.map[iName].push({
                         node:        iNode,
-                        template:    iNode.nodeValue
+                        template:    iNode.nodeValue,
+                        parent:      iNode.parentNode || iNode.ownerElement
                     });
                 }
 
@@ -86,16 +87,22 @@ define(['jquery', 'iQuery+'],  function ($) {
                     $.each(HTML_Template.getTextNode( this ),  function () {
                         var iNode = this;
 
-                        this.nodeValue = this.nodeValue.replace(
-                            HTML_Template.expression,
-                            function (iName) {
-                                iName = iName.match( HTML_Template.reference );
+                        var iValue = this.nodeValue.replace(
+                                HTML_Template.expression,
+                                function (iName) {
+                                    iName = iName.match( HTML_Template.reference );
 
-                                _This_.pushMap((iName || '')[1],  iNode);
+                                    _This_.pushMap((iName || '')[1],  iNode);
 
-                                return '';
-                            }
-                        );
+                                    return '';
+                                }
+                            );
+                        if (iValue == this.nodeValue)  return;
+
+                        if ((! iValue)  &&  (this.nodeType == 2))
+                            this.ownerElement.removeAttribute( this.nodeName );
+                        else
+                            this.nodeValue = iValue;
                     });
                 })
             ).each(function () {
@@ -122,7 +129,10 @@ define(['jquery', 'iQuery+'],  function ($) {
 
             return  new Promise(function () {
 
-                _This_.$_View.load(_This_.source,  arguments[0]);
+                if (_This_.source)
+                    _This_.$_View.load(_This_.source,  arguments[0]);
+                else
+                    arguments[0]( _This_.$_View[0].innerHTML );
 
             }).then(function () {
 
@@ -140,17 +150,31 @@ define(['jquery', 'iQuery+'],  function ($) {
                         var iValue = HTML_Template.eval(this.template, iData),
                             iNode = this.node;
 
-                        if (
-                            (iNode.nodeType == 2)  &&
-                            (iNode.nodeName in iNode.ownerElement)
-                        ) {
-                            try {
-                                iValue = eval( iValue );
-                            } catch (iError) { }
+                        switch ( iNode.nodeType ) {
+                            case 3:    {
+                                if (! (iNode.previousSibling || iNode.nextSibling))
+                                    return  this.parent.innerHTML = iValue;
 
-                            iNode.ownerElement[ iNode.nodeName ] = iValue;
-                        } else
-                            iNode.nodeValue = iValue;
+                                break;
+                            }
+                            case 2:    if (iNode.nodeName in this.parent) {
+                                try {
+                                    iValue = eval( iValue );
+                                } catch (iError) { }
+
+                                return  this.parent[ iNode.nodeName ] = iValue;
+
+                            } else if (! iNode.ownerElement) {
+                                if ( iValue )
+                                    this.parent.setAttribute(
+                                        iNode.nodeName,  iValue
+                                    );
+
+                                return;
+                            }
+                        }
+
+                        iNode.nodeValue = iValue;
                     });
             }
 

@@ -137,16 +137,17 @@ define([
                 var $_Link = $_Target.children('link[target="_blank"]')
                         .attr('href', iLink.href);
 
-                var _Link_ = $_Link[0] && (
-                        new iLink.constructor(iLink.ownerApp, $_Link[0])
-                    ).register(iLink.ownerApp.length - 1);
-
                 if (
                     ((! iLink.href)  ||  iLink.src  ||  iLink.action)  ||
                     ($_Target[0] != _This_.ownerApp.$_Root[0])  ||
-                    (! _Link_)
+                    (! $_Link[0])
                 )
                     return;
+
+                _This_.template.render( _This_.data );
+
+                var _Link_ = (new iLink.constructor(iLink.ownerApp, $_Link[0]))
+                        .register(iLink.ownerApp.length - 1);
 
                 iLink.method = _Link_.method || iLink.method;
                 iLink.src = _Link_.src;
@@ -190,8 +191,7 @@ define([
             this.lastLoad = 0;
 
             return  this.domReady = Promise.all([
-                iJSON  &&  this.loadJSON(),
-                this.source.href  &&  this.loadHTML()
+                iJSON  &&  this.loadJSON(),  this.loadHTML()
             ]).then(function (_Data_) {
                 _Data_ = _Data_[0] || _Data_[1];
 
