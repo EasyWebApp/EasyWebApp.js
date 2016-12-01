@@ -1,14 +1,20 @@
-define(['jquery', 'Node_Template', 'iQuery+'],  function ($, Node_Template) {
+define([
+    'jquery', 'DS_Inherit', 'Node_Template', 'iQuery+'
+],  function ($, DS_Inherit, Node_Template) {
 
-    function HTML_Template($_View, iURL) {
+    function HTML_Template($_View, iScope, iURL) {
 
         this.$_View = $( $_View ).data(this.constructor.getClass(), this);
+
+        this.scope = DS_Inherit(iScope,  { });
 
         this.source = (iURL || '').match(/\.(html?|md)\??/)  ?
             iURL.split('?')[0] : iURL;
 
         this.length = 0;
         this.map = { };
+
+        this.lastRender = 0;
     }
 
     $.extend(HTML_Template, {
@@ -40,11 +46,16 @@ define(['jquery', 'Node_Template', 'iQuery+'],  function ($, Node_Template) {
                 this.map[iName[i]] = (this.map[iName[i]] || 0)  +  iNode;
         },
         parse:        function () {
-            var $_DOM = this.$_View.find('*:not([name]:list *)').not(function () {
+            var $_DOM = this.$_View.find('*:not([name]:list *)'),  _This_ = this;
 
-                    return  (! this.outerHTML.match( Node_Template.expression ));
-                }),
-                _This_ = this;
+            $_DOM.filter('[name]:input').each(function () {
+
+                _This_.pushMap(this.name || this.getAttribute('name'),  this);
+            });
+
+            $_DOM = $_DOM.filter(function () {
+                return  this.outerHTML.match( Node_Template.expression );
+            });
 
             $_DOM.not(
                 $_DOM.not('[name]:list').each(function () {
@@ -69,7 +80,7 @@ define(['jquery', 'Node_Template', 'iQuery+'],  function ($, Node_Template) {
                     $.ListView( this ).clear()
                         .on('insert',  function () {
 
-                            (new HTML_Template( arguments[0] )).parse();
+                            (new HTML_Template(arguments[0], _This_.scope)).parse();
                         })
                         .on('update',  function () {
 
@@ -106,13 +117,36 @@ define(['jquery', 'Node_Template', 'iQuery+'],  function ($, Node_Template) {
             return iMask.toString(2);
         },
         render:       function (iData) {
+            var NewData = iData;
+
+            iData = iData || this.scope;
+
+            if (! this.lastRender)
+                iData = $.extend($.makeSet('', Object.keys(this.map)),  iData);
+
+            this.lastRender = $.now();
+
             var iMask = this.maskCode(iData).split('').reverse();
 
-            for (var i = 0;  iMask[i];  i++)  if (iMask[i] > 0)
-                this[i].render(
-                    (this[i] instanceof Node_Template)  ?
-                        iData  :  iData[ this[i].$_View[0].getAttribute('name') ]
-                );
+            for (var i = 0, iName;  iMask[i];  i++)  if (iMask[i] > 0)
+                switch (true) {
+                    case (this[i] instanceof Node_Template):
+                        this[i].render( iData );
+                        break;
+                    case (this[i] instanceof $.ListView):
+                        this[i].render(
+                            iData[ this[i].$_View[0].getAttribute('name') ]
+                        );
+                        break;
+                    default:
+                        $( this[i] )[
+                            ('value' in this[i])  ?  'val'  :  'html'
+                        ](iData[
+                            this[i].name || this[i].getAttribute('name')
+                        ]);
+                }
+
+            if ( NewData )  this.scope.extend( iData );
 
             return this;
         }

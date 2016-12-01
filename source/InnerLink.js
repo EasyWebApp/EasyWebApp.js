@@ -52,7 +52,7 @@ define([
             return  this.target  ?  $('*[name="' + this.target + '"]')  :  $();
         },
         getArgs:      function () {
-            var iData = this.ownerView.data;
+            var iData = this.ownerView.template.scope;
 
             var iArgs = Node_Template.prototype.getRefer.call({
                     ownerNode:    this.$_DOM[0],
@@ -68,7 +68,8 @@ define([
             var iURL = this[iName] =
                     this.$_DOM[0].getAttribute(iName) || this[iName];
 
-            iScope = iScope  ||  (this.ownerView || '').data;
+            if ((! iScope)  &&  this.ownerView)
+                iScope = this.ownerView.template.scope;
 
             if (! iURL)  return;
 

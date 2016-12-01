@@ -76,7 +76,7 @@ define(['jquery', 'UI_Module', 'InnerLink'],  function ($, UI_Module, InnerLink)
 
             var iLink = iModule.source,  _This_ = this;
 
-            iModule.data.extend( $.paramJSON() );
+            iModule.template.scope.extend( $.paramJSON() );
 
             iModule[
                 (iLink.href || iLink.src || iLink.action)  ?  'load'  :  'render'

@@ -1,15 +1,17 @@
-define([
-    'jquery', 'DS_Inherit', 'HTML_Template', 'ViewDataIO'
-],  function ($, DS_Inherit, HTML_Template) {
+define(['jquery', 'HTML_Template'],  function ($, HTML_Template) {
 
     function UI_Module(iLink) {
         this.ownerApp = iLink.ownerApp;
         this.source = iLink;
 
-        this.data = DS_Inherit(this.getScope(), this.getEnv());
-
         this.$_View = iLink.getTarget();
         this.$_View = this.$_View[0] ? this.$_View : iLink.$_DOM;
+
+        this.template = new HTML_Template(
+            this.$_View,  this.getScope(),  iLink.getURL('href')
+        );
+        this.template.scope.extend( this.getEnv() );
+
         this.attach();
 
         this.lastLoad = 0;
@@ -49,18 +51,7 @@ define([
             return this;
         },
         getScope:      function () {
-            var iLV = $.ListView.instanceOf( this.source.$_DOM ),  iData;
-
-            if (iLV  &&  (iLV.$_View[0] !== this.source.$_DOM[0])) {
-
-                var $_Item = this.source.$_DOM.parentsUntil( iLV.$_View );
-
-                iData = ($_Item[0] ? $_Item.slice(-1) : this.source.$_DOM)
-                    .data('EWA_DS');
-            }
-            iData = iData  ||  (this.source.ownerView || '').data;
-
-            return  $.likeArray(iData) ? { } : iData;
+            return  (HTML_Template.instanceOf( this.source.$_DOM ) || '').scope;
         },
         getEnv:        function () {
             var iData = { },
@@ -120,13 +111,9 @@ define([
             ));
         },
         loadJSON:      function () {
-            return  this.source.loadData( this.data );
+            return  this.source.loadData( this.template.scope );
         },
         loadHTML:      function () {
-            this.template = new HTML_Template(
-                this.$_View,  this.source.getURL('href')
-            );
-
             var _This_ = this;
 
             return  this.template.load().then(function () {
@@ -144,7 +131,7 @@ define([
                 )
                     return;
 
-                _This_.template.render( _This_.data );
+                _This_.template.render();
 
                 var _Link_ = (new iLink.constructor(iLink.ownerApp, $_Link[0]))
                         .register(iLink.ownerApp.length - 1);
@@ -153,20 +140,15 @@ define([
                 iLink.src = _Link_.src;
                 iLink.data = _Link_.data;
 
-                _This_.data.extend( _This_.getEnv() );
+                _This_.template.scope.extend( _This_.getEnv() );
 
                 return _This_.loadJSON();
             });
         },
         render:        function (iData) {
-            this.data.extend(this.trigger('data', [iData])  ||  iData);
+            iData = this.trigger('data', [iData])  ||  iData;
 
-            if (! this.data.isNoValue()) {
-                this.$_View.dataRender( this.data );
-
-                if (this.template instanceof HTML_Template)
-                    this.template.render( this.data );
-            }
+            if (! $.isEmptyObject(iData))  this.template.render( iData );
 
             var _This_ = this;
 

@@ -60,7 +60,7 @@ define([
                 iModule = $.extend({
                     ownerApp:    iLink.ownerApp,
                     source:      iLink,
-                    data:        iLink.ownerView.data
+                    template:    iLink.ownerView.template
                 }, UI_Module.prototype);
 
                 iModule.loadJSON().then(function () {
@@ -81,7 +81,22 @@ define([
 
 /* ----- 视图数据监听 ----- */
 
+    function No_Input(iEvent) {
+        var iKey = iEvent.which;
+
+        return  (iEvent.type == 'keyup')  &&  (
+            iEvent.ctrlKey || iEvent.shiftKey || iEvent.altKey || (
+                (iKey != 8)  &&  (iKey != 46)  &&  (
+                    (iKey < 48)  ||  (iKey > 105)  ||
+                    ((iKey > 90)  &&  (iKey < 96))
+                )
+            )
+        );
+    }
+
     function Data_Change() {
+        if (No_Input( arguments[0] ))  return;
+
         var iValue = $(this).value('name');
 
         try {
@@ -90,14 +105,20 @@ define([
 
         iValue = (iValue != null)  ?  iValue  :  '';
 
-        var iName = this.getAttribute('name');
+        var iName = this.getAttribute('name'),
+            iTemplate = HTML_Template.instanceOf( this );
 
-        UI_Module.instanceOf( this ).data.setValue(iName, iValue);
+        var iScope = iTemplate.scope.setValue(iName, iValue);
 
-        var iData = { };
-        iData[iName] = iValue;
+        while (iTemplate.scope !== iScope)
+            iTemplate = HTML_Template.instanceOf(
+                iTemplate.$_View[0].parentElement
+            );
 
-        HTML_Template.instanceOf( this ).render( iData );
+        iScope = { };
+        iScope[iName] = iValue;
+
+        iTemplate.render( iScope );
     }
 
     $(DOM)
