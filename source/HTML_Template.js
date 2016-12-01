@@ -1,4 +1,4 @@
-define(['jquery', 'iQuery+'],  function ($) {
+define(['jquery', 'Node_Template', 'iQuery+'],  function ($, Node_Template) {
 
     function HTML_Template($_View, iURL) {
 
@@ -11,50 +11,17 @@ define(['jquery', 'iQuery+'],  function ($) {
         this.map = { };
     }
 
-    try {
-        eval('``');
-
-        var ES_ST = function () {
-                return  eval('`' + arguments[0] + '`');
-            };
-    } catch (iError) {
-        var Eval_This = function () {
-                return  eval( arguments[0] );
-            };
-    }
-
     $.extend(HTML_Template, {
         getClass:       $.CommonView.getClass,
         instanceOf:     $.CommonView.instanceOf,
-        expression:     /\$\{([\s\S]+?)\}/g,
-        reference:      /this\.(\w+)/,
-        eval:           function (iTemplate, iContext) {
-            return  ES_ST  ?  ES_ST.call(iContext, iTemplate)  :
-                iTemplate.replace(this.expression,  function () {
-
-                    return  Eval_This.call(iContext, arguments[1]);
-                });
-        },
-        getContext:     function (iTemplate, iData) {
-            var iContext = { };
-
-            (iTemplate || '').replace(this.expression,  function () {
-
-                arguments[1].replace(HTML_Template.reference,  function () {
-
-                    iContext[ arguments[1] ] = iData[ arguments[1] ];
-                });
-            });
-
-            return iContext;
-        },
-        getMaskCode:    function () {
-            return  parseInt(1 + '0'.repeat( arguments[0] ),  2)
-        },
         getTextNode:    function (iDOM) {
             return Array.prototype.concat.apply(
                 $.map(iDOM.childNodes,  function (iNode) {
-                    return  (iNode.nodeType == 3)  ?  iNode  :  null;
+                    if (
+                        (iNode.nodeType == 3)  &&
+                        (iNode.nodeValue.indexOf('${') > -1)
+                    )
+                        return iNode;
                 }),
                 iDOM.attributes
             );
@@ -65,23 +32,17 @@ define(['jquery', 'iQuery+'],  function ($) {
         toString:    $.CommonView.prototype.toString,
         push:        Array.prototype.push,
         pushMap:     function (iName, iNode) {
+            iNode = parseInt(1 + '0'.repeat(this.push(iNode) - 1),  2);
 
-            var iMask = this.push((iNode instanceof $.ListView)  ?  iNode  :  {
-                    node:        iNode,
-                    template:    iNode.nodeValue,
-                    parent:      iNode.parentNode || iNode.ownerElement
-                });
+            iName = (typeof iName == 'string')  ?  [iName]  :  iName;
 
-            this.map[iName] = this.map[iName] || 0;
-
-            this.map[iName] += HTML_Template.getMaskCode(iMask - 1);
-
-            return this;
+            for (var i = 0;  iName[i];  i++)
+                this.map[iName[i]] = (this.map[iName[i]] || 0)  +  iNode;
         },
         parse:        function () {
             var $_DOM = this.$_View.find('*:not([name]:list *)').not(function () {
 
-                    return  (! this.outerHTML.match( HTML_Template.expression ));
+                    return  (! this.outerHTML.match( Node_Template.expression ));
                 }),
                 _This_ = this;
 
@@ -89,26 +50,16 @@ define(['jquery', 'iQuery+'],  function ($) {
                 $_DOM.not('[name]:list').each(function () {
 
                     $.each(HTML_Template.getTextNode( this ),  function () {
-                        var iNode = this;
+                        var iTemplate = new Node_Template( this );
 
-                        var iValue = this.nodeValue.replace(
-                                HTML_Template.expression,
-                                function (iName) {
-                                    iName = iName.match( HTML_Template.reference );
+                        var iName = iTemplate.getRefer();
 
-                                    iName = (iName || '')[1];
+                        if (! iName[0])  return;
 
-                                    if ( iName )  _This_.pushMap(iName, iNode);
+                        _This_.pushMap(iName, iTemplate);
 
-                                    return '';
-                                }
-                            );
-                        if (iValue == this.nodeValue)  return;
-
-                        if ((! iValue)  &&  (this.nodeType == 2))
+                        if ((! this.nodeValue)  &&  (this.nodeType == 2))
                             this.ownerElement.removeAttribute( this.nodeName );
-                        else
-                            this.nodeValue = iValue;
                     });
                 })
             ).each(function () {
@@ -145,51 +96,23 @@ define(['jquery', 'iQuery+'],  function ($) {
                 _This_.parse();
             });
         },
-        render:       function (iData) {
-            var iMask = 0,  _This_ = this;
+        maskCode:     function (iData) {
+            var iMask = 0;
 
             for (var iName in iData)
                 if (this.map.hasOwnProperty( iName ))
                     iMask = iMask  |  this.map[ iName ];
 
-            $.each(iMask.toString(2).split('').reverse(),  function (i) {
-                if (this == 0)  return;
+            return iMask.toString(2);
+        },
+        render:       function (iData) {
+            var iMask = this.maskCode(iData).split('').reverse();
 
-                if (_This_[i] instanceof $.ListView)
-                    return _This_[i].render(
-                        iData[ _This_[i].$_View[0].getAttribute('name') ]
-                    );
-
-                var iValue = HTML_Template.eval(_This_[i].template, iData),
-                    iNode = _This_[i].node,
-                    iParent = _This_[i].parent;
-
-                switch ( iNode.nodeType ) {
-                    case 3:    {
-                        if (! (iNode.previousSibling || iNode.nextSibling))
-                            return  iParent.innerHTML = iValue;
-
-                        break;
-                    }
-                    case 2:    if (iNode.nodeName in iParent) {
-                        try {
-                            iValue = eval( iValue );
-                        } catch (iError) { }
-
-                        iParent[ iNode.nodeName ] = iValue;
-
-                        return;
-
-                    } else if (! iNode.ownerElement) {
-                        if ( iValue )
-                            iParent.setAttribute(iNode.nodeName, iValue);
-
-                        return;
-                    }
-                }
-
-                iNode.nodeValue = iValue;
-            });
+            for (var i = 0;  iMask[i];  i++)  if (iMask[i] > 0)
+                this[i].render(
+                    (this[i] instanceof Node_Template)  ?
+                        iData  :  iData[ this[i].$_View[0].getAttribute('name') ]
+                );
 
             return this;
         }
