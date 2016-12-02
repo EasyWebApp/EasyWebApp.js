@@ -22,7 +22,6 @@ define([
 
     $.extend(InnerLink, {
         selector:       '*[target]:not(a)',
-        reURLVar:       /\{(.+?)\}/g,
         prefetchRel:    $.browser.modern ? 'prefetch' : 'next'
     });
 
@@ -32,15 +31,6 @@ define([
             });
 
     $.extend(InnerLink.prototype, {
-        valueOf:      function () {
-            var iValue = { };
-
-            for (var iKey in this)
-                if (typeof this[iKey] != 'function')
-                    iValue[iKey] = this[iKey];
-
-            return iValue;
-        },
         getTarget:    function () {
             switch (this.target) {
                 case '_self':      return this.ownerApp.$_Root;
@@ -51,13 +41,14 @@ define([
 
             return  this.target  ?  $('*[name="' + this.target + '"]')  :  $();
         },
-        getArgs:      function () {
-            var iData = this.ownerView.template.scope;
+        getArgs:      function (Only_Param) {
+            var iData = this.ownerView  ?  this.ownerView.template.scope  :  { };
 
-            var iArgs = Node_Template.prototype.getRefer.call({
-                    ownerNode:    this.$_DOM[0],
-                    raw:          this.src || this.action || ''
-                }, iData);
+            var iArgs = Only_Param  ?  { }  :
+                    Node_Template.prototype.getRefer.call({
+                        ownerNode:    this.$_DOM[0],
+                        raw:          this.src || this.action || ''
+                    }, iData);
 
             for (var iKey in this.data)
                 iArgs[ this.data[iKey] ] = iData[ this.data[iKey] ];
@@ -68,10 +59,10 @@ define([
             var iURL = this[iName] =
                     this.$_DOM[0].getAttribute(iName) || this[iName];
 
+            if (! iURL)  return;
+
             if ((! iScope)  &&  this.ownerView)
                 iScope = this.ownerView.template.scope;
-
-            if (! iURL)  return;
 
             if (iScope  &&  iScope.isNoValue  &&  (! iScope.isNoValue())) {
                 var _Args_ = { },  _Data_;
@@ -82,12 +73,7 @@ define([
                     if ($.isData(_Data_))  _Args_[iKey] = _Data_;
                 }
 
-                iURL = $.extendURL(
-                    iURL.replace(InnerLink.reURLVar,  function () {
-                        return  iScope[arguments[1]] || '';
-                    }),
-                    _Args_
-                );
+                iURL = $.extendURL(iURL, _Args_);
             }
 
             if ((iName != 'href')  &&  (! $.urlDomain(iURL || ' ')))
@@ -98,10 +84,7 @@ define([
         register:     function (Index) {
             DOM.title = this.title || DOM.title;
 
-            BOM.history[
-                (this.$_DOM[0].tagName != 'LINK')  ?
-                    'pushState'  :  'replaceState'
-            ](
+            BOM.history[this.ownerApp[Index] ? 'replaceState' : 'pushState'](
                 {index: Index},
                 DOM.title,
                 '#!'  +  $.extendURL(this.href, this.getArgs())
@@ -112,7 +95,9 @@ define([
         loadData:     function (iScope) {
             var iOption = {type:  this.method};
 
-            if (! this.$_DOM.find('input[type="file"]')[0])
+            if (this.$_DOM[0].tagName != 'form')
+                iOption.data = this.getArgs( true );
+            else if (! this.$_DOM.find('input[type="file"]')[0])
                 iOption.data = this.$_DOM.serialize();
             else {
                 iOption.data = new BOM.FormData( this.$_DOM[0] );
@@ -125,17 +110,12 @@ define([
             );
         },
         prefetch:     function () {
-            var iHTML = (this.href || '').split('?')[0],
-                iJSON = this.src || this.action || '';
+            var iHTML = (this.href || '').split('?')[0];
 
             if (iHTML)
                 $_Prefetch.clone(true).attr('href', iHTML).appendTo('head');
 
-            if (
-                (this.method == 'get')  &&
-                (! iJSON.match(this.constructor.reURLVar))  &&
-                $.isEmptyObject( this.data )
-            )
+            if ((this.method == 'get')  &&  $.isEmptyObject( this.data ))
                 $_Prefetch.clone(true).attr(
                     'href',  this.getURL('src') || this.getURL('action')
                 ).appendTo('head');

@@ -53,7 +53,7 @@ define([
                 _This_.pushMap(this.name || this.getAttribute('name'),  this);
             });
 
-            $_DOM = $_DOM.filter(function () {
+            $_DOM = $_DOM.add( this.$_View ).filter(function () {
                 return  this.outerHTML.match( Node_Template.expression );
             });
 
@@ -77,16 +77,15 @@ define([
 
                 _This_.pushMap(
                     this.getAttribute('name'),
-                    $.ListView( this ).clear()
-                        .on('insert',  function () {
+                    $.ListView( this ).on('insert',  function () {
 
-                            (new HTML_Template(arguments[0], _This_.scope)).parse();
-                        })
-                        .on('update',  function () {
+                        (new HTML_Template(arguments[0], _This_.scope)).parse();
 
-                            HTML_Template.instanceOf( arguments[0] )
-                                .render( arguments[1] );
-                        })
+                    }).on('update',  function () {
+
+                        HTML_Template.instanceOf( arguments[0] )
+                            .render( arguments[1] );
+                    })
                 );
             });
 
@@ -117,16 +116,13 @@ define([
             return iMask.toString(2);
         },
         render:       function (iData) {
-            var NewData = iData;
+            this.scope.extend( iData );
 
-            iData = iData || this.scope;
+            iData = this.lastRender ? this.scope : $.extend(
+                $.makeSet('', Object.keys(this.map)),  this.scope,  iData
+            );
 
-            if (! this.lastRender)
-                iData = $.extend($.makeSet('', Object.keys(this.map)),  iData);
-
-            this.lastRender = $.now();
-
-            var iMask = this.maskCode(iData).split('').reverse();
+            var iMask = this.maskCode( iData ).split('').reverse();
 
             for (var i = 0, iName;  iMask[i];  i++)  if (iMask[i] > 0)
                 switch (true) {
@@ -134,9 +130,10 @@ define([
                         this[i].render( iData );
                         break;
                     case (this[i] instanceof $.ListView):
-                        this[i].render(
-                            iData[ this[i].$_View[0].getAttribute('name') ]
-                        );
+                        if (! this.lastRender)
+                            this[i].clear().render(
+                                iData[ this[i].$_View[0].getAttribute('name') ]
+                            );
                         break;
                     default:
                         $( this[i] )[
@@ -146,7 +143,7 @@ define([
                         ]);
                 }
 
-            if ( NewData )  this.scope.extend( iData );
+            this.lastRender = $.now();
 
             return this;
         }

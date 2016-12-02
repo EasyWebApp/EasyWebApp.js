@@ -111,36 +111,39 @@ define(['jquery', 'HTML_Template'],  function ($, HTML_Template) {
             ));
         },
         loadJSON:      function () {
-            return  this.source.loadData( this.template.scope );
+            return  (this.source.getURL('src') || this.source.getURL('action'))  ?
+                this.source.loadData( this.template.scope )  :
+                Promise.resolve('');
         },
         loadHTML:      function () {
             var _This_ = this;
 
             return  this.template.load().then(function () {
-                var iLink = _This_.prefetch().source;
+                var iLink = _This_.source;
 
-                var $_Target = iLink.getTarget();
-
-                var $_Link = $_Target.children('link[target="_blank"]')
-                        .attr('href', iLink.href);
+                var $_Link = _This_.$_View.children('link[target="_blank"]');
 
                 if (
                     ((! iLink.href)  ||  iLink.src  ||  iLink.action)  ||
-                    ($_Target[0] != _This_.ownerApp.$_Root[0])  ||
+                    (_This_.$_View[0] != _This_.ownerApp.$_Root[0])  ||
                     (! $_Link[0])
                 )
                     return;
 
                 _This_.template.render();
+                _This_.template.lastRender = 0;
 
-                var _Link_ = (new iLink.constructor(iLink.ownerApp, $_Link[0]))
-                        .register(iLink.ownerApp.length - 1);
+                var iAttr = $_Link[0].attributes;
 
-                iLink.method = _Link_.method || iLink.method;
-                iLink.src = _Link_.src;
-                iLink.data = _Link_.data;
+                for (var i = 0;  iAttr[i];  i++)
+                    if (iAttr[i].nodeName != 'target')
+                        iLink.$_DOM[0].setAttribute(
+                            iAttr[i].nodeName,  iAttr[i].nodeValue
+                        );
 
                 _This_.template.scope.extend( _This_.getEnv() );
+
+                iLink.register(iLink.ownerApp.length - 1);
 
                 return _This_.loadJSON();
             });
@@ -148,9 +151,9 @@ define(['jquery', 'HTML_Template'],  function ($, HTML_Template) {
         render:        function (iData) {
             iData = this.trigger('data', [iData])  ||  iData;
 
-            if (! $.isEmptyObject(iData))  this.template.render( iData );
+            this.template.render( iData );
 
-            var _This_ = this;
+            var _This_ = this.prefetch();
 
             return  this.loadModule().then(function () {
 
@@ -167,13 +170,12 @@ define(['jquery', 'HTML_Template'],  function ($, HTML_Template) {
             });
         },
         load:          function () {
-            var _This_ = this,
-                iJSON = this.source.getURL('src') || this.source.getURL('action');
-
             this.lastLoad = 0;
 
+            var _This_ = this;
+
             return  this.domReady = Promise.all([
-                iJSON  &&  this.loadJSON(),  this.loadHTML()
+                this.loadJSON(),  this.loadHTML()
             ]).then(function (_Data_) {
                 _Data_ = _Data_[0] || _Data_[1];
 

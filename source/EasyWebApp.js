@@ -2,7 +2,7 @@
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v3.2  (2016-12-01)  Alpha
+//      [Version]    v3.2  (2016-12-02)  Beta
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //
@@ -105,20 +105,16 @@ define([
 
         iValue = (iValue != null)  ?  iValue  :  '';
 
-        var iName = this.getAttribute('name'),
-            iTemplate = HTML_Template.instanceOf( this );
+        var iTemplate = HTML_Template.instanceOf( this );
 
-        var iScope = iTemplate.scope.setValue(iName, iValue);
+        var iScope = iTemplate.scope.setValue(this.getAttribute('name'), iValue);
 
         while (iTemplate.scope !== iScope)
             iTemplate = HTML_Template.instanceOf(
                 iTemplate.$_View[0].parentElement
             );
 
-        iScope = { };
-        iScope[iName] = iValue;
-
-        iTemplate.render( iScope );
+        iTemplate.render();
     }
 
     $(DOM)

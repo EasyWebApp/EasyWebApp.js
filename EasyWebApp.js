@@ -242,7 +242,7 @@ var HTML_Template = (function (BOM, DOM, $, DS_Inherit, Node_Template) {
                 _This_.pushMap(this.name || this.getAttribute('name'),  this);
             });
 
-            $_DOM = $_DOM.filter(function () {
+            $_DOM = $_DOM.add( this.$_View ).filter(function () {
                 return  this.outerHTML.match( Node_Template.expression );
             });
 
@@ -266,16 +266,15 @@ var HTML_Template = (function (BOM, DOM, $, DS_Inherit, Node_Template) {
 
                 _This_.pushMap(
                     this.getAttribute('name'),
-                    $.ListView( this ).clear()
-                        .on('insert',  function () {
+                    $.ListView( this ).on('insert',  function () {
 
-                            (new HTML_Template(arguments[0], _This_.scope)).parse();
-                        })
-                        .on('update',  function () {
+                        (new HTML_Template(arguments[0], _This_.scope)).parse();
 
-                            HTML_Template.instanceOf( arguments[0] )
-                                .render( arguments[1] );
-                        })
+                    }).on('update',  function () {
+
+                        HTML_Template.instanceOf( arguments[0] )
+                            .render( arguments[1] );
+                    })
                 );
             });
 
@@ -306,16 +305,13 @@ var HTML_Template = (function (BOM, DOM, $, DS_Inherit, Node_Template) {
             return iMask.toString(2);
         },
         render:       function (iData) {
-            var NewData = iData;
+            this.scope.extend( iData );
 
-            iData = iData || this.scope;
+            iData = this.lastRender ? this.scope : $.extend(
+                $.makeSet('', Object.keys(this.map)),  this.scope,  iData
+            );
 
-            if (! this.lastRender)
-                iData = $.extend($.makeSet('', Object.keys(this.map)),  iData);
-
-            this.lastRender = $.now();
-
-            var iMask = this.maskCode(iData).split('').reverse();
+            var iMask = this.maskCode( iData ).split('').reverse();
 
             for (var i = 0, iName;  iMask[i];  i++)  if (iMask[i] > 0)
                 switch (true) {
@@ -323,9 +319,10 @@ var HTML_Template = (function (BOM, DOM, $, DS_Inherit, Node_Template) {
                         this[i].render( iData );
                         break;
                     case (this[i] instanceof $.ListView):
-                        this[i].render(
-                            iData[ this[i].$_View[0].getAttribute('name') ]
-                        );
+                        if (! this.lastRender)
+                            this[i].clear().render(
+                                iData[ this[i].$_View[0].getAttribute('name') ]
+                            );
                         break;
                     default:
                         $( this[i] )[
@@ -335,7 +332,7 @@ var HTML_Template = (function (BOM, DOM, $, DS_Inherit, Node_Template) {
                         ]);
                 }
 
-            if ( NewData )  this.scope.extend( iData );
+            this.lastRender = $.now();
 
             return this;
         }
@@ -460,36 +457,39 @@ var UI_Module = (function (BOM, DOM, $, HTML_Template) {
             ));
         },
         loadJSON:      function () {
-            return  this.source.loadData( this.template.scope );
+            return  (this.source.getURL('src') || this.source.getURL('action'))  ?
+                this.source.loadData( this.template.scope )  :
+                Promise.resolve('');
         },
         loadHTML:      function () {
             var _This_ = this;
 
             return  this.template.load().then(function () {
-                var iLink = _This_.prefetch().source;
+                var iLink = _This_.source;
 
-                var $_Target = iLink.getTarget();
-
-                var $_Link = $_Target.children('link[target="_blank"]')
-                        .attr('href', iLink.href);
+                var $_Link = _This_.$_View.children('link[target="_blank"]');
 
                 if (
                     ((! iLink.href)  ||  iLink.src  ||  iLink.action)  ||
-                    ($_Target[0] != _This_.ownerApp.$_Root[0])  ||
+                    (_This_.$_View[0] != _This_.ownerApp.$_Root[0])  ||
                     (! $_Link[0])
                 )
                     return;
 
                 _This_.template.render();
+                _This_.template.lastRender = 0;
 
-                var _Link_ = (new iLink.constructor(iLink.ownerApp, $_Link[0]))
-                        .register(iLink.ownerApp.length - 1);
+                var iAttr = $_Link[0].attributes;
 
-                iLink.method = _Link_.method || iLink.method;
-                iLink.src = _Link_.src;
-                iLink.data = _Link_.data;
+                for (var i = 0;  iAttr[i];  i++)
+                    if (iAttr[i].nodeName != 'target')
+                        iLink.$_DOM[0].setAttribute(
+                            iAttr[i].nodeName,  iAttr[i].nodeValue
+                        );
 
                 _This_.template.scope.extend( _This_.getEnv() );
+
+                iLink.register(iLink.ownerApp.length - 1);
 
                 return _This_.loadJSON();
             });
@@ -497,9 +497,9 @@ var UI_Module = (function (BOM, DOM, $, HTML_Template) {
         render:        function (iData) {
             iData = this.trigger('data', [iData])  ||  iData;
 
-            if (! $.isEmptyObject(iData))  this.template.render( iData );
+            this.template.render( iData );
 
-            var _This_ = this;
+            var _This_ = this.prefetch();
 
             return  this.loadModule().then(function () {
 
@@ -516,13 +516,12 @@ var UI_Module = (function (BOM, DOM, $, HTML_Template) {
             });
         },
         load:          function () {
-            var _This_ = this,
-                iJSON = this.source.getURL('src') || this.source.getURL('action');
-
             this.lastLoad = 0;
 
+            var _This_ = this;
+
             return  this.domReady = Promise.all([
-                iJSON  &&  this.loadJSON(),  this.loadHTML()
+                this.loadJSON(),  this.loadHTML()
             ]).then(function (_Data_) {
                 _Data_ = _Data_[0] || _Data_[1];
 
@@ -558,7 +557,6 @@ var InnerLink = (function (BOM, DOM, $, UI_Module, Node_Template) {
 
     $.extend(InnerLink, {
         selector:       '*[target]:not(a)',
-        reURLVar:       /\{(.+?)\}/g,
         prefetchRel:    $.browser.modern ? 'prefetch' : 'next'
     });
 
@@ -568,15 +566,6 @@ var InnerLink = (function (BOM, DOM, $, UI_Module, Node_Template) {
             });
 
     $.extend(InnerLink.prototype, {
-        valueOf:      function () {
-            var iValue = { };
-
-            for (var iKey in this)
-                if (typeof this[iKey] != 'function')
-                    iValue[iKey] = this[iKey];
-
-            return iValue;
-        },
         getTarget:    function () {
             switch (this.target) {
                 case '_self':      return this.ownerApp.$_Root;
@@ -587,13 +576,14 @@ var InnerLink = (function (BOM, DOM, $, UI_Module, Node_Template) {
 
             return  this.target  ?  $('*[name="' + this.target + '"]')  :  $();
         },
-        getArgs:      function () {
-            var iData = this.ownerView.template.scope;
+        getArgs:      function (Only_Param) {
+            var iData = this.ownerView  ?  this.ownerView.template.scope  :  { };
 
-            var iArgs = Node_Template.prototype.getRefer.call({
-                    ownerNode:    this.$_DOM[0],
-                    raw:          this.src || this.action || ''
-                }, iData);
+            var iArgs = Only_Param  ?  { }  :
+                    Node_Template.prototype.getRefer.call({
+                        ownerNode:    this.$_DOM[0],
+                        raw:          this.src || this.action || ''
+                    }, iData);
 
             for (var iKey in this.data)
                 iArgs[ this.data[iKey] ] = iData[ this.data[iKey] ];
@@ -604,10 +594,10 @@ var InnerLink = (function (BOM, DOM, $, UI_Module, Node_Template) {
             var iURL = this[iName] =
                     this.$_DOM[0].getAttribute(iName) || this[iName];
 
+            if (! iURL)  return;
+
             if ((! iScope)  &&  this.ownerView)
                 iScope = this.ownerView.template.scope;
-
-            if (! iURL)  return;
 
             if (iScope  &&  iScope.isNoValue  &&  (! iScope.isNoValue())) {
                 var _Args_ = { },  _Data_;
@@ -618,12 +608,7 @@ var InnerLink = (function (BOM, DOM, $, UI_Module, Node_Template) {
                     if ($.isData(_Data_))  _Args_[iKey] = _Data_;
                 }
 
-                iURL = $.extendURL(
-                    iURL.replace(InnerLink.reURLVar,  function () {
-                        return  iScope[arguments[1]] || '';
-                    }),
-                    _Args_
-                );
+                iURL = $.extendURL(iURL, _Args_);
             }
 
             if ((iName != 'href')  &&  (! $.urlDomain(iURL || ' ')))
@@ -634,10 +619,7 @@ var InnerLink = (function (BOM, DOM, $, UI_Module, Node_Template) {
         register:     function (Index) {
             DOM.title = this.title || DOM.title;
 
-            BOM.history[
-                (this.$_DOM[0].tagName != 'LINK')  ?
-                    'pushState'  :  'replaceState'
-            ](
+            BOM.history[this.ownerApp[Index] ? 'replaceState' : 'pushState'](
                 {index: Index},
                 DOM.title,
                 '#!'  +  $.extendURL(this.href, this.getArgs())
@@ -648,7 +630,9 @@ var InnerLink = (function (BOM, DOM, $, UI_Module, Node_Template) {
         loadData:     function (iScope) {
             var iOption = {type:  this.method};
 
-            if (! this.$_DOM.find('input[type="file"]')[0])
+            if (this.$_DOM[0].tagName != 'form')
+                iOption.data = this.getArgs( true );
+            else if (! this.$_DOM.find('input[type="file"]')[0])
                 iOption.data = this.$_DOM.serialize();
             else {
                 iOption.data = new BOM.FormData( this.$_DOM[0] );
@@ -661,17 +645,12 @@ var InnerLink = (function (BOM, DOM, $, UI_Module, Node_Template) {
             );
         },
         prefetch:     function () {
-            var iHTML = (this.href || '').split('?')[0],
-                iJSON = this.src || this.action || '';
+            var iHTML = (this.href || '').split('?')[0];
 
             if (iHTML)
                 $_Prefetch.clone(true).attr('href', iHTML).appendTo('head');
 
-            if (
-                (this.method == 'get')  &&
-                (! iJSON.match(this.constructor.reURLVar))  &&
-                $.isEmptyObject( this.data )
-            )
+            if ((this.method == 'get')  &&  $.isEmptyObject( this.data ))
                 $_Prefetch.clone(true).attr(
                     'href',  this.getURL('src') || this.getURL('action')
                 ).appendTo('head');
@@ -807,7 +786,7 @@ var WebApp = (function (BOM, DOM, $, UI_Module, InnerLink) {
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v3.2  (2016-12-01)  Alpha
+//      [Version]    v3.2  (2016-12-02)  Beta
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //
@@ -907,20 +886,16 @@ var EasyWebApp = (function (BOM, DOM, $, WebApp, InnerLink, UI_Module, HTML_Temp
 
         iValue = (iValue != null)  ?  iValue  :  '';
 
-        var iName = this.getAttribute('name'),
-            iTemplate = HTML_Template.instanceOf( this );
+        var iTemplate = HTML_Template.instanceOf( this );
 
-        var iScope = iTemplate.scope.setValue(iName, iValue);
+        var iScope = iTemplate.scope.setValue(this.getAttribute('name'), iValue);
 
         while (iTemplate.scope !== iScope)
             iTemplate = HTML_Template.instanceOf(
                 iTemplate.$_View[0].parentElement
             );
 
-        iScope = { };
-        iScope[iName] = iValue;
-
-        iTemplate.render( iScope );
+        iTemplate.render();
     }
 
     $(DOM)
