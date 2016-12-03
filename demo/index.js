@@ -36,14 +36,11 @@ require(['jquery', 'TimePassed', 'EasyWebApp'],  function ($, TimePassed) {
             if (! iData.status)
                 return  BOM.alert("【服务器报错】" + iData.msg);
 
-            return  iData.tngou  ?
-                $.map(iData.tngou, Object_Filter)  :  Object_Filter( iData );
-        });
+            if (! iData.tngou)  return  Object_Filter( iData );
 
-        $('.NavBar > .DropDown > .Body').each(function () {
-            $.ListView(this,  false,  function ($_Item, iValue) {
-                $_Item.text( iValue.name ).attr('title', iValue.title);
-            });
+            iData = $.map(iData.tngou, Object_Filter);
+
+            return  iLink.href  ?  {list: iData}  :  iData;
         });
     });
 });

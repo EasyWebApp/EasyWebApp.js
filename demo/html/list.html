@@ -1,4 +1,4 @@
-<link target="_blank" src="{_Data_Path_}/list" data-id="id" />
+<link target="_blank" src="${this._Data_Path_}/list?id=${this.id}" />
 <style>
     ol.CenterX {
         padding:    0;
@@ -22,17 +22,19 @@
     }
 </style>
 <script src="html/list.js"></script>
-<ol class="CenterX">
-    <li class="Item-Box visible Content" target="_self"
-        href="html/content.html" src="{_Data_Path_}/show" data-id="id">
-        <div class="Background-Image" name="img">
-            <i></i>
+
+<ol class="CenterX" name="list">
+    <li class="Item-Box visible Content" title="${this.description}" target="_self"
+        href="html/content.html" src="${this._Data_Path_}/show?id=${this.id}">
+        <div class="Background-Image" style="background-image: url(${this.img})">
         </div>
-        <p name="title"></p>
+        <p>${this.title}</p>
         <small class="Grid-Row CenterX">
-            <span name="timePassed"></span>
-            <a target="_blank" name="fromurl">
-                <span name="fromname"></span>
+            <span title="${(new Date(this.time)).toLocaleString()}">
+                ${this.timePassed}
+            </span>
+            <a target="_blank" href="${this.fromurl}">
+                ${this.fromname}
             </a>
         </small>
     </li>

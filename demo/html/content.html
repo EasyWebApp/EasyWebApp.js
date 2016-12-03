@@ -1,4 +1,4 @@
-<link target="_blank" src="{_Data_Path_}/show" data-id="id" />
+<link target="_blank" src="${this._Data_Path_}/show?id=${this.id}" />
 <style>
     .Content {
         position:      relative;
@@ -54,28 +54,28 @@
 <script src="html/content.js"></script>
 -->
 <div class="Content">
-    <div class="Background-Image" name="img">
+    <div class="Background-Image" style="background-image: url(${this.img})">
         <i></i>
     </div>
-    <h1 name="title"></h1>
+    <h1>${this.title}</h1>
     <small class="Grid-Row CenterX">
-        <span name="timePassed"></span>
-        <a class="CenterX" target="_blank" name="fromurl">
-            <span name="fromname"></span>
+        <span>${this.timePassed}</span>
+        <a class="CenterX" target="_blank" href="${this.fromurl}">
+            ${this.fromname}
         </a>
         <span>
             <i class="Icon Eye"></i>
-            <em name="count"></em>
+            <em>${this.count}</em>
         </span>
     </small>
-    <pre class="CenterX" name="description"></pre>
-    <p name="message"></p>
+    <pre class="CenterX">${this.description}</pre>
+    <p>${this.message}</p>
     <div multiple name="list">
-        <img class="Item-Box visible" name="img" />
+        <img class="Item-Box visible" src="${this.img}" />
     </div>
     <div class="Panel">
         <div class="Head">网友评论</div>
         <div class="Body" href="html/comment.html"
-             src="memo/comment?type=top" data-id="id"></div>
+             src="memo/comment?type=top?id=${this.id}"></div>
     </div>
 </div>

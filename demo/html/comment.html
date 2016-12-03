@@ -1,16 +1,18 @@
 <!--
 <script src="html/comment.js"></script>
 -->
-<ol id="Comment">
+<ol id="Comment" name="list">
     <li class="Grid-Row CenterY">
-        <a target="_blank" name="domain">
-            <img class="Logo" name="avatar" />
-            <span name="account"></span>
+        <a target="_blank" href="${this.domain}">
+            <img class="Logo" src="${this.avatar}" />
+            <span>${this.account}</span>
         </a>
         <div>
-            <h6 name="title"></h6>
-            <p name="memo"></p>
-            <a target="_blank" name="url"><small name="timePassed"></small></a>
+            <h6>${this.title}</h6>
+            <p>${this.memo}</p>
+            <a target="_blank" href="${this.url}">
+                <small>${this.timePassed}</small>
+            </a>
         </div>
     </li>
 </ol>

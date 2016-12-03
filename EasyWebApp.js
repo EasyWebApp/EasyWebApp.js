@@ -351,7 +351,13 @@ var UI_Module = (function (BOM, DOM, $, HTML_Template) {
         this.source = iLink;
 
         this.$_View = iLink.getTarget();
-        this.$_View = this.$_View[0] ? this.$_View : iLink.$_DOM;
+
+        this.name = this.$_View[0].getAttribute('name');
+
+        if (! this.name) {
+            this.name = $.uuid('EWA');
+            this.$_View[0].setAttribute('name', this.name);
+        }
 
         this.template = new HTML_Template(
             this.$_View,  this.getScope(),  iLink.getURL('href')
@@ -428,9 +434,9 @@ var UI_Module = (function (BOM, DOM, $, HTML_Template) {
         prefetch:      function () {
             var InnerLink = this.source.constructor;
 
-            var $_Link = this.$_View.find( InnerLink.selector ).not('link');
+            var $_Link = this.$_View.find( InnerLink.selector ).not('link, form');
 
-            for (var i = 0;  $_Link[i];  i++)
+            for (var i = 0;  $_Link[i] && (i < 5);  i++)
                 (new InnerLink(this.ownerApp, $_Link[i])).prefetch();
 
             return this;
@@ -497,7 +503,11 @@ var UI_Module = (function (BOM, DOM, $, HTML_Template) {
         render:        function (iData) {
             iData = this.trigger('data', [iData])  ||  iData;
 
-            this.template.render( iData );
+            if (iData instanceof Array) {
+                var _Data_ = { };
+                _Data_[this.name] = iData;
+            }
+            this.template.render(_Data_ || iData);
 
             var _This_ = this.prefetch();
 
@@ -574,7 +584,8 @@ var InnerLink = (function (BOM, DOM, $, UI_Module, Node_Template) {
                 case '_top':       return $();
             }
 
-            return  this.target  ?  $('*[name="' + this.target + '"]')  :  $();
+            return  this.target  ?
+                $('*[name="' + this.target + '"]')  :  this.$_DOM;
         },
         getArgs:      function (Only_Param) {
             var iData = this.ownerView  ?  this.ownerView.template.scope  :  { };
@@ -650,7 +661,11 @@ var InnerLink = (function (BOM, DOM, $, UI_Module, Node_Template) {
             if (iHTML)
                 $_Prefetch.clone(true).attr('href', iHTML).appendTo('head');
 
-            if ((this.method == 'get')  &&  $.isEmptyObject( this.data ))
+            if (
+                (this.method == 'get')  &&
+                this.src  &&  (this.src.indexOf('?') == -1)  &&
+                $.isEmptyObject( this.data )
+            )
                 $_Prefetch.clone(true).attr(
                     'href',  this.getURL('src') || this.getURL('action')
                 ).appendTo('head');
@@ -786,7 +801,7 @@ var WebApp = (function (BOM, DOM, $, UI_Module, InnerLink) {
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v3.2  (2016-12-02)  Beta
+//      [Version]    v3.2  (2016-12-03)  Beta
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //

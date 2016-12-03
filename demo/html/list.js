@@ -10,14 +10,10 @@ require(['jquery', 'iQuery+'],  function ($) {
 
         if ($.fileName( iModule.source.action )  ==  'search')
             $( $_List[0].children[0] ).attr('src',  function () {
-                return  arguments[1].replace(/\{\S+?\}/, 'top');
+                return  arguments[1].replace(/\$\{.+?\}/, 'top');
             });
 
-        $.ListView($_List,  true,  function ($_Item, iValue) {
-            $_Item.attr('title', iValue.description)
-                .find('small > span')[0].title =
-                    (new Date(iValue.time)).toLocaleString();
-        });
+        $.ListView($_List, true);
 
         iModule.render( arguments[0] );
     });

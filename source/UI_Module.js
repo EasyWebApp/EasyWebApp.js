@@ -5,7 +5,13 @@ define(['jquery', 'HTML_Template'],  function ($, HTML_Template) {
         this.source = iLink;
 
         this.$_View = iLink.getTarget();
-        this.$_View = this.$_View[0] ? this.$_View : iLink.$_DOM;
+
+        this.name = this.$_View[0].getAttribute('name');
+
+        if (! this.name) {
+            this.name = $.uuid('EWA');
+            this.$_View[0].setAttribute('name', this.name);
+        }
 
         this.template = new HTML_Template(
             this.$_View,  this.getScope(),  iLink.getURL('href')
@@ -82,9 +88,9 @@ define(['jquery', 'HTML_Template'],  function ($, HTML_Template) {
         prefetch:      function () {
             var InnerLink = this.source.constructor;
 
-            var $_Link = this.$_View.find( InnerLink.selector ).not('link');
+            var $_Link = this.$_View.find( InnerLink.selector ).not('link, form');
 
-            for (var i = 0;  $_Link[i];  i++)
+            for (var i = 0;  $_Link[i] && (i < 5);  i++)
                 (new InnerLink(this.ownerApp, $_Link[i])).prefetch();
 
             return this;
@@ -151,7 +157,11 @@ define(['jquery', 'HTML_Template'],  function ($, HTML_Template) {
         render:        function (iData) {
             iData = this.trigger('data', [iData])  ||  iData;
 
-            this.template.render( iData );
+            if (iData instanceof Array) {
+                var _Data_ = { };
+                _Data_[this.name] = iData;
+            }
+            this.template.render(_Data_ || iData);
 
             var _This_ = this.prefetch();
 

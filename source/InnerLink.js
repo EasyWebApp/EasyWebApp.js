@@ -39,7 +39,8 @@ define([
                 case '_top':       return $();
             }
 
-            return  this.target  ?  $('*[name="' + this.target + '"]')  :  $();
+            return  this.target  ?
+                $('*[name="' + this.target + '"]')  :  this.$_DOM;
         },
         getArgs:      function (Only_Param) {
             var iData = this.ownerView  ?  this.ownerView.template.scope  :  { };
@@ -115,7 +116,11 @@ define([
             if (iHTML)
                 $_Prefetch.clone(true).attr('href', iHTML).appendTo('head');
 
-            if ((this.method == 'get')  &&  $.isEmptyObject( this.data ))
+            if (
+                (this.method == 'get')  &&
+                this.src  &&  (this.src.indexOf('?') == -1)  &&
+                $.isEmptyObject( this.data )
+            )
                 $_Prefetch.clone(true).attr(
                     'href',  this.getURL('src') || this.getURL('action')
                 ).appendTo('head');
