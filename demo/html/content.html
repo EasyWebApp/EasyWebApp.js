@@ -38,16 +38,20 @@
         margin:       auto;
         max-width:    100%;
     }
-    .Content > div[multiple] {
+    .Content > ul {
+            margin:          0;
+            list-style:      none;
             padding:         0  1em;
             text-align:      center;
        -moz-column-width:    16em;
     -webkit-column-width:    16em;
             column-width:    16em;
     }
-    .Content > div[multiple] > .Item-Box {
-        background-size:    cover;
-        width:              100%;
+    .Content > ul > .Item-Box {
+        width:    100%;
+    }
+    .Content > ul > .Item-Box > .Logo {
+        padding:    0;
     }
 </style>
 <!--
@@ -70,9 +74,11 @@
     </small>
     <pre class="CenterX">${this.description}</pre>
     <p>${this.message}</p>
-    <div multiple name="list">
-        <img class="Item-Box visible" src="${this.img}" />
-    </div>
+    <ul name="list">
+        <li class="Item-Box visible">
+            <img class="Logo" src="${this.img}" />
+        </li>
+    </ul>
     <div class="Panel">
         <div class="Head">网友评论</div>
         <div class="Body" href="html/comment.html"

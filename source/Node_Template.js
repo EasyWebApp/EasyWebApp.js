@@ -16,11 +16,15 @@ define(['jquery'],  function ($) {
         eval('``');
 
         var ES_ST = function () {
-                return  eval('`' + arguments[0] + '`');
+                var iValue = eval('`' + arguments[0] + '`');
+
+                return  (iValue != null)  ?  iValue  :  '';
             };
     } catch (iError) {
         var Eval_This = function () {
-                return  eval( arguments[0] );
+                var iValue = eval( arguments[0] );
+
+                return  (iValue != null)  ?  iValue  :  '';
             };
     }
 
@@ -67,7 +71,7 @@ define(['jquery'],  function ($) {
                     break;
                 }
                 case 2:    if (iNode.nodeName in iParent) {
-                    try {
+                    if ( iValue )  try {
                         iValue = eval( iValue );
                     } catch (iError) { }
 

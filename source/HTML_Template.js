@@ -46,7 +46,10 @@ define([
                 this.map[iName[i]] = (this.map[iName[i]] || 0)  +  iNode;
         },
         parse:        function () {
-            var $_DOM = this.$_View.find('*:not([name]:list *)'),  _This_ = this;
+            var $_DOM = this.$_View.find('*').not('[name]:list *').not(
+                    this.$_View.find('[src] *')
+                ),
+                _This_ = this;
 
             $_DOM.filter('[name]:input').each(function () {
 
@@ -106,14 +109,17 @@ define([
                 _This_.parse();
             });
         },
-        maskCode:     function (iData) {
-            var iMask = 0;
+        data2Node:    function (iData) {
+            var iMask = 0,  _This_ = this;
 
             for (var iName in iData)
                 if (this.map.hasOwnProperty( iName ))
                     iMask = iMask  |  this.map[ iName ];
 
-            return iMask.toString(2);
+            return  $.map(iMask.toString(2).split('').reverse(),  function () {
+
+                return  (arguments[0] > 0)  ?  _This_[ arguments[1] ]  :  null;
+            });
         },
         render:       function (iData) {
             this.scope.extend( iData );
@@ -122,30 +128,28 @@ define([
                 $.makeSet('', Object.keys(this.map)),  this.scope,  iData
             );
 
-            var iMask = this.maskCode( iData ).split('').reverse();
+            var Last_Render = this.lastRender;
 
-            for (var i = 0, iName;  iMask[i];  i++)  if (iMask[i] > 0)
-                switch (true) {
-                    case (this[i] instanceof Node_Template):
-                        this[i].render( iData );
-                        break;
-                    case (this[i] instanceof $.ListView):
-                        if (! this.lastRender)
-                            this[i].clear().render(
-                                iData[ this[i].$_View[0].getAttribute('name') ]
+            var Render_Node = $.each(this.data2Node( iData ),  function () {
+
+                    if (this instanceof Node_Template)
+                        this.render( iData );
+                    else if (this instanceof $.ListView) {
+                        if (! Last_Render)
+                            this.clear().render(
+                                iData[ this.$_View[0].getAttribute('name') ]
                             );
-                        break;
-                    default:
-                        $( this[i] )[
-                            ('value' in this[i])  ?  'val'  :  'html'
-                        ](iData[
-                            this[i].name || this[i].getAttribute('name')
-                        ]);
-                }
+                    } else
+                        $( this )[
+                            ('value' in this)  ?  'val'  :  'html'
+                        ](
+                            iData[this.name || this.getAttribute('name')]
+                        );
+                });
 
             this.lastRender = $.now();
 
-            return this;
+            return Render_Node;
         }
     });
 

@@ -1,4 +1,6 @@
-define(['jquery', 'HTML_Template'],  function ($, HTML_Template) {
+define([
+    'jquery', 'HTML_Template', 'Node_Template'
+],  function ($, HTML_Template, Node_Template) {
 
     function UI_Module(iLink) {
         this.ownerApp = iLink.ownerApp;
@@ -25,9 +27,22 @@ define(['jquery', 'HTML_Template'],  function ($, HTML_Template) {
         this.ownerApp.register(this);
     }
 
+    var Link_Key = $.makeSet('href', 'src');
+
     $.extend(UI_Module, {
         getClass:      $.CommonView.getClass,
-        instanceOf:    $.CommonView.instanceOf
+        instanceOf:    $.CommonView.instanceOf,
+        reload:        function (iTemplate) {
+            for (var i = 0, iModule;  iTemplate[i];  i++)
+                if (
+                    (iTemplate[i] instanceof Node_Template)  &&
+                    (iTemplate[i].ownerNode.nodeName in Link_Key)
+                ) {
+                    iModule = this.instanceOf(iTemplate[i].ownerElement, true);
+
+                    if ( iModule )  iModule.load();
+                }
+        }
     });
 
     $.extend(UI_Module.prototype, {
@@ -181,6 +196,7 @@ define(['jquery', 'HTML_Template'],  function ($, HTML_Template) {
         },
         load:          function () {
             this.lastLoad = 0;
+            this.template.lastRender = 0;
 
             var _This_ = this;
 

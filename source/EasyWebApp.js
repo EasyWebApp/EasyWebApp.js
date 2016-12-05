@@ -2,7 +2,7 @@
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v3.2  (2016-12-03)  Beta
+//      [Version]    v3.2  (2016-12-05)  Beta
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //
@@ -109,16 +109,31 @@ define([
 
         var iScope = iTemplate.scope.setValue(this.getAttribute('name'), iValue);
 
-        while (iTemplate.scope !== iScope)
+        while (iTemplate.scope !== iScope) {
             iTemplate = HTML_Template.instanceOf(
                 iTemplate.$_View[0].parentElement
             );
+            if (! iTemplate)  return;
+        }
 
-        iTemplate.render();
+        UI_Module.reload( iTemplate.render() );
     }
 
+    var Only_Change = ['select', 'textarea', '[designMode]'].concat(
+            $.map([
+                'hidden', 'radio', 'checkbox', 'number', 'search',
+                'file', 'range', 'date', 'time', 'color'
+            ],  function () {
+                return  'input[type="' + arguments[0] + '"]';
+            })
+        ).join(', ');
+
     $(DOM)
-        .on('change', 'select', Data_Change)
-        .on('keyup paste', ':input:not(select)', Data_Change);
+        .on('change', Only_Change, Data_Change)
+        .on(
+            'keyup paste',
+            ':input:not(:button, ' + Only_Change + ')',
+            Data_Change
+        );
 
 });
