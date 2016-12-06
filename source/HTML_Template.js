@@ -20,6 +20,9 @@ define([
     $.extend(HTML_Template, {
         getClass:       $.CommonView.getClass,
         instanceOf:     $.CommonView.instanceOf,
+        getMaskCode:    function (Index) {
+            return  (Index < 0)  ?  0  :  parseInt(1 + '0'.repeat(Index),  2);
+        },
         getTextNode:    function (iDOM) {
             return Array.prototype.concat.apply(
                 $.map(iDOM.childNodes,  function (iNode) {
@@ -35,17 +38,17 @@ define([
     });
 
     $.extend(HTML_Template.prototype, {
-        toString:    $.CommonView.prototype.toString,
-        push:        Array.prototype.push,
-        pushMap:     function (iName, iNode) {
-            iNode = parseInt(1 + '0'.repeat(this.push(iNode) - 1),  2);
+        toString:      $.CommonView.prototype.toString,
+        push:          Array.prototype.push,
+        pushMap:       function (iName, iNode) {
+            iNode = HTML_Template.getMaskCode(this.push(iNode) - 1);
 
             iName = (typeof iName == 'string')  ?  [iName]  :  iName;
 
             for (var i = 0;  iName[i];  i++)
                 this.map[iName[i]] = (this.map[iName[i]] || 0)  +  iNode;
         },
-        parse:        function () {
+        parse:         function () {
             var $_DOM = this.$_View.find('*').not('[name]:list *').not(
                     this.$_View.find('[src] *')
                 ),
@@ -94,7 +97,7 @@ define([
 
             return this;
         },
-        load:         function () {
+        load:          function () {
             var _This_ = this;
 
             return  new Promise(function () {
@@ -109,7 +112,7 @@ define([
                 _This_.parse();
             });
         },
-        data2Node:    function (iData) {
+        data2Node:     function (iData) {
             var iMask = 0,  _This_ = this;
 
             for (var iName in iData)
@@ -121,7 +124,7 @@ define([
                 return  (arguments[0] > 0)  ?  _This_[ arguments[1] ]  :  null;
             });
         },
-        render:       function (iData) {
+        render:        function (iData) {
             this.scope.extend( iData );
 
             iData = this.lastRender ? this.scope : $.extend(
@@ -150,6 +153,36 @@ define([
             this.lastRender = $.now();
 
             return Render_Node;
+        },
+        indexOf:       function (iNode) {
+            for (var i = 0;  this[i];  i++)
+                if (
+                    (this[i] == iNode)  ||  (
+                        (this[i] instanceof Node_Template)  &&  (
+                            (iNode == this[i].ownerNode)  ||
+                            (iNode == this[i].ownerNode.nodeName)
+                        )
+                    )
+                )  return i;
+
+            return -1;
+        },
+        getContext:    function (iNode) {
+            var iContext = { },  iValue;
+
+            for (var iKey in this.map) {
+                iValue = this.scope[ iKey ];
+
+                if (iNode  ?
+                    (this.map[iKey] & HTML_Template.getMaskCode(
+                        this.indexOf(iNode)
+                    ))  :
+                    ((iValue != null)  &&  (! $.likeArray(iValue)))
+                )
+                    iContext[ iKey ] = iValue;
+            }
+
+            return iContext;
         }
     });
 

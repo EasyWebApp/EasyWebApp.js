@@ -1,6 +1,6 @@
 define([
-    'jquery', 'UI_Module', 'Node_Template'
-],  function ($, UI_Module, Node_Template) {
+    'jquery', 'UI_Module', 'HTML_Template'
+],  function ($, UI_Module, HTML_Template) {
 
     var BOM = self,  DOM = self.document;
 
@@ -46,10 +46,9 @@ define([
             var iData = this.ownerView  ?  this.ownerView.template.scope  :  { };
 
             var iArgs = Only_Param  ?  { }  :
-                    Node_Template.prototype.getRefer.call({
-                        ownerNode:    this.$_DOM[0],
-                        raw:          this.src || this.action || ''
-                    }, iData);
+                    HTML_Template.instanceOf( this.$_DOM ).getContext(
+                        this.src ? 'src' : 'action'
+                    );
 
             for (var iKey in this.data)
                 iArgs[ this.data[iKey] ] = iData[ this.data[iKey] ];

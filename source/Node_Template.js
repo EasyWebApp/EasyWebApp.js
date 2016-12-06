@@ -36,19 +36,14 @@ define(['jquery'],  function ($) {
                     return  Eval_This.call(iContext, arguments[1]);
                 });
         },
-        getRefer:    function (iData) {
-            var iRefer = $.isEmptyObject( iData )  ?  [ ]  :  { };
+        getRefer:    function () {
+            var iRefer = [ ];
 
             this.ownerNode.nodeValue = this.raw.replace(
-                Node_Template.expression,
-                function () {
+                Node_Template.expression,  function () {
                     arguments[1].replace(
-                        Node_Template.reference,
-                        function (_, iName) {
-                            if (iRefer instanceof Array)
-                                iRefer.push( iName );
-                            else
-                                iRefer[ iName ] = iData[ iName ];
+                        Node_Template.reference,  function () {
+                            iRefer.push( arguments[1] );
                         }
                     );
 

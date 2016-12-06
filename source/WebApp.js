@@ -90,8 +90,6 @@ define(['jquery', 'UI_Module', 'InnerLink'],  function ($, UI_Module, InnerLink)
             });
         },
         register:        function (iPage) {
-            if (this.$_Root[0] !== iPage.$_View[0])  return;
-
             if (this.lastPage > -1)  this[this.lastPage].detach();
 
             if (++this.lastPage != this.length)

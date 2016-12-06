@@ -8,6 +8,8 @@ define([
 
         this.$_View = iLink.getTarget();
 
+        this.type = (this.$_View[0] == this.ownerApp.$_Root[0])  ?
+            'page'  :  'module';
         this.name = this.$_View[0].getAttribute('name');
 
         if (! this.name) {
@@ -24,7 +26,7 @@ define([
 
         this.lastLoad = 0;
 
-        this.ownerApp.register(this);
+        if (this.type == 'page')  this.ownerApp.register( this );
     }
 
     var Link_Key = $.makeSet('href', 'src');
@@ -140,21 +142,18 @@ define([
             var _This_ = this;
 
             return  this.template.load().then(function () {
-                var iLink = _This_.source;
 
                 var $_Link = _This_.$_View.children('link[target="_blank"]');
 
-                if (
-                    ((! iLink.href)  ||  iLink.src  ||  iLink.action)  ||
-                    (_This_.$_View[0] != _This_.ownerApp.$_Root[0])  ||
-                    (! $_Link[0])
-                )
-                    return;
+                if (! $_Link[0])  return;
+
+                var iLink = _This_.source;
 
                 _This_.template.render();
                 _This_.template.lastRender = 0;
 
-                var iAttr = $_Link[0].attributes;
+                var iAttr = $_Link[0].attributes,
+                    iJSON = iLink.src || iLink.action;
 
                 for (var i = 0;  iAttr[i];  i++)
                     if (iAttr[i].nodeName != 'target')
@@ -164,9 +163,11 @@ define([
 
                 _This_.template.scope.extend( _This_.getEnv() );
 
-                iLink.register(iLink.ownerApp.length - 1);
+                if (_This_.type == 'page')
+                    iLink.register(iLink.ownerApp.length - 1);
 
-                return _This_.loadJSON();
+                if ((! iJSON)  &&  (iLink.src || iLink.action))
+                    return _This_.loadJSON();
             });
         },
         render:        function (iData) {
