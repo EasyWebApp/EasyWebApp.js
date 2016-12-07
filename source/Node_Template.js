@@ -3,6 +3,7 @@ define(['jquery'],  function ($) {
     function Node_Template(iNode) {
         this.ownerNode = iNode;
 
+        this.name = iNode.nodeName;
         this.raw = iNode.nodeValue;
 
         this.ownerElement = iNode.parentNode || iNode.ownerElement;
@@ -65,18 +66,20 @@ define(['jquery'],  function ($) {
 
                     break;
                 }
-                case 2:    if (iNode.nodeName in iParent) {
+                case 2:    if (
+                    (this.name != 'style')  &&  (this.name in iParent)
+                ) {
                     if ( iValue )  try {
                         iValue = eval( iValue );
                     } catch (iError) { }
 
-                    iParent[ iNode.nodeName ] = iValue;
+                    iParent[ this.name ] = iValue;
 
                     return;
 
                 } else if (! iNode.ownerElement) {
                     if ( iValue )
-                        iParent.setAttribute(iNode.nodeName, iValue);
+                        iParent.setAttribute(this.name, iValue);
 
                     return;
                 }

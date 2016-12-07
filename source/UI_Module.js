@@ -63,7 +63,9 @@ define([
             return this;
         },
         attach:        function () {
-            this.$_View.data(this.constructor.getClass(), this);
+            this.$_View
+                .data(this.constructor.getClass(), this)
+                .data(HTML_Template.getClass(), this.template);
 
             if (this.$_Content) {
                 this.$_View.append( this.$_Content );
@@ -145,21 +147,16 @@ define([
 
                 var $_Link = _This_.$_View.children('link[target="_blank"]');
 
-                if (! $_Link[0])  return;
-
-                var iLink = _This_.source;
+                if (! $_Link.remove()[0])  return;
 
                 _This_.template.render();
                 _This_.template.lastRender = 0;
 
-                var iAttr = $_Link[0].attributes,
-                    iJSON = iLink.src || iLink.action;
+                var iLink = _This_.source;
 
-                for (var i = 0;  iAttr[i];  i++)
-                    if (iAttr[i].nodeName != 'target')
-                        iLink.$_DOM[0].setAttribute(
-                            iAttr[i].nodeName,  iAttr[i].nodeValue
-                        );
+                var iJSON = iLink.src || iLink.action;
+
+                HTML_Template.extend(iLink.$_DOM[0], $_Link[0]);
 
                 _This_.template.scope.extend( _This_.getEnv() );
 

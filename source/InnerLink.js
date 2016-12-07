@@ -45,10 +45,14 @@ define([
         getArgs:      function (Only_Param) {
             var iData = this.ownerView  ?  this.ownerView.template.scope  :  { };
 
-            var iArgs = Only_Param  ?  { }  :
-                    HTML_Template.instanceOf( this.$_DOM ).getContext(
-                        this.src ? 'src' : 'action'
-                    );
+            var iArgs = { };
+
+            if (! Only_Param) {
+                var iTemplate = HTML_Template.instanceOf( this.$_DOM );
+
+                if ( iTemplate )
+                    iArgs = iTemplate.getContext(this.src ? 'src' : 'action');
+            }
 
             for (var iKey in this.data)
                 iArgs[ this.data[iKey] ] = iData[ this.data[iKey] ];
@@ -95,7 +99,7 @@ define([
         loadData:     function (iScope) {
             var iOption = {type:  this.method};
 
-            if (this.$_DOM[0].tagName != 'form')
+            if (this.$_DOM[0].tagName != 'FORM')
                 iOption.data = this.getArgs( true );
             else if (! this.$_DOM.find('input[type="file"]')[0])
                 iOption.data = this.$_DOM.serialize();

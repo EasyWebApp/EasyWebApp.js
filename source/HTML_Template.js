@@ -34,6 +34,22 @@ define([
                 }),
                 iDOM.attributes
             );
+        },
+        extend:         function (iTarget, iSource) {
+            iSource = this.getTextNode( iSource );
+
+            for (var i = 0;  iSource[i];  i++)
+                if (iSource[i].nodeName != 'target')
+                    iTarget.setAttribute(
+                        iSource[i].nodeName,  iSource[i].nodeValue
+                    );
+
+            var $_Target = this.instanceOf( iTarget );
+
+            iTarget = $_Target.parsePlain( iTarget );
+
+            for (var i = 0;  iTarget[i];  i++)
+                iTarget[i].render( $_Target.scope );
         }
     });
 
@@ -47,6 +63,27 @@ define([
 
             for (var i = 0;  iName[i];  i++)
                 this.map[iName[i]] = (this.map[iName[i]] || 0)  +  iNode;
+        },
+        parsePlain:    function () {
+            var _This_ = this;
+
+            return  $.map(
+                HTML_Template.getTextNode( arguments[0] ),
+                function (iNode) {
+                    var iTemplate = new Node_Template( iNode );
+
+                    var iName = iTemplate.getRefer();
+
+                    if (! iName[0])  return;
+
+                    _This_.pushMap(iName, iTemplate);
+
+                    if ((! iNode.nodeValue)  &&  (iNode.nodeType == 2))
+                        iNode.ownerElement.removeAttribute( iNode.nodeName );
+
+                    return iTemplate;
+                }
+            );
         },
         parse:         function () {
             var $_DOM = this.$_View.find('*').not('[name]:list *').not(
@@ -66,18 +103,7 @@ define([
             $_DOM.not(
                 $_DOM.not('[name]:list').each(function () {
 
-                    $.each(HTML_Template.getTextNode( this ),  function () {
-                        var iTemplate = new Node_Template( this );
-
-                        var iName = iTemplate.getRefer();
-
-                        if (! iName[0])  return;
-
-                        _This_.pushMap(iName, iTemplate);
-
-                        if ((! this.nodeValue)  &&  (this.nodeType == 2))
-                            this.ownerElement.removeAttribute( this.nodeName );
-                    });
+                    _This_.parsePlain( this );
                 })
             ).each(function () {
 

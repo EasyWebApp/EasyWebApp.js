@@ -99,6 +99,7 @@ var Node_Template = (function (BOM, DOM, $) {
     function Node_Template(iNode) {
         this.ownerNode = iNode;
 
+        this.name = iNode.nodeName;
         this.raw = iNode.nodeValue;
 
         this.ownerElement = iNode.parentNode || iNode.ownerElement;
@@ -161,18 +162,20 @@ var Node_Template = (function (BOM, DOM, $) {
 
                     break;
                 }
-                case 2:    if (iNode.nodeName in iParent) {
+                case 2:    if (
+                    (this.name != 'style')  &&  (this.name in iParent)
+                ) {
                     if ( iValue )  try {
                         iValue = eval( iValue );
                     } catch (iError) { }
 
-                    iParent[ iNode.nodeName ] = iValue;
+                    iParent[ this.name ] = iValue;
 
                     return;
 
                 } else if (! iNode.ownerElement) {
                     if ( iValue )
-                        iParent.setAttribute(iNode.nodeName, iValue);
+                        iParent.setAttribute(this.name, iValue);
 
                     return;
                 }
@@ -222,6 +225,22 @@ var HTML_Template = (function (BOM, DOM, $, DS_Inherit, Node_Template) {
                 }),
                 iDOM.attributes
             );
+        },
+        extend:         function (iTarget, iSource) {
+            iSource = this.getTextNode( iSource );
+
+            for (var i = 0;  iSource[i];  i++)
+                if (iSource[i].nodeName != 'target')
+                    iTarget.setAttribute(
+                        iSource[i].nodeName,  iSource[i].nodeValue
+                    );
+
+            var $_Target = this.instanceOf( iTarget );
+
+            iTarget = $_Target.parsePlain( iTarget );
+
+            for (var i = 0;  iTarget[i];  i++)
+                iTarget[i].render( $_Target.scope );
         }
     });
 
@@ -235,6 +254,27 @@ var HTML_Template = (function (BOM, DOM, $, DS_Inherit, Node_Template) {
 
             for (var i = 0;  iName[i];  i++)
                 this.map[iName[i]] = (this.map[iName[i]] || 0)  +  iNode;
+        },
+        parsePlain:    function () {
+            var _This_ = this;
+
+            return  $.map(
+                HTML_Template.getTextNode( arguments[0] ),
+                function (iNode) {
+                    var iTemplate = new Node_Template( iNode );
+
+                    var iName = iTemplate.getRefer();
+
+                    if (! iName[0])  return;
+
+                    _This_.pushMap(iName, iTemplate);
+
+                    if ((! iNode.nodeValue)  &&  (iNode.nodeType == 2))
+                        iNode.ownerElement.removeAttribute( iNode.nodeName );
+
+                    return iTemplate;
+                }
+            );
         },
         parse:         function () {
             var $_DOM = this.$_View.find('*').not('[name]:list *').not(
@@ -254,18 +294,7 @@ var HTML_Template = (function (BOM, DOM, $, DS_Inherit, Node_Template) {
             $_DOM.not(
                 $_DOM.not('[name]:list').each(function () {
 
-                    $.each(HTML_Template.getTextNode( this ),  function () {
-                        var iTemplate = new Node_Template( this );
-
-                        var iName = iTemplate.getRefer();
-
-                        if (! iName[0])  return;
-
-                        _This_.pushMap(iName, iTemplate);
-
-                        if ((! this.nodeValue)  &&  (this.nodeType == 2))
-                            this.ownerElement.removeAttribute( this.nodeName );
-                    });
+                    _This_.parsePlain( this );
                 })
             ).each(function () {
 
@@ -443,7 +472,9 @@ var UI_Module = (function (BOM, DOM, $, HTML_Template, Node_Template) {
             return this;
         },
         attach:        function () {
-            this.$_View.data(this.constructor.getClass(), this);
+            this.$_View
+                .data(this.constructor.getClass(), this)
+                .data(HTML_Template.getClass(), this.template);
 
             if (this.$_Content) {
                 this.$_View.append( this.$_Content );
@@ -525,21 +556,16 @@ var UI_Module = (function (BOM, DOM, $, HTML_Template, Node_Template) {
 
                 var $_Link = _This_.$_View.children('link[target="_blank"]');
 
-                if (! $_Link[0])  return;
-
-                var iLink = _This_.source;
+                if (! $_Link.remove()[0])  return;
 
                 _This_.template.render();
                 _This_.template.lastRender = 0;
 
-                var iAttr = $_Link[0].attributes,
-                    iJSON = iLink.src || iLink.action;
+                var iLink = _This_.source;
 
-                for (var i = 0;  iAttr[i];  i++)
-                    if (iAttr[i].nodeName != 'target')
-                        iLink.$_DOM[0].setAttribute(
-                            iAttr[i].nodeName,  iAttr[i].nodeValue
-                        );
+                var iJSON = iLink.src || iLink.action;
+
+                HTML_Template.extend(iLink.$_DOM[0], $_Link[0]);
 
                 _This_.template.scope.extend( _This_.getEnv() );
 
@@ -641,10 +667,14 @@ var InnerLink = (function (BOM, DOM, $, UI_Module, HTML_Template) {
         getArgs:      function (Only_Param) {
             var iData = this.ownerView  ?  this.ownerView.template.scope  :  { };
 
-            var iArgs = Only_Param  ?  { }  :
-                    HTML_Template.instanceOf( this.$_DOM ).getContext(
-                        this.src ? 'src' : 'action'
-                    );
+            var iArgs = { };
+
+            if (! Only_Param) {
+                var iTemplate = HTML_Template.instanceOf( this.$_DOM );
+
+                if ( iTemplate )
+                    iArgs = iTemplate.getContext(this.src ? 'src' : 'action');
+            }
 
             for (var iKey in this.data)
                 iArgs[ this.data[iKey] ] = iData[ this.data[iKey] ];
@@ -691,7 +721,7 @@ var InnerLink = (function (BOM, DOM, $, UI_Module, HTML_Template) {
         loadData:     function (iScope) {
             var iOption = {type:  this.method};
 
-            if (this.$_DOM[0].tagName != 'form')
+            if (this.$_DOM[0].tagName != 'FORM')
                 iOption.data = this.getArgs( true );
             else if (! this.$_DOM.find('input[type="file"]')[0])
                 iOption.data = this.$_DOM.serialize();
@@ -849,7 +879,7 @@ var WebApp = (function (BOM, DOM, $, UI_Module, InnerLink) {
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v3.2  (2016-12-06)  Beta
+//      [Version]    v3.2  (2016-12-07)  Beta
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //
