@@ -119,7 +119,7 @@ define([
 
             var $_Module = this.$_View
                     .find('*[href]:not(a, link), *[src]:not(img, iframe, script)')
-                    .not(InnerLink.selector + ', *[href]:parent');
+                    .not( InnerLink.selector );
 
             return Promise.all($.map(
                 $_Module[this.lastLoad ? 'not' : 'filter'](function () {

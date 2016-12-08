@@ -7,5 +7,37 @@
         {
             "Nick_Name":    "EasyWebApp"
         }
+    ],
+    "list":         [
+        {
+            "name":       "Firefox",
+            "company":    "Mozilla",
+            "renderE":    "Gecko",
+            "scriptE":    "SpiderMonkey"
+        },
+        {
+            "name":       "Internet Explorer",
+            "company":    "Microsoft",
+            "renderE":    "Trident",
+            "scriptE":    "JScript"
+        },
+        {
+            "name":       "Safari",
+            "company":    "Apple",
+            "renderE":    "Webkit",
+            "scriptE":    "JavascriptCore"
+        },
+        {
+            "name":       "Chrome",
+            "company":    "Google",
+            "renderE":    "Blink",
+            "scriptE":    "JavaScript V8"
+        },
+        {
+            "name":       "Edge",
+            "company":    "Microsoft",
+            "renderE":    "EdgeHTML",
+            "scriptE":    "Chakra"
+        }
     ]
 }

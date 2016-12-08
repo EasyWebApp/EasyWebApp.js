@@ -1,5 +1,6 @@
 <link target="_blank" src="docs/try.json" />
 
+<h3>数据绑定</h3>
 <form target="_blank">
     <fieldset>
         <legend>单一对象</legend>
@@ -20,3 +21,33 @@
         </ul>
     </fieldset>
 </form>
+
+<h3>高级模板</h3>
+<div>
+    <a target="_blank" href="http://webcomponents.org/">
+        Web Component
+    </a>
+    标准草案
+    <a target="_blank" href="https://developer.mozilla.org/zh-CN/docs/Web/API/Element/slot">
+        Slot 机制
+    </a>
+</div>
+<ul>
+    <li><a target="_blank" href="https://www.zhihu.com/question/37548226/answer/92201117">
+        彭金金 的理解
+    </a></li>
+    <li><a target="_blank" href="https://www.zhihu.com/question/37548226/answer/128196308">
+        Yi Kai 的理解
+    </a></li>
+</ul>
+<div href="docs/table.html" async="false">
+    <div slot="head">
+        <span>浏览器</span><span>厂商</span><span>排版引擎</span><span>脚本引擎</span>
+    </div>
+    <li slot="body">
+        <span>${this.name}</span>
+        <span>${this.company}</span>
+        <span>${this.renderE}</span>
+        <span>${this.scriptE}</span>
+    </li>
+</div>

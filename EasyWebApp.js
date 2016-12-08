@@ -278,7 +278,7 @@ var HTML_Template = (function (BOM, DOM, $, DS_Inherit, Node_Template) {
         },
         parse:         function () {
             var $_DOM = this.$_View.find('*').not('[name]:list *').not(
-                    this.$_View.find('[src] *')
+                    this.$_View.find('[src] *,  [href]:not(a, link, [target]) *')
                 ),
                 _This_ = this;
 
@@ -291,13 +291,12 @@ var HTML_Template = (function (BOM, DOM, $, DS_Inherit, Node_Template) {
                 return  this.outerHTML.match( Node_Template.expression );
             });
 
-            $_DOM.not(
-                $_DOM.not('[name]:list').each(function () {
+            var $_Plain = $_DOM.not('[name]:list');
 
-                    _This_.parsePlain( this );
-                })
-            ).each(function () {
+            for (var i = 0;  $_Plain[i];  i++)
+                this.parsePlain( $_Plain[i] );
 
+            $_DOM.not( $_Plain ).each(function () {
                 _This_.pushMap(
                     this.getAttribute('name'),
                     $.ListView( this ).on('insert',  function () {
@@ -317,6 +316,9 @@ var HTML_Template = (function (BOM, DOM, $, DS_Inherit, Node_Template) {
         load:          function () {
             var _This_ = this;
 
+            this.$_Slot = this.$_View.is('body [href]:not(a, link, [target])') ?
+                this.$_View.children().remove() : $();
+
             return  new Promise(function () {
 
                 if (_This_.source)
@@ -325,6 +327,18 @@ var HTML_Template = (function (BOM, DOM, $, DS_Inherit, Node_Template) {
                     arguments[0]( _This_.$_View[0].innerHTML );
 
             }).then(function () {
+
+                var $_Slot = _This_.$_View.find('slot'),
+                    $_Named = _This_.$_Slot.filter('[slot]');
+
+                if ( $_Named[0] )
+                    $_Slot.filter('[name]').replaceWith(function () {
+                        return $_Named.filter(
+                            '[slot="' + this.getAttribute('name') + '"]'
+                        );
+                    });
+
+                $_Slot.not('[name]').replaceWith(_This_.$_Slot.not( $_Named ));
 
                 _This_.parse();
             });
@@ -528,7 +542,7 @@ var UI_Module = (function (BOM, DOM, $, HTML_Template, Node_Template) {
 
             var $_Module = this.$_View
                     .find('*[href]:not(a, link), *[src]:not(img, iframe, script)')
-                    .not(InnerLink.selector + ', *[href]:parent');
+                    .not( InnerLink.selector );
 
             return Promise.all($.map(
                 $_Module[this.lastLoad ? 'not' : 'filter'](function () {
@@ -879,7 +893,7 @@ var WebApp = (function (BOM, DOM, $, UI_Module, InnerLink) {
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v3.2  (2016-12-07)  Beta
+//      [Version]    v3.3  (2016-12-08)  Alpha
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //
