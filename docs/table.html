@@ -3,20 +3,20 @@
         display:    table;
         width:      100%;
     }
-
     .Table_Component > [slot="head"] {
         display:       table-header-group;
         background:    rgb(93, 92, 96)  !important;
         color:         white  !important;
     }
-    .Table_Component > [slot="head"] > * {
-        display:    table-cell;
-    }
-
     .Table_Component > ol {
         display:    table-row-group;
         padding:    0;
     }
+    .Table_Component > [slot="foot"] {
+        display:        table-footer-group;
+        font-weight:    bold;
+    }
+
     .Table_Component > ol > li {
         display:       table-row;
         font-size:     0.9em;
@@ -30,27 +30,28 @@
         background:    whitesmoke  !important;
     }
     .Table_Component > ol > li > * {
-        display:    table-cell;
-    }
-
-    .Table_Component > [slot="head"] > *,
-    .Table_Component > ol > li > * {
-        padding:      0.5em;
-        max-width:    55em;
-    }
-    .Table_Component > [slot="head"] > * {
-        white-space:    nowrap;
-        text-align:     center;
-    }
-    .Table_Component > ol > li > * {
         white-space:    pre-line;
     }
     .Table_Component > ol > li > * > * {
         white-space:    normal;
     }
+
+    .Table_Component > [slot="head"] > *,
+    .Table_Component > [slot="foot"] > * {
+        white-space:    nowrap;
+        text-align:     center;
+    }
+    .Table_Component > [slot="head"] > *,
+    .Table_Component > ol > li > *,
+    .Table_Component > [slot="foot"] > * {
+        display:      table-cell;
+        padding:      0.5em;
+        max-width:    55em;
+    }
     @media (max-width: 1280px) {
         .Table_Component > [slot="head"] > *,
-        .Table_Component > ol > li > * {
+        .Table_Component > ol > li > *,
+        .Table_Component > [slot="foot"] > * {
             max-width:    25em;
         }
     }
@@ -60,4 +61,5 @@
     <ol name="list">
         <slot name="body"></slot>
     </ol>
+    <slot name="foot"></slot>
 </div>

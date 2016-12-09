@@ -2,7 +2,7 @@
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v3.3  (2016-12-08)  Alpha
+//      [Version]    v3.3  (2016-12-09)  Alpha
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //
@@ -51,27 +51,21 @@ define([
 
         iEvent.stopPropagation();
 
-        var iLink = new InnerLink(new WebApp(), this),  iModule;
+        var iLink = new InnerLink(new WebApp(), this);
 
         switch (iLink.target) {
             case null:        ;
             case '':          return;
-            case '_blank':    {
-                iModule = $.extend({
+            case '_blank':
+                UI_Module.prototype.loadJSON.call({
                     ownerApp:    iLink.ownerApp,
                     source:      iLink,
                     template:    iLink.ownerView.template
-                }, UI_Module.prototype);
-
-                iModule.loadJSON().then(function () {
-
-                    iModule.trigger('data', arguments[0]);
                 });
                 break;
-            }
             case '_self':     ;
             default:          {
-                iModule = iLink.ownerApp.getModule( iLink.$_DOM );
+                var iModule = iLink.ownerApp.getModule( iLink.$_DOM );
 
                 if ((! iModule)  ||  !(iModule.domReady instanceof Promise))
                     (new UI_Module(iLink)).load();
