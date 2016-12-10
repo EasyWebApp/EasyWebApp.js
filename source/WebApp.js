@@ -109,6 +109,23 @@ define(['jquery', 'UI_Module', 'InnerLink'],  function ($, UI_Module, InnerLink)
         },
         getModule:       function () {
             return  UI_Module.instanceOf( arguments[0] );
+        },
+        component:       function ($_View, iFactory) {
+
+            if (typeof $_View == 'function') {
+                iFactory = $_View;
+                $_View = '';
+            }
+            $_View = $($_View);
+
+            var iModule = UI_Module.instanceOf($_View[0] ? $_View : this.$_Root);
+
+            iModule.domReady.then(function (iData) {
+
+                iModule.render(iFactory.call(iModule, iData)  ||  iData);
+            });
+
+            return this;
         }
     });
 

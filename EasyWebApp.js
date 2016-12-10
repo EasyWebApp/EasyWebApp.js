@@ -897,6 +897,23 @@ var WebApp = (function (BOM, DOM, $, UI_Module, InnerLink) {
         },
         getModule:       function () {
             return  UI_Module.instanceOf( arguments[0] );
+        },
+        component:       function ($_View, iFactory) {
+
+            if (typeof $_View == 'function') {
+                iFactory = $_View;
+                $_View = '';
+            }
+            $_View = $($_View);
+
+            var iModule = UI_Module.instanceOf($_View[0] ? $_View : this.$_Root);
+
+            iModule.domReady.then(function (iData) {
+
+                iModule.render(iFactory.call(iModule, iData)  ||  iData);
+            });
+
+            return this;
         }
     });
 
@@ -909,7 +926,7 @@ var WebApp = (function (BOM, DOM, $, UI_Module, InnerLink) {
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v3.3  (2016-12-09)  Alpha
+//      [Version]    v3.3  (2016-12-10)  Alpha
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //
@@ -969,7 +986,7 @@ var EasyWebApp = (function (BOM, DOM, $, WebApp, InnerLink, UI_Module, HTML_Temp
                 break;
             case '_self':     ;
             default:          {
-                var iModule = iLink.ownerApp.getModule( iLink.$_DOM );
+                var iModule = UI_Module.instanceOf( iLink.$_DOM );
 
                 if ((! iModule)  ||  !(iModule.domReady instanceof Promise))
                     (new UI_Module(iLink)).load();

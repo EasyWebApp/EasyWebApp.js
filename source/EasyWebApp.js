@@ -2,7 +2,7 @@
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v3.3  (2016-12-09)  Alpha
+//      [Version]    v3.3  (2016-12-10)  Alpha
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //
@@ -65,7 +65,7 @@ define([
                 break;
             case '_self':     ;
             default:          {
-                var iModule = iLink.ownerApp.getModule( iLink.$_DOM );
+                var iModule = UI_Module.instanceOf( iLink.$_DOM );
 
                 if ((! iModule)  ||  !(iModule.domReady instanceof Promise))
                     (new UI_Module(iLink)).load();
