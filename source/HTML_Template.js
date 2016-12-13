@@ -106,9 +106,13 @@ define([
                 this.parsePlain( $_Plain[i] );
 
             $_DOM.not( $_Plain ).each(function () {
+                var iView = $[
+                        $(':media', this)[0]  ?  'GalleryView'  :  'ListView'
+                    ]( this );
+
                 _This_.pushMap(
                     this.getAttribute('name'),
-                    $.ListView( this ).on('insert',  function () {
+                    iView.on('insert',  function () {
 
                         (new HTML_Template(arguments[0], _This_.scope)).parse();
 

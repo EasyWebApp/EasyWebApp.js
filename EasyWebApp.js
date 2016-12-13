@@ -297,9 +297,13 @@ var HTML_Template = (function (BOM, DOM, $, DS_Inherit, Node_Template) {
                 this.parsePlain( $_Plain[i] );
 
             $_DOM.not( $_Plain ).each(function () {
+                var iView = $[
+                        $(':media', this)[0]  ?  'GalleryView'  :  'ListView'
+                    ]( this );
+
                 _This_.pushMap(
                     this.getAttribute('name'),
-                    $.ListView( this ).on('insert',  function () {
+                    iView.on('insert',  function () {
 
                         (new HTML_Template(arguments[0], _This_.scope)).parse();
 
@@ -926,7 +930,7 @@ var WebApp = (function (BOM, DOM, $, UI_Module, InnerLink) {
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v3.3  (2016-12-10)  Alpha
+//      [Version]    v3.3  (2016-12-13)  Alpha
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //
@@ -988,8 +992,14 @@ var EasyWebApp = (function (BOM, DOM, $, WebApp, InnerLink, UI_Module, HTML_Temp
             default:          {
                 var iModule = UI_Module.instanceOf( iLink.$_DOM );
 
-                if ((! iModule)  ||  !(iModule.domReady instanceof Promise))
-                    (new UI_Module(iLink)).load();
+                if (iModule  &&  (iModule.domReady instanceof Promise))
+                    break;
+
+                iModule = UI_Module.instanceOf(iLink.getTarget(), false);
+
+                (((! iModule)  ||  (iModule.type == 'page'))  ?
+                    (new UI_Module(iLink))  :  iModule
+                ).load();
             }
         }
     });
@@ -1010,7 +1020,11 @@ var EasyWebApp = (function (BOM, DOM, $, WebApp, InnerLink, UI_Module, HTML_Temp
     }
 
     function Data_Change() {
-        if (No_Input( arguments[0] ))  return;
+        var iName = this.getAttribute('name'),
+            iTemplate = HTML_Template.instanceOf( this );
+
+        if (No_Input( arguments[0] )  ||  (! iName)  ||  (! iTemplate))
+            return;
 
         var iValue = $(this).value('name');
 
@@ -1020,9 +1034,7 @@ var EasyWebApp = (function (BOM, DOM, $, WebApp, InnerLink, UI_Module, HTML_Temp
 
         iValue = (iValue != null)  ?  iValue  :  '';
 
-        var iTemplate = HTML_Template.instanceOf( this );
-
-        var iScope = iTemplate.scope.setValue(this.getAttribute('name'), iValue);
+        var iScope = iTemplate.scope.setValue(iName, iValue);
 
         while (iTemplate.scope !== iScope) {
             iTemplate = HTML_Template.instanceOf(

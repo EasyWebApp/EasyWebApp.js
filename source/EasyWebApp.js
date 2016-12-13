@@ -2,7 +2,7 @@
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v3.3  (2016-12-10)  Alpha
+//      [Version]    v3.3  (2016-12-13)  Alpha
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //
@@ -67,8 +67,14 @@ define([
             default:          {
                 var iModule = UI_Module.instanceOf( iLink.$_DOM );
 
-                if ((! iModule)  ||  !(iModule.domReady instanceof Promise))
-                    (new UI_Module(iLink)).load();
+                if (iModule  &&  (iModule.domReady instanceof Promise))
+                    break;
+
+                iModule = UI_Module.instanceOf(iLink.getTarget(), false);
+
+                (((! iModule)  ||  (iModule.type == 'page'))  ?
+                    (new UI_Module(iLink))  :  iModule
+                ).load();
             }
         }
     });
@@ -89,7 +95,11 @@ define([
     }
 
     function Data_Change() {
-        if (No_Input( arguments[0] ))  return;
+        var iName = this.getAttribute('name'),
+            iTemplate = HTML_Template.instanceOf( this );
+
+        if (No_Input( arguments[0] )  ||  (! iName)  ||  (! iTemplate))
+            return;
 
         var iValue = $(this).value('name');
 
@@ -99,9 +109,7 @@ define([
 
         iValue = (iValue != null)  ?  iValue  :  '';
 
-        var iTemplate = HTML_Template.instanceOf( this );
-
-        var iScope = iTemplate.scope.setValue(this.getAttribute('name'), iValue);
+        var iScope = iTemplate.scope.setValue(iName, iValue);
 
         while (iTemplate.scope !== iScope) {
             iTemplate = HTML_Template.instanceOf(
