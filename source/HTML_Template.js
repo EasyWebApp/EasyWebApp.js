@@ -6,6 +6,8 @@ define([
 
         this.$_View = $( $_View ).data(this.constructor.getClass(), this);
 
+        this.type = $.expr[':'].list( this.$_View[0] )  ?  'list'  :  'plain';
+
         this.scope = DS_Inherit(iScope,  { });
 
         this.source = (iURL || '').match(/\.(html?|md)\??/)  ?
@@ -63,6 +65,8 @@ define([
 
             for (var i = 0;  iName[i];  i++)
                 this.map[iName[i]] = (this.map[iName[i]] || 0)  +  iNode;
+
+            return this;
         },
         parsePlain:    function () {
             var _This_ = this;
@@ -85,44 +89,55 @@ define([
                 }
             );
         },
-        parse:         function () {
-            var $_DOM = this.$_View.find('*').not('[name]:list *').not(
-                    this.$_View.find('[src] *,  [href]:not(a, link, [target]) *')
-                ),
+        parseList:     function (iList) {
+            var iView = $[
+                    $(':media', iList)[0]  ?  'GalleryView'  :  'ListView'
+                ]( iList ),
                 _This_ = this;
 
-            $_DOM.filter('[name]:input').each(function () {
+            return this.pushMap(
+                iList.getAttribute('name'),
+                iView.on('insert',  function () {
 
-                _This_.pushMap(this.name || this.getAttribute('name'),  this);
-            });
+                    (new HTML_Template(arguments[0], _This_.scope)).parse();
+
+                }).on('update',  function () {
+
+                    HTML_Template.instanceOf( arguments[0] )
+                        .render( arguments[1] );
+                })
+            );
+        },
+        parse:         function () {
+            if (this.type == 'list')
+                return  this.parseList( this.$_View[0] );
+
+            var $_List = $.ListView.findView( this.$_View ).filter('[name]');
+
+            var $_DOM = this.$_View.find('*').not(
+                    this.$_View.find('[src],  [href]:not(a, link, [target])')
+                        .add( $_List ).find('*')
+                );
+
+            var $_Input = $_DOM.filter('[name]:input');
+
+            for (var i = 0;  $_Input[i];  i++)
+                this.pushMap(
+                    $_Input[i].name || $_Input[i].getAttribute('name'),  $_Input[i]
+                );
 
             $_DOM = $_DOM.add( this.$_View ).filter(function () {
+
                 return  this.outerHTML.match( Node_Template.expression );
             });
 
-            var $_Plain = $_DOM.not('[name]:list');
+            var $_Plain = $_DOM.not( $_List );
 
             for (var i = 0;  $_Plain[i];  i++)
                 this.parsePlain( $_Plain[i] );
 
-            $_DOM.not( $_Plain ).each(function () {
-                var iView = $[
-                        $(':media', this)[0]  ?  'GalleryView'  :  'ListView'
-                    ]( this );
-
-                _This_.pushMap(
-                    this.getAttribute('name'),
-                    iView.on('insert',  function () {
-
-                        (new HTML_Template(arguments[0], _This_.scope)).parse();
-
-                    }).on('update',  function () {
-
-                        HTML_Template.instanceOf( arguments[0] )
-                            .render( arguments[1] );
-                    })
-                );
-            });
+            for (var i = 0;  $_List[i];  i++)
+                this.parseList( $_List[i] );
 
             return this;
         },

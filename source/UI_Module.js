@@ -125,7 +125,7 @@ define([
             var _This_ = this,  InnerLink = this.source.constructor;
 
             var $_Module = this.$_View
-                    .find('*[href]:not(a, link), *[src]:not(img, iframe, script)')
+                    .find('*[href]:not(a, link), *[src]:not(:media, script)')
                     .not( InnerLink.selector );
 
             return Promise.all($.map(

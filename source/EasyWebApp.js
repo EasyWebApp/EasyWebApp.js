@@ -2,7 +2,7 @@
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v3.3  (2016-12-13)  Alpha
+//      [Version]    v3.3  (2016-12-15)  Alpha
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //
@@ -135,7 +135,7 @@ define([
         .on(
             'keyup paste',
             ':input:not(:button, ' + Only_Change + ')',
-            Data_Change
+            $.throttle( Data_Change )
         );
 
 });
