@@ -113,12 +113,16 @@ var Node_Template = (function (BOM, DOM, $) {
         eval('``');
 
         var ES_ST = function () {
+                'use strict';
+
                 var iValue = eval('`' + arguments[0] + '`');
 
                 return  (iValue != null)  ?  iValue  :  '';
             };
     } catch (iError) {
         var Eval_This = function () {
+                'use strict';
+
                 var iValue = eval( arguments[0] );
 
                 return  (iValue != null)  ?  iValue  :  '';
@@ -127,11 +131,15 @@ var Node_Template = (function (BOM, DOM, $) {
 
     $.extend(Node_Template.prototype, {
         eval:        function (iContext) {
-            return  ES_ST  ?  ES_ST.call(iContext, this.raw)  :
-                this.raw.replace(Node_Template.expression,  function () {
+            try {
+                return  ES_ST  ?  ES_ST.call(iContext, this.raw)  :
+                    this.raw.replace(Node_Template.expression,  function () {
 
-                    return  Eval_This.call(iContext, arguments[1]);
-                });
+                        return  Eval_This.call(iContext, arguments[1]);
+                    });
+            } catch (iError) {
+                return '';
+            }
         },
         getRefer:    function () {
             var iRefer = [ ];
@@ -358,8 +366,6 @@ var HTML_Template = (function (BOM, DOM, $, DS_Inherit, Node_Template) {
                     });
 
                 $_Slot.not('[name]').replaceWith(_This_.$_Slot.not( $_Named ));
-
-                _This_.parse();
             });
         },
         data2Node:     function (iData) {
@@ -607,6 +613,10 @@ var UI_Module = (function (BOM, DOM, $, HTML_Template, Node_Template) {
             var _This_ = this;
 
             return  this.template.load().then(function () {
+
+                _This_.trigger('template');
+
+                _This_.template.parse();
 
                 var $_Link = _This_.$_View.children('link[target="_blank"]');
 
@@ -945,7 +955,7 @@ var WebApp = (function (BOM, DOM, $, UI_Module, InnerLink) {
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v3.3  (2016-12-15)  Alpha
+//      [Version]    v3.3  (2016-12-21)  Beta
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //

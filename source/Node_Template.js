@@ -17,12 +17,16 @@ define(['jquery'],  function ($) {
         eval('``');
 
         var ES_ST = function () {
+                'use strict';
+
                 var iValue = eval('`' + arguments[0] + '`');
 
                 return  (iValue != null)  ?  iValue  :  '';
             };
     } catch (iError) {
         var Eval_This = function () {
+                'use strict';
+
                 var iValue = eval( arguments[0] );
 
                 return  (iValue != null)  ?  iValue  :  '';
@@ -31,11 +35,15 @@ define(['jquery'],  function ($) {
 
     $.extend(Node_Template.prototype, {
         eval:        function (iContext) {
-            return  ES_ST  ?  ES_ST.call(iContext, this.raw)  :
-                this.raw.replace(Node_Template.expression,  function () {
+            try {
+                return  ES_ST  ?  ES_ST.call(iContext, this.raw)  :
+                    this.raw.replace(Node_Template.expression,  function () {
 
-                    return  Eval_This.call(iContext, arguments[1]);
-                });
+                        return  Eval_This.call(iContext, arguments[1]);
+                    });
+            } catch (iError) {
+                return '';
+            }
         },
         getRefer:    function () {
             var iRefer = [ ];

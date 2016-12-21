@@ -167,8 +167,6 @@ define([
                     });
 
                 $_Slot.not('[name]').replaceWith(_This_.$_Slot.not( $_Named ));
-
-                _This_.parse();
             });
         },
         data2Node:     function (iData) {

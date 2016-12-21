@@ -166,6 +166,10 @@ define([
 
             return  this.template.load().then(function () {
 
+                _This_.trigger('template');
+
+                _This_.template.parse();
+
                 var $_Link = _This_.$_View.children('link[target="_blank"]');
 
                 if (! $_Link.remove()[0])  return;
