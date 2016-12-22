@@ -23,9 +23,10 @@
         require.config({
             baseUrl:    '../source/',
             paths:      {
-                jquery:       '//cdn.bootcss.com/jquery/1.12.4/jquery.min',
-                'jQuery+':    'http://tech_query.oschina.io/iquery/jQuery+',
-                'iQuery+':    'http://tech_query.oschina.io/iquery/iQuery+'
+                jquery:        '//cdn.bootcss.com/jquery/1.12.4/jquery.min',
+                'jQuery+':     'http://tech_query.oschina.io/iquery/jQuery+',
+                'iQuery+':     'http://tech_query.oschina.io/iquery/iQuery+',
+                TimePassed:    '../demo/javascript/TimePassed'
             }
         });
 
@@ -50,14 +51,7 @@
 ### index.js
 
 ```JavaScript
-define([
-    'jquery',
-    './javascript/TimePassed',
-    'iQuery+',
-    'EasyWebApp'
-],  function ($, TimePassed) {
-
-    var BOM = self;
+define(['jquery', 'TimePassed', 'EasyWebApp'],  function ($, TimePassed) {
 
     $.ajaxSetup({
         dataType:    'jsonp',
@@ -105,13 +99,13 @@ define([
 ### （一）调用 API
 
 ```HTML
-<span target="_blank" method="DELETE" src="api/user/{uid}">
+<span target="_blank" method="DELETE" src="api/user/${this.uid}">
     删除
 </span>
 ```
 #### 属性解释
  - `target="_blank"` —— 该链接为 **纯 HTTP API 调用**，不渲染任何模块
- - `{uid}` —— 该 **SPA 链接所在数据作用域**中名为 uid 的数据值
+ - `${this.uid}` —— 该 **SPA 链接所在数据作用域**中名为 uid 的数据值（语法规则 详见下文）
 
 
 ### （二）表单提交
@@ -138,52 +132,52 @@ define([
 ```
 
 
-### （四）数据填充
+### （四）数据绑定
 
 ```HTML
-<div class="Background-Image" name="img">
-    <i></i>
-</div>
-<h1 name="title"></h1>
+<div class="Background-Image" style="background-image: url(${this.img})"></div>
+<h1>${this.title}</h1>
 <small class="Grid-Row CenterX">
-    <span name="timePassed"></span>
-    <a class="CenterX" target="_blank" name="fromurl">
-        <span name="fromname"></span>
+    <span>${this.timePassed}</span>
+    <a class="CenterX" target="_blank" href="${this.fromurl}">
+        ${this.fromname}
     </a>
     <span>
         <i class="Icon Eye"></i>
-        <em name="count"></em>
+        <em>${this.count}</em>
     </span>
 </small>
-<pre class="CenterX" name="description"></pre>
-<p name="message"></p>
+<pre class="CenterX">${this.description}</pre>
+<p>${this.message}</p>
 ```
-#### 属性解释
- - `name` —— API 返回的 **JSON 数据对象**中的 **数值键名**
+#### 语法解释
+ 1. HTML 模板中任一标签属性、文本区域 均支持内嵌 [ES 6 模板字符串](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/template_strings)（不带 函数名标签前缀的基本语法），EWA v3.1 之前支持的 `name` 属性仅用于 表单元素的数据绑定
+ 2. **可输入元素**（[iQuery](//git.oschina.net/Tech_Query/iQuery) 扩展的 `:input:not(:button)` 伪类选择符）引起的数据变更 会触发该数据所在作用域下的 **UI 重绘**
 
 
 ### （五）迭代视图
 
 ```HTML
-<ol class="CenterX">
-    <li class="Item-Box visible Content" target="_self"
-        href="html/content.html" src="{_Data_Path_}/show" data-id="id">
-        <div class="Background-Image" name="img">
-            <i></i>
+<ol class="CenterX" name="list">
+    <li class="Item-Box visible Content" title="${this.description}" target="_self"
+        href="html/content.html" src="${this._Data_Path_}/show?id=${this.id}">
+        <div class="Background-Image" style="background-image: url(${this.img})">
         </div>
-        <p name="title"></p>
+        <p>${this.title}</p>
         <small class="Grid-Row CenterX">
-            <span name="timePassed"></span>
-            <a target="_blank" name="fromurl">
-                <span name="fromname"></span>
+            <span title="${(new Date(this.time)).toLocaleString()}">
+                ${this.timePassed}
+            </span>
+            <a target="_blank" href="${this.fromurl}">
+                ${this.fromname}
             </a>
         </small>
     </li>
 </ol>
 ```
-#### 属性解释
- - `{_Data_Path_}` —— 该 **DOM 元素所属 SPA 模块** `src` 属性中 URL 的路径部分
- - `data-name="key"` —— 该 DOM 元素所在 **SPA 数据作用域**中名为 `key`（驼峰命名法）的数据值，将以 `name` 为参数名去请求 **HTTP API**
+#### 语法解释
+ - `${this._Data_Path_}` —— 该 **DOM 元素所属 SPA 模块** `src` 属性中 URL 的路径部分
+ - `${(new Date(this.time)).toLocaleString()}` —— ES 6 模板字符串内支持任何 [ES 5 严格模式](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Strict_mode)允许的 **JavaScript 表达式**
 
 
 ### （六）模块引用
@@ -192,11 +186,9 @@ define([
 <div class="Panel">
     <div class="Head">网友评论</div>
     <div class="Body" href="html/comment.html"
-         src="memo/comment?type=top" data-id="id"></div>
+         src="memo/comment?type=top?id=${this.id}"></div>
 </div>
 ```
-【特别注意】 **SPA 模块引用容器**的 HTML 标签内不能有任何代码、字符（即 **DOM 实例化**后不能有任何子节点，符合 `:empty` **CSS 3 选择符**的定义）
-
 
 
 ## 【JavaScript API】
@@ -225,7 +217,7 @@ var iApp = $('#PageBox').iWebApp();
 $('#PageBox').iWebApp()
     .on('data',  function (iLink, iData) {
         if ( iData.code )
-            return  BOM.alert("【服务器报错】" + iData.message);
+            return  self.alert("【服务器报错】" + iData.message);
 
         return  (iData.data instanceof Array)  ?
             $.map(iData.data, Object_Filter)  :  Object_Filter( iData.data );

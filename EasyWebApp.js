@@ -616,7 +616,7 @@ var UI_Module = (function (BOM, DOM, $, HTML_Template, Node_Template) {
 
                 _This_.trigger('template');
 
-                _This_.template.parse();
+                if (! _This_.template[0])  _This_.template.parse();
 
                 var $_Link = _This_.$_View.children('link[target="_blank"]');
 

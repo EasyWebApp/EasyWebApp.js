@@ -1,6 +1,4 @@
-require(['jquery', 'TimePassed', 'EasyWebApp'],  function ($, TimePassed) {
-
-    var BOM = self;
+define(['jquery', 'TimePassed', 'EasyWebApp'],  function ($, TimePassed) {
 
     $.ajaxSetup({
         dataType:    'jsonp',
@@ -34,7 +32,7 @@ require(['jquery', 'TimePassed', 'EasyWebApp'],  function ($, TimePassed) {
 
         iApp.on('data',  function (iLink, iData) {
             if (! iData.status)
-                return  BOM.alert("【服务器报错】" + iData.msg);
+                return  self.alert("【服务器报错】" + iData.msg);
 
             if (! iData.tngou)  return  Object_Filter( iData );
 
