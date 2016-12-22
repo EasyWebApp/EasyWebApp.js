@@ -3,8 +3,9 @@
     "Description":    "为<em>jQuery 程序猿</em>打造的<em>单页应用引擎</em>！~",
     "Main_Nav":       [
         {
-            "title":    "EasyWebApp",
-            "href":     "#"
+            "title":        "EasyWebApp",
+            "href":         "#!ReadMe.md",
+            "autofocus":    true
         },
         {
             "title":    "快速入门",
@@ -12,7 +13,7 @@
         },
         {
             "title":    "小试牛刀",
-            "href":     "#!docs/try.html"
+            "href":     "#!docs/html/try.html"
         },
         {
             "title":     "演示程序",

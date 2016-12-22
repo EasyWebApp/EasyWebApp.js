@@ -9,6 +9,7 @@ body > .Head > .DropDown {
         position:    fixed;
         left:        0;
         top:         0;
+        z-index:     1;
         width:       100%;
     }
     body > .Head > .Grid-Row {
@@ -21,15 +22,14 @@ body > .Head > .DropDown {
         vertical-align:    middle;
     }
     #Main_Title {
-        padding:    0;
-    }
-    #Main_Title p {
-        display:    none;
+        font-size:     0.5em;
+        text-align:    left;
+        padding:       0  0.5em;
     }
     #Main_Content {
-        padding:    5em  1em  0;
+        padding:    2.5em  0  0;
     }
-    #Content_Nav {
+    #Main_Title p,  #Toolkit,  #Content_Nav  {
         display:    none;
     }
 }
@@ -40,14 +40,10 @@ body > .Head > .DropDown {
     width:         100%;
 }
 #Main_Nav > li:first-child {
-    width:       0;
-    padding:     0;
-    overflow:    hidden;
-    opacity:     0;
+    display:    none;
 }
 #Main_Nav > li.focus:first-child {
-    width:      auto;
-    opacity:    1;
+    display:    inline-block;
 }
 #Main_Nav > li > a {
     border-top:       4px  solid   transparent;
@@ -81,6 +77,24 @@ body > .Foot {
 }
 body > .Foot > * {
     padding:    2em;
+}
+
+
+body > .PC_Narrow > div {
+    position:    relative;
+}
+#Toolkit {
+    position:    absolute;
+    top:         1.5em;
+    right:       0;
+    z-index:     1;
+}
+#QRcode > .Body {
+    left:     auto;
+    right:    0;
+}
+#QRcode .Icon:hover {
+	background:    transparent;
 }
 
 

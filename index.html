@@ -7,7 +7,8 @@
 
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
 
-    <meta name="viewport" content="width=device-width,initial-scale=1.0,minimum-scale=1.0,maximum-scale=1.0,user-scalable=no,target-densitydpi=medium-dpi">
+    <meta name="viewport"
+          content="width=device-width,initial-scale=1.0,minimum-scale=1.0,maximum-scale=1.0,user-scalable=no">
 
     <title>EasyWebApp 官方网站 - EWAwiki</title>
 
@@ -23,8 +24,11 @@
                 'jQuery+':    '//tech_query.oschina.io/iquery/jQuery+',
                 'iQuery+':    '//tech_query.oschina.io/iquery/iQuery+',
                 EasyWebUI:    '//tech_query.oschina.io/css/EasyWebUI',
-                marked:       '//cdn.bootcss.com/marked/0.3.6/marked.min'
-            }
+                marked:       '//cdn.bootcss.com/marked/0.3.6/marked.min',
+                QRcode:
+                    '//cdn.bootcss.com/lrsjng.jquery-qrcode/0.14.0/jquery-qrcode.min'
+            },
+            shim:       {QRcode:  ['jquery']}
         });
 
         require(['../docs/index']);
@@ -33,7 +37,7 @@
     <div class="Head CenterX Black_O">
         <div class="Grid-Row CenterY">
             <div id="Main_Title">
-                <h1 target="_self" href="docs/list.html" autofocus>
+                <h1 target="_self" href="docs/html/list.html">
                     ${this.Title}
                 </h1>
                 <p>${this.Description}</p>
@@ -42,14 +46,22 @@
         <div class="DropDown Head">
             <ul class="NavBar Black_O" id="Main_Nav" name="Main_Nav">
                 <li><a target="${this.target || '_self'}" href="${this.href}"
-                       autofocus="${this.autofocus || false}">
+                       autofocus="${this.autofocus}">
                     ${this.title}
                 </a></li>
             </ul>
         </div>
     </div>
     <div class="PC_Narrow Grid-Row">
-        <div id="Main_Content"></div>
+        <div>
+            <div id="Toolkit">
+                <span class="DropDown Head" id="QRcode">
+                    <i class="Icon Mobile"></i>
+                    <div class="DropDown Body"></div>
+                </span>
+            </div>
+            <div id="Main_Content"></div>
+        </div>
         <ul class="Column_1-5" id="Content_Nav" tabindex="-1">
             <li><a></a></li>
         </ul>
@@ -59,7 +71,8 @@
             (C)2016  <a target="_blank" href="https://tech_query.oschina.io/">Tech_Query</a>
         </span>
         <span>
-            Powered by <a target="_blank" href="https://tech_query.oschina.io/easywebapp/">EasyWebApp</a>
+            Powered by
+            <a target="_blank" href="https://tech_query.oschina.io/easywebapp/">EasyWebApp</a>
         </span>
     </div>
 </body></html>
