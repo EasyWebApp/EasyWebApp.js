@@ -125,7 +125,7 @@ define(['jquery', 'UI_Module', 'InnerLink'],  function ($, UI_Module, InnerLink)
                 iModule.render(iFactory.call(iModule, iData)  ||  iData);
             });
 
-            return this;
+            return iModule;
         }
     });
 

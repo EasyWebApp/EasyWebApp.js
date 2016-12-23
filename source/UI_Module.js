@@ -226,6 +226,31 @@ define([
                 return  _This_.$_View.children('script')[0] ?
                     _Data_ : _This_.render(_Data_);
             });
+        },
+        update:        function (iName, iValue) {
+            var iTemplate = this.template;
+
+            if (iName instanceof HTML_Template) {
+                iTemplate = iName;
+                iName = iValue;
+                iValue = arguments[2];
+            }
+            try {
+                iValue = eval( iValue );
+            } catch (iError) { }
+
+            iValue = (iValue != null)  ?  iValue  :  '';
+
+            var iScope = iTemplate.scope.setValue(iName, iValue);
+
+            while (iTemplate.scope !== iScope) {
+                iTemplate = HTML_Template.instanceOf(
+                    iTemplate.$_View[0].parentElement
+                );
+                if (! iTemplate)  return;
+            }
+
+            UI_Module.reload( iTemplate.render() );
         }
     });
 

@@ -2,7 +2,7 @@
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v3.3  (2016-12-21)  Beta
+//      [Version]    v3.3  (2016-12-23)  Beta
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //
@@ -98,27 +98,10 @@ define([
         var iName = this.getAttribute('name'),
             iTemplate = HTML_Template.instanceOf( this );
 
-        if (No_Input( arguments[0] )  ||  (! iName)  ||  (! iTemplate))
-            return;
-
-        var iValue = $(this).value('name');
-
-        try {
-            iValue = eval( iValue );
-        } catch (iError) { }
-
-        iValue = (iValue != null)  ?  iValue  :  '';
-
-        var iScope = iTemplate.scope.setValue(iName, iValue);
-
-        while (iTemplate.scope !== iScope) {
-            iTemplate = HTML_Template.instanceOf(
-                iTemplate.$_View[0].parentElement
+        if (iName  &&  iTemplate  &&  (! No_Input( arguments[0] )))
+            UI_Module.instanceOf( this ).update(
+                iTemplate,  iName,  $(this).value('name')
             );
-            if (! iTemplate)  return;
-        }
-
-        UI_Module.reload( iTemplate.render() );
     }
 
     var Only_Change = ['select', 'textarea', '[designMode]'].concat(

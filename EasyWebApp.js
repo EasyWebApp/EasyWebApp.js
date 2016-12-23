@@ -218,6 +218,8 @@ var HTML_Template = (function (BOM, DOM, $, DS_Inherit, Node_Template) {
         this.lastRender = 0;
     }
 
+    var RAW_Tag = $.makeSet('CODE', 'XMP', 'TEMPLATE');
+
     $.extend(HTML_Template, {
         getClass:       $.CommonView.getClass,
         instanceOf:     $.CommonView.instanceOf,
@@ -229,6 +231,7 @@ var HTML_Template = (function (BOM, DOM, $, DS_Inherit, Node_Template) {
                 $.map(iDOM.childNodes,  function (iNode) {
                     if (
                         (iNode.nodeType == 3)  &&
+                        (! (iNode.parentNode.tagName in RAW_Tag))  &&
                         (iNode.nodeValue.indexOf('${') > -1)
                     )
                         return iNode;
@@ -334,6 +337,8 @@ var HTML_Template = (function (BOM, DOM, $, DS_Inherit, Node_Template) {
 
             for (var i = 0;  $_Plain[i];  i++)
                 this.parsePlain( $_Plain[i] );
+
+            $_List = $_List.not( $_Input );
 
             for (var i = 0;  $_List[i];  i++)
                 this.parseList( $_List[i] );
@@ -674,6 +679,31 @@ var UI_Module = (function (BOM, DOM, $, HTML_Template, Node_Template) {
                 return  _This_.$_View.children('script')[0] ?
                     _Data_ : _This_.render(_Data_);
             });
+        },
+        update:        function (iName, iValue) {
+            var iTemplate = this.template;
+
+            if (iName instanceof HTML_Template) {
+                iTemplate = iName;
+                iName = iValue;
+                iValue = arguments[2];
+            }
+            try {
+                iValue = eval( iValue );
+            } catch (iError) { }
+
+            iValue = (iValue != null)  ?  iValue  :  '';
+
+            var iScope = iTemplate.scope.setValue(iName, iValue);
+
+            while (iTemplate.scope !== iScope) {
+                iTemplate = HTML_Template.instanceOf(
+                    iTemplate.$_View[0].parentElement
+                );
+                if (! iTemplate)  return;
+            }
+
+            UI_Module.reload( iTemplate.render() );
         }
     });
 
@@ -942,7 +972,7 @@ var WebApp = (function (BOM, DOM, $, UI_Module, InnerLink) {
                 iModule.render(iFactory.call(iModule, iData)  ||  iData);
             });
 
-            return this;
+            return iModule;
         }
     });
 
@@ -955,7 +985,7 @@ var WebApp = (function (BOM, DOM, $, UI_Module, InnerLink) {
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v3.3  (2016-12-21)  Beta
+//      [Version]    v3.3  (2016-12-23)  Beta
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //
@@ -1048,27 +1078,10 @@ var EasyWebApp = (function (BOM, DOM, $, WebApp, InnerLink, UI_Module, HTML_Temp
         var iName = this.getAttribute('name'),
             iTemplate = HTML_Template.instanceOf( this );
 
-        if (No_Input( arguments[0] )  ||  (! iName)  ||  (! iTemplate))
-            return;
-
-        var iValue = $(this).value('name');
-
-        try {
-            iValue = eval( iValue );
-        } catch (iError) { }
-
-        iValue = (iValue != null)  ?  iValue  :  '';
-
-        var iScope = iTemplate.scope.setValue(iName, iValue);
-
-        while (iTemplate.scope !== iScope) {
-            iTemplate = HTML_Template.instanceOf(
-                iTemplate.$_View[0].parentElement
+        if (iName  &&  iTemplate  &&  (! No_Input( arguments[0] )))
+            UI_Module.instanceOf( this ).update(
+                iTemplate,  iName,  $(this).value('name')
             );
-            if (! iTemplate)  return;
-        }
-
-        UI_Module.reload( iTemplate.render() );
     }
 
     var Only_Change = ['select', 'textarea', '[designMode]'].concat(

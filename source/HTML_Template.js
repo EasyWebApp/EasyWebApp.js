@@ -19,6 +19,8 @@ define([
         this.lastRender = 0;
     }
 
+    var RAW_Tag = $.makeSet('CODE', 'XMP', 'TEMPLATE');
+
     $.extend(HTML_Template, {
         getClass:       $.CommonView.getClass,
         instanceOf:     $.CommonView.instanceOf,
@@ -30,6 +32,7 @@ define([
                 $.map(iDOM.childNodes,  function (iNode) {
                     if (
                         (iNode.nodeType == 3)  &&
+                        (! (iNode.parentNode.tagName in RAW_Tag))  &&
                         (iNode.nodeValue.indexOf('${') > -1)
                     )
                         return iNode;
@@ -135,6 +138,8 @@ define([
 
             for (var i = 0;  $_Plain[i];  i++)
                 this.parsePlain( $_Plain[i] );
+
+            $_List = $_List.not( $_Input );
 
             for (var i = 0;  $_List[i];  i++)
                 this.parseList( $_List[i] );
