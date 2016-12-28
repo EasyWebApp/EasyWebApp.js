@@ -2,7 +2,7 @@
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v3.3  (2016-12-23)  Beta
+//      [Version]    v3.3  (2016-12-28)  Beta
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //

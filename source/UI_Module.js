@@ -241,16 +241,9 @@ define([
 
             iValue = (iValue != null)  ?  iValue  :  '';
 
-            var iScope = iTemplate.scope.setValue(iName, iValue);
-
-            while (iTemplate.scope !== iScope) {
-                iTemplate = HTML_Template.instanceOf(
-                    iTemplate.$_View[0].parentElement
-                );
-                if (! iTemplate)  return;
-            }
-
-            UI_Module.reload( iTemplate.render() );
+            UI_Module.reload(
+                iTemplate.valueOf(iTemplate.scope.setValue(iName, iValue)).render()
+            );
         }
     });
 

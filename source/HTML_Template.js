@@ -122,7 +122,11 @@ define([
                         .add( $_List ).find('*')
                 );
 
-            var $_Input = $_DOM.filter('[name]:input');
+            var $_Input = $_DOM.filter('[name]:input').not(function () {
+                    return (
+                        this.defaultValue || this.getAttribute('value') || ''
+                    ).match( Node_Template.expression );
+                });
 
             for (var i = 0;  $_Input[i];  i++)
                 this.pushMap(
@@ -138,8 +142,6 @@ define([
 
             for (var i = 0;  $_Plain[i];  i++)
                 this.parsePlain( $_Plain[i] );
-
-            $_List = $_List.not( $_Input );
 
             for (var i = 0;  $_List[i];  i++)
                 this.parseList( $_List[i] );
@@ -175,13 +177,13 @@ define([
             });
         },
         data2Node:     function (iData) {
-            var iMask = 0,  _This_ = this;
+            var iMask = '0',  _This_ = this;
 
             for (var iName in iData)
                 if (this.map.hasOwnProperty( iName ))
-                    iMask = iMask  |  this.map[ iName ];
+                    iMask = $.bitOperate('|',  iMask,  this.map[ iName ]);
 
-            return  $.map(iMask.toString(2).split('').reverse(),  function () {
+            return  $.map(iMask.split('').reverse(),  function () {
 
                 return  (arguments[0] > 0)  ?  _This_[ arguments[1] ]  :  null;
             });
@@ -229,22 +231,38 @@ define([
 
             return -1;
         },
-        getContext:    function (iNode) {
+        contextOf:     function (iNode) {
             var iContext = { },  iValue;
 
             for (var iKey in this.map) {
                 iValue = this.scope[ iKey ];
 
                 if (iNode  ?
-                    (this.map[iKey] & HTML_Template.getMaskCode(
-                        this.indexOf(iNode)
-                    ))  :
+                    parseInt($.bitOperate(
+                        '&', this.map[iKey], HTML_Template.getMaskCode(
+                            this.indexOf(iNode)
+                        )
+                    ), 2)  :
                     ((iValue != null)  &&  (! $.likeArray(iValue)))
                 )
                     iContext[ iKey ] = iValue;
             }
 
             return iContext;
+        },
+        valueOf:       function (iScope) {
+            if (! iScope)  return this;
+
+            var iTemplate = this;
+
+            while (iTemplate.scope !== iScope) {
+                iTemplate = HTML_Template.instanceOf(
+                    iTemplate.$_View[0].parentElement
+                );
+                if (! iTemplate)  return this;
+            }
+
+            return iTemplate;
         }
     });
 

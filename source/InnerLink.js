@@ -51,7 +51,7 @@ define([
                 var iTemplate = HTML_Template.instanceOf( this.$_DOM );
 
                 if ( iTemplate )
-                    iArgs = iTemplate.getContext(this.src ? 'src' : 'action');
+                    iArgs = iTemplate.contextOf(this.src ? 'src' : 'action');
             }
 
             for (var iKey in this.data)

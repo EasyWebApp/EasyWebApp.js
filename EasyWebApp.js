@@ -321,7 +321,11 @@ var HTML_Template = (function (BOM, DOM, $, DS_Inherit, Node_Template) {
                         .add( $_List ).find('*')
                 );
 
-            var $_Input = $_DOM.filter('[name]:input');
+            var $_Input = $_DOM.filter('[name]:input').not(function () {
+                    return (
+                        this.defaultValue || this.getAttribute('value') || ''
+                    ).match( Node_Template.expression );
+                });
 
             for (var i = 0;  $_Input[i];  i++)
                 this.pushMap(
@@ -337,8 +341,6 @@ var HTML_Template = (function (BOM, DOM, $, DS_Inherit, Node_Template) {
 
             for (var i = 0;  $_Plain[i];  i++)
                 this.parsePlain( $_Plain[i] );
-
-            $_List = $_List.not( $_Input );
 
             for (var i = 0;  $_List[i];  i++)
                 this.parseList( $_List[i] );
@@ -374,13 +376,13 @@ var HTML_Template = (function (BOM, DOM, $, DS_Inherit, Node_Template) {
             });
         },
         data2Node:     function (iData) {
-            var iMask = 0,  _This_ = this;
+            var iMask = '0',  _This_ = this;
 
             for (var iName in iData)
                 if (this.map.hasOwnProperty( iName ))
-                    iMask = iMask  |  this.map[ iName ];
+                    iMask = $.bitOperate('|',  iMask,  this.map[ iName ]);
 
-            return  $.map(iMask.toString(2).split('').reverse(),  function () {
+            return  $.map(iMask.split('').reverse(),  function () {
 
                 return  (arguments[0] > 0)  ?  _This_[ arguments[1] ]  :  null;
             });
@@ -428,22 +430,38 @@ var HTML_Template = (function (BOM, DOM, $, DS_Inherit, Node_Template) {
 
             return -1;
         },
-        getContext:    function (iNode) {
+        contextOf:     function (iNode) {
             var iContext = { },  iValue;
 
             for (var iKey in this.map) {
                 iValue = this.scope[ iKey ];
 
                 if (iNode  ?
-                    (this.map[iKey] & HTML_Template.getMaskCode(
-                        this.indexOf(iNode)
-                    ))  :
+                    parseInt($.bitOperate(
+                        '&', this.map[iKey], HTML_Template.getMaskCode(
+                            this.indexOf(iNode)
+                        )
+                    ), 2)  :
                     ((iValue != null)  &&  (! $.likeArray(iValue)))
                 )
                     iContext[ iKey ] = iValue;
             }
 
             return iContext;
+        },
+        valueOf:       function (iScope) {
+            if (! iScope)  return this;
+
+            var iTemplate = this;
+
+            while (iTemplate.scope !== iScope) {
+                iTemplate = HTML_Template.instanceOf(
+                    iTemplate.$_View[0].parentElement
+                );
+                if (! iTemplate)  return this;
+            }
+
+            return iTemplate;
         }
     });
 
@@ -694,16 +712,9 @@ var UI_Module = (function (BOM, DOM, $, HTML_Template, Node_Template) {
 
             iValue = (iValue != null)  ?  iValue  :  '';
 
-            var iScope = iTemplate.scope.setValue(iName, iValue);
-
-            while (iTemplate.scope !== iScope) {
-                iTemplate = HTML_Template.instanceOf(
-                    iTemplate.$_View[0].parentElement
-                );
-                if (! iTemplate)  return;
-            }
-
-            UI_Module.reload( iTemplate.render() );
+            UI_Module.reload(
+                iTemplate.valueOf(iTemplate.scope.setValue(iName, iValue)).render()
+            );
         }
     });
 
@@ -762,7 +773,7 @@ var InnerLink = (function (BOM, DOM, $, UI_Module, HTML_Template) {
                 var iTemplate = HTML_Template.instanceOf( this.$_DOM );
 
                 if ( iTemplate )
-                    iArgs = iTemplate.getContext(this.src ? 'src' : 'action');
+                    iArgs = iTemplate.contextOf(this.src ? 'src' : 'action');
             }
 
             for (var iKey in this.data)
@@ -985,7 +996,7 @@ var WebApp = (function (BOM, DOM, $, UI_Module, InnerLink) {
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v3.3  (2016-12-23)  Beta
+//      [Version]    v3.3  (2016-12-28)  Beta
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //
