@@ -2,8 +2,6 @@ define(['jquery', 'UI_Module', 'InnerLink'],  function ($, UI_Module, InnerLink)
 
     var BOM = self,  DOM = self.document;
 
-    var $_BOM = $(BOM);
-
     function WebApp(Page_Box, API_Path, Cache_Minute) {
         var _Self_ = arguments.callee;
 
@@ -26,7 +24,7 @@ define(['jquery', 'UI_Module', 'InnerLink'],  function ($, UI_Module, InnerLink)
         this.length = 0;
         this.lastPage = -1;
 
-        $_BOM.on('popstate',  function () {
+        $(BOM).on('popstate',  function () {
 
             var Index = (arguments[0].originalEvent.state || '').index;
 
@@ -51,16 +49,15 @@ define(['jquery', 'UI_Module', 'InnerLink'],  function ($, UI_Module, InnerLink)
         this.init();
     }
 
-    WebApp.getRoute = function () {
-        var iHash = BOM.location.hash.match(/^#!([^#!]+)/);
-        return  iHash && iHash[1];
-    };
-
-    WebApp.fn = WebApp.prototype = $.extend(new $.Observer(),  {
-        constructor:     WebApp,
-        push:            Array.prototype.push,
-        splice:          Array.prototype.splice,
-        load:            function (HTML_URL, $_Sibling) {
+    $.fn.iWebApp = $.inherit($.Observer, WebApp, {
+        getRoute:    function () {
+            var iHash = BOM.location.hash.match(/^#!([^#!]+)/);
+            return  iHash && iHash[1];
+        }
+    }, {
+        push:         Array.prototype.push,
+        splice:       Array.prototype.splice,
+        load:         function (HTML_URL, $_Sibling) {
             $('<span />',  $.extend(
                 {style: 'display: none'},
                 (typeof HTML_URL == 'object')  ?  HTML_URL  :  {
@@ -71,7 +68,7 @@ define(['jquery', 'UI_Module', 'InnerLink'],  function ($, UI_Module, InnerLink)
 
             return this;
         },
-        init:            function () {
+        init:         function () {
             var iModule = new UI_Module(new InnerLink(this, DOM.body));
 
             var iLink = iModule.source,  _This_ = this;
@@ -89,7 +86,7 @@ define(['jquery', 'UI_Module', 'InnerLink'],  function ($, UI_Module, InnerLink)
                     _This_.load(iHash);
             });
         },
-        register:        function (iPage) {
+        register:     function (iPage) {
             if (this.lastPage > -1)  this[this.lastPage].detach();
 
             if (++this.lastPage != this.length)
@@ -107,10 +104,10 @@ define(['jquery', 'UI_Module', 'InnerLink'],  function ($, UI_Module, InnerLink)
                     this[i].$_Content = null;
                 }
         },
-        getModule:       function () {
+        getModule:    function () {
             return  UI_Module.instanceOf( arguments[0] );
         },
-        component:       function ($_View, iFactory) {
+        component:    function ($_View, iFactory) {
 
             if (typeof $_View == 'function') {
                 iFactory = $_View;
@@ -129,6 +126,8 @@ define(['jquery', 'UI_Module', 'InnerLink'],  function ($, UI_Module, InnerLink)
         }
     });
 
-    return  $.fn.iWebApp = WebApp;
+    WebApp.fn = WebApp.prototype;
+
+    return WebApp;
 
 });

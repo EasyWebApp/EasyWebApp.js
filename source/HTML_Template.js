@@ -191,8 +191,8 @@ define([
         render:        function (iData) {
             this.scope.extend( iData );
 
-            iData = this.lastRender ? this.scope : $.extend(
-                $.makeSet('', Object.keys(this.map)),  this.scope,  iData
+            iData = this.lastRender  ?  (iData || this.scope)  :  $.extend(
+                $.makeSet('', Object.keys(this.map)),  this.scope
             );
 
             var Last_Render = this.lastRender;
