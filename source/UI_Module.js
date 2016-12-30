@@ -241,14 +241,16 @@ define([
 
             iValue = (iValue != null)  ?  iValue  :  '';
 
-            var iData = { };
-            iData[iName] = iValue;
+            var iScope = iTemplate.scope.setValue(iName, iValue);
 
-            UI_Module.reload(
-                iTemplate.valueOf(
-                    iTemplate.scope.setValue(iName, iValue)
-                ).render( iData )
-            );
+            if ( iScope ) {
+                var iData = { };
+                iData[iName] = iValue;
+
+                UI_Module.reload( iTemplate.valueOf( iScope ).render( iData ) );
+            }
+
+            return this;
         }
     });
 
