@@ -147,8 +147,7 @@ define([
 
             return (
                 (this.source.getURL('src') || this.source.getURL('action'))  ?
-                    this.source.loadData( this.template.scope )  :
-                    Promise.resolve('')
+                    this.source.loadData()  :  Promise.resolve('')
             ).then(function (iData) {
 
                 iData = _This_.trigger('data', [iData])  ||  iData;

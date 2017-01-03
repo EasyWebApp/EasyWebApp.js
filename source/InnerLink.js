@@ -16,8 +16,6 @@ define([
         this.method = (iLink.getAttribute('method') || 'GET').toLowerCase();
         this.src = iLink.getAttribute('src');
         this.action = iLink.getAttribute('action');
-
-        this.data = iLink.dataset;
     }
 
     $.extend(InnerLink, {
@@ -42,48 +40,13 @@ define([
             return  this.target  ?
                 $('*[name="' + this.target + '"]')  :  this.$_DOM;
         },
-        getArgs:      function (Only_Param) {
-            var iData = this.ownerView  ?  this.ownerView.template.scope  :  { };
+        getArgs:      function () {
+            var iArgs = { },  iTemplate = HTML_Template.instanceOf( this.$_DOM );
 
-            var iArgs = { };
+            if ( iTemplate )
+                iArgs = iTemplate.contextOf(this.src ? 'src' : 'action');
 
-            if (! Only_Param) {
-                var iTemplate = HTML_Template.instanceOf( this.$_DOM );
-
-                if ( iTemplate )
-                    iArgs = iTemplate.contextOf(this.src ? 'src' : 'action');
-            }
-
-            for (var iKey in this.data)
-                iArgs[ this.data[iKey] ] = iData[ this.data[iKey] ];
-
-            return iArgs;
-        },
-        getURL:       function (iName, iScope) {
-            var iURL = this[iName] =
-                    this.$_DOM[0].getAttribute(iName) || this[iName];
-
-            if (! iURL)  return;
-
-            if ((! iScope)  &&  this.ownerView)
-                iScope = this.ownerView.template.scope;
-
-            if (iScope  &&  iScope.isNoValue  &&  (! iScope.isNoValue())) {
-                var _Args_ = { },  _Data_;
-
-                for (var iKey in this.data) {
-                    _Data_ = iScope[ this.data[iKey] ];
-
-                    if ($.isData(_Data_))  _Args_[iKey] = _Data_;
-                }
-
-                iURL = $.extendURL(iURL, _Args_);
-            }
-
-            if ((iName != 'href')  &&  (! $.urlDomain(iURL || ' ')))
-                iURL = this.ownerApp.apiPath + iURL;
-
-            return iURL;
+            return  $.extend(iArgs, this.$_DOM[0].dataset);
         },
         register:     function (Index) {
             DOM.title = this.title || DOM.title;
@@ -96,11 +59,22 @@ define([
 
             return this;
         },
+        getURL:       function (iName) {
+            var iURL = this[iName] =
+                    this.$_DOM[0].getAttribute(iName) || this[iName];
+
+            if ( iURL ) {
+                if ((iName != 'href')  &&  (! $.urlDomain(iURL || ' ')))
+                    iURL = this.ownerApp.apiPath + iURL;
+
+                return iURL;
+            }
+        },
         loadData:     function (iScope) {
             var iOption = {type:  this.method};
 
             if (this.$_DOM[0].tagName != 'FORM')
-                iOption.data = this.getArgs( true );
+                iOption.data = $.extend({ }, this.$_DOM[0].dataset);
             else if (! this.$_DOM.find('input[type="file"]')[0])
                 iOption.data = this.$_DOM.serialize();
             else {
@@ -108,10 +82,7 @@ define([
                 iOption.contentType = iOption.processData = false;
             }
 
-            return $.ajax(
-                this.getURL('src', iScope)  ||  this.getURL('action', iScope),
-                iOption
-            );
+            return  $.ajax(this.getURL('src') || this.getURL('action'),  iOption);
         },
         prefetch:     function () {
             var iHTML = (this.href || '').split('?')[0];
@@ -122,7 +93,7 @@ define([
             if (
                 (this.method == 'get')  &&
                 this.src  &&  (this.src.indexOf('?') == -1)  &&
-                $.isEmptyObject( this.data )
+                $.isEmptyObject( this.$_DOM[0].dataset )
             )
                 $_Prefetch.clone(true).attr(
                     'href',  this.getURL('src') || this.getURL('action')
