@@ -27,8 +27,10 @@ define(['jquery'],  function ($) {
             )) {
                 _Parent_ = Object.getPrototypeOf( iScope );
 
-                if (_Parent_ === DataScope.prototype)  return;
-
+                if (_Parent_ === DataScope.prototype) {
+                    iScope = this;
+                    break;
+                }
                 iScope = _Parent_;
             }
 

@@ -57,6 +57,30 @@ define(['jquery', 'UI_Module', 'InnerLink'],  function ($, UI_Module, InnerLink)
     }, {
         push:         Array.prototype.push,
         splice:       Array.prototype.splice,
+        boot:         function (iLink) {
+            iLink = new InnerLink(this, iLink);
+
+            switch (iLink.target) {
+                case null:        ;
+                case '':          break;
+                case '_blank':
+                    UI_Module.prototype.loadJSON.call({
+                        ownerApp:    this,
+                        source:      iLink,
+                        template:    iLink.ownerView.template
+                    });
+                    break;
+                case '_self':     ;
+                default:          {
+                    var iModule = UI_Module.instanceOf( iLink.$_DOM );
+
+                    if ((! iModule)  ||  !(iModule.domReady instanceof Promise))
+                        (new UI_Module(iLink)).load();
+                }
+            }
+
+            return this;
+        },
         load:         function (HTML_URL, $_Sibling) {
             $('<span />',  $.extend(
                 {style: 'display: none'},

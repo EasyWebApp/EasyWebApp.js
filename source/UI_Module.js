@@ -17,9 +17,14 @@ define([
             this.$_View[0].setAttribute('name', this.name);
         }
 
-        this.template = new HTML_Template(
-            this.$_View,  this.getScope(),  iLink.getURL('href')
-        );
+        if (! iLink.href)
+            this.template = HTML_Template.instanceOf(this.$_View, false);
+
+        if (! this.template)
+            this.template = new HTML_Template(
+                this.$_View,  this.getScope(),  iLink.getURL('href')
+            );
+
         this.template.scope.extend( this.getEnv() );
 
         this.attach();
@@ -240,14 +245,14 @@ define([
 
             iValue = (iValue != null)  ?  iValue  :  '';
 
-            var iScope = iTemplate.scope.setValue(iName, iValue);
+            var iData = { };
+            iData[iName] = iValue;
 
-            if ( iScope ) {
-                var iData = { };
-                iData[iName] = iValue;
-
-                UI_Module.reload( iTemplate.valueOf( iScope ).render( iData ) );
-            }
+            UI_Module.reload(
+                iTemplate.valueOf(
+                    iTemplate.scope.setValue(iName, iValue)
+                ).render( iData )
+            );
 
             return this;
         }
