@@ -6,8 +6,10 @@ define([
 
         this.$_View = $( $_View ).data(this.constructor.getClass(), this);
 
-        this.type = $.expr[':'].list( this.$_View[0] )  ?  'list'  :  'plain';
-
+        this.type = (
+            $.ListView.findView( this.$_View.parent() ).filter( this.$_View )[0]  ?
+                'list'  :  'plain'
+        );
         this.scope = DS_Inherit(iScope,  { });
 
         this.source = (iURL || '').match(/\.(html?|md)\??/)  ?
@@ -111,15 +113,17 @@ define([
                 })
             );
         },
-        parse:         function () {
+        parse:         function ($_Exclude) {
             if (this.type == 'list')
                 return  this.parseList( this.$_View[0] );
 
-            var $_List = $.ListView.findView( this.$_View ).filter('[name]');
+            $_Exclude = $.likeArray( $_Exclude )  ?  $_Exclude  :  $( $_Exclude );
+
+            var $_List = $.ListView.findView( this.$_View )
+                    .filter('[name]').not( $_Exclude );
 
             var $_DOM = this.$_View.find('*').not(
-                    this.$_View.find('[src],  [href]:not(a, link, [target])')
-                        .add( $_List ).find('*')
+                    $_List.add( $_Exclude ).find('*')
                 );
 
             var $_Input = $_DOM.filter('[name]:input').not(function () {

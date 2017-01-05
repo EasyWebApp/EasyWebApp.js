@@ -194,8 +194,10 @@ var HTML_Template = (function (BOM, DOM, $, DS_Inherit, Node_Template) {
 
         this.$_View = $( $_View ).data(this.constructor.getClass(), this);
 
-        this.type = $.expr[':'].list( this.$_View[0] )  ?  'list'  :  'plain';
-
+        this.type = (
+            $.ListView.findView( this.$_View.parent() ).filter( this.$_View )[0]  ?
+                'list'  :  'plain'
+        );
         this.scope = DS_Inherit(iScope,  { });
 
         this.source = (iURL || '').match(/\.(html?|md)\??/)  ?
@@ -299,15 +301,17 @@ var HTML_Template = (function (BOM, DOM, $, DS_Inherit, Node_Template) {
                 })
             );
         },
-        parse:         function () {
+        parse:         function ($_Exclude) {
             if (this.type == 'list')
                 return  this.parseList( this.$_View[0] );
 
-            var $_List = $.ListView.findView( this.$_View ).filter('[name]');
+            $_Exclude = $.likeArray( $_Exclude )  ?  $_Exclude  :  $( $_Exclude );
+
+            var $_List = $.ListView.findView( this.$_View )
+                    .filter('[name]').not( $_Exclude );
 
             var $_DOM = this.$_View.find('*').not(
-                    this.$_View.find('[src],  [href]:not(a, link, [target])')
-                        .add( $_List ).find('*')
+                    $_List.add( $_Exclude ).find('*')
                 );
 
             var $_Input = $_DOM.filter('[name]:input').not(function () {
@@ -470,6 +474,8 @@ var UI_Module = (function (BOM, DOM, $, HTML_Template, Node_Template) {
 
         this.type = (this.$_View[0] == this.ownerApp.$_Root[0])  ?
             'page'  :  'module';
+        this.async = (this.$_View[0].getAttribute('async') != 'false');
+
         this.name = this.$_View[0].getAttribute('name');
 
         if (! this.name) {
@@ -489,7 +495,7 @@ var UI_Module = (function (BOM, DOM, $, HTML_Template, Node_Template) {
 
         this.attach();
 
-        this.lastLoad = 0;
+        this.length = this.lastLoad = 0;
 
         if (this.type == 'page')  this.ownerApp.register( this );
     }
@@ -521,6 +527,22 @@ var UI_Module = (function (BOM, DOM, $, HTML_Template, Node_Template) {
 
     $.extend(UI_Module.prototype, {
         toString:      $.CommonView.prototype.toString,
+        findSub:       function () {
+            var _This_ = this,  InnerLink = this.source.constructor;
+
+            var $_Sub = this.$_View
+                    .find('*[href]:not(a, link), *[src]:not(:media, script)')
+                    .not( InnerLink.selector );
+
+            $.extend(this,  $.map($_Sub,  function () {
+                return  new UI_Module(
+                    new InnerLink(_This_.ownerApp, arguments[0])
+                );
+            }));
+            this.length = $_Sub.length;
+
+            return $_Sub;
+        },
         trigger:       function () {
             return this.ownerApp.trigger(
                 arguments[0],
@@ -587,25 +609,15 @@ var UI_Module = (function (BOM, DOM, $, HTML_Template, Node_Template) {
             return this;
         },
         loadModule:    function () {
-            var _This_ = this,  InnerLink = this.source.constructor;
+            var _This_ = this;
 
-            var $_Module = this.$_View
-                    .find('*[href]:not(a, link), *[src]:not(:media, script)')
-                    .not( InnerLink.selector );
-
-            return Promise.all($.map(
-                $_Module[this.lastLoad ? 'not' : 'filter'](function () {
-
-                //  About this --- https://github.com/jquery/jquery/issues/3270
-
-                    return  (this.getAttribute('async') == 'false');
-                }),
-                function () {
-                    return  (new UI_Module(
-                        new InnerLink(_This_.ownerApp, arguments[0])
-                    )).load();
-                }
-            ));
+            return  Promise.all($.map(this,  function (iModule) {
+                return (
+                    (_This_.lastLoad && iModule.async)  ||
+                    !(_This_.lastLoad || iModule.async)
+                ) ?
+                    iModule.load() : null;
+            }));
         },
         loadJSON:      function () {
             var _This_ = this;
@@ -632,7 +644,9 @@ var UI_Module = (function (BOM, DOM, $, HTML_Template, Node_Template) {
 
                 _This_.trigger('template');
 
-                if (! _This_.template[0])  _This_.template.parse();
+                var $_Sub = _This_.findSub();
+
+                if (! _This_.template[0])  _This_.template.parse( $_Sub );
 
                 var $_Link = _This_.$_View.children('link[target="_blank"]');
 
@@ -990,7 +1004,7 @@ var WebApp = (function (BOM, DOM, $, UI_Module, InnerLink) {
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v3.3  (2017-01-04)  Beta
+//      [Version]    v3.3  (2017-01-05)  Beta
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //

@@ -10,6 +10,8 @@ define([
 
         this.type = (this.$_View[0] == this.ownerApp.$_Root[0])  ?
             'page'  :  'module';
+        this.async = (this.$_View[0].getAttribute('async') != 'false');
+
         this.name = this.$_View[0].getAttribute('name');
 
         if (! this.name) {
@@ -29,7 +31,7 @@ define([
 
         this.attach();
 
-        this.lastLoad = 0;
+        this.length = this.lastLoad = 0;
 
         if (this.type == 'page')  this.ownerApp.register( this );
     }
@@ -61,6 +63,22 @@ define([
 
     $.extend(UI_Module.prototype, {
         toString:      $.CommonView.prototype.toString,
+        findSub:       function () {
+            var _This_ = this,  InnerLink = this.source.constructor;
+
+            var $_Sub = this.$_View
+                    .find('*[href]:not(a, link), *[src]:not(:media, script)')
+                    .not( InnerLink.selector );
+
+            $.extend(this,  $.map($_Sub,  function () {
+                return  new UI_Module(
+                    new InnerLink(_This_.ownerApp, arguments[0])
+                );
+            }));
+            this.length = $_Sub.length;
+
+            return $_Sub;
+        },
         trigger:       function () {
             return this.ownerApp.trigger(
                 arguments[0],
@@ -127,25 +145,15 @@ define([
             return this;
         },
         loadModule:    function () {
-            var _This_ = this,  InnerLink = this.source.constructor;
+            var _This_ = this;
 
-            var $_Module = this.$_View
-                    .find('*[href]:not(a, link), *[src]:not(:media, script)')
-                    .not( InnerLink.selector );
-
-            return Promise.all($.map(
-                $_Module[this.lastLoad ? 'not' : 'filter'](function () {
-
-                //  About this --- https://github.com/jquery/jquery/issues/3270
-
-                    return  (this.getAttribute('async') == 'false');
-                }),
-                function () {
-                    return  (new UI_Module(
-                        new InnerLink(_This_.ownerApp, arguments[0])
-                    )).load();
-                }
-            ));
+            return  Promise.all($.map(this,  function (iModule) {
+                return (
+                    (_This_.lastLoad && iModule.async)  ||
+                    !(_This_.lastLoad || iModule.async)
+                ) ?
+                    iModule.load() : null;
+            }));
         },
         loadJSON:      function () {
             var _This_ = this;
@@ -172,7 +180,9 @@ define([
 
                 _This_.trigger('template');
 
-                if (! _This_.template[0])  _This_.template.parse();
+                var $_Sub = _This_.findSub();
+
+                if (! _This_.template[0])  _This_.template.parse( $_Sub );
 
                 var $_Link = _This_.$_View.children('link[target="_blank"]');
 
