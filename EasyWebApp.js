@@ -96,7 +96,7 @@ var Node_Template = (function (BOM, DOM, $) {
 
     Node_Template.expression = /\$\{([\s\S]+?)\}/g;
 
-    Node_Template.reference = /this\.(\w+)/;
+    Node_Template.reference = /this\.(\w+)/g;
 
     try {
         eval('``');
@@ -136,8 +136,9 @@ var Node_Template = (function (BOM, DOM, $) {
             this.ownerNode.nodeValue = this.raw.replace(
                 Node_Template.expression,  function () {
                     arguments[1].replace(
-                        Node_Template.reference,  function () {
-                            iRefer.push( arguments[1] );
+                        Node_Template.reference,  function (_, iKey) {
+
+                            if (iRefer.indexOf(iKey) < 0)  iRefer.push( iKey );
                         }
                     );
 
@@ -305,11 +306,14 @@ var HTML_Template = (function (BOM, DOM, $, DS_Inherit, Node_Template) {
             if (this.type == 'list')
                 return  this.parseList( this.$_View[0] );
 
-            $_Exclude = $.likeArray( $_Exclude )  ?  $_Exclude  :  $( $_Exclude );
+            $_Exclude = $( $_Exclude );
 
-            var $_List = $.ListView.findView( this.$_View )
-                    .filter('[name]').not( $_Exclude );
+            var $_List = $.ListView.findView( this.$_View ).filter('[name]').not(
+                    $_Exclude.add($.map($_Exclude,  function () {
 
+                        return  $.makeArray($.ListView.findView( arguments[0] ));
+                    }))
+                );
             var $_DOM = this.$_View.find('*').not(
                     $_List.add( $_Exclude ).find('*')
                 );
@@ -522,7 +526,8 @@ var UI_Module = (function (BOM, DOM, $, HTML_Template, Node_Template) {
                         iModule.render( arguments[0] );
                     });
                 }
-        }
+        },
+        selector:      '*[href]:not(a, link), *[src]:not(:media, script)'
     });
 
     $.extend(UI_Module.prototype, {
@@ -530,9 +535,14 @@ var UI_Module = (function (BOM, DOM, $, HTML_Template, Node_Template) {
         findSub:       function () {
             var _This_ = this,  InnerLink = this.source.constructor;
 
-            var $_Sub = this.$_View
-                    .find('*[href]:not(a, link), *[src]:not(:media, script)')
+            var $_Sub = this.$_View.find( UI_Module.selector )
                     .not( InnerLink.selector );
+
+            $_Sub = $($.map($_Sub,  function (_This_, Index) {
+
+                if (! (Index  &&  $.contains($_Sub[Index - 1], _This_)))
+                    return _This_;
+            }));
 
             $.extend(this,  $.map($_Sub,  function () {
                 return  new UI_Module(
@@ -900,47 +910,14 @@ var WebApp = (function (BOM, DOM, $, UI_Module, InnerLink) {
     }, {
         push:         Array.prototype.push,
         splice:       Array.prototype.splice,
-        boot:         function (iLink) {
-            iLink = new InnerLink(this, iLink);
-
-            switch (iLink.target) {
-                case null:        ;
-                case '':          break;
-                case '_blank':
-                    UI_Module.prototype.loadJSON.call({
-                        ownerApp:    this,
-                        source:      iLink,
-                        template:    iLink.ownerView.template
-                    });
-                    break;
-                case '_self':     ;
-                default:          {
-                    var iModule = UI_Module.instanceOf( iLink.$_DOM );
-
-                    if ((! iModule)  ||  !(iModule.domReady instanceof Promise))
-                        (new UI_Module(iLink)).load();
-                }
-            }
-
-            return this;
-        },
-        load:         function (HTML_URL, $_Sibling) {
-            $('<span />',  $.extend(
-                {style: 'display: none'},
-                (typeof HTML_URL == 'object')  ?  HTML_URL  :  {
-                    target:    '_self',
-                    href:      HTML_URL
-                }
-            )).appendTo($_Sibling || 'body').click();
-
-            return this;
-        },
         init:         function () {
             var iModule = new UI_Module(new InnerLink(this, DOM.body));
 
             var iLink = iModule.source,  _This_ = this;
 
             iModule.template.scope.extend( $.paramJSON() );
+
+            iModule.findSub();
 
             iModule[
                 (iLink.href || iLink.src || iLink.action)  ?  'load'  :  'render'
@@ -970,6 +947,41 @@ var WebApp = (function (BOM, DOM, $, UI_Module, InnerLink) {
                     this[i].$_Content.remove();
                     this[i].$_Content = null;
                 }
+        },
+        boot:         function (iLink) {
+            iLink = new InnerLink(this, iLink);
+
+            switch (iLink.target) {
+                case null:        ;
+                case '':          break;
+                case '_blank':
+                    $.extend(Object.create( UI_Module.prototype ),  {
+                        ownerApp:    this,
+                        source:      iLink,
+                        template:    iLink.ownerView.template
+                    }).loadJSON();
+                    break;
+                case '_self':     ;
+                default:          {
+                    var iModule = UI_Module.instanceOf( iLink.$_DOM );
+
+                    if ((! iModule)  ||  !(iModule.domReady instanceof Promise))
+                        (new UI_Module(iLink)).load();
+                }
+            }
+
+            return this;
+        },
+        load:         function (HTML_URL, $_Sibling) {
+            $('<span />',  $.extend(
+                {style: 'display: none'},
+                (typeof HTML_URL == 'object')  ?  HTML_URL  :  {
+                    target:    '_self',
+                    href:      HTML_URL
+                }
+            )).appendTo($_Sibling || 'body').click();
+
+            return this;
         },
         getModule:    function () {
             return  UI_Module.instanceOf( arguments[0] );
@@ -1004,7 +1016,7 @@ var WebApp = (function (BOM, DOM, $, UI_Module, InnerLink) {
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v3.3  (2017-01-05)  Beta
+//      [Version]    v3.3  (2017-01-09)  Beta
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //

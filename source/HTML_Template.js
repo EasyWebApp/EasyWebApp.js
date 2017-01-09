@@ -117,11 +117,14 @@ define([
             if (this.type == 'list')
                 return  this.parseList( this.$_View[0] );
 
-            $_Exclude = $.likeArray( $_Exclude )  ?  $_Exclude  :  $( $_Exclude );
+            $_Exclude = $( $_Exclude );
 
-            var $_List = $.ListView.findView( this.$_View )
-                    .filter('[name]').not( $_Exclude );
+            var $_List = $.ListView.findView( this.$_View ).filter('[name]').not(
+                    $_Exclude.add($.map($_Exclude,  function () {
 
+                        return  $.makeArray($.ListView.findView( arguments[0] ));
+                    }))
+                );
             var $_DOM = this.$_View.find('*').not(
                     $_List.add( $_Exclude ).find('*')
                 );

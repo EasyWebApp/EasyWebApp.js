@@ -11,7 +11,7 @@ define(['jquery'],  function ($) {
 
     Node_Template.expression = /\$\{([\s\S]+?)\}/g;
 
-    Node_Template.reference = /this\.(\w+)/;
+    Node_Template.reference = /this\.(\w+)/g;
 
     try {
         eval('``');
@@ -51,8 +51,9 @@ define(['jquery'],  function ($) {
             this.ownerNode.nodeValue = this.raw.replace(
                 Node_Template.expression,  function () {
                     arguments[1].replace(
-                        Node_Template.reference,  function () {
-                            iRefer.push( arguments[1] );
+                        Node_Template.reference,  function (_, iKey) {
+
+                            if (iRefer.indexOf(iKey) < 0)  iRefer.push( iKey );
                         }
                     );
 

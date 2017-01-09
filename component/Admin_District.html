@@ -1,0 +1,40 @@
+<script>
+/* ---------- 行政区 联动查询 ---------- */
+
+// 【文档】http://lbs.amap.com/api/webservice/guide/api/district/
+
+require(['jquery', 'EasyWebApp'],  function ($) {
+
+    function Select_Render($_Item, iValue) {
+
+        $_Item.attr('value', iValue.adcode)[0].textContent = iValue.name;
+    }
+
+    $().iWebApp().component('[href*="Admin_District.htm"]',  function () {
+
+        this.ownerApp.on('data',  '',  'amap.com',  function (iLink, iData) {
+
+            iData = iData.districts[0].districts;
+
+            var $_Select = iData[0]  &&
+                    iLink.$_DOM.find('select[name="' + iData[0].level + '"]');
+
+            if (($_Select || '')[0])
+                $.ListView($_Select, Select_Render).clear().render( iData );
+
+            return  { };
+        });
+    });
+});
+</script>
+<span src="//restapi.amap.com/v3/config/district?key=8d1f86ee16089781fdd20687a8d657fd&extensions=base&keywords=${this.province || this.city || this.district}">
+    <select name="province">
+        <option>请选择</option>
+    </select>
+    <select name="city">
+        <option>请选择</option>
+    </select>
+    <select name="district">
+        <option>请选择</option>
+    </select>
+</span>

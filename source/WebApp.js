@@ -57,47 +57,14 @@ define(['jquery', 'UI_Module', 'InnerLink'],  function ($, UI_Module, InnerLink)
     }, {
         push:         Array.prototype.push,
         splice:       Array.prototype.splice,
-        boot:         function (iLink) {
-            iLink = new InnerLink(this, iLink);
-
-            switch (iLink.target) {
-                case null:        ;
-                case '':          break;
-                case '_blank':
-                    UI_Module.prototype.loadJSON.call({
-                        ownerApp:    this,
-                        source:      iLink,
-                        template:    iLink.ownerView.template
-                    });
-                    break;
-                case '_self':     ;
-                default:          {
-                    var iModule = UI_Module.instanceOf( iLink.$_DOM );
-
-                    if ((! iModule)  ||  !(iModule.domReady instanceof Promise))
-                        (new UI_Module(iLink)).load();
-                }
-            }
-
-            return this;
-        },
-        load:         function (HTML_URL, $_Sibling) {
-            $('<span />',  $.extend(
-                {style: 'display: none'},
-                (typeof HTML_URL == 'object')  ?  HTML_URL  :  {
-                    target:    '_self',
-                    href:      HTML_URL
-                }
-            )).appendTo($_Sibling || 'body').click();
-
-            return this;
-        },
         init:         function () {
             var iModule = new UI_Module(new InnerLink(this, DOM.body));
 
             var iLink = iModule.source,  _This_ = this;
 
             iModule.template.scope.extend( $.paramJSON() );
+
+            iModule.findSub();
 
             iModule[
                 (iLink.href || iLink.src || iLink.action)  ?  'load'  :  'render'
@@ -127,6 +94,41 @@ define(['jquery', 'UI_Module', 'InnerLink'],  function ($, UI_Module, InnerLink)
                     this[i].$_Content.remove();
                     this[i].$_Content = null;
                 }
+        },
+        boot:         function (iLink) {
+            iLink = new InnerLink(this, iLink);
+
+            switch (iLink.target) {
+                case null:        ;
+                case '':          break;
+                case '_blank':
+                    $.extend(Object.create( UI_Module.prototype ),  {
+                        ownerApp:    this,
+                        source:      iLink,
+                        template:    iLink.ownerView.template
+                    }).loadJSON();
+                    break;
+                case '_self':     ;
+                default:          {
+                    var iModule = UI_Module.instanceOf( iLink.$_DOM );
+
+                    if ((! iModule)  ||  !(iModule.domReady instanceof Promise))
+                        (new UI_Module(iLink)).load();
+                }
+            }
+
+            return this;
+        },
+        load:         function (HTML_URL, $_Sibling) {
+            $('<span />',  $.extend(
+                {style: 'display: none'},
+                (typeof HTML_URL == 'object')  ?  HTML_URL  :  {
+                    target:    '_self',
+                    href:      HTML_URL
+                }
+            )).appendTo($_Sibling || 'body').click();
+
+            return this;
         },
         getModule:    function () {
             return  UI_Module.instanceOf( arguments[0] );

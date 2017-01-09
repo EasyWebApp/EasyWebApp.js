@@ -58,7 +58,8 @@ define([
                         iModule.render( arguments[0] );
                     });
                 }
-        }
+        },
+        selector:      '*[href]:not(a, link), *[src]:not(:media, script)'
     });
 
     $.extend(UI_Module.prototype, {
@@ -66,9 +67,14 @@ define([
         findSub:       function () {
             var _This_ = this,  InnerLink = this.source.constructor;
 
-            var $_Sub = this.$_View
-                    .find('*[href]:not(a, link), *[src]:not(:media, script)')
+            var $_Sub = this.$_View.find( UI_Module.selector )
                     .not( InnerLink.selector );
+
+            $_Sub = $($.map($_Sub,  function (_This_, Index) {
+
+                if (! (Index  &&  $.contains($_Sub[Index - 1], _This_)))
+                    return _This_;
+            }));
 
             $.extend(this,  $.map($_Sub,  function () {
                 return  new UI_Module(

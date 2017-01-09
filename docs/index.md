@@ -273,33 +273,3 @@ $('#PageBox').iWebApp()
         return ConfirmDialog();
     });
 ```
-
-### selectLoad
-
-【主要功能】
- 1. 正确设置 `<option value="" />`
- 2. 数据加载后，选中首项，并触发 `selectElement.onchange`
- 3. **多级数据联动**加载
-
-```JavaScript
-var iApp = $('#PageBox').iWebApp();
-
-//  单下拉框
-iApp.selectLoad('path/to/list',  'value_key',  function (iLink, iData) {
-    return iData.data;
-});
-
-//  多级联动
-iApp.selectLoad(
-    'path/to/list',
-    'value_key',
-    function (iLink, iData) {
-        return iData.data;
-    },
-    'path/to/parent_module.html',
-    function () {
-        //  修改 src 属性
-        return  arguments[1].replace(/\/\d+$/,  '/' + ID);
-    }
-);
-```

@@ -42,12 +42,14 @@ define([
             $_Toolkit = $('#Toolkit'),
             $_QRcode = $('#QRcode > .Body');
 
-        $_App.iWebApp().on('data',  '',  'index.json',  function () {
+        $_App.iWebApp().on('data',  '',  'index.json',  function (_, iData) {
 
-            $.ajaxSetup({
-                headers:    {
-                    Authorization:    'token ' + arguments[1].Git_Token
-                }
+            $.ajaxPrefilter(function (iOption, _, iXHR) {
+
+                if (iOption.url.indexOf( iData.Git_API )  >  -1)
+                    iXHR.setRequestHeader(
+                        'Authorization',  'token ' + iData.Git_Token
+                    );
             });
         }).on('ready',  '(list\\.html|ReadMe\\.md)',  function () {
 

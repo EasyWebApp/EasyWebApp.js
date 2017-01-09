@@ -15,7 +15,7 @@ EasyWebApp 虽通过 v3.0 的“统一页面、模块抽象”彻底解决了 **
 
 ## 新版特性
 
- 1. 支持 HTML 标签属性、文本内容中书写 **ES 6 模板字符串**（不带 函数名标签前缀），`name` 属性仅用于表单元素的数据绑定
+ 1. 支持 HTML 标签属性、文本内容中书写 **ES 6 模板字符串**（不带 函数名标签前缀），`name` 属性仅用于表单元素、ListView 对象的数据绑定
  2. **可输入元素**（[iQuery](//git.oschina.net/Tech_Query/iQuery) 扩展的 `:input:not(:button)` 伪类选择符）引起的数据变更 会触发该数据所在作用域下的 UI 重绘
  3. UI 模块支持 `<slot />`（Web Component 标准草案）
 
@@ -23,6 +23,11 @@ EasyWebApp 虽通过 v3.0 的“统一页面、模块抽象”彻底解决了 **
 ## 移除特性
 
  1. [数据结构读写 jQuery 插件](//git.oschina.net/Tech_Query/EasyWebApp/blob/Component/source/ViewDataIO.js#L38)
+
+
+## 官方组件
+
+ 1. [行政区多级联动选择](//git.oschina.net/Tech_Query/EasyWebApp/blob/String_Template/component/Admin_District.html)（基于高德地图 HTTP API）
 
 
 ## 开发详情
