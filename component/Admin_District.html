@@ -24,10 +24,27 @@ require(['jquery', 'EasyWebApp'],  function ($) {
 
             return  { };
         });
+
+        var iModule = this,  iSum = this.$_View.find('select').length;
+
+        this.$_View.on('change',  'select',  function () {
+
+            var $_This = $(this);
+
+            $_This.next().nextAll().each(function () {
+
+                $.ListView( this ).clear();
+
+                iModule[0].template.scope.setValue(this.name, 0);
+            });
+
+            if ($_This.index() + 1  <  iSum)
+                iModule.update('zip_code', this.value);
+        });
     });
 });
 </script>
-<span src="//restapi.amap.com/v3/config/district?key=8d1f86ee16089781fdd20687a8d657fd&extensions=base&keywords=${this.province || this.city || this.district}">
+<span src="//restapi.amap.com/v3/config/district?key=8d1f86ee16089781fdd20687a8d657fd&extensions=base&keywords=${this.zip_code}">
     <select name="province">
         <option>请选择</option>
     </select>

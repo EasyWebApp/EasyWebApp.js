@@ -385,28 +385,32 @@ var HTML_Template = (function (BOM, DOM, $, DS_Inherit, Node_Template) {
             });
         },
         render:        function (iData) {
-            this.scope.extend( iData );
+            var iScope = this.scope.extend( iData ),
+                Last_Render = this.lastRender;
 
-            iData = this.lastRender  ?  (iData || this.scope)  :  $.extend(
-                $.makeSet('', Object.keys(this.map)),  this.scope
-            );
-
-            var Last_Render = this.lastRender;
+            if ( Last_Render )
+                iData = iData || this.scope;
+            else {
+                iScope = $.extend(
+                    $.makeSet('', Object.keys(this.map)),  this.scope
+                );
+                iData = this.map;
+            }
 
             var Render_Node = $.each(this.data2Node( iData ),  function () {
 
                     if (this instanceof Node_Template)
-                        this.render( iData );
+                        this.render( iScope );
                     else if (this instanceof $.ListView) {
                         if (! Last_Render)
                             this.clear().render(
-                                iData[ this.$_View[0].getAttribute('name') ]
+                                iScope[ this.$_View[0].getAttribute('name') ]
                             );
                     } else
                         $( this )[
                             ('value' in this)  ?  'val'  :  'html'
                         ](
-                            iData[this.name || this.getAttribute('name')]
+                            iScope[this.name || this.getAttribute('name')]
                         );
                 });
 
@@ -1016,7 +1020,7 @@ var WebApp = (function (BOM, DOM, $, UI_Module, InnerLink) {
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v3.3  (2017-01-09)  Beta
+//      [Version]    v3.3  (2017-01-10)  Beta
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //
