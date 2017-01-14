@@ -55,9 +55,9 @@ define(['jquery', 'UI_Module', 'InnerLink'],  function ($, UI_Module, InnerLink)
             return  iHash && iHash[1];
         }
     }, {
-        push:         Array.prototype.push,
-        splice:       Array.prototype.splice,
-        init:         function () {
+        push:        Array.prototype.push,
+        splice:      Array.prototype.splice,
+        init:        function () {
             var iModule = new UI_Module(new InnerLink(this, DOM.body));
 
             var iLink = iModule.source,  _This_ = this;
@@ -77,7 +77,7 @@ define(['jquery', 'UI_Module', 'InnerLink'],  function ($, UI_Module, InnerLink)
                     _This_.load(iHash);
             });
         },
-        register:     function (iPage) {
+        register:    function (iPage) {
             if (this.lastPage > -1)  this[this.lastPage].detach();
 
             if (++this.lastPage != this.length)
@@ -95,7 +95,7 @@ define(['jquery', 'UI_Module', 'InnerLink'],  function ($, UI_Module, InnerLink)
                     this[i].$_Content = null;
                 }
         },
-        boot:         function (iLink) {
+        boot:        function (iLink) {
             iLink = new InnerLink(this, iLink);
 
             switch (iLink.target) {
@@ -119,7 +119,7 @@ define(['jquery', 'UI_Module', 'InnerLink'],  function ($, UI_Module, InnerLink)
 
             return this;
         },
-        load:         function (HTML_URL, $_Sibling) {
+        load:        function (HTML_URL, $_Sibling) {
             $('<span />',  $.extend(
                 {style: 'display: none'},
                 (typeof HTML_URL == 'object')  ?  HTML_URL  :  {
@@ -129,26 +129,6 @@ define(['jquery', 'UI_Module', 'InnerLink'],  function ($, UI_Module, InnerLink)
             )).appendTo($_Sibling || 'body').click();
 
             return this;
-        },
-        getModule:    function () {
-            return  UI_Module.instanceOf( arguments[0] );
-        },
-        component:    function ($_View, iFactory) {
-
-            if (typeof $_View == 'function') {
-                iFactory = $_View;
-                $_View = '';
-            }
-            $_View = $($_View);
-
-            var iModule = UI_Module.instanceOf($_View[0] ? $_View : this.$_Root);
-
-            iModule.domReady.then(function (iData) {
-
-                iModule.render(iFactory.call(iModule, iData)  ||  iData);
-            });
-
-            return iModule;
         }
     });
 

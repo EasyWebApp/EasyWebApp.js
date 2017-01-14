@@ -718,31 +718,6 @@ var UI_Module = (function (BOM, DOM, $, HTML_Template, Node_Template) {
                 return  _This_.$_View.children('script')[0] ?
                     _Data_ : _This_.render(_Data_);
             });
-        },
-        update:        function (iName, iValue) {
-            var iTemplate = this.template;
-
-            if (iName instanceof HTML_Template) {
-                iTemplate = iName;
-                iName = iValue;
-                iValue = arguments[2];
-            }
-            try {
-                iValue = eval( iValue );
-            } catch (iError) { }
-
-            iValue = (iValue != null)  ?  iValue  :  '';
-
-            var iData = { };
-            iData[iName] = iValue;
-
-            UI_Module.reload(
-                iTemplate.valueOf(
-                    iTemplate.scope.setValue(iName, iValue)
-                ).render( iData )
-            );
-
-            return this;
         }
     });
 
@@ -912,9 +887,9 @@ var WebApp = (function (BOM, DOM, $, UI_Module, InnerLink) {
             return  iHash && iHash[1];
         }
     }, {
-        push:         Array.prototype.push,
-        splice:       Array.prototype.splice,
-        init:         function () {
+        push:        Array.prototype.push,
+        splice:      Array.prototype.splice,
+        init:        function () {
             var iModule = new UI_Module(new InnerLink(this, DOM.body));
 
             var iLink = iModule.source,  _This_ = this;
@@ -934,7 +909,7 @@ var WebApp = (function (BOM, DOM, $, UI_Module, InnerLink) {
                     _This_.load(iHash);
             });
         },
-        register:     function (iPage) {
+        register:    function (iPage) {
             if (this.lastPage > -1)  this[this.lastPage].detach();
 
             if (++this.lastPage != this.length)
@@ -952,7 +927,7 @@ var WebApp = (function (BOM, DOM, $, UI_Module, InnerLink) {
                     this[i].$_Content = null;
                 }
         },
-        boot:         function (iLink) {
+        boot:        function (iLink) {
             iLink = new InnerLink(this, iLink);
 
             switch (iLink.target) {
@@ -976,7 +951,7 @@ var WebApp = (function (BOM, DOM, $, UI_Module, InnerLink) {
 
             return this;
         },
-        load:         function (HTML_URL, $_Sibling) {
+        load:        function (HTML_URL, $_Sibling) {
             $('<span />',  $.extend(
                 {style: 'display: none'},
                 (typeof HTML_URL == 'object')  ?  HTML_URL  :  {
@@ -986,26 +961,6 @@ var WebApp = (function (BOM, DOM, $, UI_Module, InnerLink) {
             )).appendTo($_Sibling || 'body').click();
 
             return this;
-        },
-        getModule:    function () {
-            return  UI_Module.instanceOf( arguments[0] );
-        },
-        component:    function ($_View, iFactory) {
-
-            if (typeof $_View == 'function') {
-                iFactory = $_View;
-                $_View = '';
-            }
-            $_View = $($_View);
-
-            var iModule = UI_Module.instanceOf($_View[0] ? $_View : this.$_Root);
-
-            iModule.domReady.then(function (iData) {
-
-                iModule.render(iFactory.call(iModule, iData)  ||  iData);
-            });
-
-            return iModule;
         }
     });
 
@@ -1016,11 +971,85 @@ var WebApp = (function (BOM, DOM, $, UI_Module, InnerLink) {
 })(self, self.document, self.jQuery, UI_Module, InnerLink);
 
 
+
+var Helper_API = (function (BOM, DOM, $, UI_Module, WebApp) {
+
+    $.extend(UI_Module.prototype, {
+        update:       function (iName, iValue) {
+            var iTemplate = this.template;
+
+            if (iName instanceof HTML_Template) {
+                iTemplate = iName;
+                iName = iValue;
+                iValue = arguments[2];
+            }
+            try {
+                iValue = eval( iValue );
+            } catch (iError) { }
+
+            iValue = (iValue != null)  ?  iValue  :  '';
+
+            var iData = { };
+            iData[iName] = iValue;
+
+            UI_Module.reload(
+                iTemplate.valueOf(
+                    iTemplate.scope.setValue(iName, iValue)
+                ).render( iData )
+            );
+
+            return this;
+        },
+        on:           function (iType, $_Sub, iCallback) {
+
+            $_Sub = this.ownerApp.getModule( this.$_View.find($_Sub) );
+
+            var iHTML = ($_Sub.source.href || '').split('?')[0]  ||  '',
+                iJSON = ($_Sub.source.src || '').split('?')[0]  ||  '';
+
+            this.ownerApp.off(iType, iHTML, iJSON, iCallback)
+                .on(iType, iHTML, iJSON, iCallback);
+
+            return this;
+        },
+        getParent:    function () {
+            return  UI_Module.instanceOf( this.$_View[0].parentNode );
+        }
+    });
+
+    $.extend(WebApp.prototype, {
+        getModule:    function () {
+            return  UI_Module.instanceOf(arguments[0] || this.$_Root);
+        },
+        component:    function ($_View, iFactory) {
+
+            if (typeof $_View == 'function') {
+                iFactory = $_View;
+                $_View = null;
+            }
+            $_View = (typeof $_View == 'string')  ?
+                $('[href*="' + $_View + '.htm"]',  document.body)  :
+                $( $_View );
+
+            var iModule = this.getModule($_View[0] && $_View);
+
+            if (typeof iFactory == 'function')
+                iModule.domReady.then(function (iData) {
+
+                    iModule.render(iFactory.call(iModule, iData)  ||  iData);
+                });
+
+            return iModule;
+        }
+    });
+})(self, self.document, self.jQuery, UI_Module, WebApp);
+
+
 //
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v3.3  (2017-01-10)  Beta
+//      [Version]    v3.3  (2017-01-14)  Beta
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //
@@ -1035,7 +1064,7 @@ var WebApp = (function (BOM, DOM, $, UI_Module, InnerLink) {
 
 
 
-var EasyWebApp = (function (BOM, DOM, $, WebApp, InnerLink, UI_Module, HTML_Template) {
+var EasyWebApp = (function (BOM, DOM, $, InnerLink, UI_Module, HTML_Template) {
 
     $.ajaxSetup({dataType: 'json'});
 
@@ -1053,7 +1082,7 @@ var EasyWebApp = (function (BOM, DOM, $, WebApp, InnerLink, UI_Module, HTML_Temp
 
         iURL = (iURL[1][0] == '!')  &&  iURL[1].slice(1);
 
-        if (iURL)  (new WebApp()).load(iURL);
+        if (iURL)  $().iWebApp().load(iURL);
 
     }).on('click submit',  InnerLink.selector,  function (iEvent) {
 
@@ -1066,19 +1095,19 @@ var EasyWebApp = (function (BOM, DOM, $, WebApp, InnerLink, UI_Module, HTML_Temp
 
         iEvent.stopPropagation();
 
-        (new WebApp()).boot( this );
+        $().iWebApp().boot( this );
     });
 
 /* ----- 视图数据监听 ----- */
 
-    var Only_Change = ['select', 'textarea', '[designMode]'].concat(
+    var Only_Change = $.map(['select', 'textarea', '[designMode]'].concat(
             $.map([
                 'hidden', 'radio', 'checkbox', 'number', 'search',
                 'file', 'range', 'date', 'time', 'color'
             ],  function () {
-                return  'input[name][type="' + arguments[0] + '"]';
+                return  'input[type="' + arguments[0] + '"]';
             })
-        ).join(', ');
+        ),  function () {  return  arguments[0] + '[name]';  }).join(', ');
 
     function No_Input(iEvent) {
         var iKey = iEvent.which;
@@ -1102,15 +1131,14 @@ var EasyWebApp = (function (BOM, DOM, $, WebApp, InnerLink, UI_Module, HTML_Temp
             );
     }
 
-    $(DOM)
-        .on('change', Only_Change, Data_Change)
+    $(DOM).on('change', Only_Change, Data_Change)
         .on(
-            'keyup paste',
+            ($.browser.mobile ? 'input' : 'keyup')  +  ' paste',
             ':field:not(' + Only_Change + ')',
             $.throttle( Data_Change )
         );
 
-})(self, self.document, self.jQuery, WebApp, InnerLink, UI_Module, HTML_Template);
+})(self, self.document, self.jQuery, InnerLink, UI_Module, HTML_Template);
 
 
 });

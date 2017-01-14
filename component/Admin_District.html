@@ -10,9 +10,9 @@ require(['jquery', 'EasyWebApp'],  function ($) {
         $_Item.attr('value', iValue.adcode)[0].textContent = iValue.name;
     }
 
-    $().iWebApp().component('[href*="Admin_District.htm"]',  function () {
+    $().iWebApp().component('Admin_District',  function () {
 
-        this.ownerApp.on('data',  '',  'amap.com',  function (iLink, iData) {
+        this.on('data',  'span[src]',  function (iLink, iData) {
 
             iData = iData.districts[0].districts;
 
@@ -44,7 +44,7 @@ require(['jquery', 'EasyWebApp'],  function ($) {
     });
 });
 </script>
-<span src="//restapi.amap.com/v3/config/district?key=8d1f86ee16089781fdd20687a8d657fd&extensions=base&keywords=${this.zip_code}">
+<span src="//restapi.amap.com/v3/config/district?key=${this.user_key}&extensions=base&keywords=${this.zip_code}">
     <select name="province">
         <option>请选择</option>
     </select>

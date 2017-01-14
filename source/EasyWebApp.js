@@ -2,7 +2,7 @@
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v3.3  (2017-01-10)  Beta
+//      [Version]    v3.3  (2017-01-14)  Beta
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //
@@ -17,8 +17,8 @@
 
 
 define([
-    'jquery', 'WebApp', 'InnerLink', 'UI_Module', 'HTML_Template'
-],  function ($, WebApp, InnerLink, UI_Module, HTML_Template) {
+    'jquery', 'InnerLink', 'UI_Module', 'HTML_Template', 'Helper_API'
+],  function ($, InnerLink, UI_Module, HTML_Template) {
 
     var BOM = self,  DOM = self.document;
 
@@ -38,7 +38,7 @@ define([
 
         iURL = (iURL[1][0] == '!')  &&  iURL[1].slice(1);
 
-        if (iURL)  (new WebApp()).load(iURL);
+        if (iURL)  $().iWebApp().load(iURL);
 
     }).on('click submit',  InnerLink.selector,  function (iEvent) {
 
@@ -51,19 +51,19 @@ define([
 
         iEvent.stopPropagation();
 
-        (new WebApp()).boot( this );
+        $().iWebApp().boot( this );
     });
 
 /* ----- 视图数据监听 ----- */
 
-    var Only_Change = ['select', 'textarea', '[designMode]'].concat(
+    var Only_Change = $.map(['select', 'textarea', '[designMode]'].concat(
             $.map([
                 'hidden', 'radio', 'checkbox', 'number', 'search',
                 'file', 'range', 'date', 'time', 'color'
             ],  function () {
-                return  'input[name][type="' + arguments[0] + '"]';
+                return  'input[type="' + arguments[0] + '"]';
             })
-        ).join(', ');
+        ),  function () {  return  arguments[0] + '[name]';  }).join(', ');
 
     function No_Input(iEvent) {
         var iKey = iEvent.which;
@@ -87,10 +87,9 @@ define([
             );
     }
 
-    $(DOM)
-        .on('change', Only_Change, Data_Change)
+    $(DOM).on('change', Only_Change, Data_Change)
         .on(
-            'keyup paste',
+            ($.browser.mobile ? 'input' : 'keyup')  +  ' paste',
             ':field:not(' + Only_Change + ')',
             $.throttle( Data_Change )
         );
