@@ -1,0 +1,64 @@
+<style>
+    .Grid-Row > * {
+        padding:    1em;
+    }
+    .Grid-Row > *:first-child {
+        text-align:    left;
+    }
+    .Grid-Row > *:last-child {
+        text-align:    right;
+    }
+	table + .Grid-Row {
+		border-top:    1px  solid  lightgray;
+        text-align:    center;
+	}
+</style>
+<script>
+require(['jquery', 'Data_Table'],  function ($) {
+
+    $().iWebApp().component('Data_Table', arguments[1]);
+});
+</script>
+<div class="Grid-Row">
+    <span>
+        显示
+        <select name="pageSize">
+            <option>10</option>
+            <option>20</option>
+            <option>30</option>
+        </select>
+        行
+    </span>
+    <slot name="toolbar"></slot>
+</div>
+<slot name="table"></slot>
+<div class="Grid-Row">
+    <div>
+        <span>跳转到</span>
+        <input type="number" name="pageIndex" min="1" max="${this.pageSum}" />
+        <span>页</span>
+    </div>
+    <ul class="NavBar">
+        <li style="display: ${(this.pageIndex < 3) ? 'none' : ''}">
+            1
+        </li>
+        <li style="display: ${(this.pageSum < 7) || (this.pageIndex < 4) ? 'none' : ''}">
+            …
+        </li>
+        <li style="display: ${(this.pageIndex < 2) ? 'none' : ''}">
+            ${this.pageIndex - 1}
+        </li>
+        <li class="active">
+            ${this.pageIndex}
+        </li>
+        <li style="display: ${(this.pageIndex + 1 > this.pageSum) ? 'none' : ''}">
+            ${this.pageIndex + 1}
+        </li>
+        <li style="display: ${(this.pageSum < 6) || (this.pageIndex + 3 > this.pageSum) ? 'none' : ''}">
+            …
+        </li>
+        <li style="display: ${(this.pageIndex + 2 > this.pageSum) ? 'none' : ''}">
+            ${this.pageSum}
+        </li>
+    </ul>
+</div>

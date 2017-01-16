@@ -12,13 +12,8 @@ define([
         );
         this.scope = DS_Inherit(iScope,  { });
 
-        this.source = (iURL || '').match(/\.(html?|md)\??/)  ?
+        this.init().source = (iURL || '').match(/\.(html?|md)\??/)  ?
             iURL.split('?')[0] : iURL;
-
-        this.length = 0;
-        this.map = { };
-
-        this.lastRender = 0;
     }
 
     var RAW_Tag = $.makeSet('CODE', 'XMP', 'TEMPLATE');
@@ -63,6 +58,15 @@ define([
     $.extend(HTML_Template.prototype, {
         toString:      $.CommonView.prototype.toString,
         push:          Array.prototype.push,
+        init:          function () {
+            Array.prototype.splice.call(this, 0, Infinity);
+
+            this.map = { };
+
+            this.lastRender = 0;
+
+            return this;
+        },
         pushMap:       function (iName, iNode) {
             iNode = HTML_Template.getMaskCode(this.push(iNode) - 1);
 
@@ -164,7 +168,7 @@ define([
             return  new Promise(function () {
 
                 if (_This_.source)
-                    _This_.$_View.load(_This_.source,  arguments[0]);
+                    _This_.init().$_View.load(_This_.source,  arguments[0]);
                 else
                     arguments[0]( _This_.$_View[0].innerHTML );
 

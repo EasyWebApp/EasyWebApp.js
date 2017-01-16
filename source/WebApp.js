@@ -81,7 +81,7 @@ define(['jquery', 'UI_Module', 'InnerLink'],  function ($, UI_Module, InnerLink)
             if (this.lastPage > -1)  this[this.lastPage].detach();
 
             if (++this.lastPage != this.length)
-                this.splice(this.lastPage, this.length);
+                $.each(this.splice(this.lastPage, Infinity),  iPage.destructor);
 
             this.hashChange = false;
             iPage.source.register( this.length );
@@ -90,10 +90,8 @@ define(['jquery', 'UI_Module', 'InnerLink'],  function ($, UI_Module, InnerLink)
             var iTimeOut = $.now()  -  (1000 * 60 * this.cacheMinute);
 
             for (var i = 0;  (i + 2) < this.length;  i++)
-                if ((this[i].lastLoad < iTimeOut)  &&  this[i].$_Content) {
-                    this[i].$_Content.remove();
-                    this[i].$_Content = null;
-                }
+                if ((this[i].lastLoad < iTimeOut)  &&  this[i].$_Content)
+                    this[i].destructor();
         },
         boot:        function (iLink) {
             iLink = new InnerLink(this, iLink);

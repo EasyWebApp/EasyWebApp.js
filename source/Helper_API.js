@@ -26,18 +26,6 @@ define(['jquery', 'UI_Module', 'WebApp'],  function ($, UI_Module, WebApp) {
 
             return this;
         },
-        on:           function (iType, $_Sub, iCallback) {
-
-            $_Sub = this.ownerApp.getModule( this.$_View.find($_Sub) );
-
-            var iHTML = ($_Sub.source.href || '').split('?')[0]  ||  '',
-                iJSON = ($_Sub.source.src || '').split('?')[0]  ||  '';
-
-            this.ownerApp.off(iType, iHTML, iJSON, iCallback)
-                .on(iType, iHTML, iJSON, iCallback);
-
-            return this;
-        },
         getParent:    function () {
             return  UI_Module.instanceOf( this.$_View[0].parentNode );
         }

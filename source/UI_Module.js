@@ -64,6 +64,50 @@ define([
 
     $.extend(UI_Module.prototype, {
         toString:      $.CommonView.prototype.toString,
+        trigger:       function () {
+            return this.ownerApp.trigger(
+                arguments[0],
+                this.source.href || '',
+                this.source.src || this.source.action || '',
+                [ this.source ].concat( arguments[1] )
+            ).slice(-1)[0];
+        },
+        attach:        function () {
+            this.$_View
+                .data(this.constructor.getClass(), this)
+                .data(HTML_Template.getClass(), this.template);
+
+            if (this.$_Content) {
+                this.$_View.append( this.$_Content );
+                this.trigger('ready');
+            } else if (this.lastLoad)
+                this.load();
+
+            return this;
+        },
+        detach:        function () {
+            this.$_Content = this.$_View.children().detach();
+
+            return this;
+        },
+        on:            function (iType, $_Sub, iCallback) {
+
+            $_Sub = this.$_View.find( $_Sub );
+
+            var iHTML = ($_Sub.attr('href') || '').split('?')[0]  ||  '',
+                iJSON = ($_Sub.attr('src') || '').split('?')[0]  ||  '';
+
+            this.ownerApp.off(iType, iHTML, iJSON, iCallback)
+                .on(iType, iHTML, iJSON, iCallback);
+
+            return this;
+        },
+        destructor:    function () {
+            this.$_Content.remove();
+            this.$_Content = null;
+
+            return this;
+        },
         findSub:       function () {
             var _This_ = this,  InnerLink = this.source.constructor;
 
@@ -84,32 +128,6 @@ define([
             this.length = $_Sub.length;
 
             return $_Sub;
-        },
-        trigger:       function () {
-            return this.ownerApp.trigger(
-                arguments[0],
-                this.source.href || '',
-                this.source.src || this.source.action || '',
-                [ this.source ].concat( arguments[1] )
-            ).slice(-1)[0];
-        },
-        detach:        function () {
-            this.$_Content = this.$_View.children().detach();
-
-            return this;
-        },
-        attach:        function () {
-            this.$_View
-                .data(this.constructor.getClass(), this)
-                .data(HTML_Template.getClass(), this.template);
-
-            if (this.$_Content) {
-                this.$_View.append( this.$_Content );
-                this.trigger('ready');
-            } else if (this.lastLoad)
-                this.load();
-
-            return this;
         },
         getScope:      function () {
             return  (HTML_Template.instanceOf( this.source.$_DOM ) || '').scope;

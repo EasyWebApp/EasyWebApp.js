@@ -201,13 +201,8 @@ var HTML_Template = (function (BOM, DOM, $, DS_Inherit, Node_Template) {
         );
         this.scope = DS_Inherit(iScope,  { });
 
-        this.source = (iURL || '').match(/\.(html?|md)\??/)  ?
+        this.init().source = (iURL || '').match(/\.(html?|md)\??/)  ?
             iURL.split('?')[0] : iURL;
-
-        this.length = 0;
-        this.map = { };
-
-        this.lastRender = 0;
     }
 
     var RAW_Tag = $.makeSet('CODE', 'XMP', 'TEMPLATE');
@@ -252,6 +247,15 @@ var HTML_Template = (function (BOM, DOM, $, DS_Inherit, Node_Template) {
     $.extend(HTML_Template.prototype, {
         toString:      $.CommonView.prototype.toString,
         push:          Array.prototype.push,
+        init:          function () {
+            Array.prototype.splice.call(this, 0, Infinity);
+
+            this.map = { };
+
+            this.lastRender = 0;
+
+            return this;
+        },
         pushMap:       function (iName, iNode) {
             iNode = HTML_Template.getMaskCode(this.push(iNode) - 1);
 
@@ -353,7 +357,7 @@ var HTML_Template = (function (BOM, DOM, $, DS_Inherit, Node_Template) {
             return  new Promise(function () {
 
                 if (_This_.source)
-                    _This_.$_View.load(_This_.source,  arguments[0]);
+                    _This_.init().$_View.load(_This_.source,  arguments[0]);
                 else
                     arguments[0]( _This_.$_View[0].innerHTML );
 
@@ -536,6 +540,50 @@ var UI_Module = (function (BOM, DOM, $, HTML_Template, Node_Template) {
 
     $.extend(UI_Module.prototype, {
         toString:      $.CommonView.prototype.toString,
+        trigger:       function () {
+            return this.ownerApp.trigger(
+                arguments[0],
+                this.source.href || '',
+                this.source.src || this.source.action || '',
+                [ this.source ].concat( arguments[1] )
+            ).slice(-1)[0];
+        },
+        attach:        function () {
+            this.$_View
+                .data(this.constructor.getClass(), this)
+                .data(HTML_Template.getClass(), this.template);
+
+            if (this.$_Content) {
+                this.$_View.append( this.$_Content );
+                this.trigger('ready');
+            } else if (this.lastLoad)
+                this.load();
+
+            return this;
+        },
+        detach:        function () {
+            this.$_Content = this.$_View.children().detach();
+
+            return this;
+        },
+        on:            function (iType, $_Sub, iCallback) {
+
+            $_Sub = this.$_View.find( $_Sub );
+
+            var iHTML = ($_Sub.attr('href') || '').split('?')[0]  ||  '',
+                iJSON = ($_Sub.attr('src') || '').split('?')[0]  ||  '';
+
+            this.ownerApp.off(iType, iHTML, iJSON, iCallback)
+                .on(iType, iHTML, iJSON, iCallback);
+
+            return this;
+        },
+        destructor:    function () {
+            this.$_Content.remove();
+            this.$_Content = null;
+
+            return this;
+        },
         findSub:       function () {
             var _This_ = this,  InnerLink = this.source.constructor;
 
@@ -556,32 +604,6 @@ var UI_Module = (function (BOM, DOM, $, HTML_Template, Node_Template) {
             this.length = $_Sub.length;
 
             return $_Sub;
-        },
-        trigger:       function () {
-            return this.ownerApp.trigger(
-                arguments[0],
-                this.source.href || '',
-                this.source.src || this.source.action || '',
-                [ this.source ].concat( arguments[1] )
-            ).slice(-1)[0];
-        },
-        detach:        function () {
-            this.$_Content = this.$_View.children().detach();
-
-            return this;
-        },
-        attach:        function () {
-            this.$_View
-                .data(this.constructor.getClass(), this)
-                .data(HTML_Template.getClass(), this.template);
-
-            if (this.$_Content) {
-                this.$_View.append( this.$_Content );
-                this.trigger('ready');
-            } else if (this.lastLoad)
-                this.load();
-
-            return this;
         },
         getScope:      function () {
             return  (HTML_Template.instanceOf( this.source.$_DOM ) || '').scope;
@@ -913,7 +935,7 @@ var WebApp = (function (BOM, DOM, $, UI_Module, InnerLink) {
             if (this.lastPage > -1)  this[this.lastPage].detach();
 
             if (++this.lastPage != this.length)
-                this.splice(this.lastPage, this.length);
+                $.each(this.splice(this.lastPage, Infinity),  iPage.destructor);
 
             this.hashChange = false;
             iPage.source.register( this.length );
@@ -922,10 +944,8 @@ var WebApp = (function (BOM, DOM, $, UI_Module, InnerLink) {
             var iTimeOut = $.now()  -  (1000 * 60 * this.cacheMinute);
 
             for (var i = 0;  (i + 2) < this.length;  i++)
-                if ((this[i].lastLoad < iTimeOut)  &&  this[i].$_Content) {
-                    this[i].$_Content.remove();
-                    this[i].$_Content = null;
-                }
+                if ((this[i].lastLoad < iTimeOut)  &&  this[i].$_Content)
+                    this[i].destructor();
         },
         boot:        function (iLink) {
             iLink = new InnerLink(this, iLink);
@@ -1000,18 +1020,6 @@ var Helper_API = (function (BOM, DOM, $, UI_Module, WebApp) {
 
             return this;
         },
-        on:           function (iType, $_Sub, iCallback) {
-
-            $_Sub = this.ownerApp.getModule( this.$_View.find($_Sub) );
-
-            var iHTML = ($_Sub.source.href || '').split('?')[0]  ||  '',
-                iJSON = ($_Sub.source.src || '').split('?')[0]  ||  '';
-
-            this.ownerApp.off(iType, iHTML, iJSON, iCallback)
-                .on(iType, iHTML, iJSON, iCallback);
-
-            return this;
-        },
         getParent:    function () {
             return  UI_Module.instanceOf( this.$_View[0].parentNode );
         }
@@ -1049,7 +1057,7 @@ var Helper_API = (function (BOM, DOM, $, UI_Module, WebApp) {
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v3.3  (2017-01-14)  Beta
+//      [Version]    v3.3  (2017-01-16)  Beta
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //
