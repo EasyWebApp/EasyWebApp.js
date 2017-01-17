@@ -40,5 +40,12 @@ define(['jquery', 'TimePassed', 'EasyWebApp'],  function ($, TimePassed) {
 
             return  iLink.href  ?  {list: iData}  :  iData;
         });
+    }).on('ajaxStart',  function () {
+
+        $( this.body ).removeClass('Loaded');
+
+    }).on('ajaxStop',  function () {
+
+        $( this.body ).addClass('Loaded');
     });
 });

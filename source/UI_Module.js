@@ -3,10 +3,14 @@ define([
 ],  function ($, HTML_Template, Node_Template) {
 
     function UI_Module(iLink) {
-        this.ownerApp = iLink.ownerApp;
-        this.source = iLink;
 
-        this.$_View = iLink.getTarget();
+        var iView = $.CommonView.call(this, iLink.getTarget());
+
+        iView.source = iLink;
+
+        if (iView !== this)  return iView;
+
+        this.ownerApp = iLink.ownerApp;
 
         this.type = (this.$_View[0] == this.ownerApp.$_Root[0])  ?
             'page'  :  'module';
@@ -38,10 +42,8 @@ define([
 
     var Link_Key = $.makeSet('href', 'src');
 
-    $.extend(UI_Module, {
-        getClass:      $.CommonView.getClass,
-        instanceOf:    $.CommonView.instanceOf,
-        reload:        function (iTemplate) {
+    return  $.inherit($.CommonView, UI_Module, {
+        reload:      function (iTemplate) {
             for (var i = 0, iModule;  iTemplate[i];  i++)
                 if (
                     (iTemplate[i] instanceof Node_Template)  &&
@@ -59,27 +61,26 @@ define([
                     });
                 }
         },
-        selector:      '*[href]:not(a, link), *[src]:not(:media, script)'
-    });
+        selector:    '*[href]:not(a, link), *[src]:not(:media, script)'
+    }, {
+        emit:          function () {
+            var iArgs = [
+                    arguments[0],
+                    this.source.href || '',
+                    this.source.src || this.source.action || '',
+                    [ this.source ].concat( arguments[1] )
+                ];
 
-    $.extend(UI_Module.prototype, {
-        toString:      $.CommonView.prototype.toString,
-        trigger:       function () {
-            return this.ownerApp.trigger(
-                arguments[0],
-                this.source.href || '',
-                this.source.src || this.source.action || '',
-                [ this.source ].concat( arguments[1] )
-            ).slice(-1)[0];
+            return  this.trigger.apply(this, iArgs).concat(
+                this.trigger.apply(this.ownerApp, iArgs)
+            )[0];
         },
         attach:        function () {
-            this.$_View
-                .data(this.constructor.getClass(), this)
-                .data(HTML_Template.getClass(), this.template);
+            this.$_View.data(HTML_Template.getClass(), this.template);
 
             if (this.$_Content) {
                 this.$_View.append( this.$_Content );
-                this.trigger('ready');
+                this.emit('ready');
             } else if (this.lastLoad)
                 this.load();
 
@@ -90,21 +91,14 @@ define([
 
             return this;
         },
-        on:            function (iType, $_Sub, iCallback) {
-
-            $_Sub = this.$_View.find( $_Sub );
-
-            var iHTML = ($_Sub.attr('href') || '').split('?')[0]  ||  '',
-                iJSON = ($_Sub.attr('src') || '').split('?')[0]  ||  '';
-
-            this.ownerApp.off(iType, iHTML, iJSON, iCallback)
-                .on(iType, iHTML, iJSON, iCallback);
-
-            return this;
-        },
         destructor:    function () {
-            this.$_Content.remove();
-            this.$_Content = null;
+            if ( this.$_Content ) {
+                this.$_Content.remove();
+                this.$_Content = null;
+            }
+            this.$_View
+                .data(this.constructor.getClass(), null)
+                .data(HTML_Template.getClass(), null);
 
             return this;
         },
@@ -187,7 +181,7 @@ define([
                     this.source.loadData()  :  Promise.resolve('')
             ).then(function (iData) {
 
-                iData = _This_.trigger('data', [iData])  ||  iData;
+                iData = _This_.emit('data', [iData])  ||  iData;
 
                 if (iData instanceof Array) {
                     var _Data_ = { };
@@ -202,7 +196,7 @@ define([
 
             return  this.template.load().then(function () {
 
-                _This_.trigger('template');
+                _This_.emit('template');
 
                 var $_Sub = _This_.findSub();
 
@@ -236,7 +230,7 @@ define([
             this.lastLoad = $.now();
             this.domReady = null;
 
-            this.prefetch().trigger('ready');
+            this.prefetch().emit('ready');
 
             return this.loadModule();
         },
@@ -266,7 +260,4 @@ define([
             });
         }
     });
-
-    return UI_Module;
-
 });

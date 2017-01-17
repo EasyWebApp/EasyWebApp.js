@@ -108,10 +108,15 @@ define(['jquery', 'UI_Module', 'InnerLink'],  function ($, UI_Module, InnerLink)
                     break;
                 case '_self':     ;
                 default:          {
-                    var iModule = UI_Module.instanceOf( iLink.$_DOM );
+                    var iModule = UI_Module.instanceOf(iLink.getTarget(), false);
 
-                    if ((! iModule)  ||  !(iModule.domReady instanceof Promise))
-                        (new UI_Module(iLink)).load();
+                    if ( iModule ) {
+                        if ( iModule.domReady )  break;
+
+                        if ( iLink.href )  iModule.destructor();
+                    }
+
+                    (new UI_Module(iLink)).load();
                 }
             }
 

@@ -2,7 +2,7 @@
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v3.3  (2017-01-16)  Beta
+//      [Version]    v3.3  (2017-01-17)  Beta
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //
@@ -89,7 +89,7 @@ define([
 
     $(DOM).on('change', Only_Change, Data_Change)
         .on(
-            ($.browser.mobile ? 'input' : 'keyup')  +  ' paste',
+            $.browser.mobile ? 'input' : 'keyup paste',
             ':field:not(' + Only_Change + ')',
             $.throttle( Data_Change )
         );

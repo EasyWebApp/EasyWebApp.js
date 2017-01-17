@@ -1,19 +1,18 @@
 define(['jquery', 'EasyWebApp'],  function ($) {
 
-    function PageData(iLink, iData) {
+    function PageData(_, iData) {
 
-        var tBody = this.getModule( iLink.$_DOM );
-
-        this.getModule( tBody.$_View[0].parentNode ).update(
-            'pageSum',  Math.ceil(iData.total / tBody.template.scope.pageSize)
+        this.getParent().update(
+            'pageSum',  Math.ceil(iData.total / this.template.scope.pageSize)
         );
 
         return iData.list;
     }
 
     return  function () {
-        var $_Number = this.on('data', 'tbody', PageData)
-                .$_View.find('table + * [type="number"]');
+        this.bind('data', 'tbody', PageData);
+
+        var $_Number = this.$_View.find('table + * [type="number"]');
 
         this.$_View.on('click',  'table + * li',  function () {
 

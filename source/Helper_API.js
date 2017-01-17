@@ -1,4 +1,6 @@
-define(['jquery', 'UI_Module', 'WebApp'],  function ($, UI_Module, WebApp) {
+define([
+    'jquery', 'UI_Module', 'HTML_Template', 'InnerLink', 'WebApp'
+],  function ($, UI_Module, HTML_Template, InnerLink, WebApp) {
 
     $.extend(UI_Module.prototype, {
         update:       function (iName, iValue) {
@@ -26,6 +28,18 @@ define(['jquery', 'UI_Module', 'WebApp'],  function ($, UI_Module, WebApp) {
 
             return this;
         },
+        bind:         function (iType, $_Sub, iCallback) {
+
+            $_Sub = new UI_Module(new InnerLink(
+                this.ownerApp,  this.$_View.find( $_Sub )[0]
+            ));
+
+            var iHTML = ($_Sub.source.href || '').split('?')[0]  ||  '',
+                iJSON = ($_Sub.source.src || '').split('?')[0]  ||  '';
+
+            return  $_Sub.off(iType, iHTML, iJSON, iCallback)
+                .on(iType, iHTML, iJSON, iCallback);
+        },
         getParent:    function () {
             return  UI_Module.instanceOf( this.$_View[0].parentNode );
         }
@@ -36,16 +50,20 @@ define(['jquery', 'UI_Module', 'WebApp'],  function ($, UI_Module, WebApp) {
             return  UI_Module.instanceOf(arguments[0] || this.$_Root);
         },
         component:    function ($_View, iFactory) {
-
-            if (typeof $_View == 'function') {
-                iFactory = $_View;
-                $_View = null;
+            switch (typeof $_View) {
+                case 'string':
+                    $_View = $('[href*="' + $_View + '.htm"]',  document.body);
+                    break;
+                case 'function':    {
+                    iFactory = $_View;
+                    $_View = null;
+                }
+                default:            $_View = $( $_View );
             }
-            $_View = (typeof $_View == 'string')  ?
-                $('[href*="' + $_View + '.htm"]',  document.body)  :
-                $( $_View );
 
-            var iModule = this.getModule($_View[0] && $_View);
+            var iModule = $_View[0]  ?
+                    (new UI_Module(new InnerLink(this, $_View[0])))  :
+                    this.getModule();
 
             if (typeof iFactory == 'function')
                 iModule.domReady.then(function (iData) {
