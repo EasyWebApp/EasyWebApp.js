@@ -70,7 +70,7 @@ define([
                 return iURL;
             }
         },
-        loadData:     function (iScope) {
+        loadData:     function () {
             var iOption = {type:  this.method};
 
             if (this.$_DOM[0].tagName != 'FORM')

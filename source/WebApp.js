@@ -89,9 +89,12 @@ define(['jquery', 'UI_Module', 'InnerLink'],  function ($, UI_Module, InnerLink)
 
             var iTimeOut = $.now()  -  (1000 * 60 * this.cacheMinute);
 
-            for (var i = 0;  (i + 2) < this.length;  i++)
-                if ((this[i].lastLoad < iTimeOut)  &&  this[i].$_Content)
-                    this[i].destructor();
+            for (var i = 0;  this[i + 2];  i++)
+                if ((this[i].lastLoad < iTimeOut)  &&  this[i].$_Content) {
+
+                    this[i].$_Content.remove();
+                    this[i].$_Content = null;
+                }
         },
         boot:        function (iLink) {
             iLink = new InnerLink(this, iLink);

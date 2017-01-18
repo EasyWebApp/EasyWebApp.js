@@ -94,41 +94,37 @@ var Node_Template = (function (BOM, DOM, $) {
         this.ownerElement = iNode.parentNode || iNode.ownerElement;
     }
 
-    Node_Template.expression = /\$\{([\s\S]+?)\}/g;
-
-    Node_Template.reference = /this\.(\w+)/g;
-
-    try {
-        eval('``');
-
-        var ES_ST = function () {
-                'use strict';
-
-                var iValue = eval('`' + arguments[0] + '`');
-
-                return  (iValue != null)  ?  iValue  :  '';
-            };
-    } catch (iError) {
-        var Eval_This = function () {
-                'use strict';
-
+    $.extend(Node_Template, {
+        eval:          function () {
+            'use strict';
+            try {
                 var iValue = eval( arguments[0] );
 
                 return  (iValue != null)  ?  iValue  :  '';
-            };
-    }
-
-    $.extend(Node_Template.prototype, {
-        eval:        function (iContext) {
-            try {
-                return  ES_ST  ?  ES_ST.call(iContext, this.raw)  :
-                    this.raw.replace(Node_Template.expression,  function () {
-
-                        return  Eval_This.call(iContext, arguments[1]);
-                    });
             } catch (iError) {
                 return '';
             }
+        },
+        safeEval:      function (iValue) {
+            if ((typeof iValue == 'string')  &&  (iValue[0] == '0')  &&  iValue[1])
+                return iValue;
+
+            return  (iValue && this.eval(iValue))  ||  iValue;
+        },
+        expression:    /\$\{([\s\S]+?)\}/g,
+        reference:     /this\.(\w+)/g
+    });
+
+    var ES_ST = Node_Template.eval('`1`');
+
+    $.extend(Node_Template.prototype, {
+        eval:        function (iContext) {
+            return  ES_ST ?
+                Node_Template.eval.call(iContext,  '`' + this.raw + '`')  :
+                this.raw.replace(Node_Template.expression,  function () {
+
+                    return  Node_Template.eval.call(iContext, arguments[1]);
+                });
         },
         getRefer:    function () {
             var iRefer = [ ];
@@ -163,11 +159,7 @@ var Node_Template = (function (BOM, DOM, $) {
                 case 2:    if (
                     (this.name != 'style')  &&  (this.name in iParent)
                 ) {
-                    if ( iValue )  try {
-                        iValue = eval( iValue );
-                    } catch (iError) { }
-
-                    iParent[ this.name ] = iValue;
+                    iParent[ this.name ] = Node_Template.safeEval( iValue );
 
                     return;
 
@@ -808,7 +800,7 @@ var InnerLink = (function (BOM, DOM, $, UI_Module, HTML_Template) {
                 return iURL;
             }
         },
-        loadData:     function (iScope) {
+        loadData:     function () {
             var iOption = {type:  this.method};
 
             if (this.$_DOM[0].tagName != 'FORM')
@@ -934,9 +926,12 @@ var WebApp = (function (BOM, DOM, $, UI_Module, InnerLink) {
 
             var iTimeOut = $.now()  -  (1000 * 60 * this.cacheMinute);
 
-            for (var i = 0;  (i + 2) < this.length;  i++)
-                if ((this[i].lastLoad < iTimeOut)  &&  this[i].$_Content)
-                    this[i].destructor();
+            for (var i = 0;  this[i + 2];  i++)
+                if ((this[i].lastLoad < iTimeOut)  &&  this[i].$_Content) {
+
+                    this[i].$_Content.remove();
+                    this[i].$_Content = null;
+                }
         },
         boot:        function (iLink) {
             iLink = new InnerLink(this, iLink);
@@ -988,7 +983,7 @@ var WebApp = (function (BOM, DOM, $, UI_Module, InnerLink) {
 
 
 
-var Helper_API = (function (BOM, DOM, $, UI_Module, HTML_Template, InnerLink, WebApp) {
+var Helper_API = (function (BOM, DOM, $, UI_Module, HTML_Template, Node_Template, InnerLink, WebApp) {
 
     $.extend(UI_Module.prototype, {
         update:       function (iName, iValue) {
@@ -999,18 +994,13 @@ var Helper_API = (function (BOM, DOM, $, UI_Module, HTML_Template, InnerLink, We
                 iName = iValue;
                 iValue = arguments[2];
             }
-            try {
-                iValue = eval( iValue );
-            } catch (iError) { }
-
-            iValue = (iValue != null)  ?  iValue  :  '';
 
             var iData = { };
-            iData[iName] = iValue;
+            iData[iName] = Node_Template.safeEval( iValue );
 
             UI_Module.reload(
                 iTemplate.valueOf(
-                    iTemplate.scope.setValue(iName, iValue)
+                    iTemplate.scope.setValue(iName, iData[iName])
                 ).render( iData )
             );
 
@@ -1062,14 +1052,14 @@ var Helper_API = (function (BOM, DOM, $, UI_Module, HTML_Template, InnerLink, We
             return iModule;
         }
     });
-})(self, self.document, self.jQuery, UI_Module, HTML_Template, InnerLink, WebApp);
+})(self, self.document, self.jQuery, UI_Module, HTML_Template, Node_Template, InnerLink, WebApp);
 
 
 //
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v3.3  (2017-01-17)  Beta
+//      [Version]    v3.3  (2017-01-18)  Beta
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //

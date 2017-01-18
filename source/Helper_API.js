@@ -1,6 +1,6 @@
 define([
-    'jquery', 'UI_Module', 'HTML_Template', 'InnerLink', 'WebApp'
-],  function ($, UI_Module, HTML_Template, InnerLink, WebApp) {
+    'jquery', 'UI_Module', 'HTML_Template', 'Node_Template', 'InnerLink', 'WebApp'
+],  function ($, UI_Module, HTML_Template, Node_Template, InnerLink, WebApp) {
 
     $.extend(UI_Module.prototype, {
         update:       function (iName, iValue) {
@@ -11,18 +11,13 @@ define([
                 iName = iValue;
                 iValue = arguments[2];
             }
-            try {
-                iValue = eval( iValue );
-            } catch (iError) { }
-
-            iValue = (iValue != null)  ?  iValue  :  '';
 
             var iData = { };
-            iData[iName] = iValue;
+            iData[iName] = Node_Template.safeEval( iValue );
 
             UI_Module.reload(
                 iTemplate.valueOf(
-                    iTemplate.scope.setValue(iName, iValue)
+                    iTemplate.scope.setValue(iName, iData[iName])
                 ).render( iData )
             );
 

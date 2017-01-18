@@ -9,41 +9,37 @@ define(['jquery'],  function ($) {
         this.ownerElement = iNode.parentNode || iNode.ownerElement;
     }
 
-    Node_Template.expression = /\$\{([\s\S]+?)\}/g;
-
-    Node_Template.reference = /this\.(\w+)/g;
-
-    try {
-        eval('``');
-
-        var ES_ST = function () {
-                'use strict';
-
-                var iValue = eval('`' + arguments[0] + '`');
-
-                return  (iValue != null)  ?  iValue  :  '';
-            };
-    } catch (iError) {
-        var Eval_This = function () {
-                'use strict';
-
+    $.extend(Node_Template, {
+        eval:          function () {
+            'use strict';
+            try {
                 var iValue = eval( arguments[0] );
 
                 return  (iValue != null)  ?  iValue  :  '';
-            };
-    }
-
-    $.extend(Node_Template.prototype, {
-        eval:        function (iContext) {
-            try {
-                return  ES_ST  ?  ES_ST.call(iContext, this.raw)  :
-                    this.raw.replace(Node_Template.expression,  function () {
-
-                        return  Eval_This.call(iContext, arguments[1]);
-                    });
             } catch (iError) {
                 return '';
             }
+        },
+        safeEval:      function (iValue) {
+            if ((typeof iValue == 'string')  &&  (iValue[0] == '0')  &&  iValue[1])
+                return iValue;
+
+            return  (iValue && this.eval(iValue))  ||  iValue;
+        },
+        expression:    /\$\{([\s\S]+?)\}/g,
+        reference:     /this\.(\w+)/g
+    });
+
+    var ES_ST = Node_Template.eval('`1`');
+
+    $.extend(Node_Template.prototype, {
+        eval:        function (iContext) {
+            return  ES_ST ?
+                Node_Template.eval.call(iContext,  '`' + this.raw + '`')  :
+                this.raw.replace(Node_Template.expression,  function () {
+
+                    return  Node_Template.eval.call(iContext, arguments[1]);
+                });
         },
         getRefer:    function () {
             var iRefer = [ ];
@@ -78,11 +74,7 @@ define(['jquery'],  function ($) {
                 case 2:    if (
                     (this.name != 'style')  &&  (this.name in iParent)
                 ) {
-                    if ( iValue )  try {
-                        iValue = eval( iValue );
-                    } catch (iError) { }
-
-                    iParent[ this.name ] = iValue;
+                    iParent[ this.name ] = Node_Template.safeEval( iValue );
 
                     return;
 
