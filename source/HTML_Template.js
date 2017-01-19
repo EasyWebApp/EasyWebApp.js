@@ -4,7 +4,9 @@ define([
 
     function HTML_Template($_View, iScope, iURL) {
 
-        this.$_View = $( $_View ).data(this.constructor.getClass(), this);
+        var iView = $.CommonView.call(this, $_View);
+
+        if (iView !== this)  return iView;
 
         this.type = (
             $.ListView.findView( this.$_View.parent() ).filter( this.$_View )[0]  ?
@@ -18,9 +20,7 @@ define([
 
     var RAW_Tag = $.makeSet('CODE', 'XMP', 'TEMPLATE');
 
-    $.extend(HTML_Template, {
-        getClass:       $.CommonView.getClass,
-        instanceOf:     $.CommonView.instanceOf,
+    return  $.inherit($.CommonView, HTML_Template, {
         getMaskCode:    function (Index) {
             return  (Index < 0)  ?  0  :  parseInt(1 + '0'.repeat(Index),  2);
         },
@@ -36,27 +36,8 @@ define([
                 }),
                 iDOM.attributes
             );
-        },
-        extend:         function (iTarget, iSource) {
-            iSource = this.getTextNode( iSource );
-
-            for (var i = 0;  iSource[i];  i++)
-                if (iSource[i].nodeName != 'target')
-                    iTarget.setAttribute(
-                        iSource[i].nodeName,  iSource[i].nodeValue
-                    );
-
-            var $_Target = this.instanceOf( iTarget );
-
-            iTarget = $_Target.parsePlain( iTarget );
-
-            for (var i = 0;  iTarget[i];  i++)
-                iTarget[i].render( $_Target.scope );
         }
-    });
-
-    $.extend(HTML_Template.prototype, {
-        toString:      $.CommonView.prototype.toString,
+    }, {
         push:          Array.prototype.push,
         init:          function () {
             Array.prototype.splice.call(this, 0, Infinity);
@@ -246,6 +227,16 @@ define([
 
             return -1;
         },
+        renderDOM:     function (iDOM) {
+            var _This_ = this;
+
+            return  $.map(HTML_Template.getTextNode( iDOM ),  function (iNode) {
+
+                iNode = _This_[_This_.indexOf( iNode )];
+
+                return  iNode  &&  iNode.render( _This_.scope );
+            });
+        },
         contextOf:     function (iNode) {
             var iContext = { },  iValue;
 
@@ -280,7 +271,4 @@ define([
             return iTemplate;
         }
     });
-
-    return HTML_Template;
-
 });

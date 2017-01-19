@@ -22,18 +22,11 @@ define([
             this.name = $.uuid('EWA');
             this.$_View[0].setAttribute('name', this.name);
         }
-
-        if (! iLink.href)
-            this.template = HTML_Template.instanceOf(this.$_View, false);
-
-        if (! this.template)
+        (
             this.template = new HTML_Template(
                 this.$_View,  this.getScope(),  iLink.getURL('href')
-            );
-
-        this.template.scope.extend( this.getEnv() );
-
-        this.attach();
+            )
+        ).scope.extend( this.getEnv() );
 
         this.length = this.lastLoad = 0;
 
@@ -76,8 +69,6 @@ define([
             )[0];
         },
         attach:        function () {
-            this.$_View.data(HTML_Template.getClass(), this.template);
-
             if (this.$_Content) {
                 this.$_View.append( this.$_Content );
                 this.emit('ready');
@@ -191,6 +182,33 @@ define([
                 return  _Data_ || iData;
             });
         },
+        syncLoad:      function ($_Link) {
+            this.template.renderDOM( $_Link[0] );
+
+            $_Link = $_Link[0].attributes;
+
+            var iLink = this.source;
+
+            for (var i = 0;  $_Link[i];  i++)
+                if ($_Link[i].nodeName != 'target')
+                    iLink.$_DOM[0].setAttribute(
+                        $_Link[i].nodeName,  $_Link[i].nodeValue
+                    );
+
+            var iJSON = iLink.src || iLink.action;
+
+            this.template.scope.extend( this.getEnv() );
+
+            if (this.type == 'page') {
+                iLink.$_DOM = [$( $_Link[0].ownerElement ),  $_Link = iLink.$_DOM][0];
+
+                iLink.register(this.ownerApp.length - 1).$_DOM.remove();
+
+                iLink.$_DOM = $_Link;
+            }
+
+            if ((! iJSON)  &&  iLink.src)  return this.loadJSON();
+        },
         loadHTML:      function () {
             var _This_ = this;
 
@@ -204,24 +222,7 @@ define([
 
                 var $_Link = _This_.$_View.children('link[target="_blank"]');
 
-                if (! $_Link.remove()[0])  return;
-
-                _This_.template.render();
-                _This_.template.lastRender = 0;
-
-                var iLink = _This_.source;
-
-                var iJSON = iLink.src || iLink.action;
-
-                HTML_Template.extend(iLink.$_DOM[0], $_Link[0]);
-
-                _This_.template.scope.extend( _This_.getEnv() );
-
-                if (_This_.type == 'page')
-                    iLink.register(iLink.ownerApp.length - 1);
-
-                if ((! iJSON)  &&  (iLink.src || iLink.action))
-                    return _This_.loadJSON();
+                if ( $_Link[0] )  return _This_.syncLoad($_Link);
             });
         },
         render:        function () {

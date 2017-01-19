@@ -172,6 +172,8 @@ var Node_Template = (function (BOM, DOM, $) {
             }
 
             iNode.nodeValue = iValue;
+
+            return this;
         }
     });
 
@@ -185,7 +187,9 @@ var HTML_Template = (function (BOM, DOM, $, DS_Inherit, Node_Template) {
 
     function HTML_Template($_View, iScope, iURL) {
 
-        this.$_View = $( $_View ).data(this.constructor.getClass(), this);
+        var iView = $.CommonView.call(this, $_View);
+
+        if (iView !== this)  return iView;
 
         this.type = (
             $.ListView.findView( this.$_View.parent() ).filter( this.$_View )[0]  ?
@@ -199,9 +203,7 @@ var HTML_Template = (function (BOM, DOM, $, DS_Inherit, Node_Template) {
 
     var RAW_Tag = $.makeSet('CODE', 'XMP', 'TEMPLATE');
 
-    $.extend(HTML_Template, {
-        getClass:       $.CommonView.getClass,
-        instanceOf:     $.CommonView.instanceOf,
+    return  $.inherit($.CommonView, HTML_Template, {
         getMaskCode:    function (Index) {
             return  (Index < 0)  ?  0  :  parseInt(1 + '0'.repeat(Index),  2);
         },
@@ -217,27 +219,8 @@ var HTML_Template = (function (BOM, DOM, $, DS_Inherit, Node_Template) {
                 }),
                 iDOM.attributes
             );
-        },
-        extend:         function (iTarget, iSource) {
-            iSource = this.getTextNode( iSource );
-
-            for (var i = 0;  iSource[i];  i++)
-                if (iSource[i].nodeName != 'target')
-                    iTarget.setAttribute(
-                        iSource[i].nodeName,  iSource[i].nodeValue
-                    );
-
-            var $_Target = this.instanceOf( iTarget );
-
-            iTarget = $_Target.parsePlain( iTarget );
-
-            for (var i = 0;  iTarget[i];  i++)
-                iTarget[i].render( $_Target.scope );
         }
-    });
-
-    $.extend(HTML_Template.prototype, {
-        toString:      $.CommonView.prototype.toString,
+    }, {
         push:          Array.prototype.push,
         init:          function () {
             Array.prototype.splice.call(this, 0, Infinity);
@@ -427,6 +410,16 @@ var HTML_Template = (function (BOM, DOM, $, DS_Inherit, Node_Template) {
 
             return -1;
         },
+        renderDOM:     function (iDOM) {
+            var _This_ = this;
+
+            return  $.map(HTML_Template.getTextNode( iDOM ),  function (iNode) {
+
+                iNode = _This_[_This_.indexOf( iNode )];
+
+                return  iNode  &&  iNode.render( _This_.scope );
+            });
+        },
         contextOf:     function (iNode) {
             var iContext = { },  iValue;
 
@@ -461,9 +454,6 @@ var HTML_Template = (function (BOM, DOM, $, DS_Inherit, Node_Template) {
             return iTemplate;
         }
     });
-
-    return HTML_Template;
-
 })(self, self.document, self.jQuery, DS_Inherit, Node_Template);
 
 
@@ -490,18 +480,11 @@ var UI_Module = (function (BOM, DOM, $, HTML_Template, Node_Template) {
             this.name = $.uuid('EWA');
             this.$_View[0].setAttribute('name', this.name);
         }
-
-        if (! iLink.href)
-            this.template = HTML_Template.instanceOf(this.$_View, false);
-
-        if (! this.template)
+        (
             this.template = new HTML_Template(
                 this.$_View,  this.getScope(),  iLink.getURL('href')
-            );
-
-        this.template.scope.extend( this.getEnv() );
-
-        this.attach();
+            )
+        ).scope.extend( this.getEnv() );
 
         this.length = this.lastLoad = 0;
 
@@ -544,8 +527,6 @@ var UI_Module = (function (BOM, DOM, $, HTML_Template, Node_Template) {
             )[0];
         },
         attach:        function () {
-            this.$_View.data(HTML_Template.getClass(), this.template);
-
             if (this.$_Content) {
                 this.$_View.append( this.$_Content );
                 this.emit('ready');
@@ -659,6 +640,33 @@ var UI_Module = (function (BOM, DOM, $, HTML_Template, Node_Template) {
                 return  _Data_ || iData;
             });
         },
+        syncLoad:      function ($_Link) {
+            this.template.renderDOM( $_Link[0] );
+
+            $_Link = $_Link[0].attributes;
+
+            var iLink = this.source;
+
+            for (var i = 0;  $_Link[i];  i++)
+                if ($_Link[i].nodeName != 'target')
+                    iLink.$_DOM[0].setAttribute(
+                        $_Link[i].nodeName,  $_Link[i].nodeValue
+                    );
+
+            var iJSON = iLink.src || iLink.action;
+
+            this.template.scope.extend( this.getEnv() );
+
+            if (this.type == 'page') {
+                iLink.$_DOM = [$( $_Link[0].ownerElement ),  $_Link = iLink.$_DOM][0];
+
+                iLink.register(this.ownerApp.length - 1).$_DOM.remove();
+
+                iLink.$_DOM = $_Link;
+            }
+
+            if ((! iJSON)  &&  iLink.src)  return this.loadJSON();
+        },
         loadHTML:      function () {
             var _This_ = this;
 
@@ -672,24 +680,7 @@ var UI_Module = (function (BOM, DOM, $, HTML_Template, Node_Template) {
 
                 var $_Link = _This_.$_View.children('link[target="_blank"]');
 
-                if (! $_Link.remove()[0])  return;
-
-                _This_.template.render();
-                _This_.template.lastRender = 0;
-
-                var iLink = _This_.source;
-
-                var iJSON = iLink.src || iLink.action;
-
-                HTML_Template.extend(iLink.$_DOM[0], $_Link[0]);
-
-                _This_.template.scope.extend( _This_.getEnv() );
-
-                if (_This_.type == 'page')
-                    iLink.register(iLink.ownerApp.length - 1);
-
-                if ((! iJSON)  &&  (iLink.src || iLink.action))
-                    return _This_.loadJSON();
+                if ( $_Link[0] )  return _This_.syncLoad($_Link);
             });
         },
         render:        function () {
@@ -1059,7 +1050,7 @@ var Helper_API = (function (BOM, DOM, $, UI_Module, HTML_Template, Node_Template
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v3.3  (2017-01-18)  Beta
+//      [Version]    v3.3  (2017-01-19)  Beta
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //

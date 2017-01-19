@@ -31,7 +31,7 @@ define(['jquery', 'TimePassed', 'EasyWebApp'],  function ($, TimePassed) {
         var iApp = $('body > .PC_Narrow').iWebApp('http://www.tngou.net/api/');
 
         iApp.on('data',  function (iLink, iData) {
-            if (! iData.status)
+            if (iData.status === false)
                 return  self.alert("【服务器报错】" + iData.msg);
 
             if (! iData.tngou)  return  Object_Filter( iData );

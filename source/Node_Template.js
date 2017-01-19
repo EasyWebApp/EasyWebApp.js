@@ -87,6 +87,8 @@ define(['jquery'],  function ($) {
             }
 
             iNode.nodeValue = iValue;
+
+            return this;
         }
     });
 
