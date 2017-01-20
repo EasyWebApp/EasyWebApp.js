@@ -69,16 +69,25 @@ define([
             )[0];
         },
         attach:        function () {
-            if (this.$_Content) {
+            this.$_View
+                .data(this.constructor.getClass(), this)
+                .data(HTML_Template.getClass(), this.template);
+
+            if ( this.$_Content ) {
                 this.$_View.append( this.$_Content );
+                this.$_Content = null;
+
                 this.emit('ready');
-            } else if (this.lastLoad)
+            } else if ( this.lastLoad )
                 this.load();
 
             return this;
         },
         detach:        function () {
-            this.$_Content = this.$_View.children().detach();
+            this.$_Content = this.$_View
+                .data(this.constructor.getClass(), null)
+                .data(HTML_Template.getClass(), null)
+                .children().detach();
 
             return this;
         },
@@ -87,11 +96,6 @@ define([
                 this.$_Content.remove();
                 this.$_Content = null;
             }
-            this.$_View
-                .data(this.constructor.getClass(), null)
-                .data(HTML_Template.getClass(), null);
-
-            return this;
         },
         findSub:       function () {
             var _This_ = this,  InnerLink = this.source.constructor;
@@ -153,16 +157,20 @@ define([
 
             return this;
         },
-        loadModule:    function () {
+        loadModule:    function (iScope) {
             var _This_ = this;
 
             return  Promise.all($.map(this,  function (iModule) {
-                return (
+                if (
                     (_This_.lastLoad && iModule.async)  ||
                     !(_This_.lastLoad || iModule.async)
-                ) ?
-                    iModule.load() : null;
-            }));
+                ) {
+                    if (! iModule.async)
+                        _This_.template.renderDOM(iModule.$_View[0], iScope);
+
+                    return iModule.load();
+                }
+            })).then(function () {  return iScope;  });
         },
         loadJSON:      function () {
             var _This_ = this;
@@ -200,7 +208,9 @@ define([
             this.template.scope.extend( this.getEnv() );
 
             if (this.type == 'page') {
-                iLink.$_DOM = [$( $_Link[0].ownerElement ),  $_Link = iLink.$_DOM][0];
+                iLink.$_DOM = [
+                    $( $_Link[0].ownerElement ),  $_Link = iLink.$_DOM
+                ][0];
 
                 iLink.register(this.ownerApp.length - 1).$_DOM.remove();
 
@@ -228,6 +238,12 @@ define([
         render:        function () {
             this.template.render( arguments[0] );
 
+            for (var i = 0;  this[i];  i++)  if (! this[i].async) {
+
+                this[i].template.lastRender = 0;
+                this[i].render();
+            }
+
             this.lastLoad = $.now();
             this.domReady = null;
 
@@ -243,17 +259,9 @@ define([
             return  this.domReady = Promise.all([
                 this.loadJSON(),  this.loadHTML()
             ]).then(function (_Data_) {
-                _Data_ = _Data_[0] || _Data_[1];
 
-                if (! _This_.$_View.find('[href][async="false"]')[0])
-                    return _Data_;
+                return  _This_.loadModule(_Data_[0] || _Data_[1]);
 
-                _This_.template.render(_Data_);
-                _This_.template.lastRender = 0;
-
-                return  _This_.loadModule().then(function () {
-                    return _Data_;
-                });
             }).then(function (_Data_) {
 
                 return  _This_.$_View.children('script')[0] ?

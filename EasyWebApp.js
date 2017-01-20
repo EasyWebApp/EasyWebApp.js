@@ -410,14 +410,16 @@ var HTML_Template = (function (BOM, DOM, $, DS_Inherit, Node_Template) {
 
             return -1;
         },
-        renderDOM:     function (iDOM) {
+        renderDOM:     function (iDOM, iScope) {
             var _This_ = this;
+
+            iScope = $.extend({ }, this.scope, iScope);
 
             return  $.map(HTML_Template.getTextNode( iDOM ),  function (iNode) {
 
                 iNode = _This_[_This_.indexOf( iNode )];
 
-                return  iNode  &&  iNode.render( _This_.scope );
+                return  iNode  &&  iNode.render( iScope );
             });
         },
         contextOf:     function (iNode) {
@@ -527,16 +529,25 @@ var UI_Module = (function (BOM, DOM, $, HTML_Template, Node_Template) {
             )[0];
         },
         attach:        function () {
-            if (this.$_Content) {
+            this.$_View
+                .data(this.constructor.getClass(), this)
+                .data(HTML_Template.getClass(), this.template);
+
+            if ( this.$_Content ) {
                 this.$_View.append( this.$_Content );
+                this.$_Content = null;
+
                 this.emit('ready');
-            } else if (this.lastLoad)
+            } else if ( this.lastLoad )
                 this.load();
 
             return this;
         },
         detach:        function () {
-            this.$_Content = this.$_View.children().detach();
+            this.$_Content = this.$_View
+                .data(this.constructor.getClass(), null)
+                .data(HTML_Template.getClass(), null)
+                .children().detach();
 
             return this;
         },
@@ -545,11 +556,6 @@ var UI_Module = (function (BOM, DOM, $, HTML_Template, Node_Template) {
                 this.$_Content.remove();
                 this.$_Content = null;
             }
-            this.$_View
-                .data(this.constructor.getClass(), null)
-                .data(HTML_Template.getClass(), null);
-
-            return this;
         },
         findSub:       function () {
             var _This_ = this,  InnerLink = this.source.constructor;
@@ -611,16 +617,20 @@ var UI_Module = (function (BOM, DOM, $, HTML_Template, Node_Template) {
 
             return this;
         },
-        loadModule:    function () {
+        loadModule:    function (iScope) {
             var _This_ = this;
 
             return  Promise.all($.map(this,  function (iModule) {
-                return (
+                if (
                     (_This_.lastLoad && iModule.async)  ||
                     !(_This_.lastLoad || iModule.async)
-                ) ?
-                    iModule.load() : null;
-            }));
+                ) {
+                    if (! iModule.async)
+                        _This_.template.renderDOM(iModule.$_View[0], iScope);
+
+                    return iModule.load();
+                }
+            })).then(function () {  return iScope;  });
         },
         loadJSON:      function () {
             var _This_ = this;
@@ -658,7 +668,9 @@ var UI_Module = (function (BOM, DOM, $, HTML_Template, Node_Template) {
             this.template.scope.extend( this.getEnv() );
 
             if (this.type == 'page') {
-                iLink.$_DOM = [$( $_Link[0].ownerElement ),  $_Link = iLink.$_DOM][0];
+                iLink.$_DOM = [
+                    $( $_Link[0].ownerElement ),  $_Link = iLink.$_DOM
+                ][0];
 
                 iLink.register(this.ownerApp.length - 1).$_DOM.remove();
 
@@ -686,6 +698,12 @@ var UI_Module = (function (BOM, DOM, $, HTML_Template, Node_Template) {
         render:        function () {
             this.template.render( arguments[0] );
 
+            for (var i = 0;  this[i];  i++)  if (! this[i].async) {
+
+                this[i].template.lastRender = 0;
+                this[i].render();
+            }
+
             this.lastLoad = $.now();
             this.domReady = null;
 
@@ -701,17 +719,9 @@ var UI_Module = (function (BOM, DOM, $, HTML_Template, Node_Template) {
             return  this.domReady = Promise.all([
                 this.loadJSON(),  this.loadHTML()
             ]).then(function (_Data_) {
-                _Data_ = _Data_[0] || _Data_[1];
 
-                if (! _This_.$_View.find('[href][async="false"]')[0])
-                    return _Data_;
+                return  _This_.loadModule(_Data_[0] || _Data_[1]);
 
-                _This_.template.render(_Data_);
-                _This_.template.lastRender = 0;
-
-                return  _This_.loadModule().then(function () {
-                    return _Data_;
-                });
             }).then(function (_Data_) {
 
                 return  _This_.$_View.children('script')[0] ?
@@ -856,35 +866,32 @@ var WebApp = (function (BOM, DOM, $, UI_Module, InnerLink) {
 
             var Index = (arguments[0].originalEvent.state || '').index;
 
-            _This_.hashChange = false;
-
             if ((! _This_[Index])  ||  (_This_.lastPage == Index))
                 return;
+
+            _This_.hashChange = false;
 
             _This_[_This_.lastPage].detach();
             _This_[_This_.lastPage = Index].attach();
 
         }).on('hashchange',  function () {
 
-            if (_This_.hashChange === false)
-                return  _This_.hashChange = null;
+            if (_This_.hashChange !== false)  _This_.bootLink();
 
-            var iHash = _Self_.getRoute();
-
-            if (iHash)  _This_.load(iHash);
+            _This_.hashChange = null;
         });
 
         this.init();
     }
 
-    $.fn.iWebApp = $.inherit($.Observer, WebApp, {
-        getRoute:    function () {
-            var iHash = BOM.location.hash.match(/^#!([^#!]+)/);
-            return  iHash && iHash[1];
-        }
-    }, {
+    $.fn.iWebApp = $.inherit($.Observer, WebApp, null, {
         push:        Array.prototype.push,
         splice:      Array.prototype.splice,
+        bootLink:    function () {
+            var iURL = (arguments[0] || BOM.location).hash.match(/^#!([^#!]+)/);
+
+            return  iURL  &&  this.load( iURL[1] );
+        },
         init:        function () {
             var iModule = new UI_Module(new InnerLink(this, DOM.body));
 
@@ -897,32 +904,26 @@ var WebApp = (function (BOM, DOM, $, UI_Module, InnerLink) {
             iModule[
                 (iLink.href || iLink.src || iLink.action)  ?  'load'  :  'render'
             ]().then(function () {
-                var iHash = WebApp.getRoute();
 
-                if (! iHash)
-                    $('body *[autofocus]:not(:input)').eq(0).click();
-                else
-                    _This_.load(iHash);
+                if (! _This_.bootLink()) {
+                    var iAuto = $('body *[autofocus]:not(:input)')[0];
+
+                    if ( iAuto )  iAuto.click();
+                }
             });
         },
         register:    function (iPage) {
-            if (this.lastPage > -1)  this[this.lastPage].detach();
 
             if (++this.lastPage != this.length)
                 $.each(this.splice(this.lastPage, Infinity),  iPage.destructor);
 
-            this.hashChange = false;
             iPage.source.register( this.length );
             this.push( iPage );
 
             var iTimeOut = $.now()  -  (1000 * 60 * this.cacheMinute);
 
             for (var i = 0;  this[i + 2];  i++)
-                if ((this[i].lastLoad < iTimeOut)  &&  this[i].$_Content) {
-
-                    this[i].$_Content.remove();
-                    this[i].$_Content = null;
-                }
+                if (this[i].lastLoad < iTimeOut)  this[i].destructor();
         },
         boot:        function (iLink) {
             iLink = new InnerLink(this, iLink);
@@ -944,7 +945,7 @@ var WebApp = (function (BOM, DOM, $, UI_Module, InnerLink) {
                     if ( iModule ) {
                         if ( iModule.domReady )  break;
 
-                        if ( iLink.href )  iModule.destructor();
+                        if ( iLink.href )  iModule.detach();
                     }
 
                     (new UI_Module(iLink)).load();
@@ -1050,7 +1051,7 @@ var Helper_API = (function (BOM, DOM, $, UI_Module, HTML_Template, Node_Template
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v3.3  (2017-01-19)  Beta
+//      [Version]    v3.3  (2017-01-20)  Beta
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //
@@ -1074,16 +1075,12 @@ var EasyWebApp = (function (BOM, DOM, $, InnerLink, UI_Module, HTML_Template) {
 
     $(DOM).on('click',  'a[href]:not(a[target="_blank"])',  function () {
 
-        var iURL = this.href.split('#');
-
-        if (iURL[0] != DOM.URL.split('#')[0])
+        if (this.href.split('#')[0] != DOM.URL.split('#')[0])
             return  this.target = '_blank';
 
         arguments[0].preventDefault();
 
-        iURL = (iURL[1][0] == '!')  &&  iURL[1].slice(1);
-
-        if (iURL)  $().iWebApp().load(iURL);
+        $().iWebApp().bootLink( this );
 
     }).on('click submit',  InnerLink.selector,  function (iEvent) {
 

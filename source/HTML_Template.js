@@ -227,14 +227,16 @@ define([
 
             return -1;
         },
-        renderDOM:     function (iDOM) {
+        renderDOM:     function (iDOM, iScope) {
             var _This_ = this;
+
+            iScope = $.extend({ }, this.scope, iScope);
 
             return  $.map(HTML_Template.getTextNode( iDOM ),  function (iNode) {
 
                 iNode = _This_[_This_.indexOf( iNode )];
 
-                return  iNode  &&  iNode.render( _This_.scope );
+                return  iNode  &&  iNode.render( iScope );
             });
         },
         contextOf:     function (iNode) {

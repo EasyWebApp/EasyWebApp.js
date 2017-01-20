@@ -28,35 +28,32 @@ define(['jquery', 'UI_Module', 'InnerLink'],  function ($, UI_Module, InnerLink)
 
             var Index = (arguments[0].originalEvent.state || '').index;
 
-            _This_.hashChange = false;
-
             if ((! _This_[Index])  ||  (_This_.lastPage == Index))
                 return;
+
+            _This_.hashChange = false;
 
             _This_[_This_.lastPage].detach();
             _This_[_This_.lastPage = Index].attach();
 
         }).on('hashchange',  function () {
 
-            if (_This_.hashChange === false)
-                return  _This_.hashChange = null;
+            if (_This_.hashChange !== false)  _This_.bootLink();
 
-            var iHash = _Self_.getRoute();
-
-            if (iHash)  _This_.load(iHash);
+            _This_.hashChange = null;
         });
 
         this.init();
     }
 
-    $.fn.iWebApp = $.inherit($.Observer, WebApp, {
-        getRoute:    function () {
-            var iHash = BOM.location.hash.match(/^#!([^#!]+)/);
-            return  iHash && iHash[1];
-        }
-    }, {
+    $.fn.iWebApp = $.inherit($.Observer, WebApp, null, {
         push:        Array.prototype.push,
         splice:      Array.prototype.splice,
+        bootLink:    function () {
+            var iURL = (arguments[0] || BOM.location).hash.match(/^#!([^#!]+)/);
+
+            return  iURL  &&  this.load( iURL[1] );
+        },
         init:        function () {
             var iModule = new UI_Module(new InnerLink(this, DOM.body));
 
@@ -69,32 +66,26 @@ define(['jquery', 'UI_Module', 'InnerLink'],  function ($, UI_Module, InnerLink)
             iModule[
                 (iLink.href || iLink.src || iLink.action)  ?  'load'  :  'render'
             ]().then(function () {
-                var iHash = WebApp.getRoute();
 
-                if (! iHash)
-                    $('body *[autofocus]:not(:input)').eq(0).click();
-                else
-                    _This_.load(iHash);
+                if (! _This_.bootLink()) {
+                    var iAuto = $('body *[autofocus]:not(:input)')[0];
+
+                    if ( iAuto )  iAuto.click();
+                }
             });
         },
         register:    function (iPage) {
-            if (this.lastPage > -1)  this[this.lastPage].detach();
 
             if (++this.lastPage != this.length)
                 $.each(this.splice(this.lastPage, Infinity),  iPage.destructor);
 
-            this.hashChange = false;
             iPage.source.register( this.length );
             this.push( iPage );
 
             var iTimeOut = $.now()  -  (1000 * 60 * this.cacheMinute);
 
             for (var i = 0;  this[i + 2];  i++)
-                if ((this[i].lastLoad < iTimeOut)  &&  this[i].$_Content) {
-
-                    this[i].$_Content.remove();
-                    this[i].$_Content = null;
-                }
+                if (this[i].lastLoad < iTimeOut)  this[i].destructor();
         },
         boot:        function (iLink) {
             iLink = new InnerLink(this, iLink);
@@ -116,7 +107,7 @@ define(['jquery', 'UI_Module', 'InnerLink'],  function ($, UI_Module, InnerLink)
                     if ( iModule ) {
                         if ( iModule.domReady )  break;
 
-                        if ( iLink.href )  iModule.destructor();
+                        if ( iLink.href )  iModule.detach();
                     }
 
                     (new UI_Module(iLink)).load();
