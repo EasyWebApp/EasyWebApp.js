@@ -198,10 +198,12 @@ define([
                     if (this instanceof Node_Template)
                         this.render( iScope );
                     else if (this instanceof $.ListView) {
-                        if (! Last_Render)
-                            this.clear().render(
-                                iScope[ this.$_View[0].getAttribute('name') ]
-                            );
+                        if (! Last_Render) {
+                            var _Data_ = iScope[
+                                    this.$_View[0].getAttribute('name')
+                                ];
+                            if ($.likeArray(_Data_))  this.clear().render(_Data_);
+                        }
                     } else
                         $( this )[
                             ('value' in this)  ?  'val'  :  'html'

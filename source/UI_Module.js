@@ -1,6 +1,6 @@
 define([
-    'jquery', 'HTML_Template', 'Node_Template'
-],  function ($, HTML_Template, Node_Template) {
+    'jquery', 'HTML_Template', 'Node_Template', 'InnerLink'
+],  function ($, HTML_Template, Node_Template, InnerLink) {
 
     function UI_Module(iLink) {
 
@@ -48,7 +48,7 @@ define([
 
                     iModule.loadJSON().then(function () {
 
-                        iModule.lastLoad = iModule.template.lastRender = 0;
+                        iModule.template.lastRender = 0;
 
                         iModule.render( arguments[0] );
                     });
@@ -98,8 +98,6 @@ define([
             }
         },
         findSub:       function () {
-            var _This_ = this,  InnerLink = this.source.constructor;
-
             var $_Sub = this.$_View.find( UI_Module.selector )
                     .not( InnerLink.selector );
 
@@ -108,6 +106,8 @@ define([
                 if (! (Index  &&  $.contains($_Sub[Index - 1], _This_)))
                     return _This_;
             }));
+
+            var _This_ = this;
 
             $.extend(this,  $.map($_Sub,  function () {
                 return  new UI_Module(
@@ -147,31 +147,6 @@ define([
 
             return  $.extend(iData, $.paramJSON(this.source.href));
         },
-        prefetch:      function () {
-            var InnerLink = this.source.constructor;
-
-            var $_Link = this.$_View.find( InnerLink.selector ).not('link, form');
-
-            for (var i = 0;  $_Link[i] && (i < 5);  i++)
-                (new InnerLink(this.ownerApp, $_Link[i])).prefetch();
-
-            return this;
-        },
-        loadModule:    function (iScope) {
-            var _This_ = this;
-
-            return  Promise.all($.map(this,  function (iModule) {
-                if (
-                    (_This_.lastLoad && iModule.async)  ||
-                    !(_This_.lastLoad || iModule.async)
-                ) {
-                    if (! iModule.async)
-                        _This_.template.renderDOM(iModule.$_View[0], iScope);
-
-                    return iModule.load();
-                }
-            })).then(function () {  return iScope;  });
-        },
         loadJSON:      function () {
             var _This_ = this;
 
@@ -191,6 +166,7 @@ define([
             });
         },
         syncLoad:      function ($_Link) {
+            this.template.parsePlain( $_Link[0] );
             this.template.renderDOM( $_Link[0] );
 
             $_Link = $_Link[0].attributes;
@@ -226,16 +202,41 @@ define([
 
                 _This_.emit('template');
 
-                var $_Sub = _This_.findSub();
-
-                if (! _This_.template[0])  _This_.template.parse( $_Sub );
+                _This_.$_Sub = _This_.findSub();
 
                 var $_Link = _This_.$_View.children('link[target="_blank"]');
 
                 if ( $_Link[0] )  return _This_.syncLoad($_Link);
             });
         },
+        loadModule:    function (iScope) {
+            var _This_ = this;
+
+            return  Promise.all($.map(this,  function (iModule) {
+                if (
+                    (_This_.lastLoad && iModule.async)  ||
+                    !(_This_.lastLoad || iModule.async)
+                ) {
+                    if (! iModule.async) {
+                        _This_.template.parsePlain( iModule.$_View[0] );
+                        _This_.template.renderDOM(iModule.$_View[0], iScope);
+                    }
+                    return iModule.load();
+                }
+            })).then(function () {  return iScope;  });
+        },
+        prefetch:      function () {
+            var $_Link = this.$_View.find( InnerLink.selector ).not('link, form');
+
+            for (var i = 0;  $_Link[i] && (i < 5);  i++)
+                (new InnerLink(this.ownerApp, $_Link[i])).prefetch();
+
+            return this;
+        },
         render:        function () {
+            this.template.parse( this.$_Sub );
+            delete this.$_Sub;
+
             this.template.render( arguments[0] );
 
             for (var i = 0;  this[i];  i++)  if (! this[i].async) {
@@ -244,10 +245,12 @@ define([
                 this[i].render();
             }
 
+            if (! this.lastLoad)  this.prefetch();
+
             this.lastLoad = $.now();
             this.domReady = null;
 
-            this.prefetch().emit('ready');
+            this.emit('ready');
 
             return this.loadModule();
         },

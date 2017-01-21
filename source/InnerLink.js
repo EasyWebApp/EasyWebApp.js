@@ -1,12 +1,9 @@
-define([
-    'jquery', 'UI_Module', 'HTML_Template'
-],  function ($, UI_Module, HTML_Template) {
+define(['jquery', 'HTML_Template'],  function ($, HTML_Template) {
 
     var BOM = self,  DOM = self.document;
 
     function InnerLink(iApp, iLink) {
         this.ownerApp = iApp;
-        this.ownerView = UI_Module.instanceOf(iLink);
 
         this.$_DOM = $(iLink);
 

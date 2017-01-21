@@ -97,7 +97,7 @@ define(['jquery', 'UI_Module', 'InnerLink'],  function ($, UI_Module, InnerLink)
                     $.extend(Object.create( UI_Module.prototype ),  {
                         ownerApp:    this,
                         source:      iLink,
-                        template:    iLink.ownerView.template
+                        template:    UI_Module.instanceOf( iLink.$_DOM ).template
                     }).loadJSON();
                     break;
                 case '_self':     ;

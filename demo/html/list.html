@@ -21,11 +21,9 @@
         overflow:    hidden;
     }
 </style>
-<script src="html/list.js"></script>
-
 <ol class="CenterX" name="list">
     <li class="Item-Box visible Content" title="${this.description}" target="_self"
-        href="html/content.html" src="${this._Data_Path_}/show?id=${this.id}">
+        href="html/content.html" src="${this._Data_Path_ || 'top'}/show?id=${this.id}">
         <div class="Background-Image" style="background-image: url(${this.img})">
         </div>
         <p>${this.title}</p>
