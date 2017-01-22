@@ -67,7 +67,28 @@ define(['jquery', 'HTML_Template'],  function ($, HTML_Template) {
                 return iURL;
             }
         },
-        loadData:     function () {
+        loadHTML:     function () {
+            var iHTML = this.getURL('href'),  $_Target = this.getTarget();
+
+            return  (! iHTML)  ?  Promise.resolve('')  :  Promise.resolve(
+                $.ajax(iHTML,  {dataType: 'html'})
+            ).then(
+                $.proxy($.fn.toggleAnimate, $_Target, 'active')
+            ).then(function () {
+
+                var $_Prev = $_Target.children().detach();
+
+                return  $_Target.htmlExec( arguments[0] ).then(function () {
+
+                    return  $_Target.toggleAnimate('active', $_Prev);
+                });
+            });
+        },
+        loadJSON:     function () {
+            var iJSON = this.getURL('src') || this.getURL('action');
+
+            if (! iJSON)  return Promise.resolve('');
+
             var iOption = {type:  this.method};
 
             if (this.$_DOM[0].tagName != 'FORM')
@@ -79,7 +100,10 @@ define(['jquery', 'HTML_Template'],  function ($, HTML_Template) {
                 iOption.contentType = iOption.processData = false;
             }
 
-            return  $.ajax(this.getURL('src') || this.getURL('action'),  iOption);
+            return  Promise.resolve($.ajax(iJSON, iOption));
+        },
+        load:         function () {
+            return  Promise.all([this.loadHTML(), this.loadJSON()]);
         },
         prefetch:     function () {
             var iHTML = (this.href || '').split('?')[0];

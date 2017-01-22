@@ -2,7 +2,7 @@ define([
     'jquery', 'HTML_Template', 'Node_Template', 'InnerLink'
 ],  function ($, HTML_Template, Node_Template, InnerLink) {
 
-    function UI_Module(iLink) {
+    function UI_Module(iLink, iScope) {
 
         var iView = $.CommonView.call(this, iLink.getTarget());
 
@@ -24,13 +24,11 @@ define([
         }
         (
             this.template = new HTML_Template(
-                this.$_View,  this.getScope(),  iLink.getURL('href')
+                this.$_View,  iScope || this.getScope(),  iLink.getURL('href')
             )
         ).scope.extend( this.getEnv() );
 
         this.length = this.lastLoad = 0;
-
-        if (this.type == 'page')  this.ownerApp.register( this );
     }
 
     var Link_Key = $.makeSet('href', 'src');
@@ -46,11 +44,9 @@ define([
 
                     if (! iModule)  continue;
 
-                    iModule.loadJSON().then(function () {
+                    iModule.source.loadJSON().then(function () {
 
-                        iModule.template.lastRender = 0;
-
-                        iModule.render( arguments[0] );
+                        iModule.load( arguments[0] );
                     });
                 }
         },
@@ -75,21 +71,20 @@ define([
 
             if ( this.$_Content ) {
                 this.$_View.append( this.$_Content );
-                this.$_Content = null;
 
                 this.emit('ready');
-            } else if ( this.lastLoad )
-                this.load();
+            }
 
             return this;
         },
         detach:        function () {
-            this.$_Content = this.$_View
-                .data(this.constructor.getClass(), null)
-                .data(HTML_Template.getClass(), null)
-                .children().detach();
+            this.$_Content = arguments[0] || this.$_View.children().detach();
 
-            return this;
+            this.$_View
+                .data(this.constructor.getClass(), null)
+                .data(HTML_Template.getClass(), null);
+
+            return this.template.scope;
         },
         destructor:    function () {
             if ( this.$_Content ) {
@@ -147,24 +142,6 @@ define([
 
             return  $.extend(iData, $.paramJSON(this.source.href));
         },
-        loadJSON:      function () {
-            var _This_ = this;
-
-            return (
-                (this.source.getURL('src') || this.source.getURL('action'))  ?
-                    this.source.loadData()  :  Promise.resolve('')
-            ).then(function (iData) {
-
-                iData = _This_.emit('data', [iData])  ||  iData;
-
-                if (iData instanceof Array) {
-                    var _Data_ = { };
-                    _Data_[_This_.name] = iData;
-                }
-
-                return  _Data_ || iData;
-            });
-        },
         syncLoad:      function ($_Link) {
             this.template.parsePlain( $_Link[0] );
             this.template.renderDOM( $_Link[0] );
@@ -193,21 +170,8 @@ define([
                 iLink.$_DOM = $_Link;
             }
 
-            if ((! iJSON)  &&  iLink.src)  return this.loadJSON();
-        },
-        loadHTML:      function () {
-            var _This_ = this;
-
-            return  this.template.load().then(function () {
-
-                _This_.emit('template');
-
-                _This_.$_Sub = _This_.findSub();
-
-                var $_Link = _This_.$_View.children('link[target="_blank"]');
-
-                if ( $_Link[0] )  return _This_.syncLoad($_Link);
-            });
+            return  ((! iJSON)  &&  iLink.src)  ?
+                this.source.loadJSON()  :  Promise.resolve('');
         },
         loadModule:    function (iScope) {
             var _This_ = this;
@@ -221,7 +185,13 @@ define([
                         _This_.template.parsePlain( iModule.$_View[0] );
                         _This_.template.renderDOM(iModule.$_View[0], iScope);
                     }
-                    return iModule.load();
+
+                    return  iModule.source.load().then(function () {
+
+                        iModule.template.parseSlot( arguments[0][0] );
+
+                        return  iModule.load( arguments[0][1] );
+                    });
                 }
             })).then(function () {  return iScope;  });
         },
@@ -254,18 +224,32 @@ define([
 
             return this.loadModule();
         },
-        load:          function () {
+        load:          function (iData) {
             this.lastLoad = this.template.lastRender = 0;
 
-            var _This_ = this;
+            this.emit('template');
 
-            return  this.domReady = Promise.all([
-                this.loadJSON(),  this.loadHTML()
-            ]).then(function (_Data_) {
+            this.$_Sub = this.findSub();
 
-                return  _This_.loadModule(_Data_[0] || _Data_[1]);
+            var $_Link = this.$_View.children('link[target="_blank"]'),
+                _This_ = this;
 
-            }).then(function (_Data_) {
+            return  this.domReady = (
+                $_Link[0]  ?  this.syncLoad( $_Link )  :  Promise.resolve('')
+            ).then(function (_Data_) {
+
+                iData = _Data_ || iData;
+
+                iData = _This_.emit('data', [iData])  ||  iData;
+
+                if (iData instanceof Array) {
+                    _Data_ = { };
+                    _Data_[_This_.name] = iData;
+                }
+
+                return  _Data_ || iData;
+
+            }).then($.proxy(this.loadModule, this)).then(function (_Data_) {
 
                 return  _This_.$_View.children('script')[0] ?
                     _Data_ : _This_.render(_Data_);

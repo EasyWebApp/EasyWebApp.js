@@ -2,7 +2,7 @@
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v3.3  (2017-01-21)  Beta
+//      [Version]    v3.4  (2017-01-22)  Beta
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //
@@ -34,7 +34,7 @@ define([
 
         arguments[0].preventDefault();
 
-        $().iWebApp().bootLink( this );
+        $().iWebApp().loadLink( this );
 
     }).on('click submit',  InnerLink.selector,  function (iEvent) {
 

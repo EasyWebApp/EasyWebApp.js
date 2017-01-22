@@ -48,6 +48,22 @@ define([
 
             return this;
         },
+        parseSlot:     function () {
+            this.$_Slot = this.$_View.is('body [href]:not(a, link, [target])') ?
+                $( arguments[0] )  :  $();
+
+            var $_Slot = this.$_View.find('slot'),
+                $_Named = this.$_Slot.filter('[slot]');
+
+            if ( $_Named[0] )
+                $_Slot.filter('[name]').replaceWith(function () {
+                    return $_Named.filter(
+                        '[slot="' + this.getAttribute('name') + '"]'
+                    );
+                });
+
+            $_Slot.not('[name]').replaceWith(this.$_Slot.not( $_Named ));
+        },
         pushMap:       function (iName, iNode) {
             iNode = HTML_Template.getMaskCode(this.push(iNode) - 1);
 
@@ -139,34 +155,6 @@ define([
                 this.parseList( $_List[i] );
 
             return this;
-        },
-        load:          function () {
-            var _This_ = this;
-
-            this.$_Slot = this.$_View.is('body [href]:not(a, link, [target])') ?
-                this.$_View.children().remove() : $();
-
-            return  new Promise(function () {
-
-                if (_This_.source)
-                    _This_.init().$_View.load(_This_.source,  arguments[0]);
-                else
-                    arguments[0]( _This_.$_View[0].innerHTML );
-
-            }).then(function () {
-
-                var $_Slot = _This_.$_View.find('slot'),
-                    $_Named = _This_.$_Slot.filter('[slot]');
-
-                if ( $_Named[0] )
-                    $_Slot.filter('[name]').replaceWith(function () {
-                        return $_Named.filter(
-                            '[slot="' + this.getAttribute('name') + '"]'
-                        );
-                    });
-
-                $_Slot.not('[name]').replaceWith(_This_.$_Slot.not( $_Named ));
-            });
         },
         data2Node:     function (iData) {
             var iMask = '0',  _This_ = this;

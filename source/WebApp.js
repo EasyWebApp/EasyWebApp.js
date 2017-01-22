@@ -34,11 +34,17 @@ define(['jquery', 'UI_Module', 'InnerLink'],  function ($, UI_Module, InnerLink)
             _This_.hashChange = false;
 
             _This_[_This_.lastPage].detach();
-            _This_[_This_.lastPage = Index].attach();
 
+            var iPage = _This_[_This_.lastPage = Index].attach();
+
+            if ((! iPage.$_Content)  &&  iPage.lastLoad) {
+                iPage.$_Content = null;
+
+                _This_.bootLink( iPage.source );
+            }
         }).on('hashchange',  function () {
 
-            if (_This_.hashChange !== false)  _This_.bootLink();
+            if (_This_.hashChange !== false)  _This_.loadLink();
 
             _This_.hashChange = null;
         });
@@ -49,30 +55,21 @@ define(['jquery', 'UI_Module', 'InnerLink'],  function ($, UI_Module, InnerLink)
     $.fn.iWebApp = $.inherit($.Observer, WebApp, null, {
         push:        Array.prototype.push,
         splice:      Array.prototype.splice,
-        bootLink:    function () {
+        loadLink:    function () {
             var iURL = (arguments[0] || BOM.location).hash.match(/^#!([^#!]+)/);
 
             return  iURL  &&  this.load( iURL[1] );
         },
-        init:        function () {
-            var iModule = new UI_Module(new InnerLink(this, DOM.body));
-
-            var iLink = iModule.source,  _This_ = this;
-
-            iModule.template.scope.extend( $.paramJSON() );
-
-            iModule.findSub();
-
-            iModule[
-                (iLink.href || iLink.src || iLink.action)  ?  'load'  :  'render'
-            ]().then(function () {
-
-                if (! _This_.bootLink()) {
-                    var iAuto = $('body *[autofocus]:not(:input)')[0];
-
-                    if ( iAuto )  iAuto.click();
+        load:        function (HTML_URL, $_Sibling) {
+            $('<span />',  $.extend(
+                {style: 'display: none'},
+                (typeof HTML_URL == 'object')  ?  HTML_URL  :  {
+                    target:    '_self',
+                    href:      HTML_URL
                 }
-            });
+            )).appendTo($_Sibling || 'body').click();
+
+            return this;
         },
         register:    function (iPage) {
 
@@ -86,44 +83,67 @@ define(['jquery', 'UI_Module', 'InnerLink'],  function ($, UI_Module, InnerLink)
 
             for (var i = 0;  this[i + 2];  i++)
                 if (this[i].lastLoad < iTimeOut)  this[i].destructor();
+
+            return iPage;
+        },
+        bootLink:    function (iLink, iPrev) {
+            var _This_ = this,
+                isPage = (_This_.$_Root[0] === (
+                    (iPrev || '').$_View  ||  iLink.getTarget()
+                )[0]);
+
+            return  iLink.load().then(function () {
+                return (
+                    isPage  ?
+                        _This_.register(new UI_Module(
+                            iLink,  iPrev && iPrev.detach( arguments[0][0] )
+                        ))  :
+                        new UI_Module( iLink )
+                ).load( arguments[0][1] );
+            });
+        },
+        init:        function () {
+            var iModule = new UI_Module(new InnerLink(this, DOM.body));
+
+            iModule.template.scope.extend( $.paramJSON() );
+
+            iModule.findSub();
+
+            this.bootLink( iModule.source ).then(function () {
+
+                if (! iModule.ownerApp.loadLink()) {
+                    var iAuto = $('body *[autofocus]:not(:input)')[0];
+
+                    if ( iAuto )  iAuto.click();
+                }
+            });
         },
         boot:        function (iLink) {
             iLink = new InnerLink(this, iLink);
+
+            var _This_ = this;
 
             switch (iLink.target) {
                 case null:        ;
                 case '':          break;
                 case '_blank':
-                    $.extend(Object.create( UI_Module.prototype ),  {
-                        ownerApp:    this,
-                        source:      iLink,
-                        template:    UI_Module.instanceOf( iLink.$_DOM ).template
-                    }).loadJSON();
+                    iLink.loadJSON().then(function () {
+                        _This_.trigger(
+                            'data',  iLink.href,  iLink.src,  [iLink, arguments[0]]
+                        );
+                    });
                     break;
                 case '_self':     ;
                 default:          {
                     var iModule = UI_Module.instanceOf(iLink.getTarget(), false);
 
-                    if ( iModule ) {
-                        if ( iModule.domReady )  break;
+                    if (! (iModule || '').domReady)
+                        this.bootLink(iLink, iModule).catch(function () {
 
-                        if ( iLink.href )  iModule.detach();
-                    }
-
-                    (new UI_Module(iLink)).load();
+                            console.error( arguments[0] );
+                        });
                 }
             }
-
-            return this;
-        },
-        load:        function (HTML_URL, $_Sibling) {
-            $('<span />',  $.extend(
-                {style: 'display: none'},
-                (typeof HTML_URL == 'object')  ?  HTML_URL  :  {
-                    target:    '_self',
-                    href:      HTML_URL
-                }
-            )).appendTo($_Sibling || 'body').click();
 
             return this;
         }
