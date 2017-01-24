@@ -473,9 +473,34 @@ var InnerLink = (function (BOM, DOM, $, HTML_Template) {
     var $_Prefetch = $('<link rel="' + InnerLink.prefetchRel + '" />')
             .on('load error',  function () {
                 $(this).remove();
-            });
+            }),
+        localStorage = {
+            setItem:    function (iName, iData) {
+                var iLast = 0,  iKey;
+
+                do  try {
+                    BOM.localStorage[ iName ] = JSON.stringify( iData );
+                    break;
+                } catch (iError) {
+                    iKey = BOM.localStorage.key(iLast) || '';
+
+                    if (iKey.match( /^(GET|POST|PUT|DELETE) (\w+:)?\/\/.+/ ))
+                        delete  BOM.localStorage[ iKey ];
+                    else
+                        iLast++ ;
+                } while (iLast < BOM.localStorage.length);
+
+                return iData;
+            },
+            getItem:    function () {
+                return  JSON.parse(BOM.localStorage[ arguments[0] ]);
+            }
+        };
 
     $.extend(InnerLink.prototype, {
+        getScope:      function () {
+            return  (HTML_Template.instanceOf( this.$_DOM ) || '').scope;
+        },
         getTarget:    function () {
             switch (this.target) {
                 case '_self':      return this.ownerApp.$_Root;
@@ -550,7 +575,12 @@ var InnerLink = (function (BOM, DOM, $, HTML_Template) {
                 iOption.contentType = iOption.processData = false;
             }
 
-            return  Promise.resolve($.ajax(iJSON, iOption));
+            var URI = this.method.toUpperCase() + ' ' + iJSON;
+
+            return  Promise.resolve($.ajax(iJSON, iOption)).then(
+                $.proxy(localStorage.setItem, null, URI),
+                $.proxy(localStorage.getItem, null, URI)
+            );
         },
         load:         function () {
             return  Promise.all([this.loadHTML(), this.loadJSON()]);
@@ -602,7 +632,7 @@ var UI_Module = (function (BOM, DOM, $, HTML_Template, Node_Template, InnerLink)
         }
         (
             this.template = new HTML_Template(
-                this.$_View,  iScope || this.getScope(),  iLink.getURL('href')
+                this.$_View,  iScope || this.source.getScope()
             )
         ).scope.extend( this.getEnv() );
 
@@ -662,7 +692,7 @@ var UI_Module = (function (BOM, DOM, $, HTML_Template, Node_Template, InnerLink)
                 .data(this.constructor.getClass(), null)
                 .data(HTML_Template.getClass(), null);
 
-            return this.template.scope;
+            return this;
         },
         destructor:    function () {
             if ( this.$_Content ) {
@@ -690,9 +720,6 @@ var UI_Module = (function (BOM, DOM, $, HTML_Template, Node_Template, InnerLink)
             this.length = $_Sub.length;
 
             return $_Sub;
-        },
-        getScope:      function () {
-            return  (HTML_Template.instanceOf( this.source.$_DOM ) || '').scope;
         },
         getEnv:        function () {
             var iData = { },
@@ -926,18 +953,21 @@ var WebApp = (function (BOM, DOM, $, UI_Module, InnerLink) {
         },
         bootLink:    function (iLink, iPrev) {
             var _This_ = this,
-                isPage = (_This_.$_Root[0] === (
+                not_Page = (_This_.$_Root[0] !== (
                     (iPrev || '').$_View  ||  iLink.getTarget()
                 )[0]);
 
             return  iLink.load().then(function () {
-                return (
-                    isPage  ?
-                        _This_.register(new UI_Module(
-                            iLink,  iPrev && iPrev.detach( arguments[0][0] )
-                        ))  :
-                        new UI_Module( iLink )
-                ).load( arguments[0][1] );
+
+                var iData = arguments[0][1];
+
+                if ( not_Page )  return  (new UI_Module( iLink )).load( iData );
+
+                var iScope = iLink.getScope();
+
+                if ( iPrev )  iPrev.detach( arguments[0][0] );
+
+                return  _This_.register(new UI_Module(iLink, iScope)).load( iData );
             });
         },
         init:        function () {
@@ -1071,7 +1101,7 @@ var Helper_API = (function (BOM, DOM, $, UI_Module, HTML_Template, Node_Template
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v3.4  (2017-01-22)  Beta
+//      [Version]    v3.4  (2017-01-24)  Beta
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //
@@ -1088,7 +1118,10 @@ var Helper_API = (function (BOM, DOM, $, UI_Module, HTML_Template, Node_Template
 
 var EasyWebApp = (function (BOM, DOM, $, InnerLink, UI_Module, HTML_Template) {
 
-    $.ajaxSetup({dataType: 'json'});
+    $.ajaxSetup({
+        dataType:    'json',
+        timeout:     30 * 1000
+    });
 
 
 /* ----- SPA 链接事件 ----- */

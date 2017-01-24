@@ -23,9 +23,34 @@ define(['jquery', 'HTML_Template'],  function ($, HTML_Template) {
     var $_Prefetch = $('<link rel="' + InnerLink.prefetchRel + '" />')
             .on('load error',  function () {
                 $(this).remove();
-            });
+            }),
+        localStorage = {
+            setItem:    function (iName, iData) {
+                var iLast = 0,  iKey;
+
+                do  try {
+                    BOM.localStorage[ iName ] = JSON.stringify( iData );
+                    break;
+                } catch (iError) {
+                    iKey = BOM.localStorage.key(iLast) || '';
+
+                    if (iKey.match( /^(GET|POST|PUT|DELETE) (\w+:)?\/\/.+/ ))
+                        delete  BOM.localStorage[ iKey ];
+                    else
+                        iLast++ ;
+                } while (iLast < BOM.localStorage.length);
+
+                return iData;
+            },
+            getItem:    function () {
+                return  JSON.parse(BOM.localStorage[ arguments[0] ]);
+            }
+        };
 
     $.extend(InnerLink.prototype, {
+        getScope:      function () {
+            return  (HTML_Template.instanceOf( this.$_DOM ) || '').scope;
+        },
         getTarget:    function () {
             switch (this.target) {
                 case '_self':      return this.ownerApp.$_Root;
@@ -100,7 +125,12 @@ define(['jquery', 'HTML_Template'],  function ($, HTML_Template) {
                 iOption.contentType = iOption.processData = false;
             }
 
-            return  Promise.resolve($.ajax(iJSON, iOption));
+            var URI = this.method.toUpperCase() + ' ' + iJSON;
+
+            return  Promise.resolve($.ajax(iJSON, iOption)).then(
+                $.proxy(localStorage.setItem, null, URI),
+                $.proxy(localStorage.getItem, null, URI)
+            );
         },
         load:         function () {
             return  Promise.all([this.loadHTML(), this.loadJSON()]);

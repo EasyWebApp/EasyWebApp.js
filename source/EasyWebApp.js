@@ -2,7 +2,7 @@
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v3.4  (2017-01-22)  Beta
+//      [Version]    v3.4  (2017-01-24)  Beta
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //
@@ -22,7 +22,10 @@ define([
 
     var BOM = self,  DOM = self.document;
 
-    $.ajaxSetup({dataType: 'json'});
+    $.ajaxSetup({
+        dataType:    'json',
+        timeout:     30 * 1000
+    });
 
 
 /* ----- SPA 链接事件 ----- */

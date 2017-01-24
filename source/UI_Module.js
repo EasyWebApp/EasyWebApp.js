@@ -24,7 +24,7 @@ define([
         }
         (
             this.template = new HTML_Template(
-                this.$_View,  iScope || this.getScope(),  iLink.getURL('href')
+                this.$_View,  iScope || this.source.getScope()
             )
         ).scope.extend( this.getEnv() );
 
@@ -84,7 +84,7 @@ define([
                 .data(this.constructor.getClass(), null)
                 .data(HTML_Template.getClass(), null);
 
-            return this.template.scope;
+            return this;
         },
         destructor:    function () {
             if ( this.$_Content ) {
@@ -112,9 +112,6 @@ define([
             this.length = $_Sub.length;
 
             return $_Sub;
-        },
-        getScope:      function () {
-            return  (HTML_Template.instanceOf( this.source.$_DOM ) || '').scope;
         },
         getEnv:        function () {
             var iData = { },

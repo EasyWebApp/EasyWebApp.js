@@ -88,18 +88,21 @@ define(['jquery', 'UI_Module', 'InnerLink'],  function ($, UI_Module, InnerLink)
         },
         bootLink:    function (iLink, iPrev) {
             var _This_ = this,
-                isPage = (_This_.$_Root[0] === (
+                not_Page = (_This_.$_Root[0] !== (
                     (iPrev || '').$_View  ||  iLink.getTarget()
                 )[0]);
 
             return  iLink.load().then(function () {
-                return (
-                    isPage  ?
-                        _This_.register(new UI_Module(
-                            iLink,  iPrev && iPrev.detach( arguments[0][0] )
-                        ))  :
-                        new UI_Module( iLink )
-                ).load( arguments[0][1] );
+
+                var iData = arguments[0][1];
+
+                if ( not_Page )  return  (new UI_Module( iLink )).load( iData );
+
+                var iScope = iLink.getScope();
+
+                if ( iPrev )  iPrev.detach( arguments[0][0] );
+
+                return  _This_.register(new UI_Module(iLink, iScope)).load( iData );
             });
         },
         init:        function () {
