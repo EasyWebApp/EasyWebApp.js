@@ -28,20 +28,23 @@ define(['jquery', 'UI_Module', 'InnerLink'],  function ($, UI_Module, InnerLink)
 
             var Index = (arguments[0].originalEvent.state || '').index;
 
-            if ((! _This_[Index])  ||  (_This_.lastPage == Index))
-                return;
+            if (! _This_[Index])  return;
 
             _This_.hashChange = false;
 
-            _This_[_This_.lastPage].detach();
+            if (_This_.lastPage == Index)  return;
 
-            var iPage = _This_[_This_.lastPage = Index].attach();
+            var iPage = _This_[Index];
 
-            if ((! iPage.$_Content)  &&  iPage.lastLoad) {
-                iPage.$_Content = null;
+            _This_[_This_.lastPage].detach().then(
+                $.proxy(iPage.attach, iPage)
+            ).then(function () {
 
-                _This_.bootLink( iPage.source );
-            }
+                _This_.lastPage = Index
+
+                if ((! iPage.$_View.children()[0])  &&  iPage.lastLoad)
+                    return  _This_.bootLink( iPage.source );
+            });
         }).on('hashchange',  function () {
 
             if (_This_.hashChange !== false)  _This_.loadLink();
@@ -88,29 +91,31 @@ define(['jquery', 'UI_Module', 'InnerLink'],  function ($, UI_Module, InnerLink)
         },
         bootLink:    function (iLink, iPrev) {
             var _This_ = this,
-                not_Page = (_This_.$_Root[0] !== (
+                not_Page = (this.$_Root[0] !== (
                     (iPrev || '').$_View  ||  iLink.getTarget()
                 )[0]);
 
             return  iLink.load().then(function () {
 
-                var iData = arguments[0][1];
+                var iHTML = arguments[0][0],  iJSON = arguments[0][1];
 
-                if ( not_Page )  return  (new UI_Module( iLink )).load( iData );
+                if ( not_Page )
+                    return  (new UI_Module( iLink )).load(iJSON, iHTML);
 
                 var iScope = iLink.getScope();
 
-                if ( iPrev )  iPrev.detach( arguments[0][0] );
-
-                return  _This_.register(new UI_Module(iLink, iScope)).load( iData );
+                return  (iPrev ? iPrev.detach() : Promise.resolve(''))
+                    .then(function () {
+                        return _This_.register(
+                            new UI_Module(iLink, iScope)
+                        ).load(iJSON, iHTML);
+                    });
             });
         },
         init:        function () {
             var iModule = new UI_Module(new InnerLink(this, DOM.body));
 
             iModule.template.scope.extend( $.paramJSON() );
-
-            iModule.findSub();
 
             this.bootLink( iModule.source ).then(function () {
 
@@ -132,7 +137,10 @@ define(['jquery', 'UI_Module', 'InnerLink'],  function ($, UI_Module, InnerLink)
                 case '_blank':
                     iLink.loadJSON().then(function () {
                         _This_.trigger(
-                            'data',  iLink.href,  iLink.src,  [iLink, arguments[0]]
+                            'data',
+                            iLink.href || '',
+                            iLink.src || iLink.action || '',
+                            [iLink, arguments[0]]
                         );
                     });
                     break;

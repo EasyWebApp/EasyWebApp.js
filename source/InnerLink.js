@@ -23,29 +23,7 @@ define(['jquery', 'HTML_Template'],  function ($, HTML_Template) {
     var $_Prefetch = $('<link rel="' + InnerLink.prefetchRel + '" />')
             .on('load error',  function () {
                 $(this).remove();
-            }),
-        localStorage = {
-            setItem:    function (iName, iData) {
-                var iLast = 0,  iKey;
-
-                do  try {
-                    BOM.localStorage[ iName ] = JSON.stringify( iData );
-                    break;
-                } catch (iError) {
-                    iKey = BOM.localStorage.key(iLast) || '';
-
-                    if (iKey.match( /^(GET|POST|PUT|DELETE) (\w+:)?\/\/.+/ ))
-                        delete  BOM.localStorage[ iKey ];
-                    else
-                        iLast++ ;
-                } while (iLast < BOM.localStorage.length);
-
-                return iData;
-            },
-            getItem:    function () {
-                return  JSON.parse(BOM.localStorage[ arguments[0] ]);
-            }
-        };
+            });
 
     $.extend(InnerLink.prototype, {
         getScope:      function () {
@@ -93,21 +71,11 @@ define(['jquery', 'HTML_Template'],  function ($, HTML_Template) {
             }
         },
         loadHTML:     function () {
-            var iHTML = this.getURL('href'),  $_Target = this.getTarget();
+            var iHTML = this.getURL('href');
 
             return  (! iHTML)  ?  Promise.resolve('')  :  Promise.resolve(
                 $.ajax(iHTML,  {dataType: 'html'})
-            ).then(
-                $.proxy($.fn.toggleAnimate, $_Target, 'active')
-            ).then(function () {
-
-                var $_Prev = $_Target.children().detach();
-
-                return  $_Target.htmlExec( arguments[0] ).then(function () {
-
-                    return  $_Target.toggleAnimate('active', $_Prev);
-                });
-            });
+            );
         },
         loadJSON:     function () {
             var iJSON = this.getURL('src') || this.getURL('action');
@@ -128,8 +96,7 @@ define(['jquery', 'HTML_Template'],  function ($, HTML_Template) {
             var URI = this.method.toUpperCase() + ' ' + iJSON;
 
             return  Promise.resolve($.ajax(iJSON, iOption)).then(
-                $.proxy(localStorage.setItem, null, URI),
-                $.proxy(localStorage.getItem, null, URI)
+                $.proxy($.storage, $, URI),  $.proxy($.storage, $, URI, null)
             );
         },
         load:         function () {

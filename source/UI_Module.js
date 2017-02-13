@@ -42,12 +42,13 @@ define([
                 ) {
                     iModule = this.instanceOf(iTemplate[i].ownerElement, true);
 
-                    if (! iModule)  continue;
+                    if ( iModule )
+                        iModule.source.loadJSON().then(function () {
 
-                    iModule.source.loadJSON().then(function () {
+                            iModule.template.lastRender = 0;
 
-                        iModule.load( arguments[0] );
-                    });
+                            iModule.render(iModule.loadJSON( arguments[0] ));
+                        });
                 }
         },
         selector:    '*[href]:not(a, link), *[src]:not(:media, script)'
@@ -63,34 +64,6 @@ define([
             return  this.trigger.apply(this, iArgs).concat(
                 this.trigger.apply(this.ownerApp, iArgs)
             )[0];
-        },
-        attach:        function () {
-            this.$_View
-                .data(this.constructor.getClass(), this)
-                .data(HTML_Template.getClass(), this.template);
-
-            if ( this.$_Content ) {
-                this.$_View.append( this.$_Content );
-
-                this.emit('ready');
-            }
-
-            return this;
-        },
-        detach:        function () {
-            this.$_Content = arguments[0] || this.$_View.children().detach();
-
-            this.$_View
-                .data(this.constructor.getClass(), null)
-                .data(HTML_Template.getClass(), null);
-
-            return this;
-        },
-        destructor:    function () {
-            if ( this.$_Content ) {
-                this.$_Content.remove();
-                this.$_Content = null;
-            }
         },
         findSub:       function () {
             var $_Sub = this.$_View.find( UI_Module.selector )
@@ -112,6 +85,54 @@ define([
             this.length = $_Sub.length;
 
             return $_Sub;
+        },
+        loadHTML:      function ($_HTML) {
+
+            var _This_ = this,  $_Slot = this.$_View.children().detach();
+
+            return (
+                (typeof $_HTML == 'string')  ?
+                    this.$_View.htmlExec( $_HTML )  :
+                    Promise.resolve(this.$_View.append($_HTML) && '')
+            ).then(function () {
+                _This_.template.parseSlot( $_Slot );
+
+                _This_.emit('template');
+
+                return _This_.$_View.toggleAnimate('active');
+            });
+        },
+        attach:        function () {
+            this.$_View
+                .data(this.constructor.getClass(), this)
+                .data(HTML_Template.getClass(), this.template);
+
+            var _This_ = this;
+
+            return  (! this.$_Content)  ?  Promise.resolve('')  :
+                this.loadHTML( this.$_Content ).then(function () {
+
+                    _This_.$_Content = null;
+
+                    _This_.emit('ready');
+                });
+        },
+        detach:        function () {
+            return  this.$_View.toggleAnimate('active', this)
+                .then(function (_This_) {
+
+                    _This_.$_Content = _This_.$_View.children().detach();
+
+                    _This_.$_View
+                        .data(_This_.constructor.getClass(), null)
+                        .data(HTML_Template.getClass(), null);
+                });
+        },
+        destructor:    function () {
+            if ( this.$_Content ) {
+                this.$_Content.remove();
+                this.$_Content = null;
+            }
         },
         getEnv:        function () {
             var iData = { },
@@ -170,6 +191,17 @@ define([
             return  ((! iJSON)  &&  iLink.src)  ?
                 this.source.loadJSON()  :  Promise.resolve('');
         },
+        loadJSON:      function (iData) {
+
+            iData = this.emit('data', [iData])  ||  iData;
+
+            if (iData instanceof Array) {
+                var _Data_ = { };
+                _Data_[this.name] = iData;
+            }
+
+            return  _Data_ || iData;
+        },
         loadModule:    function (iScope) {
             var _This_ = this;
 
@@ -185,9 +217,7 @@ define([
 
                     return  iModule.source.load().then(function () {
 
-                        iModule.template.parseSlot( arguments[0][0] );
-
-                        return  iModule.load( arguments[0][1] );
+                        return  iModule.load(arguments[0][1], arguments[0][0]);
                     });
                 }
             })).then(function () {  return iScope;  });
@@ -221,36 +251,30 @@ define([
 
             return this.loadModule();
         },
-        load:          function (iData) {
-            this.lastLoad = this.template.lastRender = 0;
+        load:          function (iData, iHTML) {
+            var _This_ = this;
 
-            this.emit('template');
+            return  (iHTML  ?  this.loadHTML( iHTML )  :  Promise.resolve(''))
+                .then(function () {
+                    _This_.lastLoad = _This_.template.lastRender = 0;
 
-            this.$_Sub = this.findSub();
+                    _This_.$_Sub = _This_.findSub();
 
-            var $_Link = this.$_View.children('link[target="_blank"]'),
-                _This_ = this;
+                    var $_Link = _This_.$_View.children('link[target="_blank"]');
 
-            return  this.domReady = (
-                $_Link[0]  ?  this.syncLoad( $_Link )  :  Promise.resolve('')
-            ).then(function (_Data_) {
+                    return  _This_.domReady = (
+                        $_Link[0]  ?  _This_.syncLoad( $_Link )  :  Promise.resolve('')
+                    ).then(function (_Data_) {
 
-                iData = _Data_ || iData;
+                        return  _This_.loadJSON(_Data_ || iData);
+                    }).then(
+                        $.proxy(_This_.loadModule, _This_)
+                    ).then(function (_Data_) {
 
-                iData = _This_.emit('data', [iData])  ||  iData;
-
-                if (iData instanceof Array) {
-                    _Data_ = { };
-                    _Data_[_This_.name] = iData;
-                }
-
-                return  _Data_ || iData;
-
-            }).then($.proxy(this.loadModule, this)).then(function (_Data_) {
-
-                return  _This_.$_View.children('script')[0] ?
-                    _Data_ : _This_.render(_Data_);
-            });
+                        return  _This_.$_View.children('script')[0] ?
+                            _Data_ : _This_.render(_Data_);
+                    });
+                });
         }
     });
 });

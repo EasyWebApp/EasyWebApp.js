@@ -473,29 +473,7 @@ var InnerLink = (function (BOM, DOM, $, HTML_Template) {
     var $_Prefetch = $('<link rel="' + InnerLink.prefetchRel + '" />')
             .on('load error',  function () {
                 $(this).remove();
-            }),
-        localStorage = {
-            setItem:    function (iName, iData) {
-                var iLast = 0,  iKey;
-
-                do  try {
-                    BOM.localStorage[ iName ] = JSON.stringify( iData );
-                    break;
-                } catch (iError) {
-                    iKey = BOM.localStorage.key(iLast) || '';
-
-                    if (iKey.match( /^(GET|POST|PUT|DELETE) (\w+:)?\/\/.+/ ))
-                        delete  BOM.localStorage[ iKey ];
-                    else
-                        iLast++ ;
-                } while (iLast < BOM.localStorage.length);
-
-                return iData;
-            },
-            getItem:    function () {
-                return  JSON.parse(BOM.localStorage[ arguments[0] ]);
-            }
-        };
+            });
 
     $.extend(InnerLink.prototype, {
         getScope:      function () {
@@ -543,21 +521,11 @@ var InnerLink = (function (BOM, DOM, $, HTML_Template) {
             }
         },
         loadHTML:     function () {
-            var iHTML = this.getURL('href'),  $_Target = this.getTarget();
+            var iHTML = this.getURL('href');
 
             return  (! iHTML)  ?  Promise.resolve('')  :  Promise.resolve(
                 $.ajax(iHTML,  {dataType: 'html'})
-            ).then(
-                $.proxy($.fn.toggleAnimate, $_Target, 'active')
-            ).then(function () {
-
-                var $_Prev = $_Target.children().detach();
-
-                return  $_Target.htmlExec( arguments[0] ).then(function () {
-
-                    return  $_Target.toggleAnimate('active', $_Prev);
-                });
-            });
+            );
         },
         loadJSON:     function () {
             var iJSON = this.getURL('src') || this.getURL('action');
@@ -578,8 +546,7 @@ var InnerLink = (function (BOM, DOM, $, HTML_Template) {
             var URI = this.method.toUpperCase() + ' ' + iJSON;
 
             return  Promise.resolve($.ajax(iJSON, iOption)).then(
-                $.proxy(localStorage.setItem, null, URI),
-                $.proxy(localStorage.getItem, null, URI)
+                $.proxy($.storage, $, URI),  $.proxy($.storage, $, URI, null)
             );
         },
         load:         function () {
@@ -650,12 +617,13 @@ var UI_Module = (function (BOM, DOM, $, HTML_Template, Node_Template, InnerLink)
                 ) {
                     iModule = this.instanceOf(iTemplate[i].ownerElement, true);
 
-                    if (! iModule)  continue;
+                    if ( iModule )
+                        iModule.source.loadJSON().then(function () {
 
-                    iModule.source.loadJSON().then(function () {
+                            iModule.template.lastRender = 0;
 
-                        iModule.load( arguments[0] );
-                    });
+                            iModule.render(iModule.loadJSON( arguments[0] ));
+                        });
                 }
         },
         selector:    '*[href]:not(a, link), *[src]:not(:media, script)'
@@ -671,34 +639,6 @@ var UI_Module = (function (BOM, DOM, $, HTML_Template, Node_Template, InnerLink)
             return  this.trigger.apply(this, iArgs).concat(
                 this.trigger.apply(this.ownerApp, iArgs)
             )[0];
-        },
-        attach:        function () {
-            this.$_View
-                .data(this.constructor.getClass(), this)
-                .data(HTML_Template.getClass(), this.template);
-
-            if ( this.$_Content ) {
-                this.$_View.append( this.$_Content );
-
-                this.emit('ready');
-            }
-
-            return this;
-        },
-        detach:        function () {
-            this.$_Content = arguments[0] || this.$_View.children().detach();
-
-            this.$_View
-                .data(this.constructor.getClass(), null)
-                .data(HTML_Template.getClass(), null);
-
-            return this;
-        },
-        destructor:    function () {
-            if ( this.$_Content ) {
-                this.$_Content.remove();
-                this.$_Content = null;
-            }
         },
         findSub:       function () {
             var $_Sub = this.$_View.find( UI_Module.selector )
@@ -720,6 +660,54 @@ var UI_Module = (function (BOM, DOM, $, HTML_Template, Node_Template, InnerLink)
             this.length = $_Sub.length;
 
             return $_Sub;
+        },
+        loadHTML:      function ($_HTML) {
+
+            var _This_ = this,  $_Slot = this.$_View.children().detach();
+
+            return (
+                (typeof $_HTML == 'string')  ?
+                    this.$_View.htmlExec( $_HTML )  :
+                    Promise.resolve(this.$_View.append($_HTML) && '')
+            ).then(function () {
+                _This_.template.parseSlot( $_Slot );
+
+                _This_.emit('template');
+
+                return _This_.$_View.toggleAnimate('active');
+            });
+        },
+        attach:        function () {
+            this.$_View
+                .data(this.constructor.getClass(), this)
+                .data(HTML_Template.getClass(), this.template);
+
+            var _This_ = this;
+
+            return  (! this.$_Content)  ?  Promise.resolve('')  :
+                this.loadHTML( this.$_Content ).then(function () {
+
+                    _This_.$_Content = null;
+
+                    _This_.emit('ready');
+                });
+        },
+        detach:        function () {
+            return  this.$_View.toggleAnimate('active', this)
+                .then(function (_This_) {
+
+                    _This_.$_Content = _This_.$_View.children().detach();
+
+                    _This_.$_View
+                        .data(_This_.constructor.getClass(), null)
+                        .data(HTML_Template.getClass(), null);
+                });
+        },
+        destructor:    function () {
+            if ( this.$_Content ) {
+                this.$_Content.remove();
+                this.$_Content = null;
+            }
         },
         getEnv:        function () {
             var iData = { },
@@ -778,6 +766,17 @@ var UI_Module = (function (BOM, DOM, $, HTML_Template, Node_Template, InnerLink)
             return  ((! iJSON)  &&  iLink.src)  ?
                 this.source.loadJSON()  :  Promise.resolve('');
         },
+        loadJSON:      function (iData) {
+
+            iData = this.emit('data', [iData])  ||  iData;
+
+            if (iData instanceof Array) {
+                var _Data_ = { };
+                _Data_[this.name] = iData;
+            }
+
+            return  _Data_ || iData;
+        },
         loadModule:    function (iScope) {
             var _This_ = this;
 
@@ -793,9 +792,7 @@ var UI_Module = (function (BOM, DOM, $, HTML_Template, Node_Template, InnerLink)
 
                     return  iModule.source.load().then(function () {
 
-                        iModule.template.parseSlot( arguments[0][0] );
-
-                        return  iModule.load( arguments[0][1] );
+                        return  iModule.load(arguments[0][1], arguments[0][0]);
                     });
                 }
             })).then(function () {  return iScope;  });
@@ -829,36 +826,30 @@ var UI_Module = (function (BOM, DOM, $, HTML_Template, Node_Template, InnerLink)
 
             return this.loadModule();
         },
-        load:          function (iData) {
-            this.lastLoad = this.template.lastRender = 0;
+        load:          function (iData, iHTML) {
+            var _This_ = this;
 
-            this.emit('template');
+            return  (iHTML  ?  this.loadHTML( iHTML )  :  Promise.resolve(''))
+                .then(function () {
+                    _This_.lastLoad = _This_.template.lastRender = 0;
 
-            this.$_Sub = this.findSub();
+                    _This_.$_Sub = _This_.findSub();
 
-            var $_Link = this.$_View.children('link[target="_blank"]'),
-                _This_ = this;
+                    var $_Link = _This_.$_View.children('link[target="_blank"]');
 
-            return  this.domReady = (
-                $_Link[0]  ?  this.syncLoad( $_Link )  :  Promise.resolve('')
-            ).then(function (_Data_) {
+                    return  _This_.domReady = (
+                        $_Link[0]  ?  _This_.syncLoad( $_Link )  :  Promise.resolve('')
+                    ).then(function (_Data_) {
 
-                iData = _Data_ || iData;
+                        return  _This_.loadJSON(_Data_ || iData);
+                    }).then(
+                        $.proxy(_This_.loadModule, _This_)
+                    ).then(function (_Data_) {
 
-                iData = _This_.emit('data', [iData])  ||  iData;
-
-                if (iData instanceof Array) {
-                    _Data_ = { };
-                    _Data_[_This_.name] = iData;
-                }
-
-                return  _Data_ || iData;
-
-            }).then($.proxy(this.loadModule, this)).then(function (_Data_) {
-
-                return  _This_.$_View.children('script')[0] ?
-                    _Data_ : _This_.render(_Data_);
-            });
+                        return  _This_.$_View.children('script')[0] ?
+                            _Data_ : _This_.render(_Data_);
+                    });
+                });
         }
     });
 })(self, self.document, self.jQuery, HTML_Template, Node_Template, InnerLink);
@@ -893,20 +884,23 @@ var WebApp = (function (BOM, DOM, $, UI_Module, InnerLink) {
 
             var Index = (arguments[0].originalEvent.state || '').index;
 
-            if ((! _This_[Index])  ||  (_This_.lastPage == Index))
-                return;
+            if (! _This_[Index])  return;
 
             _This_.hashChange = false;
 
-            _This_[_This_.lastPage].detach();
+            if (_This_.lastPage == Index)  return;
 
-            var iPage = _This_[_This_.lastPage = Index].attach();
+            var iPage = _This_[Index];
 
-            if ((! iPage.$_Content)  &&  iPage.lastLoad) {
-                iPage.$_Content = null;
+            _This_[_This_.lastPage].detach().then(
+                $.proxy(iPage.attach, iPage)
+            ).then(function () {
 
-                _This_.bootLink( iPage.source );
-            }
+                _This_.lastPage = Index
+
+                if ((! iPage.$_View.children()[0])  &&  iPage.lastLoad)
+                    return  _This_.bootLink( iPage.source );
+            });
         }).on('hashchange',  function () {
 
             if (_This_.hashChange !== false)  _This_.loadLink();
@@ -953,29 +947,31 @@ var WebApp = (function (BOM, DOM, $, UI_Module, InnerLink) {
         },
         bootLink:    function (iLink, iPrev) {
             var _This_ = this,
-                not_Page = (_This_.$_Root[0] !== (
+                not_Page = (this.$_Root[0] !== (
                     (iPrev || '').$_View  ||  iLink.getTarget()
                 )[0]);
 
             return  iLink.load().then(function () {
 
-                var iData = arguments[0][1];
+                var iHTML = arguments[0][0],  iJSON = arguments[0][1];
 
-                if ( not_Page )  return  (new UI_Module( iLink )).load( iData );
+                if ( not_Page )
+                    return  (new UI_Module( iLink )).load(iJSON, iHTML);
 
                 var iScope = iLink.getScope();
 
-                if ( iPrev )  iPrev.detach( arguments[0][0] );
-
-                return  _This_.register(new UI_Module(iLink, iScope)).load( iData );
+                return  (iPrev ? iPrev.detach() : Promise.resolve(''))
+                    .then(function () {
+                        return _This_.register(
+                            new UI_Module(iLink, iScope)
+                        ).load(iJSON, iHTML);
+                    });
             });
         },
         init:        function () {
             var iModule = new UI_Module(new InnerLink(this, DOM.body));
 
             iModule.template.scope.extend( $.paramJSON() );
-
-            iModule.findSub();
 
             this.bootLink( iModule.source ).then(function () {
 
@@ -997,7 +993,10 @@ var WebApp = (function (BOM, DOM, $, UI_Module, InnerLink) {
                 case '_blank':
                     iLink.loadJSON().then(function () {
                         _This_.trigger(
-                            'data',  iLink.href,  iLink.src,  [iLink, arguments[0]]
+                            'data',
+                            iLink.href || '',
+                            iLink.src || iLink.action || '',
+                            [iLink, arguments[0]]
                         );
                     });
                     break;
@@ -1101,7 +1100,7 @@ var Helper_API = (function (BOM, DOM, $, UI_Module, HTML_Template, Node_Template
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v3.4  (2017-01-24)  Beta
+//      [Version]    v3.4  (2017-02-13)  Beta
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //
@@ -1154,7 +1153,7 @@ var EasyWebApp = (function (BOM, DOM, $, InnerLink, UI_Module, HTML_Template) {
     var Only_Change = $.map(['select', 'textarea', '[designMode]'].concat(
             $.map([
                 'hidden', 'radio', 'checkbox', 'number', 'search',
-                'file', 'range', 'date', 'time', 'color'
+                'range', 'date', 'time', 'color'
             ],  function () {
                 return  'input[type="' + arguments[0] + '"]';
             })

@@ -2,7 +2,7 @@
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v3.4  (2017-01-24)  Beta
+//      [Version]    v3.4  (2017-02-13)  Beta
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //
@@ -58,7 +58,7 @@ define([
     var Only_Change = $.map(['select', 'textarea', '[designMode]'].concat(
             $.map([
                 'hidden', 'radio', 'checkbox', 'number', 'search',
-                'file', 'range', 'date', 'time', 'color'
+                'range', 'date', 'time', 'color'
             ],  function () {
                 return  'input[type="' + arguments[0] + '"]';
             })
