@@ -1,12 +1,12 @@
 define([
-    'jquery', 'marked', 'EasyWebUI', 'EasyWebApp', 'QRcode'
-],  function ($, marked) {
+    'jquery', 'marked', 'MediumEditor', 'EasyWebUI', 'EasyWebApp', 'QRcode'
+],  function ($, marked, MediumEditor) {
 
     $.ajaxSetup({
         dataFilter:    function (iData) {
             var iName = $.fileName( this.url ).split('.');
 
-            switch ((iName.slice(-1)[0] || '').toLowerCase()) {
+            switch (iName[1]  &&  (iName.slice(-1)[0] || '').toLowerCase()) {
                 case 'md':          ;
                 case 'markdown':    return  marked( iData );
                 case '':            break;
@@ -38,20 +38,19 @@ define([
 
         var $_App = $('#Main_Content');
 
+        $('#Toolkit .Icon.Pen').click(function () {
+
+            if ($_App[0].contentEditable == "true")
+                MediumEditor.getEditorFromElement( $_App[0] ).destroy();
+            else
+                new MediumEditor( $_App[0] );
+        });
+
         var $_ReadNav = $('#Content_Nav').iReadNav( $_App ).scrollFixed(),
             $_Toolkit = $('#Toolkit'),
             $_QRcode = $('#QRcode > .Body');
 
-        $_App.iWebApp().on('data',  '',  'index.json',  function (_, iData) {
-
-            $.ajaxPrefilter(function (iOption, _, iXHR) {
-
-                if (iOption.url.indexOf( iData.Git_API )  >  -1)
-                    iXHR.setRequestHeader(
-                        'Authorization',  'token ' + iData.Git_Token
-                    );
-            });
-        }).on('ready',  '(list\\.html|ReadMe\\.md)',  function () {
+        $_App.iWebApp().on('ready',  '(list\\.html|ReadMe\\.md)',  function () {
 
             $_Toolkit.hide();
 
@@ -74,13 +73,6 @@ define([
                 text:          self.location.href,
                 background:    'white'
             });
-
-        }).on('data',  '',  '/contents/',  function (_, iData) {
-            return {
-                content:    $.map(iData,  function () {
-                    return  (arguments[0].type != 'dir')  ?  null  :  arguments[0];
-                })
-            };
         });
     });
 });

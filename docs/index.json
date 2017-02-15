@@ -25,11 +25,5 @@
             "target":    "_blank",
             "href":      "http://git.oschina.net/Tech_Query/EasyWebApp/tree/Component/"
         }
-    ],
-    "Git_API":        "https://api.github.com",
-    "Git_Token":      "a289ee209e6265efe9d3078deed7953f05d518c5",
-    "Git_Account":    "TechQuery",
-    "Git_Repo":       "EasyWebApp.js",
-    "Git_Branch":     "Component",
-    "Root_Path":      "docs"
+    ]
 }

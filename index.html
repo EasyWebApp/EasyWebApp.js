@@ -14,19 +14,26 @@
 
     <link rel="stylesheet" href="//tech_query.oschina.io/css/EasyWebUI.css" />
     <link rel="stylesheet" href="docs/css/index.css" />
+    <link rel="stylesheet"
+          href="//cdn.bootcss.com/medium-editor/5.22.1/css/medium-editor.min.css" />
+    <link rel="stylesheet"
+          href="//cdn.bootcss.com/medium-editor/5.22.1/css/themes/default.min.css" />
 
-    <script src="//cdn.bootcss.com/require.js/2.2.0/require.min.js"></script>
+    <script src="//cdn.bootcss.com/require.js/2.3.0/require.min.js"></script>
     <script>
         require.config({
             baseUrl:    'source/',
             paths:      {
-                jquery:       '//cdn.bootcss.com/jquery/1.12.4/jquery.min',
-                'jQuery+':    '//tech_query.oschina.io/iquery/jQuery+',
-                'iQuery+':    '//tech_query.oschina.io/iquery/iQuery+',
-                EasyWebUI:    '//tech_query.oschina.io/css/EasyWebUI',
-                marked:       '//cdn.bootcss.com/marked/0.3.6/marked.min',
+                jquery:          '//cdn.bootcss.com/jquery/1.12.4/jquery.min',
+                'jQuery+':       '//tech_query.oschina.io/iquery/jQuery+',
+                'iQuery+':       '//tech_query.oschina.io/iquery/iQuery+',
+                EasyWebUI:       '//tech_query.oschina.io/css/EasyWebUI',
+                marked:          '//cdn.bootcss.com/marked/0.3.6/marked.min',
+                MediumEditor:
+                    '//cdn.bootcss.com/medium-editor/5.22.1/js/medium-editor.min',
                 QRcode:
-                    '//cdn.bootcss.com/lrsjng.jquery-qrcode/0.14.0/jquery-qrcode.min'
+                    '//cdn.bootcss.com/lrsjng.jquery-qrcode/0.14.0/jquery-qrcode.min',
+                Git_List:        '../docs/html/Git_List'
             },
             shim:       {QRcode:  ['jquery']}
         });
@@ -37,7 +44,7 @@
     <div class="Head CenterX Black_O">
         <div class="Grid-Row CenterY">
             <div id="Main_Title">
-                <h1 target="_self" href="docs/html/list.html">
+                <h1 target="_self" href="docs/html/Git_List.html">
                     ${this.Title}
                 </h1>
                 <p>${this.Description}</p>
@@ -59,6 +66,7 @@
                     <i class="Icon Mobile"></i>
                     <div class="DropDown Body"></div>
                 </span>
+                <i class="Icon Pen"></i>
             </div>
             <div id="Main_Content"></div>
         </div>
