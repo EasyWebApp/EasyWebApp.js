@@ -8,10 +8,11 @@ define([
 
         if (iView !== this)  return iView;
 
-        this.type = (
-            $.ListView.findView( this.$_View.parent() ).filter( this.$_View )[0]  ?
-                'list'  :  'plain'
-        );
+        var iLV = $.ListView.findView(
+                this.$_View.parent()[0]  ||  $('<div />').append( this.$_View )
+            );
+        this.type = iLV.filter( this.$_View )[0]  ?  'list'  :  'plain';
+
         this.scope = DS_Inherit(iScope,  { });
 
         this.init().source = (iURL || '').match(/\.(html?|md)\??/)  ?
@@ -96,10 +97,14 @@ define([
             );
         },
         parseList:     function (iList) {
-            var iView = $[
-                    $(':media', iList)[0]  ?  'GalleryView'  :  'ListView'
-                ]( iList ),
-                _This_ = this;
+
+            var $_Media = $.ListView.findView( iList );
+
+            $_Media = $( iList ).find(':media:not(iframe)').not(
+                $_Media.add( $_Media.find('*') )
+            );
+            var _This_ = this,
+                iView = $[$_Media[0] ? 'GalleryView' : 'ListView']( iList );
 
             return this.pushMap(
                 iList.getAttribute('name'),

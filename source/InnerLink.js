@@ -48,12 +48,10 @@ define(['jquery', 'HTML_Template'],  function ($, HTML_Template) {
 
             return  $.extend(iArgs, this.$_DOM[0].dataset);
         },
-        register:     function (Index) {
-            DOM.title = this.title || DOM.title;
-
-            BOM.history[this.ownerApp[Index] ? 'replaceState' : 'pushState'](
-                {index: Index},
-                DOM.title,
+        register:     function () {
+            BOM.history.pushState(
+                {index:  arguments[0]},
+                DOM.title = this.title || DOM.title,
                 '#!'  +  $.extendURL(this.href, this.getArgs())
             );
 

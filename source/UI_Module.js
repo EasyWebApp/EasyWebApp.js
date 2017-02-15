@@ -86,54 +86,6 @@ define([
 
             return $_Sub;
         },
-        loadHTML:      function ($_HTML) {
-
-            var _This_ = this,  $_Slot = this.$_View.children().detach();
-
-            return (
-                (typeof $_HTML == 'string')  ?
-                    this.$_View.htmlExec( $_HTML )  :
-                    Promise.resolve(this.$_View.append($_HTML) && '')
-            ).then(function () {
-                _This_.template.parseSlot( $_Slot );
-
-                _This_.emit('template');
-
-                return _This_.$_View.toggleAnimate('active');
-            });
-        },
-        attach:        function () {
-            this.$_View
-                .data(this.constructor.getClass(), this)
-                .data(HTML_Template.getClass(), this.template);
-
-            var _This_ = this;
-
-            return  (! this.$_Content)  ?  Promise.resolve('')  :
-                this.loadHTML( this.$_Content ).then(function () {
-
-                    _This_.$_Content = null;
-
-                    _This_.emit('ready');
-                });
-        },
-        detach:        function () {
-            return  this.$_View.toggleAnimate('active', this)
-                .then(function (_This_) {
-
-                    _This_.$_Content = _This_.$_View.children().detach();
-
-                    _This_.$_View
-                        .data(_This_.constructor.getClass(), null)
-                        .data(HTML_Template.getClass(), null);
-                });
-        },
-        destructor:    function () {
-            if ( this.$_Content ) {
-                this.$_Content.remove();
-                this.$_Content = null;
-            }
-        },
         getEnv:        function () {
             var iData = { },
                 iHTML = this.source.getURL('href'),
@@ -183,13 +135,68 @@ define([
                     $( $_Link[0].ownerElement ),  $_Link = iLink.$_DOM
                 ][0];
 
-                iLink.register(this.ownerApp.length - 1).$_DOM.remove();
+                this.ownerApp.register( this ).source.$_DOM.remove();
+
+                this.registered = true;
 
                 iLink.$_DOM = $_Link;
             }
 
             return  ((! iJSON)  &&  iLink.src)  ?
                 this.source.loadJSON()  :  Promise.resolve('');
+        },
+        attach:        function () {
+            this.$_View
+                .data(this.constructor.getClass(), this)
+                .data(HTML_Template.getClass(), this.template);
+
+            if ( this.$_Content )
+                return  this.$_View.append( this.$_Content )
+                    .toggleAnimate('active', this).then(function (_This_) {
+
+                        _This_.$_Content = null;
+
+                        _This_.emit('ready');
+                    });
+        },
+        detach:        function () {
+            return  this.$_View.toggleAnimate('active', this)
+                .then(function (_This_) {
+
+                    _This_.$_Content = _This_.$_View.children().detach();
+
+                    _This_.$_View
+                        .data(_This_.constructor.getClass(), null)
+                        .data(HTML_Template.getClass(), null);
+
+                    return _This_;
+                });
+        },
+        destructor:    function () {
+            return  (this.$_Content ? Promise.resolve('') : this.detach())
+                .then(function (_This_) {
+
+                    if ( _This_.$_Content ) {
+                        _This_.$_Content.remove();
+                        _This_.$_Content = null;
+                    }
+                });
+        },
+        loadHTML:      function () {
+
+            var _This_ = this,  $_Slot = this.$_View.children().detach();
+
+            return  this.$_View.htmlExec( arguments[0] ).then(function () {
+
+                _This_.template.parseSlot( $_Slot );
+
+                _This_.emit('template');
+
+                var $_Link = _This_.$_View.children('link[target="_blank"]');
+
+                return  $_Link[0]  &&  _This_.syncLoad( $_Link );
+
+            }).then($.proxy($.fn.toggleAnimate, this.$_View, 'active'));
         },
         loadJSON:      function (iData) {
 
@@ -255,26 +262,23 @@ define([
             var _This_ = this;
 
             return  (iHTML  ?  this.loadHTML( iHTML )  :  Promise.resolve(''))
-                .then(function () {
+                .then(function (_Data_) {
+
                     _This_.lastLoad = _This_.template.lastRender = 0;
 
                     _This_.$_Sub = _This_.findSub();
 
-                    var $_Link = _This_.$_View.children('link[target="_blank"]');
+                    return  _This_.loadJSON(_Data_ || iData);
 
-                    return  _This_.domReady = (
-                        $_Link[0]  ?  _This_.syncLoad( $_Link )  :  Promise.resolve('')
-                    ).then(function (_Data_) {
+                }).then($.proxy(this.loadModule, this)).then(function (_Data_) {
 
-                        return  _This_.loadJSON(_Data_ || iData);
-                    }).then(
-                        $.proxy(_This_.loadModule, _This_)
-                    ).then(function (_Data_) {
+                    return  (! _This_.$_View.children('script')[0])  ?
+                        _Data_  :
+                        new Promise(function () {
 
-                        return  _This_.$_View.children('script')[0] ?
-                            _Data_ : _This_.render(_Data_);
-                    });
-                });
+                            _This_.domReady = [ ].concat.apply([_Data_], arguments);
+                        });
+                }).then($.proxy(this.render, this));
         }
     });
 });

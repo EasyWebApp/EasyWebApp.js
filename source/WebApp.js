@@ -44,6 +44,8 @@ define(['jquery', 'UI_Module', 'InnerLink'],  function ($, UI_Module, InnerLink)
 
                 if ((! iPage.$_View.children()[0])  &&  iPage.lastLoad)
                     return  _This_.bootLink( iPage.source );
+
+                DOM.title = iPage.source.title || DOM.title;
             });
         }).on('hashchange',  function () {
 
@@ -102,13 +104,24 @@ define(['jquery', 'UI_Module', 'InnerLink'],  function ($, UI_Module, InnerLink)
                 if ( not_Page )
                     return  (new UI_Module( iLink )).load(iJSON, iHTML);
 
-                var iScope = iLink.getScope();
+                var iScope = iLink.getScope(),  iNext;
 
                 return  (iPrev ? iPrev.detach() : Promise.resolve(''))
                     .then(function () {
-                        return _This_.register(
-                            new UI_Module(iLink, iScope)
-                        ).load(iJSON, iHTML);
+
+                        iNext = new UI_Module(iLink, iScope);
+
+                        return  iNext.load(iJSON, iHTML);
+
+                    }).then(function () {
+
+                        if (! iNext.registered)  _This_.register( iNext );
+
+                    },  function () {
+
+                        return iNext.destructor().then(
+                            iPrev  ?  $.proxy(iPrev.attach, iPrev)  :  $.noop
+                        );
                     });
             });
         },
