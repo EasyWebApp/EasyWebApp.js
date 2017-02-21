@@ -839,6 +839,11 @@ var UI_Module = (function (BOM, DOM, $, HTML_Template, Node_Template, InnerLink)
         load:          function (iData, iHTML) {
             var _This_ = this;
 
+            var DOM_Ready = new Promise(function () {
+
+                    _This_.domReady = $.makeArray( arguments );
+                });
+
             return  (iHTML  ?  this.loadHTML( iHTML )  :  Promise.resolve(''))
                 .then(function (_Data_) {
 
@@ -850,12 +855,16 @@ var UI_Module = (function (BOM, DOM, $, HTML_Template, Node_Template, InnerLink)
 
                 }).then($.proxy(this.loadModule, this)).then(function (_Data_) {
 
-                    return  (! _This_.$_View.children('script')[0])  ?
-                        _Data_  :
-                        new Promise(function () {
+                    if (! _This_.$_View.children('script')[0]) {
 
-                            _This_.domReady = [ ].concat.apply([_Data_], arguments);
-                        });
+                        delete _This_.domReady;
+                        return _Data_;
+                    }
+
+                    _This_.domReady.push(_Data_);
+
+                    return DOM_Ready;
+
                 }).then($.proxy(this.render, this));
         }
     });
@@ -1105,12 +1114,12 @@ var Helper_API = (function (BOM, DOM, $, UI_Module, HTML_Template, Node_Template
                     this.getModule();
 
             if (iModule.domReady  &&  (typeof iFactory == 'function'))  try {
-                iModule.domReady[1](
-                    iFactory.call(iModule, iModule.domReady[0])  ||
-                    iModule.domReady[0]
+                iModule.domReady[0](
+                    iFactory.call(iModule, iModule.domReady[2])  ||
+                    iModule.domReady[2]
                 );
             } catch (iError) {
-                iModule.domReady[2]( iError );
+                iModule.domReady[1]( iError );
             }
 
             return iModule;
@@ -1123,7 +1132,7 @@ var Helper_API = (function (BOM, DOM, $, UI_Module, HTML_Template, Node_Template
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v3.4  (2017-02-15)  Beta
+//      [Version]    v3.4  (2017-02-21)  Beta
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //

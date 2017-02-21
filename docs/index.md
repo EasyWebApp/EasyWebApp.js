@@ -180,15 +180,73 @@ define(['jquery', 'TimePassed', 'EasyWebApp'],  function ($, TimePassed) {
  - `${(new Date(this.time)).toLocaleString()}` —— ES 6 模板字符串内支持任何 [ES 5 严格模式](https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Strict_mode)允许的 **JavaScript 表达式**
 
 
-### （六）模块引用
+### （六）组件引用
 
 ```HTML
 <div class="Panel">
     <div class="Head">网友评论</div>
     <div class="Body" href="html/comment.html"
-         src="memo/comment?type=top?id=${this.id}"></div>
+         src="memo/comment?type=top&id=${this.id}"></div>
 </div>
 ```
+#### 属性解释
+ - `href="html/comment.html"` —— 从相对于应用主文件 `index.html` 的路径 `html/comment.html` 加载 HTML 组件代码
+ - `src="memo/comment?type=top&id=${this.id}"` —— 上述组件的数据来源
+
+
+
+## 【组件化开发】
+
+
+**EWA 组件** 是一个 **仅包含必要的 HTML、CSS、JS 代码**的合法 HTML 文件，其中 ——
+ - HTML 对外可通过 `<slot name="" />` 提供 **元素插入点**
+ - CSS 暂时没有局部作用域
+ - JS 需要由 **符合 AMD 规范的异步加载器**引入
+ - HTML 中可再引入其它模块
+
+
+### （〇）异步逻辑
+
+```JavaScript
+<script>
+require(['jquery'],  function ($) {
+
+    //  在 WebApp 单例对象上定义页面组件的工厂函数
+
+    $().iWebApp().component(function (data) {
+
+        //  此时组件 HTML 已实例化，JSON 已加载、待渲染
+
+        //  可以在当前组件下操作 DOM 元素
+        this.$_View.find('tag.class');
+
+        //  也可以绑定子组件的生命周期事件
+        this.bind('data',  '#id .class',  function (link, data) {
+
+            //  根据子组件的数据 更新父组件
+            this.getParent().update('key', 'value');
+        });
+
+        //  修改过的 API 原始数据须返回给引擎
+        return  $.map(data,  function () { });
+    });
+});
+</script>
+```
+
+**示例组件** —— [分页数据表](../component/Data_Table.html)
+
+
+### （一）页面组件
+
+**页面组件** 是一种略微特殊的组件，它通常由用户点击 **SPA 链接**加载而来（SPA 链接 `src` 属性声明的 JSON URL 让 EWA 引擎可以异步加载页面数据），但也可能来自 用户 F5 刷新、URL 直接打开，为了保证 JSON 正常加载、URL 路由正确解析，需要在其 HTML 开头多写一个空指向的 **SPA 链接元素**（规则同上文）——
+
+```HTML
+<link target="_blank" src="path/to/json?key1=value1" />
+```
+
+**示例页面** —— [EWA 小试牛刀](html/try.html)
+
 
 
 ## 【JavaScript API】

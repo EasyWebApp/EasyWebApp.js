@@ -1,17 +1,22 @@
 <style>
-    .Grid-Row > * {
+    [href] > .Grid-Row > * {
         padding:    1em;
     }
-    .Grid-Row > *:first-child {
+    [href] > .Grid-Row > *:first-child {
         text-align:    left;
     }
-    .Grid-Row > *:last-child {
+    [href] > .Grid-Row > *:last-child {
         text-align:    right;
     }
-	table + .Grid-Row {
+	[href] > .Foot {
 		border-top:    1px  solid  lightgray;
         text-align:    center;
 	}
+    [href] > .Foot .NavBar > li {
+        border-top:       1px  solid;
+        border-bottom:    1px  solid;
+        padding:          0.5em  1em;
+    }
 </style>
 <script>
 require(['jquery', 'Data_Table'],  function ($) {
@@ -19,7 +24,7 @@ require(['jquery', 'Data_Table'],  function ($) {
     $().iWebApp().component('Data_Table', arguments[1]);
 });
 </script>
-<div class="Grid-Row">
+<div class="Grid-Row Head">
     <span>
         显示
         <select name="pageSize">
@@ -32,13 +37,13 @@ require(['jquery', 'Data_Table'],  function ($) {
     <slot name="toolbar"></slot>
 </div>
 <slot name="table"></slot>
-<div class="Grid-Row">
+<div class="Grid-Row CenterY Foot">
     <div>
         <span>跳转到</span>
         <input type="number" name="pageIndex" min="1" max="${this.pageSum}" />
         <span>页</span>
     </div>
-    <ul class="NavBar">
+    <ul class="NavBar Border-Column">
         <li style="display: ${(this.pageIndex < 3) ? 'none' : ''}">
             1
         </li>

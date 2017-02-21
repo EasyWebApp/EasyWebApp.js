@@ -61,12 +61,12 @@ define([
                     this.getModule();
 
             if (iModule.domReady  &&  (typeof iFactory == 'function'))  try {
-                iModule.domReady[1](
-                    iFactory.call(iModule, iModule.domReady[0])  ||
-                    iModule.domReady[0]
+                iModule.domReady[0](
+                    iFactory.call(iModule, iModule.domReady[2])  ||
+                    iModule.domReady[2]
                 );
             } catch (iError) {
-                iModule.domReady[2]( iError );
+                iModule.domReady[1]( iError );
             }
 
             return iModule;

@@ -261,6 +261,11 @@ define([
         load:          function (iData, iHTML) {
             var _This_ = this;
 
+            var DOM_Ready = new Promise(function () {
+
+                    _This_.domReady = $.makeArray( arguments );
+                });
+
             return  (iHTML  ?  this.loadHTML( iHTML )  :  Promise.resolve(''))
                 .then(function (_Data_) {
 
@@ -272,12 +277,16 @@ define([
 
                 }).then($.proxy(this.loadModule, this)).then(function (_Data_) {
 
-                    return  (! _This_.$_View.children('script')[0])  ?
-                        _Data_  :
-                        new Promise(function () {
+                    if (! _This_.$_View.children('script')[0]) {
 
-                            _This_.domReady = [ ].concat.apply([_Data_], arguments);
-                        });
+                        delete _This_.domReady;
+                        return _Data_;
+                    }
+
+                    _This_.domReady.push(_Data_);
+
+                    return DOM_Ready;
+
                 }).then($.proxy(this.render, this));
         }
     });
