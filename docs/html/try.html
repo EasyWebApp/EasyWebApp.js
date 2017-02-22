@@ -11,7 +11,7 @@ require(['jquery', 'docs/html/try.js'],  function ($, Data_Fix) {
 </script>
 
 <h3>数据绑定</h3>
-<form target="_blank">
+<form target="_blank" onsubmit="return false">
     <fieldset>
         <legend>单一对象</legend>
         <input type="text" name="Nick_Name" />
@@ -54,7 +54,24 @@ require(['jquery', 'docs/html/try.js'],  function ($, Data_Fix) {
         Yi Kai 的理解
     </a></li>
 </ul>
-<div href="component/Data_Table.html?pageIndex=1&pageSize=10">
+<form target="_blank" onsubmit="return false">
+    <fieldset>
+        <legend>组件外传参</legend>
+        <label>
+            分页数
+            <select name="pageSize">
+                <option>10</option>
+                <option>20</option>
+                <option>30</option>
+            </select>
+        </label>
+        <label>
+            页序号
+            <input type="number" name="pageIndex" min="1" max="100" />
+        </label>
+    </fieldset>
+</form>
+<div href="component/Data_Table.html" rows="${this.pageSize}" page="${this.pageIndex}">
     <span slot="toolbar">
         <button>功能按钮</button>
     </span>
@@ -62,7 +79,7 @@ require(['jquery', 'docs/html/try.js'],  function ($, Data_Fix) {
         <thead><tr>
             <th>标题</th><th>配图</th><th>时间</th><th>稿源</th>
         </tr></thead>
-        <tbody src="http://www.tngou.net/api/top/list?page=${this.pageIndex}&rows=${this.pageSize}&callback=?">
+        <tbody src="http://www.tngou.net/api/top/list?page=${this.page}&rows=${this.rows}&callback=?">
             <tr title="${this.description}">
                 <td>${this.title}</td>
                 <td>

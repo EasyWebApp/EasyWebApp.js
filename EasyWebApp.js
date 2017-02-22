@@ -578,7 +578,63 @@ var InnerLink = (function (BOM, DOM, $, HTML_Template) {
 
 
 
-var UI_Module = (function (BOM, DOM, $, HTML_Template, Node_Template, InnerLink) {
+var Module_Argument = (function (BOM, DOM, $) {
+
+    function Module_Argument(iSource, Exclude_Name) {
+
+        this.callee = iSource;
+
+        Exclude_Name = $.makeSet.apply($, Exclude_Name);
+
+        var _This_ = this;  this.length = 0;
+
+        $.each(iSource.attributes,  function () {
+            if (! (
+                (this.nodeName in Exclude_Name)  ||
+                (($.propFix[this.nodeName] || this.nodeName)  in  iSource)
+            ))
+                _This_[_This_.length++] = this.nodeName;
+        });
+    }
+
+    $.extend(Module_Argument.prototype, {
+        observe:    function (iCallback) {
+
+            if (typeof iCallback == 'function')
+                this.observer = new self.MutationObserver(function () {
+
+                    $.each(arguments[0],  function () {
+
+                        var iNew = this.target.getAttribute( this.attributeName );
+
+                        if (iNew != this.oldValue)
+                            iCallback.apply(this.target, [
+                                this,  this.attributeName,  iNew,  this.oldValue
+                            ]);
+                    });
+                });
+
+            if ( this.observer )
+                this.observer.observe(this.callee, {
+                    attributes:           true,
+                    attributeOldValue:    true,
+                    attributeFilter:      $.makeArray( this )
+                });
+
+            return this;
+        },
+        destructor:    function () {
+            this.observer.disconnect();
+        }
+    });
+
+    return Module_Argument;
+
+})(self, self.document, self.jQuery);
+
+
+
+var UI_Module = (function (BOM, DOM, $, HTML_Template, Module_Argument, Node_Template, InnerLink) {
 
     function UI_Module(iLink, iScope) {
 
@@ -605,6 +661,18 @@ var UI_Module = (function (BOM, DOM, $, HTML_Template, Node_Template, InnerLink)
                 this.$_View,  iScope || this.source.getScope()
             )
         ).scope.extend( this.getEnv() );
+
+        this.arguments = new Module_Argument(this.$_View[0], [
+            'target', 'href', 'src', 'action', 'method', 'title', 'autofocus',
+            'name', 'async'
+        ]).observe(function (_, iKey, iNew, iOld) {
+
+            if (! (iOld != null))  return;
+
+            var iData = { };  iData[iKey] = iNew;
+
+            iView.constructor.reload(iView.template.render( iData ));
+        });
 
         this.length = this.lastLoad = 0;
     }
@@ -728,6 +796,8 @@ var UI_Module = (function (BOM, DOM, $, HTML_Template, Node_Template, InnerLink)
                 .data(this.constructor.getClass(), this)
                 .data(HTML_Template.getClass(), this.template);
 
+            this.arguments.observe();
+
             if ( this.$_Content )
                 return  this.$_View.append( this.$_Content )
                     .toggleAnimate('active', this).then(function (_This_) {
@@ -742,6 +812,8 @@ var UI_Module = (function (BOM, DOM, $, HTML_Template, Node_Template, InnerLink)
                 .then(function (_This_) {
 
                     _This_.$_Content = _This_.$_View.children().detach();
+
+                    _This_.arguments.destructor();
 
                     _This_.$_View
                         .data(_This_.constructor.getClass(), null)
@@ -837,12 +909,8 @@ var UI_Module = (function (BOM, DOM, $, HTML_Template, Node_Template, InnerLink)
             return this.loadModule();
         },
         load:          function (iData, iHTML) {
-            var _This_ = this;
 
-            var DOM_Ready = new Promise(function () {
-
-                    _This_.domReady = $.makeArray( arguments );
-                });
+            var _This_ = this,  DOM_Ready = this.promise();
 
             return  (iHTML  ?  this.loadHTML( iHTML )  :  Promise.resolve(''))
                 .then(function (_Data_) {
@@ -861,14 +929,41 @@ var UI_Module = (function (BOM, DOM, $, HTML_Template, Node_Template, InnerLink)
                         return _Data_;
                     }
 
-                    _This_.domReady.push(_Data_);
+                    _This_.resolve(_Data_);
 
                     return DOM_Ready;
 
                 }).then($.proxy(this.render, this));
+        },
+        promise:       function () {
+            var _This_ = this;
+
+            var DOM_Ready = new Promise(function () {
+
+                    _This_.domReady = $.makeArray( arguments );
+                });
+
+            this.curry = $.curry(function (iData, iFactory) {
+
+                if (typeof iData == 'function')
+                    iData = [iFactory,  iFactory = iData][0];
+
+                try {
+                    _This_.domReady[0](iFactory.call(_This_, iData)  ||  iData);
+                } catch (iError) {
+                    _This_.domReady[1]( iError );
+                }
+            });
+
+            return DOM_Ready;
+        },
+        resolve:       function () {
+            if ( this.curry )  this.curry = this.curry( arguments[0] );
+
+            if (! this.curry)  delete this.domReady;
         }
     });
-})(self, self.document, self.jQuery, HTML_Template, Node_Template, InnerLink);
+})(self, self.document, self.jQuery, HTML_Template, Module_Argument, Node_Template, InnerLink);
 
 
 
@@ -1113,14 +1208,8 @@ var Helper_API = (function (BOM, DOM, $, UI_Module, HTML_Template, Node_Template
                     (new UI_Module(new InnerLink(this, $_View[0])))  :
                     this.getModule();
 
-            if (iModule.domReady  &&  (typeof iFactory == 'function'))  try {
-                iModule.domReady[0](
-                    iFactory.call(iModule, iModule.domReady[2])  ||
-                    iModule.domReady[2]
-                );
-            } catch (iError) {
-                iModule.domReady[1]( iError );
-            }
+            if (iModule.domReady  &&  (typeof iFactory == 'function'))
+                iModule.resolve( iFactory );
 
             return iModule;
         }
@@ -1132,7 +1221,7 @@ var Helper_API = (function (BOM, DOM, $, UI_Module, HTML_Template, Node_Template
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v3.4  (2017-02-21)  Beta
+//      [Version]    v3.5  (2017-02-22)  Beta
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //

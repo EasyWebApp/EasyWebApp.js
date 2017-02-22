@@ -1,6 +1,6 @@
 define([
-    'jquery', 'HTML_Template', 'Node_Template', 'InnerLink'
-],  function ($, HTML_Template, Node_Template, InnerLink) {
+    'jquery', 'HTML_Template', 'Module_Argument', 'Node_Template', 'InnerLink'
+],  function ($, HTML_Template, Module_Argument, Node_Template, InnerLink) {
 
     function UI_Module(iLink, iScope) {
 
@@ -27,6 +27,18 @@ define([
                 this.$_View,  iScope || this.source.getScope()
             )
         ).scope.extend( this.getEnv() );
+
+        this.arguments = new Module_Argument(this.$_View[0], [
+            'target', 'href', 'src', 'action', 'method', 'title', 'autofocus',
+            'name', 'async'
+        ]).observe(function (_, iKey, iNew, iOld) {
+
+            if (! (iOld != null))  return;
+
+            var iData = { };  iData[iKey] = iNew;
+
+            iView.constructor.reload(iView.template.render( iData ));
+        });
 
         this.length = this.lastLoad = 0;
     }
@@ -150,6 +162,8 @@ define([
                 .data(this.constructor.getClass(), this)
                 .data(HTML_Template.getClass(), this.template);
 
+            this.arguments.observe();
+
             if ( this.$_Content )
                 return  this.$_View.append( this.$_Content )
                     .toggleAnimate('active', this).then(function (_This_) {
@@ -164,6 +178,8 @@ define([
                 .then(function (_This_) {
 
                     _This_.$_Content = _This_.$_View.children().detach();
+
+                    _This_.arguments.destructor();
 
                     _This_.$_View
                         .data(_This_.constructor.getClass(), null)
@@ -259,12 +275,8 @@ define([
             return this.loadModule();
         },
         load:          function (iData, iHTML) {
-            var _This_ = this;
 
-            var DOM_Ready = new Promise(function () {
-
-                    _This_.domReady = $.makeArray( arguments );
-                });
+            var _This_ = this,  DOM_Ready = this.promise();
 
             return  (iHTML  ?  this.loadHTML( iHTML )  :  Promise.resolve(''))
                 .then(function (_Data_) {
@@ -283,11 +295,38 @@ define([
                         return _Data_;
                     }
 
-                    _This_.domReady.push(_Data_);
+                    _This_.resolve(_Data_);
 
                     return DOM_Ready;
 
                 }).then($.proxy(this.render, this));
+        },
+        promise:       function () {
+            var _This_ = this;
+
+            var DOM_Ready = new Promise(function () {
+
+                    _This_.domReady = $.makeArray( arguments );
+                });
+
+            this.curry = $.curry(function (iData, iFactory) {
+
+                if (typeof iData == 'function')
+                    iData = [iFactory,  iFactory = iData][0];
+
+                try {
+                    _This_.domReady[0](iFactory.call(_This_, iData)  ||  iData);
+                } catch (iError) {
+                    _This_.domReady[1]( iError );
+                }
+            });
+
+            return DOM_Ready;
+        },
+        resolve:       function () {
+            if ( this.curry )  this.curry = this.curry( arguments[0] );
+
+            if (! this.curry)  delete this.domReady;
         }
     });
 });

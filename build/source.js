@@ -2,9 +2,11 @@
     name:            'EasyWebApp',
     baseUrl:         '../source',
     paths:           {
-        jquery:       'http://cdn.bootcss.com/jquery/1.12.4/jquery',
-        'jQuery+':    'http://tech_query.oschina.io/iquery/jQuery+',
-        'iQuery+':    'http://tech_query.oschina.io/iquery/iQuery+'
+        jquery:             '//cdn.bootcss.com/jquery/1.12.4/jquery',
+        'jQuery+':          '//tech_query.oschina.io/iquery/jQuery+',
+        'iQuery+':          '//tech_query.oschina.io/iquery/iQuery+',
+        MutationObserver:
+            '//cdn.bootcss.com/MutationObserver.js/0.3.2/mutationobserver'
     },
     out:             '../EasyWebApp.js',
     onBuildWrite:    function (iName) {

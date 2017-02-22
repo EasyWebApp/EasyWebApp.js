@@ -24,19 +24,24 @@
         require.config({
             baseUrl:    'source/',
             paths:      {
-                jquery:          '//cdn.bootcss.com/jquery/1.12.4/jquery.min',
-                'jQuery+':       '//tech_query.oschina.io/iquery/jQuery+',
-                'iQuery+':       '//tech_query.oschina.io/iquery/iQuery+',
-                EasyWebUI:       '//tech_query.oschina.io/css/EasyWebUI',
-                marked:          '//cdn.bootcss.com/marked/0.3.6/marked.min',
+                jquery:             '//cdn.bootcss.com/jquery/1.12.4/jquery.min',
+                'jQuery+':          'http://tech_query.oschina.io/iquery/jQuery+',
+                'iQuery+':          'http://tech_query.oschina.io/iquery/iQuery+',
+                MutationObserver:
+                    '//cdn.bootcss.com/MutationObserver.js/0.3.2/mutationobserver.min',
+                EasyWebUI:          '//tech_query.oschina.io/css/EasyWebUI',
+                marked:             '//cdn.bootcss.com/marked/0.3.6/marked.min',
                 MediumEditor:
                     '//cdn.bootcss.com/medium-editor/5.22.1/js/medium-editor.min',
                 QRcode:
                     '//cdn.bootcss.com/lrsjng.jquery-qrcode/0.14.0/jquery-qrcode.min',
-                Git_List:        '../docs/html/Git_List',
-                Data_Table:      '../component/Data_Table'
+                Git_List:           '../docs/html/Git_List',
+                Data_Table:         '../component/Data_Table'
             },
-            shim:       {QRcode:  ['jquery']}
+            shim:       {
+                MutationObserver:    {exports:  'MutationObserver'},
+                QRcode:              ['jquery']
+            }
         });
 
         require(['../docs/index']);

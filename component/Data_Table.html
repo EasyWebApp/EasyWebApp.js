@@ -25,44 +25,44 @@ require(['jquery', 'Data_Table'],  function ($) {
 });
 </script>
 <div class="Grid-Row Head">
-    <span>
+    <label>
         显示
-        <select name="pageSize">
+        <select name="rows">
             <option>10</option>
             <option>20</option>
             <option>30</option>
         </select>
         行
-    </span>
+    </label>
     <slot name="toolbar"></slot>
 </div>
 <slot name="table"></slot>
 <div class="Grid-Row CenterY Foot">
-    <div>
-        <span>跳转到</span>
-        <input type="number" name="pageIndex" min="1" max="${this.pageSum}" />
-        <span>页</span>
-    </div>
+    <label>
+        跳转到
+        <input type="number" name="page" min="1" max="${this.pageSum}" />
+        页
+    </label>
     <ul class="NavBar Border-Column">
-        <li style="display: ${(this.pageIndex < 3) ? 'none' : ''}">
+        <li style="display: ${(this.page < 3) ? 'none' : ''}">
             1
         </li>
-        <li style="display: ${(this.pageSum < 7) || (this.pageIndex < 4) ? 'none' : ''}">
+        <li style="display: ${(this.pageSum < 7) || (this.page < 4) ? 'none' : ''}">
             …
         </li>
-        <li style="display: ${(this.pageIndex < 2) ? 'none' : ''}">
-            ${this.pageIndex - 1}
+        <li style="display: ${(this.page < 2) ? 'none' : ''}">
+            ${this.page - 1}
         </li>
         <li class="active">
-            ${this.pageIndex}
+            ${this.page}
         </li>
-        <li style="display: ${(this.pageIndex + 1 > this.pageSum) ? 'none' : ''}">
-            ${this.pageIndex + 1}
+        <li style="display: ${(this.page + 1 > this.pageSum) ? 'none' : ''}">
+            ${this.page + 1}
         </li>
-        <li style="display: ${(this.pageSum < 6) || (this.pageIndex + 3 > this.pageSum) ? 'none' : ''}">
+        <li style="display: ${(this.pageSum < 6) || (this.page + 3 > this.pageSum) ? 'none' : ''}">
             …
         </li>
-        <li style="display: ${(this.pageIndex + 2 > this.pageSum) ? 'none' : ''}">
+        <li style="display: ${(this.page + 2 > this.pageSum) ? 'none' : ''}">
             ${this.pageSum}
         </li>
     </ul>

@@ -3,7 +3,7 @@ define(['jquery', 'EasyWebApp'],  function ($) {
     function PageData(_, iData) {
 
         this.getParent().update(
-            'pageSum',  Math.ceil(iData.total / this.template.scope.pageSize)
+            'pageSum',  Math.ceil(iData.total / this.template.scope.rows)
         );
 
         return iData.list;

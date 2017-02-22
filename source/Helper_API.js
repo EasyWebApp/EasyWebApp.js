@@ -60,14 +60,8 @@ define([
                     (new UI_Module(new InnerLink(this, $_View[0])))  :
                     this.getModule();
 
-            if (iModule.domReady  &&  (typeof iFactory == 'function'))  try {
-                iModule.domReady[0](
-                    iFactory.call(iModule, iModule.domReady[2])  ||
-                    iModule.domReady[2]
-                );
-            } catch (iError) {
-                iModule.domReady[1]( iError );
-            }
+            if (iModule.domReady  &&  (typeof iFactory == 'function'))
+                iModule.resolve( iFactory );
 
             return iModule;
         }
