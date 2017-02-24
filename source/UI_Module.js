@@ -22,20 +22,22 @@ define([
             this.name = $.uuid('EWA');
             this.$_View[0].setAttribute('name', this.name);
         }
+
+        this.arguments = new Module_Argument(this.$_View[0], [
+            'target', 'href', 'src', 'method', 'title', 'autofocus',
+            'name', 'async'
+        ]);
         (
             this.template = new HTML_Template(
                 this.$_View,  iScope || this.source.getScope()
             )
-        ).scope.extend( this.getEnv() );
+        ).scope.extend( this.getEnv() ).extend( this.valueOf() );
 
-        this.arguments = new Module_Argument(this.$_View[0], [
-            'target', 'href', 'src', 'action', 'method', 'title', 'autofocus',
-            'name', 'async'
-        ]).observe(function (_, iKey, iNew, iOld) {
+        this.arguments.observe(function (_, iKey, iNew, iOld) {
 
             if (! (iOld != null))  return;
 
-            var iData = { };  iData[iKey] = iNew;
+            var iData = { };  iData[iKey] = Node_Template.safeEval( iNew );
 
             iView.constructor.reload(iView.template.render( iData ));
         });

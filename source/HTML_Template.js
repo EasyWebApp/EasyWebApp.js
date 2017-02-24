@@ -65,15 +65,29 @@ define([
 
             $_Slot.not('[name]').replaceWith(this.$_Slot.not( $_Named ));
         },
+        indexOf:       function (iNode) {
+            for (var i = 0;  this[i];  i++)
+                if (
+                    (this[i] == iNode)  ||  (
+                        (this[i] instanceof Node_Template)  &&  (
+                            (iNode == this[i].ownerNode)  ||
+                            (iNode == this[i].ownerNode.nodeName)
+                        )
+                    )
+                )  return i;
+
+            return -1;
+        },
         pushMap:       function (iName, iNode) {
+
+            if (this.indexOf( iNode )  >  -1)  return;
+
             iNode = HTML_Template.getMaskCode(this.push(iNode) - 1);
 
             iName = (typeof iName == 'string')  ?  [iName]  :  iName;
 
             for (var i = 0;  iName[i];  i++)
                 this.map[iName[i]] = (this.map[iName[i]] || 0)  +  iNode;
-
-            return this;
         },
         parsePlain:    function () {
             var _This_ = this;
@@ -106,7 +120,7 @@ define([
             var _This_ = this,
                 iView = $[$_Media[0] ? 'GalleryView' : 'ListView']( iList );
 
-            return this.pushMap(
+            this.pushMap(
                 iList.getAttribute('name'),
                 iView.on('insert',  function () {
 
@@ -158,8 +172,6 @@ define([
 
             for (var i = 0;  $_List[i];  i++)
                 this.parseList( $_List[i] );
-
-            return this;
         },
         data2Node:     function (iData) {
             var iMask = '0',  _This_ = this;
@@ -208,19 +220,6 @@ define([
             this.lastRender = $.now();
 
             return Render_Node;
-        },
-        indexOf:       function (iNode) {
-            for (var i = 0;  this[i];  i++)
-                if (
-                    (this[i] == iNode)  ||  (
-                        (this[i] instanceof Node_Template)  &&  (
-                            (iNode == this[i].ownerNode)  ||
-                            (iNode == this[i].ownerNode.nodeName)
-                        )
-                    )
-                )  return i;
-
-            return -1;
         },
         renderDOM:     function (iDOM, iScope) {
             var _This_ = this;

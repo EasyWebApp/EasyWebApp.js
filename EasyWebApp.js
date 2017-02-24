@@ -3,7 +3,7 @@
     if ((typeof this.define != 'function')  ||  (! this.define.amd))
         arguments[0]();
     else
-        this.define('EasyWebApp', ['iQuery+'], arguments[0]);
+        this.define('EasyWebApp', ['iQuery+', 'MutationObserver'], arguments[0]);
 
 })(function () {
 
@@ -17,7 +17,7 @@ var DS_Inherit = (function (BOM, DOM, $) {
     $.extend(DataScope.prototype, {
         extend:       function (iData) {
             switch (true) {
-                case  $.likeArray( iData ):    {
+                case  $.likeArray( iData ):          {
                     this.length = iData.length;
 
                     Array.prototype.splice.call(
@@ -248,15 +248,29 @@ var HTML_Template = (function (BOM, DOM, $, DS_Inherit, Node_Template) {
 
             $_Slot.not('[name]').replaceWith(this.$_Slot.not( $_Named ));
         },
+        indexOf:       function (iNode) {
+            for (var i = 0;  this[i];  i++)
+                if (
+                    (this[i] == iNode)  ||  (
+                        (this[i] instanceof Node_Template)  &&  (
+                            (iNode == this[i].ownerNode)  ||
+                            (iNode == this[i].ownerNode.nodeName)
+                        )
+                    )
+                )  return i;
+
+            return -1;
+        },
         pushMap:       function (iName, iNode) {
+
+            if (this.indexOf( iNode )  >  -1)  return;
+
             iNode = HTML_Template.getMaskCode(this.push(iNode) - 1);
 
             iName = (typeof iName == 'string')  ?  [iName]  :  iName;
 
             for (var i = 0;  iName[i];  i++)
                 this.map[iName[i]] = (this.map[iName[i]] || 0)  +  iNode;
-
-            return this;
         },
         parsePlain:    function () {
             var _This_ = this;
@@ -289,7 +303,7 @@ var HTML_Template = (function (BOM, DOM, $, DS_Inherit, Node_Template) {
             var _This_ = this,
                 iView = $[$_Media[0] ? 'GalleryView' : 'ListView']( iList );
 
-            return this.pushMap(
+            this.pushMap(
                 iList.getAttribute('name'),
                 iView.on('insert',  function () {
 
@@ -341,8 +355,6 @@ var HTML_Template = (function (BOM, DOM, $, DS_Inherit, Node_Template) {
 
             for (var i = 0;  $_List[i];  i++)
                 this.parseList( $_List[i] );
-
-            return this;
         },
         data2Node:     function (iData) {
             var iMask = '0',  _This_ = this;
@@ -391,19 +403,6 @@ var HTML_Template = (function (BOM, DOM, $, DS_Inherit, Node_Template) {
             this.lastRender = $.now();
 
             return Render_Node;
-        },
-        indexOf:       function (iNode) {
-            for (var i = 0;  this[i];  i++)
-                if (
-                    (this[i] == iNode)  ||  (
-                        (this[i] instanceof Node_Template)  &&  (
-                            (iNode == this[i].ownerNode)  ||
-                            (iNode == this[i].ownerNode.nodeName)
-                        )
-                    )
-                )  return i;
-
-            return -1;
         },
         renderDOM:     function (iDOM, iScope) {
             var _This_ = this;
@@ -578,38 +577,70 @@ var InnerLink = (function (BOM, DOM, $, HTML_Template) {
 
 
 
-var Module_Argument = (function (BOM, DOM, $) {
+var Module_Argument = (function (BOM, DOM, $, Node_Template) {
 
     function Module_Argument(iSource, Exclude_Name) {
 
         this.callee = iSource;
 
-        Exclude_Name = $.makeSet.apply($, Exclude_Name);
+        this.exclude = $.makeSet.apply($, Exclude_Name);
 
-        var _This_ = this;  this.length = 0;
+        this.length = 0;
 
-        $.each(iSource.attributes,  function () {
-            if (! (
-                (this.nodeName in Exclude_Name)  ||
-                (($.propFix[this.nodeName] || this.nodeName)  in  iSource)
-            ))
-                _This_[_This_.length++] = this.nodeName;
-        });
+        this.update();
     }
 
     $.extend(Module_Argument.prototype, {
+        push:       function (iAttr) {
+
+            if (! (iAttr.nodeName in this))
+                this[ this.length++ ] = iAttr.nodeName;
+
+            this[ iAttr.nodeName ] =
+                (iAttr.nodeValue || '').match( Node_Template.expression )  ?
+                    null  :  iAttr.nodeValue;
+
+            return iAttr;
+        },
+        update:     function () {
+            var _This_ = this;
+
+            $.each(this.callee.attributes,  function () {
+                if (! (
+                    (this.nodeName in _This_.exclude)  ||
+                    (this.nodeName in _This_.constructor.prototype)  ||
+                    (($.propFix[this.nodeName] || this.nodeName)  in  _This_.callee)
+                ))
+                    _This_.push( this );
+            });
+        },
+        valueOf:    function () {
+            this.update();
+
+            var iData = { };
+
+            for (var i = 0;  this[i];  i++)  if (this[this[i]] != null)
+                iData[ this[i] ] = this[ this[i] ];
+
+            return iData;
+        },
         observe:    function (iCallback) {
+            var _This_ = this;
 
             if (typeof iCallback == 'function')
                 this.observer = new self.MutationObserver(function () {
 
                     $.each(arguments[0],  function () {
 
-                        var iNew = this.target.getAttribute( this.attributeName );
+                        var iNew = this.target.getAttribute( this.attributeName ),
+                            iOld = this.oldValue;
 
-                        if (iNew != this.oldValue)
-                            iCallback.apply(this.target, [
-                                this,  this.attributeName,  iNew,  this.oldValue
+                        if (
+                            (iNew != iOld)  &&
+                            (! (iOld || '').match( Node_Template.expression ))
+                        )
+                            iCallback.apply(_This_.push( this.target ), [
+                                this,  this.attributeName,  iNew,  iOld
                             ]);
                     });
                 });
@@ -630,7 +661,7 @@ var Module_Argument = (function (BOM, DOM, $) {
 
     return Module_Argument;
 
-})(self, self.document, self.jQuery);
+})(self, self.document, self.jQuery, Node_Template);
 
 
 
@@ -656,20 +687,22 @@ var UI_Module = (function (BOM, DOM, $, HTML_Template, Module_Argument, Node_Tem
             this.name = $.uuid('EWA');
             this.$_View[0].setAttribute('name', this.name);
         }
+
+        this.arguments = new Module_Argument(this.$_View[0], [
+            'target', 'href', 'src', 'method', 'title', 'autofocus',
+            'name', 'async'
+        ]);
         (
             this.template = new HTML_Template(
                 this.$_View,  iScope || this.source.getScope()
             )
-        ).scope.extend( this.getEnv() );
+        ).scope.extend( this.getEnv() ).extend( this.valueOf() );
 
-        this.arguments = new Module_Argument(this.$_View[0], [
-            'target', 'href', 'src', 'action', 'method', 'title', 'autofocus',
-            'name', 'async'
-        ]).observe(function (_, iKey, iNew, iOld) {
+        this.arguments.observe(function (_, iKey, iNew, iOld) {
 
             if (! (iOld != null))  return;
 
-            var iData = { };  iData[iKey] = iNew;
+            var iData = { };  iData[iKey] = Node_Template.safeEval( iNew );
 
             iView.constructor.reload(iView.template.render( iData ));
         });
@@ -1221,7 +1254,7 @@ var Helper_API = (function (BOM, DOM, $, UI_Module, HTML_Template, Node_Template
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v3.5  (2017-02-22)  Beta
+//      [Version]    v3.5  (2017-02-24)  Beta
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //
