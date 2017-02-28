@@ -7,8 +7,7 @@
 
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
 
-    <meta name="viewport"
-          content="width=device-width,initial-scale=1.0,minimum-scale=1.0,maximum-scale=1.0,user-scalable=no">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
 
     <title>EasyWebApp 官方网站 - EWAwiki</title>
 
@@ -44,23 +43,31 @@
             }
         });
 
-        require(['../docs/index']);
+        require(['jquery', 'HTMLView', 'ListView'],  function ($, HTMLView, ListView) {
+
+            $.getJSON(document.body.getAttribute('src'),  function (iData) {
+
+                iView = (new HTMLView('.Head > .Grid-Row')).render( iData );
+
+                iList = (new ListView('ul[name]')).render( iData.Main_Nav );
+            });
+        });
     </script>
 </head><body src="docs/index.json">
     <div class="Head CenterX Black_O">
         <div class="Grid-Row CenterY">
             <div id="Main_Title">
                 <h1 target="_self" href="docs/html/Git_List.html">
-                    ${this.Title}
+                    ${vm.Title}
                 </h1>
-                <p>${this.Description}</p>
+                <p>${vm.Description}</p>
             </div>
         </div>
         <div class="DropDown Head">
             <ul class="NavBar Black_O" id="Main_Nav" name="Main_Nav">
-                <li><a target="${this.target || '_self'}" href="${this.href}"
-                       autofocus="${this.autofocus}">
-                    ${this.title}
+                <li><a target="${vm.target || '_self'}" href="${vm.href}"
+                       autofocus="${vm.autofocus}">
+                    ${vm.title}
                 </a></li>
             </ul>
         </div>

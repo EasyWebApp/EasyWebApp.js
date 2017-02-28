@@ -12,6 +12,9 @@ define(['jquery'],  function ($) {
     $.extend(Node_Template, {
         eval:          function () {
             'use strict';
+
+            var vm = this;
+
             try {
                 var iValue = eval( arguments[0] );
 
@@ -27,7 +30,7 @@ define(['jquery'],  function ($) {
             return  (iValue && this.eval(iValue))  ||  iValue;
         },
         expression:    /\$\{([\s\S]+?)\}/g,
-        reference:     /this\.(\w+)/g
+        reference:     /(this|vm)\.(\w+)/g
     });
 
     var ES_ST = Node_Template.eval('`1`');
@@ -42,22 +45,21 @@ define(['jquery'],  function ($) {
                 });
         },
         getRefer:    function () {
-            var iRefer = [ ];
+            var iRefer = { };
 
             this.ownerNode.nodeValue = this.raw.replace(
                 Node_Template.expression,  function () {
-                    arguments[1].replace(
-                        Node_Template.reference,  function (_, iKey) {
 
-                            if (iRefer.indexOf(iKey) < 0)  iRefer.push( iKey );
-                        }
-                    );
+                    arguments[1].replace(Node_Template.reference,  function () {
+
+                        iRefer[ arguments[2] ] = 1;
+                    });
 
                     return '';
                 }
             );
 
-            return iRefer;
+            return  Object.keys( iRefer );
         },
         render:      function () {
             var iValue = this.eval( arguments[0] ),
