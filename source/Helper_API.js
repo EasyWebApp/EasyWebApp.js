@@ -15,11 +15,9 @@ define([
             var iData = { };
             iData[iName] = Node_Template.safeEval( iValue );
 
-            UI_Module.reload(
-                iTemplate.valueOf(
-                    iTemplate.scope.setValue(iName, iData[iName])
-                ).render( iData )
-            );
+            iTemplate.valueOf(
+                iTemplate.scope.setValue(iName, iData[iName])
+            ).render( iData );
 
             return this;
         },

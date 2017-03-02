@@ -547,7 +547,9 @@ var InnerLink = (function (BOM, DOM, $, HTML_Template) {
 
             var URI = this.method.toUpperCase() + ' ' + iJSON;
 
-            return  Promise.resolve($.ajax(iJSON, iOption)).then(
+            iJSON = Promise.resolve($.ajax(iJSON, iOption));
+
+            return  (this.method != 'get')  ?  iJSON  :  iJSON.then(
                 $.proxy($.storage, $, URI),  $.proxy($.storage, $, URI, null)
             );
         },
@@ -679,7 +681,6 @@ var UI_Module = (function (BOM, DOM, $, HTML_Template, Module_Argument, Node_Tem
 
         this.type = (this.$_View[0] == this.ownerApp.$_Root[0])  ?
             'page'  :  'module';
-        this.async = (this.$_View[0].getAttribute('async') != 'false');
 
         this.name = this.$_View[0].getAttribute('name');
 
@@ -689,8 +690,7 @@ var UI_Module = (function (BOM, DOM, $, HTML_Template, Module_Argument, Node_Tem
         }
 
         this.arguments = new Module_Argument(this.$_View[0], [
-            'target', 'href', 'src', 'method', 'title', 'autofocus',
-            'name', 'async'
+            'target', 'href', 'method', 'title', 'autofocus', 'name'
         ]);
         (
             this.template = new HTML_Template(
@@ -698,40 +698,34 @@ var UI_Module = (function (BOM, DOM, $, HTML_Template, Module_Argument, Node_Tem
             )
         ).scope.extend( this.getEnv() ).extend( this.valueOf() );
 
-        this.arguments.observe(function (_, iKey, iNew, iOld) {
-
-            if (! (iOld != null))  return;
-
-            var iData = { };  iData[iKey] = Node_Template.safeEval( iNew );
-
-            iView.constructor.reload(iView.template.render( iData ));
-        });
-
-        this.length = this.lastLoad = 0;
+        this.attrWatch().length = this.lastLoad = 0;
     }
 
-    var Link_Key = $.makeSet('href', 'src');
-
     return  $.inherit($.CommonView, UI_Module, {
-        reload:      function (iTemplate) {
-            for (var i = 0, iModule;  iTemplate[i];  i++)
-                if (
-                    (iTemplate[i] instanceof Node_Template)  &&
-                    (iTemplate[i].ownerNode.nodeName in Link_Key)
-                ) {
-                    iModule = this.instanceOf(iTemplate[i].ownerElement, true);
-
-                    if ( iModule )
-                        iModule.source.loadJSON().then(function () {
-
-                            iModule.template.lastRender = 0;
-
-                            iModule.render(iModule.loadJSON( arguments[0] ));
-                        });
-                }
-        },
         selector:    '*[href]:not(a, link), *[src]:not(:media, script)'
     }, {
+        attrWatch:     function () {
+            var _This_ = this;
+
+            this.arguments.observe(function (_, iKey, iNew, iOld) {
+
+                if (! (iOld != null))  return;
+
+                if (iKey == 'src')
+                    return  _This_.source.loadJSON().then(function () {
+
+                        _This_.template.lastRender = 0;
+
+                        _This_.render(_This_.loadJSON( arguments[0] ));
+                    });
+
+                var iData = { };  iData[iKey] = Node_Template.safeEval( iNew );
+
+                _This_.template.render( iData );
+            });
+
+            return this;
+        },
         emit:          function () {
             var iArgs = [
                     arguments[0],
@@ -892,25 +886,15 @@ var UI_Module = (function (BOM, DOM, $, HTML_Template, Module_Argument, Node_Tem
 
             return  _Data_ || iData;
         },
-        loadModule:    function (iScope) {
-            var _This_ = this;
+        loadModule:    function () {
 
             return  Promise.all($.map(this,  function (iModule) {
-                if (
-                    (_This_.lastLoad && iModule.async)  ||
-                    !(_This_.lastLoad || iModule.async)
-                ) {
-                    if (! iModule.async) {
-                        _This_.template.parsePlain( iModule.$_View[0] );
-                        _This_.template.renderDOM(iModule.$_View[0], iScope);
-                    }
 
-                    return  iModule.source.load().then(function () {
+                return  iModule.source.load().then(function () {
 
-                        return  iModule.load(arguments[0][1], arguments[0][0]);
-                    });
-                }
-            })).then(function () {  return iScope;  });
+                    return  iModule.load(arguments[0][1], arguments[0][0]);
+                });
+            }));
         },
         prefetch:      function () {
             var $_Link = this.$_View.find( InnerLink.selector ).not('link, form');
@@ -925,12 +909,6 @@ var UI_Module = (function (BOM, DOM, $, HTML_Template, Module_Argument, Node_Tem
             delete this.$_Sub;
 
             this.template.render( arguments[0] );
-
-            for (var i = 0;  this[i];  i++)  if (! this[i].async) {
-
-                this[i].template.lastRender = 0;
-                this[i].render();
-            }
 
             if (! this.lastLoad)  this.prefetch();
 
@@ -954,7 +932,7 @@ var UI_Module = (function (BOM, DOM, $, HTML_Template, Module_Argument, Node_Tem
 
                     return  _This_.loadJSON(_Data_ || iData);
 
-                }).then($.proxy(this.loadModule, this)).then(function (_Data_) {
+                }).then(function (_Data_) {
 
                     if (! _This_.$_View.children('script')[0]) {
 
@@ -1196,11 +1174,9 @@ var Helper_API = (function (BOM, DOM, $, UI_Module, HTML_Template, Node_Template
             var iData = { };
             iData[iName] = Node_Template.safeEval( iValue );
 
-            UI_Module.reload(
-                iTemplate.valueOf(
-                    iTemplate.scope.setValue(iName, iData[iName])
-                ).render( iData )
-            );
+            iTemplate.valueOf(
+                iTemplate.scope.setValue(iName, iData[iName])
+            ).render( iData );
 
             return this;
         },
@@ -1254,7 +1230,7 @@ var Helper_API = (function (BOM, DOM, $, UI_Module, HTML_Template, Node_Template
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v3.5  (2017-02-24)  Beta
+//      [Version]    v3.5  (2017-03-02)  Beta
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //

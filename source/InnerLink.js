@@ -93,7 +93,9 @@ define(['jquery', 'HTML_Template'],  function ($, HTML_Template) {
 
             var URI = this.method.toUpperCase() + ' ' + iJSON;
 
-            return  Promise.resolve($.ajax(iJSON, iOption)).then(
+            iJSON = Promise.resolve($.ajax(iJSON, iOption));
+
+            return  (this.method != 'get')  ?  iJSON  :  iJSON.then(
                 $.proxy($.storage, $, URI),  $.proxy($.storage, $, URI, null)
             );
         },

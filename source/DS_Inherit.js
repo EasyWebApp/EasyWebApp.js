@@ -7,7 +7,7 @@ define(['jquery'],  function ($) {
     $.extend(DataScope.prototype, {
         extend:       function (iData) {
             switch (true) {
-                case  $.likeArray( iData ):    {
+                case  $.likeArray( iData ):          {
                     this.length = iData.length;
 
                     Array.prototype.splice.call(

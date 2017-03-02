@@ -18,6 +18,7 @@ EasyWebApp 虽通过 v3.0 的“统一页面、模块抽象”彻底解决了 **
  1. 支持 HTML 标签属性、文本内容中书写 **ES 6 模板字符串**（不带 函数名标签前缀），`name` 属性仅用于表单元素、ListView 对象的数据绑定
  2. **可输入元素**（[iQuery](http://git.oschina.net/Tech_Query/iQuery) 扩展的 `:input:not(:button)` 伪类选择符）引起的数据变更 会触发该数据所在作用域下的 UI 重绘
  3. UI 模块支持 `<slot />`（Web Component 标准草案）
+ 4. UI 模块支持 HTML 自定义属性（Web Component 标准草案）
 
 
 ## 【移除特性】
@@ -32,7 +33,7 @@ EasyWebApp 虽通过 v3.0 的“统一页面、模块抽象”彻底解决了 **
  3. [GitHub 仓库文档列表页](docs/html/Git_List.html)（[EasyWiki v2](http://git.oschina.net/Tech_Query/EasyWiki/blob/EWAwiki) 官方组件）
 
 
-## 开发详情
+## 【开发详情】
 
  - [为什么我还在用 jQuery？](jQueryLove.md)
  - [开发进度](../../milestones/2)
