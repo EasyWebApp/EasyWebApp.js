@@ -43,13 +43,11 @@
             }
         });
 
-        require(['jquery', 'HTMLView', 'ListView'],  function ($, HTMLView, ListView) {
+        require(['jquery', 'TreeBuilder'],  function ($, TreeBuilder) {
 
             $.getJSON(document.body.getAttribute('src'),  function (iData) {
 
-                iView = (new HTMLView('.Head > .Grid-Row')).render( iData );
-
-                iList = (new ListView('ul[name]')).render( iData.Main_Nav );
+                iView = TreeBuilder('body > .Head').render( iData );
             });
         });
     </script>

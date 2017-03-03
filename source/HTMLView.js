@@ -1,16 +1,18 @@
-define(['jquery', 'Node_Template', 'iQuery+'],  function ($, Node_Template) {
+define([
+    'jquery', 'View', 'Node_Template', 'iQuery+'
+],  function ($, View, Node_Template) {
 
-    function HTMLView($_View) {
+    function HTMLView() {
 
-        this.$_View = $( $_View );
+        var _This_ = View.apply(this, arguments);
 
-        this.length = 0;
+        if (this != _This_)  return _This_;
 
-        this.__map__ = { };
-
-        this.__data__ = { };
-
-        var _This_ = this.parse();
+        $.extend(this, {
+            length:      0,
+            __map__:     { },
+            __data__:    { }
+        });
 
         this.$_View.on('input change',  ':field',  $.throttle(function () {
             _This_.render(
@@ -19,9 +21,9 @@ define(['jquery', 'Node_Template', 'iQuery+'],  function ($, Node_Template) {
         }));
     }
 
-    HTMLView.rawSelector = 'code, xmp, template';
-
-    $.extend(HTMLView.prototype, {
+    return  $.inherit(View, HTMLView, {
+        rawSelector:    'code, xmp, template'
+    }, {
         watch:         function (iKey) {
             var _This_ = this;
 
@@ -72,12 +74,23 @@ define(['jquery', 'Node_Template', 'iQuery+'],  function ($, Node_Template) {
                 }
             );
         },
-        parse:         function () {
-            var _This_ = this;
+        parse:         function ($_Exclude) {
+
+            var _This_ = this,  Sub_View = View.findView( this.$_View );
+
+            for (var i = 0;  Sub_View[i];  i++)
+                this.signIn(Sub_View[i],  [ Sub_View[i].$_View.attr('name') ]);
+
+            $_Exclude = $( $_Exclude ).add($.map(Sub_View,  function () {
+
+                return  $.makeArray( arguments[0].$_View );
+            }));
+
+            $_Exclude = $_Exclude.find('*').add( $_Exclude );
 
             this.$_View.each(function () {
 
-                var $_All = $('*', this).add( this );
+                var $_All = $('*', this).not( $_Exclude ).add( this );
 
                 var $_Input = $_All.filter(':field');
 
@@ -118,6 +131,8 @@ define(['jquery', 'Node_Template', 'iQuery+'],  function ($, Node_Template) {
 
                 if (this instanceof Node_Template)
                     this.render( iData );
+                else if (this instanceof View)
+                    this.render( iData[this.__name__] );
                 else
                     $( this )[
                         ('value' in this)  ?  'val'  :  'html'
@@ -129,7 +144,4 @@ define(['jquery', 'Node_Template', 'iQuery+'],  function ($, Node_Template) {
             return this;
         }
     });
-
-    return HTMLView;
-
 });

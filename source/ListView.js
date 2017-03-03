@@ -1,21 +1,31 @@
-define(['jquery', 'HTMLView'],  function ($, HTMLView) {
+define(['jquery', 'View', 'HTMLView'],  function ($, View, HTMLView) {
 
-    function ListView($_View) {
+    function ListView() {
 
-        this.$_View = $( $_View );
+        var _This_ = View.apply(this, arguments);
 
-        this.$_Template = this.$_View.children().remove();
+        if (this != _This_)  return _This_;
 
-        this.length = 0;
+        this.template = this.$_View.html();
+
+        this.clear();
     }
 
-    $.extend(ListView.prototype, {
+    return  $.inherit(View, ListView, null, {
         splice:    Array.prototype.splice,
+        clear:     function () {
+            this.$_View.empty();
+
+            this.splice(0, Infinity);
+
+            return this;
+        },
         insert:    function (iData, Index) {
 
-            var Item = new HTMLView(
-                    this.$_Template.clone(false, true).insertTo(this.$_View, Index)
-                );
+            var Item = (new HTMLView( this.template )).parse();
+
+            Item.$_View.insertTo(this.$_View, Index);
+
             this.splice(Index || 0,  0,  Item.render( iData ));
         },
         render:    function (iList) {
@@ -27,16 +37,6 @@ define(['jquery', 'HTMLView'],  function ($, HTMLView) {
         remove:    function (Index) {
 
             this.splice(Index, 1)[0].$_View.remove();
-        },
-        clear:     function () {
-            this.$_View.empty();
-
-            this.splice(0, Infinity);
-
-            return this;
         }
     });
-
-    return ListView;
-
 });
