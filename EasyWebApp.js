@@ -711,17 +711,19 @@ var UI_Module = (function (BOM, DOM, $, HTML_Template, Module_Argument, Node_Tem
 
                 if (! (iOld != null))  return;
 
-                if (iKey == 'src')
-                    return  _This_.source.loadJSON().then(function () {
+                if (iKey != 'src') {
+                    var iData = { };  iData[iKey] = Node_Template.safeEval( iNew );
+
+                    return  _This_.template.render( iData );
+                }
+
+                if (_This_.lastLoad)
+                    _This_.source.loadJSON().then(function () {
 
                         _This_.template.lastRender = 0;
 
                         _This_.render(_This_.loadJSON( arguments[0] ));
                     });
-
-                var iData = { };  iData[iKey] = Node_Template.safeEval( iNew );
-
-                _This_.template.render( iData );
             });
 
             return this;

@@ -30,7 +30,9 @@ require(['jquery', 'docs/html/try.js'],  function ($, Data_Fix) {
     </fieldset>
     <fieldset>
         <legend>多级联动选择</legend>
-        <span href="component/Admin_District.html?user_key=8d1f86ee16089781fdd20687a8d657fd&zip_code=100000">
+        上级作用域 初始值：${this.Province} ${this.City} ${this.District}
+        <span href="component/Admin_District.html?user_key=8d1f86ee16089781fdd20687a8d657fd"
+              province="${this.Province}" city="${this.City}" district="${this.District}">
             <!-- 演示用 Key，请勿滥用！-->
         </span>
     </fieldset>

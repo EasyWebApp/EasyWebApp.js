@@ -12,39 +12,58 @@ require(['jquery', 'EasyWebApp'],  function ($) {
 
     $().iWebApp().component('Admin_District',  function () {
 
+        var $_Select = $(),  iWebApp = this.ownerApp,
+            iSum = this.$_View.find('select').length;
+
+        function Updater() {
+
+            var iModule = iWebApp.getModule( $_Select.parent() );
+
+            if (this instanceof Element) {
+                $_Select = $(this);
+
+                $_Select.next().nextAll().each(function () {
+
+                    $.ListView( this ).clear();
+
+                    iModule.template.scope.setValue(this.name, 0);
+                });
+            }
+
+            if (($_Select.index() + 1  <  iSum)  &&  $_Select.val())
+                iModule.$_View[0].setAttribute('src',  $.extendURL(
+                    iModule.$_View[0].getAttribute('src'),
+                    {keywords: $_Select[0].value}
+                ));
+        }
+
         this.bind('data',  'span[src]',  function (iLink, iData) {
 
             iData = iData.districts[0].districts;
 
-            var $_Select = iData[0]  &&
+            $_Select = iData[0]  &&
                     iLink.$_DOM.find('select[name="' + iData[0].level + '"]');
 
-            if (($_Select || '')[0])
+            if (($_Select || '')[0]) {
                 $.ListView($_Select, Select_Render).clear().render( iData );
 
+                var ID = this.template.scope[ iData[0].level ];
+
+                if (! $.isNumeric( ID ))
+                    this.template.scope.setValue(
+                        iData[0].level,
+                        $_Select.find(':contains("' + ID + '")').val()
+                    );
+            }
             return  { };
-        });
 
-        var iModule = this,  iSum = this.$_View.find('select').length;
+        }).on('ready', '', '//restapi.amap.com', Updater);
 
-        this.$_View.on('change',  'select',  function () {
-
-            var $_This = $(this);
-
-            $_This.next().nextAll().each(function () {
-
-                $.ListView( this ).clear();
-
-                iModule[0].template.scope.setValue(this.name, 0);
-            });
-
-            if ($_This.index() + 1  <  iSum)
-                iModule.update('zip_code', this.value);
-        });
+        this.$_View.on('change', 'select', Updater);
     });
 });
 </script>
-<span src="//restapi.amap.com/v3/config/district?key=${this.user_key}&extensions=base&keywords=${this.zip_code}">
+<span src="//restapi.amap.com/v3/config/district?key=${this.user_key}&extensions=base&keywords=100000">
     <select name="province">
         <option>请选择</option>
     </select>

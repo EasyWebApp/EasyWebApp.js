@@ -8,6 +8,9 @@
             "Nick_Name":    "EasyWebApp"
         }
     ],
+    "Province":     "四川",
+    "City":         "成都",
+    "District":     "武侯",
     "pageSize":     10,
     "pageIndex":    1,
     "list":         [
