@@ -15,12 +15,6 @@ define([
         });
 
         if ( $_Template )  this.parseSlot( $_Template );
-
-        this.$_View.on('input change',  ':field',  $.throttle(function () {
-            _This_.render(
-                this.name || this.getAttribute('name'),  $(this).value('name')
-            );
-        }));
     }
 
     return  $.inherit(View, HTMLView, {

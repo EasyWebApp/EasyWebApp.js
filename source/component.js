@@ -1,98 +1,205 @@
 define([
-    'jquery', 'TreeBuilder', 'View', 'iQuery+'
-],  function ($, TreeBuilder, View) {
+    'jquery', 'TreeBuilder', 'HTMLView', 'iQuery+'
+],  function ($, TreeBuilder, HTMLView) {
 
-    function WebApp() {
+    function getCID(Page_Root, iURL) {
+
+        return  iURL.replace(Page_Root, '')
+            .replace(/\.(js|html)(\?.*)?/i, '.html');
+    }
+
+/* ---------- SPA 链接 ---------- */
+
+    function InnerLink(Glob_Env, Link_DOM) {
+
+        this.globEnv = Glob_Env;
+
+        this.$_View = $( Link_DOM );
+
+        this.target = Link_DOM.target || '_self';
+
+        this.$_Target = (this.target == '_self')  ?
+            this.globEnv.$_Page  :  $('[name="' + this.target + '"]');
+
+        this.method = (Link_DOM.getAttribute('method') || 'Get').toUpperCase();
+
+        this.href = Link_DOM.href || Link_DOM.action;
+
+        this.src = $.paramJSON( this.href )['for'];
+
+        if (! $.urlDomain( this.src ))
+            this.src = this.globEnv.apiRoot + this.src;
+
+        this.href = getCID(this.globEnv.pageRoot, this.href);
+
+        this.title = Link_DOM.title || document.title;
+    }
+
+    $.extend(InnerLink.prototype, {
+        loadData:    function () {
+            if (! this.src)  return;
+
+            if (this.$_View[0].tagName == 'A')
+                return  Promise.resolve($.getJSON( this.src ));
+
+            var iOption = {type: this.method};
+
+            if (! this.$_View.find('input[type="file"]')[0])
+                iOption.data = this.$_View.serialize();
+            else {
+                iOption.data = new BOM.FormData( this.$_View[0] );
+                iOption.contentType = iOption.processData = false;
+            }
+
+            var URI = iOption.type.toUpperCase() + ' ' + this.src;
+
+            return  Promise.resolve($.ajax(this.src, iOption)).then(
+                $.proxy($.storage, $, URI),  $.proxy($.storage, $, URI, null)
+            );
+        },
+        load:        function () {
+            var iData,  _This_ = this;
+
+            return Promise.all([
+                $.get( this.href ),  this.loadData()
+            ]).then(function () {
+
+                iData = arguments[0][1];
+
+                return  _This_.$_Target.empty().htmlExec( arguments[0][0] );
+
+            }).then(function () {
+
+                return iData;
+            });
+        },
+        valueOf:     function () {
+            var _This_ = { };
+
+            for (var iKey in this)
+                if (
+                    (typeof this[iKey] != 'object')  &&
+                    (typeof this[iKey] != 'function')
+                )
+                    _This_[iKey] = this[iKey];
+
+            return _This_;
+        }
+    });
+
+/* ---------- SPA 单例 ---------- */
+
+    function WebApp(Page_Box, API_Root) {
+
+        this.$_Page = $( Page_Box );
+
+        this.apiRoot = API_Root || '';
+
         var iPath = self.location.href.split('?')[0];
 
         this.pageRoot = $.filePath(
             iPath  +  (iPath.match(/\/([^\.]+\.html?)?/i) ? '' : '/')
-        );
+        ) + '/';
 
-        this.listen();
+        this.listenDOM().listenBOM();
     }
 
     $.extend(WebApp.prototype, {
-        getCID:      function () {
-            return  arguments[0].replace(this.pageRoot + '/',  '')
-                .replace(/\.js(\?.*)?/i, '.html');
-        },
-        loadView:    function (Target_Name, HTML_URL) {
+        setRoute:     function (iLink) {
 
-            var $_Target = $('[name="' + Target_Name + '"]');
+            this.lastPage = self.btoa(iLink.href + '?for=' + iLink.src);
 
-            return Promise.resolve($.get( HTML_URL )).then(
-                $.proxy($.fn.htmlExec, $_Target)
-            ).then(
-                $.proxy(TreeBuilder, null, $_Target)
+            self.history.pushState(
+                iLink.valueOf(),
+                document.title = iLink.title,
+                '#!' + this.lastPage
             );
         },
-        loadData:    function (Link_DOM) {
-
-            var iURL = Link_DOM.href || Link_DOM.action;
-
-            var iData = $.paramJSON( iURL )['for'];
-
-            if (! iData)  return;
-
-            if (Link_DOM.tagName == 'A')
-                return  Promise.resolve($.getJSON( iData ));
-
-            var iOption = {type:  Link_DOM.getAttribute('method')};
-
-            Link_DOM = $( Link_DOM );
-
-            if (! $('input[type="file"]', Link_DOM)[0])
-                iOption.data = $( Link_DOM ).serialize();
-            else {
-                iOption.data = new BOM.FormData( Link_DOM );
-                iOption.contentType = iOption.processData = false;
-            }
-
-            iURL = iOption.type.toUpperCase() + ' ' + iData;
-
-            return  Promise.resolve($.ajax(iData, iOption)).then(
-                $.proxy($.storage, $, iURL),  $.proxy($.storage, $, iURL, null)
+        getRoute:     function () {
+            return self.atob(
+                (self.location.hash.match(/^\#!(.+)/) || '')[1]  ||  ''
             );
         },
-        listen:      function () {
+        load:         function (iLink) {
+
+            iLink = (iLink instanceof InnerLink)  ?
+                iLink  :  new InnerLink(this, iLink);
+
+            iLink.load().then($.proxy(function () {
+
+                if (this.$_Page[0] == iLink.$_Target[0])
+                    this.setRoute( iLink );
+
+                var iPromise = (this[iLink.href] instanceof Array)  ?
+                        this[iLink.href]  :  '';
+
+                this[iLink.href] = TreeBuilder( iLink.$_Target );
+
+                if ( iPromise )  iPromise[0]( arguments[0] );
+
+            }, this));
+        },
+        listenDOM:    function () {
             var _This_ = this;
 
-            $(document).on(
-                'click submit',
-                'a[target][href], form[target][action]',
-                function () {
-                    var iURL = this.href || this.action;
+            $(document).on('input change',  ':field',  $.throttle(function () {
 
-                    var CID = iURL.match(_This_.pageRoot) || '';
+                var iView = HTMLView.instanceOf( this );
 
-                    if (CID.index !== 0)  return;
+                if ( iView )
+                    iView.render(
+                        this.name || this.getAttribute('name'),
+                        $(this).value('name')
+                    );
+            })).on('click submit',  'a[href], form[action]',  function () {
+
+                var CID = (this.href || this.action).match(_This_.pageRoot);
+
+                if ((CID || '').index === 0) {
 
                     arguments[0].preventDefault();
 
-                    CID = _This_.getCID( iURL );
-
-                    Promise.all([
-                        _This_.loadView(this.target, CID),
-                        _This_.loadData( this )
-                    ]).then(function () {
-
-                        var iPromise = (_This_[CID] instanceof Array)  ?
-                                _This_[CID]  :  '';
-
-                        _This_[CID] = arguments[0][0];
-
-                        if ( iPromise )  iPromise[0]( arguments[0][1] );
-                    });
+                    _This_.load( this );
                 }
-            );
+            });
+
+            return this;
         },
-        define:      function (iSuper, iFactory) {
+        listenBOM:    function () {
+            var _This_ = this;
+
+            $(self).on('popstate',  function () {
+
+                var iLink = arguments[0].originalEvent.state;
+
+                if (! (iLink || '').title)  return;
+
+                document.title = iLink.title;
+
+                _This_.hashChange = false;
+
+                var iPage = _This_.getRoute();
+
+                if (_This_.lastPage == iPage)  return;
+
+                _This_.$_Page.empty();
+
+                _This_.load( iLink );
+
+            }).on('hashchange',  function () {
+
+                if (_This_.hashChange !== false)  _This_.getRoute();
+
+                _This_.hashChange = null;
+            });
+        },
+        define:       function (iSuper, iFactory) {
 
             if (! document.currentScript)
                 throw 'WebApp.prototype.define() can only be executed synchronously in script tags, not a callback function.';
 
-            var CID = this.getCID( document.currentScript.src ),  _This_ = this;
+            var CID = getCID(this.pageRoot, document.currentScript.src),
+                _This_ = this;
 
             Promise.all([
                 new Promise(function (iResolve) {

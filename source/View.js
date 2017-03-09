@@ -32,13 +32,14 @@ define(['jquery', 'jQuery+'],  function ($) {
 
             var _Instance_;  $_Instance = $( $_Instance );
 
-            while (_Instance_ = $_Instance.data('[object View]')) {
+            do {
+                _Instance_ = $_Instance.data('[object View]');
 
-                if ((_Instance_ instanceof this)  ||  (Check_Parent === false))
-                    return _Instance_;
+                if (_Instance_ instanceof this)  return _Instance_;
 
                 $_Instance = $_Instance.parent();
-            }
+
+            } while ($_Instance[0]  &&  (Check_Parent !== false));
         },
         findView:      function ($_Root) {
 

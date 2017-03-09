@@ -13,8 +13,7 @@
         },
         {
             "title":    "小试牛刀",
-            "target":    "content",
-            "href":     "docs/html/try.html"
+            "href":     "docs/html/try.html?for=docs/html/try.json"
         },
         {
             "title":     "演示程序",
