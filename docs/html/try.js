@@ -1,7 +1,10 @@
-define(function () {
+iWebApp.define(['jquery'],  function ($, Data_Fix) {
 
-    return  function () {
+    $().iWebApp().component(function () {
 
-        return arguments[1].tngou;
-    };
+        this.ownerApp.on('data',  '',  '/top/list',  function () {
+
+            return arguments[1].tngou;
+        });
+    });
 });

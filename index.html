@@ -43,11 +43,15 @@
             }
         });
 
-        require(['jquery', 'TreeBuilder'],  function ($, TreeBuilder) {
+        require([
+            'jquery', 'TreeBuilder', 'component'
+        ],  function ($, TreeBuilder, WebApp) {
 
             $.getJSON(document.body.getAttribute('src'),  function (iData) {
 
                 iView = TreeBuilder('body > .Head').render( iData );
+
+                iWebApp = new WebApp();
             });
         });
     </script>
@@ -79,7 +83,7 @@
                 </span>
                 <i class="Icon Pen"></i>
             </div>
-            <div id="Main_Content"></div>
+            <div id="Main_Content" name="content"></div>
         </div>
         <ul class="Column_1-5" id="Content_Nav" tabindex="-1">
             <li><a></a></li>

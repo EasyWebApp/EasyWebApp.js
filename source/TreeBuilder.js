@@ -25,16 +25,27 @@ define(['jquery', 'ListView', 'HTMLView'],  function ($, ListView, HTMLView) {
                     return NodeFilter.FILTER_ACCEPT;
                 }
             }),
-            iList = [ ],  _This_;
+            _This_,  iList = [ ],  iView = [ ];
 
-        while (_This_ = iSearcher.nextNode())
-            if (_This_.getAttribute('name')  &&  $.expr[':'].list(_This_))
+        while (_This_ = iSearcher.nextNode())  if (_This_.getAttribute('name')) {
+
+            if ($.expr[':'].list(_This_))
                 iList.unshift(_This_);
+            else if (! $.expr[':'].field(_This_))
+                iView.unshift(_This_);
+        }
 
         for (var i = 0;  iList[i];  i++)
             _This_ = new ListView( iList[i] );
 
-        return  (iList[i] != $_Root[0]) ?
+        if (iList[i] != $_Root[0]) {
+
+            for (var i = 0;  iView[i];  i++)
+                if ($( iView[i] ).parents( $_Root )[0])
+                    _This_ = (new HTMLView( iView[i] )).parse( Sub_Component );
+        }
+
+        return  (_This_.$_View[0] != $_Root[0])  ?
             (new HTMLView( $_Root )).parse( Sub_Component )  :  _This_;
     };
 

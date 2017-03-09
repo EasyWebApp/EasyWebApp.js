@@ -2,9 +2,9 @@ define([
     'jquery', 'View', 'Node_Template', 'iQuery+'
 ],  function ($, View, Node_Template) {
 
-    function HTMLView() {
+    function HTMLView($_View, $_Template) {
 
-        var _This_ = View.apply(this, arguments);
+        var _This_ = View.call(this, $_View);
 
         if (this != _This_)  return _This_;
 
@@ -13,6 +13,8 @@ define([
             __map__:     { },
             __data__:    { }
         });
+
+        if ( $_Template )  this.parseSlot( $_Template );
 
         this.$_View.on('input change',  ':field',  $.throttle(function () {
             _This_.render(
@@ -24,6 +26,22 @@ define([
     return  $.inherit(View, HTMLView, {
         rawSelector:    'code, xmp, template'
     }, {
+        parseSlot:     function ($_Template) {
+
+            var $_All = this.$_View.children().detach();
+
+            var $_Slot = this.$_View.append( $_Template ).find('slot'),
+                $_Named = $_All.filter('[slot]');
+
+            if ( $_Named[0] )
+                $_Slot.filter('[name]').replaceWith(function () {
+                    return $_Named.filter(
+                        '[slot="' + this.getAttribute('name') + '"]'
+                    );
+                });
+
+            $_Slot.not('[name]').replaceWith( $_All.not( $_Named ) );
+        },
         watch:         function (iKey) {
             var _This_ = this;
 
@@ -81,12 +99,12 @@ define([
             for (var i = 0;  Sub_View[i];  i++)
                 this.signIn(Sub_View[i],  [ Sub_View[i].$_View.attr('name') ]);
 
-            $_Exclude = $( $_Exclude ).add($.map(Sub_View,  function () {
+            Sub_View = $($.map(Sub_View,  function () {
 
                 return  $.makeArray( arguments[0].$_View );
             }));
 
-            $_Exclude = $_Exclude.find('*').add( $_Exclude );
+            $_Exclude = $( $_Exclude ).add( Sub_View ).find('*').add( Sub_View );
 
             this.$_View.each(function () {
 
