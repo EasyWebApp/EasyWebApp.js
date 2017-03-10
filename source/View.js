@@ -17,6 +17,7 @@ define(['jquery', 'jQuery+'],  function ($) {
     }
 
     View.prototype.toString = function () {
+
         var iName = this.constructor.name;
 
         return  '[object ' + (
@@ -24,9 +25,31 @@ define(['jquery', 'jQuery+'],  function ($) {
         )+ ']';
     };
 
-    return  $.extend(View, {
-        getClass:      function () {
-            return  this.prototype.toString.call({constructor: this});
+    $.extend(View, {
+        getClass:        function () {
+
+            return this.prototype.toString.call(
+                {constructor: this}
+            ).split(' ')[1].slice(0, -1);
+        },
+        signSelector:    function () {
+            var _This_ = this;
+
+            $.expr[':'][ this.getClass().toLowerCase() ] = function () {
+                return (
+                    ($.data(arguments[0], '[object View]') || '') instanceof _This_
+                );
+            };
+
+            return this;
+        }
+    });
+
+    return  $.extend(View.signSelector(),  {
+        extend:        function (iConstructor, iStatic, iPrototype) {
+            return $.inherit(
+                this, iConstructor, iStatic, iPrototype
+            ).signSelector();
         },
         instanceOf:    function ($_Instance, Check_Parent) {
 
@@ -40,24 +63,6 @@ define(['jquery', 'jQuery+'],  function ($) {
                 $_Instance = $_Instance.parent();
 
             } while ($_Instance[0]  &&  (Check_Parent !== false));
-        },
-        findView:      function ($_Root) {
-
-            var iClass = this,  iMap = { };
-
-            return $.map(
-                $( $_Root ).find(':data("[object View]")'),
-                function () {
-                    var iView = $.data(arguments[0], '[object View]');
-
-                    if ((iView instanceof iClass)  &&  (! iMap[iView.__id__])) {
-
-                        iMap[iView.__id__] = 1;
-
-                        return iView;
-                    }
-                }
-            );
         }
     });
 });

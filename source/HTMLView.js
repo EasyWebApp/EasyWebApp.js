@@ -17,7 +17,7 @@ define([
         if ( $_Template )  this.parseSlot( $_Template );
     }
 
-    return  $.inherit(View, HTMLView, {
+    return  View.extend(HTMLView, {
         rawSelector:    'code, xmp, template'
     }, {
         parseSlot:     function ($_Template) {
@@ -88,17 +88,14 @@ define([
         },
         parse:         function ($_Exclude) {
 
-            var _This_ = this,  Sub_View = View.findView( this.$_View );
+            var _This_ = this,  $_Sub = this.$_View.find(':view');
 
-            for (var i = 0;  Sub_View[i];  i++)
-                this.signIn(Sub_View[i],  [ Sub_View[i].$_View.attr('name') ]);
+            for (var i = 0;  $_Sub[i];  i++)
+                this.signIn(
+                    View.instanceOf( $_Sub[i] ),  [ $_Sub[i].getAttribute('name') ]
+                );
 
-            Sub_View = $($.map(Sub_View,  function () {
-
-                return  $.makeArray( arguments[0].$_View );
-            }));
-
-            $_Exclude = $( $_Exclude ).add( Sub_View ).find('*').add( Sub_View );
+            $_Exclude = $( $_Exclude ).add( $_Sub ).find('*').add( $_Sub );
 
             this.$_View.each(function () {
 

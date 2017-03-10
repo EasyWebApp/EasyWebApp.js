@@ -2,35 +2,27 @@ define([
     'jquery', 'TreeBuilder', 'HTMLView', 'iQuery+'
 ],  function ($, TreeBuilder, HTMLView) {
 
-    function getCID(Page_Root, iURL) {
-
-        return  iURL.replace(Page_Root, '')
-            .replace(/\.(js|html)(\?.*)?/i, '.html');
-    }
-
 /* ---------- SPA 链接 ---------- */
 
-    function InnerLink(Glob_Env, Link_DOM) {
-
-        this.globEnv = Glob_Env;
+    function InnerLink(Link_DOM, Glob_Env) {
 
         this.$_View = $( Link_DOM );
 
-        this.target = Link_DOM.target || '_self';
-
-        this.$_Target = (this.target == '_self')  ?
-            this.globEnv.$_Page  :  $('[name="' + this.target + '"]');
+        this.$_Target = Glob_Env.target[
+            this.target = Link_DOM.target || '_self'
+        ]  ||  $(
+            '[name="' + this.target + '"]'
+        );
 
         this.method = (Link_DOM.getAttribute('method') || 'Get').toUpperCase();
 
-        this.href = Link_DOM.href || Link_DOM.action;
+        this.src = $.paramJSON(
+            this.href = Link_DOM.getAttribute(Link_DOM.href ? 'href' : 'action')
+        )['for'];
 
-        this.src = $.paramJSON( this.href )['for'];
+        if (! $.urlDomain( this.src ))  this.src = Glob_Env.dataBase + this.src;
 
-        if (! $.urlDomain( this.src ))
-            this.src = this.globEnv.apiRoot + this.src;
-
-        this.href = getCID(this.globEnv.pageRoot, this.href);
+        this.href = this.href.split('?')[0];
 
         this.title = Link_DOM.title || document.title;
     }
@@ -101,31 +93,56 @@ define([
             iPath  +  (iPath.match(/\/([^\.]+\.html?)?/i) ? '' : '/')
         ) + '/';
 
+        this.length = 0;
+        this.lastPage = -1;
+
+        var Init = this.getRoute();
+
+        if ( Init )  this.load( $('<a />',  {href: Init})[0] );
+
         this.listenDOM().listenBOM();
     }
 
     $.extend(WebApp.prototype, {
+        push:         Array.prototype.push,
+        splice:       Array.prototype.splice,
         setRoute:     function (iLink) {
 
-            this.lastPage = self.btoa(iLink.href + '?for=' + iLink.src);
+            if (++this.lastPage != this.length)
+                this.splice(this.lastPage, Infinity);
 
             self.history.pushState(
-                iLink.valueOf(),
+                {index: this.length},
                 document.title = iLink.title,
-                '#!' + this.lastPage
+                '#!'  +  self.btoa(iLink.href + '?for=' + iLink.src)
             );
+
+            this.push( iLink );
         },
         getRoute:     function () {
             return self.atob(
                 (self.location.hash.match(/^\#!(.+)/) || '')[1]  ||  ''
             );
         },
+        getCID:       function () {
+            return  arguments[0].replace(this.pageRoot, '')
+                .replace(/\.(js|html)(\?.*)?/i, '.html');
+        },
         load:         function (iLink) {
 
-            iLink = (iLink instanceof InnerLink)  ?
-                iLink  :  new InnerLink(this, iLink);
+            if (iLink instanceof Element) {
 
-            iLink.load().then($.proxy(function () {
+                var iName = iLink.href ? 'href' : 'action';
+
+                iLink.setAttribute(iName, iLink[iName].replace(this.pageRoot, ''));
+
+                iLink = new InnerLink(iLink, {
+                    target:      {_self:  this.$_Page},
+                    dataBase:    this.apiRoot
+                });
+            }
+
+            return  iLink.load().then($.proxy(function () {
 
                 if (this.$_Page[0] == iLink.$_Target[0])
                     this.setRoute( iLink );
@@ -170,27 +187,18 @@ define([
 
             $(self).on('popstate',  function () {
 
-                var iLink = arguments[0].originalEvent.state;
+                var Index = (arguments[0].originalEvent.state || '').index;
 
-                if (! (iLink || '').title)  return;
-
-                document.title = iLink.title;
-
-                _This_.hashChange = false;
-
-                var iPage = _This_.getRoute();
-
-                if (_This_.lastPage == iPage)  return;
+                if ((! _This_[Index])  ||  (_This_.lastPage == Index))  return;
 
                 _This_.$_Page.empty();
 
-                _This_.load( iLink );
+                _This_.load(_This_[Index]).then(function () {
 
-            }).on('hashchange',  function () {
+                    _This_.lastPage = Index;
 
-                if (_This_.hashChange !== false)  _This_.getRoute();
-
-                _This_.hashChange = null;
+                    document.title = _This_[Index].title;
+                });
             });
         },
         define:       function (iSuper, iFactory) {
@@ -198,10 +206,9 @@ define([
             if (! document.currentScript)
                 throw 'WebApp.prototype.define() can only be executed synchronously in script tags, not a callback function.';
 
-            var CID = getCID(this.pageRoot, document.currentScript.src),
-                _This_ = this;
+            var CID = this.getCID( document.currentScript.src ),  _This_ = this;
 
-            Promise.all([
+            return Promise.all([
                 new Promise(function (iResolve) {
 
                     self.require(iSuper,  function () {

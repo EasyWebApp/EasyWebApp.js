@@ -11,7 +11,7 @@ define(['jquery', 'View', 'HTMLView'],  function ($, View, HTMLView) {
         this.clear();
     }
 
-    return  $.inherit(View, ListView, null, {
+    return  View.extend(ListView, null, {
         splice:    Array.prototype.splice,
         clear:     function () {
             this.$_View.empty();
