@@ -1,9 +1,12 @@
 define(['jquery', 'ListView', 'HTMLView'],  function ($, ListView, HTMLView) {
 
     function is_Component(iDOM) {
-
-        return  (iDOM.tagName != 'A')  &&  (! iDOM.getAttribute('target'))  &&  (
-            iDOM.getAttribute('href')  ||  iDOM.getAttribute('src')
+        return (
+            (iDOM.tagName != 'A')  &&
+            (! iDOM.getAttribute('target'))  &&
+            (! $.expr[':'].media( iDOM ))  &&  (
+                iDOM.getAttribute('href')  ||  iDOM.getAttribute('src')
+            )
         );
     }
 
@@ -45,7 +48,7 @@ define(['jquery', 'ListView', 'HTMLView'],  function ($, ListView, HTMLView) {
                     _This_ = (new HTMLView( iView[i] )).parse( Sub_Component );
         }
 
-        return  (_This_.$_View[0] != $_Root[0])  ?
+        return  ((! _This_)  ||  (_This_.$_View[0] != $_Root[0]))  ?
             (new HTMLView( $_Root )).parse( Sub_Component )  :  _This_;
     };
 

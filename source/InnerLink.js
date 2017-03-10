@@ -1,119 +1,81 @@
-define(['jquery', 'HTML_Template'],  function ($, HTML_Template) {
+define(['jquery', 'iQuery+'],  function ($) {
 
-    var BOM = self,  DOM = self.document;
+    function InnerLink(Link_DOM, Glob_Env) {
 
-    function InnerLink(iApp, iLink) {
-        this.ownerApp = iApp;
+        this.$_View = $( Link_DOM );
 
-        this.$_DOM = $(iLink);
+        this.$_Target = Glob_Env.target[
+            this.target = Link_DOM.target || '_self'
+        ]  ||  $(
+            '[name="' + this.target + '"]'
+        );
 
-        this.title = iLink.title;
-        this.target = iLink.getAttribute('target');
-        this.href = iLink.getAttribute('href');
-        this.method = (iLink.getAttribute('method') || 'GET').toLowerCase();
-        this.src = iLink.getAttribute('src');
-        this.action = iLink.getAttribute('action');
+        this.method = (Link_DOM.getAttribute('method') || 'Get').toUpperCase();
+
+        this.src = $.paramJSON(
+            this.href = Link_DOM.getAttribute(Link_DOM.href ? 'href' : 'action')
+        )['for'];
+
+        if (! $.urlDomain( this.src ))  this.src = Glob_Env.dataBase + this.src;
+
+        this.href = this.href.split('?')[0];
+
+        this.title = Link_DOM.title || document.title;
     }
 
-    $.extend(InnerLink, {
-        selector:       '*[target]:not(a)',
-        prefetchRel:    $.browser.modern ? 'prefetch' : 'next'
-    });
-
-    var $_Prefetch = $('<link rel="' + InnerLink.prefetchRel + '" />')
-            .on('load error',  function () {
-                $(this).remove();
-            });
+    var $_Prefetch = $(
+            '<link rel="'  +  ($.browser.modern ? 'prefetch' : 'next')  +  '" />'
+        ).on('load error',  function () {
+            $(this).remove();
+        });
 
     $.extend(InnerLink.prototype, {
-        getScope:      function () {
-            return  (HTML_Template.instanceOf( this.$_DOM ) || '').scope;
-        },
-        getTarget:    function () {
-            switch (this.target) {
-                case '_self':      return this.ownerApp.$_Root;
-                case '_blank':     ;
-                case '_parent':    ;
-                case '_top':       return $();
-            }
+        loadData:    function () {
+            if (! this.src)  return;
 
-            return  this.target  ?
-                $('*[name="' + this.target + '"]')  :  this.$_DOM;
-        },
-        getArgs:      function () {
-            var iArgs = { },  iTemplate = HTML_Template.instanceOf( this.$_DOM );
+            if (this.$_View[0].tagName == 'A')
+                return  Promise.resolve($.getJSON( this.src ));
 
-            if ( iTemplate )
-                iArgs = iTemplate.contextOf(this.src ? 'src' : 'action');
+            var iOption = {type: this.method};
 
-            return  $.extend(iArgs, this.$_DOM[0].dataset);
-        },
-        register:     function () {
-            BOM.history.pushState(
-                {index:  arguments[0]},
-                DOM.title = this.title || DOM.title,
-                '#!'  +  $.extendURL(this.href, this.getArgs())
-            );
-
-            return this;
-        },
-        getURL:       function (iName) {
-            var iURL = this[iName] =
-                    this.$_DOM[0].getAttribute(iName) || this[iName];
-
-            if ( iURL ) {
-                if ((iName != 'href')  &&  (! $.urlDomain(iURL || ' ')))
-                    iURL = this.ownerApp.apiPath + iURL;
-
-                return iURL;
-            }
-        },
-        loadHTML:     function () {
-            var iHTML = this.getURL('href');
-
-            return  (! iHTML)  ?  Promise.resolve('')  :  Promise.resolve(
-                $.ajax(iHTML,  {dataType: 'html'})
-            );
-        },
-        loadJSON:     function () {
-            var iJSON = this.getURL('src') || this.getURL('action');
-
-            if (! iJSON)  return Promise.resolve('');
-
-            var iOption = {type:  this.method};
-
-            if (this.$_DOM[0].tagName != 'FORM')
-                iOption.data = $.extend({ }, this.$_DOM[0].dataset);
-            else if (! this.$_DOM.find('input[type="file"]')[0])
-                iOption.data = this.$_DOM.serialize();
+            if (! this.$_View.find('input[type="file"]')[0])
+                iOption.data = this.$_View.serialize();
             else {
-                iOption.data = new BOM.FormData( this.$_DOM[0] );
+                iOption.data = new BOM.FormData( this.$_View[0] );
                 iOption.contentType = iOption.processData = false;
             }
 
-            var URI = this.method.toUpperCase() + ' ' + iJSON;
+            var URI = iOption.type.toUpperCase() + ' ' + this.src;
 
-            return  Promise.resolve($.ajax(iJSON, iOption)).then(
+            return  Promise.resolve($.ajax(this.src, iOption)).then(
                 $.proxy($.storage, $, URI),  $.proxy($.storage, $, URI, null)
             );
         },
-        load:         function () {
-            return  Promise.all([this.loadHTML(), this.loadJSON()]);
+        load:        function () {
+            var iData,  _This_ = this;
+
+            return Promise.all([
+                $.get( this.href ),  this.loadData()
+            ]).then(function () {
+
+                iData = arguments[0][1];
+
+                return  _This_.$_Target.empty().htmlExec( arguments[0][0] );
+
+            }).then(function () {
+
+                return iData;
+            });
         },
         prefetch:     function () {
-            var iHTML = (this.href || '').split('?')[0];
-
-            if (iHTML)
-                $_Prefetch.clone(true).attr('href', iHTML).appendTo('head');
+            if ( this.href )
+                $_Prefetch.clone().attr('href', this.href).appendTo('head');
 
             if (
-                (this.method == 'get')  &&
-                this.src  &&  (this.src.indexOf('?') == -1)  &&
-                $.isEmptyObject( this.$_DOM[0].dataset )
+                (this.method == 'GET')  &&
+                this.src  &&  (this.src.indexOf('?') == -1)
             )
-                $_Prefetch.clone(true).attr(
-                    'href',  this.getURL('src') || this.getURL('action')
-                ).appendTo('head');
+                $_Prefetch.clone().attr('href', this.src).appendTo('head');
         }
     });
 
