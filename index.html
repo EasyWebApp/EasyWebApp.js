@@ -44,14 +44,20 @@
         });
 
         require([
-            'jquery', 'TreeBuilder', 'component'
-        ],  function ($, TreeBuilder, WebApp) {
+            'jquery', 'marked', 'TreeBuilder', 'WebApp'
+        ],  function ($, marked, TreeBuilder, WebApp) {
 
             $.getJSON(document.body.getAttribute('src'),  function (iData) {
 
                 iView = TreeBuilder('body > .Head').render( iData );
 
-                iWebApp = new WebApp('#Main_Content');
+                iWebApp = $('#Main_Content').iWebApp().on({
+                    type:    'template',
+                    href:    /\.md$/i
+                },  function () {
+
+                    return  marked( arguments[1] );
+                });
             });
         });
     </script>

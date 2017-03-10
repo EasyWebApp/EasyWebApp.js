@@ -1,5 +1,5 @@
 ({
-    name:            'EasyWebApp',
+    name:            'WebApp',
     baseUrl:         '../source',
     paths:           {
         jquery:             '//cdn.bootcss.com/jquery/1.12.4/jquery',

@@ -1,6 +1,24 @@
+//
+//                    >>>  EasyWebApp.js  <<<
+//
+//
+//      [Version]    v3.8  (2017-03-10)  Beta
+//
+//      [Require]    iQuery  ||  jQuery with jQuery+,
+//
+//                   iQuery+
+//
+//      [Usage]      A Light-weight SPA Engine with
+//                   jQuery Compatible API.
+//
+//
+//              (C)2015-2017    shiy2008@gmail.com
+//
+
+
 define([
-    'jquery', 'InnerLink', 'TreeBuilder', 'HTMLView', 'jQuery+'
-],  function ($, InnerLink, TreeBuilder, HTMLView) {
+    'jquery', 'Observer', 'InnerLink', 'TreeBuilder', 'HTMLView'
+],  function ($, Observer, InnerLink, TreeBuilder, HTMLView) {
 
     function WebApp(Page_Box, API_Root) {
 
@@ -11,7 +29,7 @@ define([
 
         if (_This_ !== this)  return _This_;
 
-        this.$_Page = $( Page_Box ).data('_EWA_', this);
+        Observer.call( this ).$_Page = $( Page_Box ).data('_EWA_', this);
 
         this.apiRoot = API_Root || '';
 
@@ -23,6 +41,7 @@ define([
 
         this.length = 0;
         this.lastPage = -1;
+        this.loading = { };
 
         this.listenDOM().listenBOM();
 
@@ -34,7 +53,7 @@ define([
             $('body a[href][autofocus]').eq(0).click();
     }
 
-    $.extend(WebApp.prototype, {
+    $.fn.iWebApp = $.inherit(Observer, WebApp, null, {
         indexOf:      Array.prototype.indexOf,
         splice:       Array.prototype.splice,
         push:         Array.prototype.push,
@@ -60,6 +79,31 @@ define([
             return  arguments[0].replace(this.pageRoot, '')
                 .replace(/\.\w+(\?.*)?/i, '.html');
         },
+        resolve:      function (CID, iPromise) {
+            var _This_ = this;
+
+            return (
+                this.loading[CID]  ?
+                    iPromise.then.apply(iPromise, this.loading[CID])  :
+                    Promise.all([iPromise,  new Promise(function () {
+
+                        _This_.loading[CID] = arguments;
+                    })])
+            ).then(function (iResult) {
+
+                var VM = iResult[0],  AMD = iResult[1];
+
+                if (iResult[0] instanceof Array)  VM = [AMD,  AMD = VM][0];
+
+                if (! AMD[0])  return  VM.view.render( VM.data );
+
+                var iFactory = AMD.pop();
+
+                AMD.push( VM.data );
+
+                return  VM.view.render(iFactory.apply(VM.view, AMD)  ||  VM.data);
+            });
+        },
         load:         function (iLink) {
 
             if (iLink instanceof Element) {
@@ -74,21 +118,38 @@ define([
                 });
             }
 
-            return  iLink.load().then($.proxy(function () {
+            var iData,  _This_ = this;
+
+            return  this.resolve(iLink.href,  iLink.load().then(function () {
+
+                var iEvent = iLink.valueOf();  iData = arguments[0][1];
+
+                if (iData != null)
+                    iData = _This_.emit($.extend(iEvent, {type: 'data'}),  iData);
+
+                return iLink.$_Target.empty().htmlExec(
+                    _This_.emit(
+                        $.extend(iEvent, {type: 'template'}),  arguments[0][0]
+                    )
+                );
+            }).then($.proxy(function () {
+
+                var iView = TreeBuilder( iLink.$_Target );
+
                 if (
                     (this.$_Page[0] == iLink.$_Target[0])  &&
                     (this.indexOf( iLink )  ==  -1)
                 )
                     this.setRoute( iLink );
 
-                var iPromise = (this[iLink.href] instanceof Array)  ?
-                        this[iLink.href]  :  '';
+                if (! iLink.$_Target.find('script[src]')[0])
+                    this.resolve(iLink.href,  Promise.resolve([1]));
 
-                this[iLink.href] = TreeBuilder( iLink.$_Target );
-
-                if ( iPromise )  iPromise[0]( arguments[0] );
-
-            }, this));
+                return {
+                    view:    iView,
+                    data:    iData
+                };
+            }, this)));
         },
         listenDOM:    function () {
             var _This_ = this;
@@ -142,33 +203,21 @@ define([
                     'WebApp.prototype.define() can only be executed synchronously in script tags, not a callback function.'
                 );
 
-            var CID = this.getCID( document.currentScript.src ),  _This_ = this;
-
-            return Promise.all([
+            return this.resolve(
+                this.getCID( document.currentScript.src ),
                 new Promise(function (iResolve) {
 
                     self.require(iSuper,  function () {
 
-                        iResolve( arguments );
+                        iResolve( $.makeArray( arguments ).concat( iFactory ) );
                     });
-                }),
-                new Promise(function () {
-
-                    _This_[CID] = $.makeArray( arguments );
                 })
-            ]).then(function () {
-
-                iSuper = $.makeArray( arguments[0][0] );
-
-                var iData = arguments[0][1];
-
-                iSuper.push( iData );
-
-                _This_[CID].render(iFactory.apply(_This_[CID], iSuper)  ||  iData);
-            });
+            );
         }
     });
 
-    return  $.fn.iWebApp = WebApp;
+    WebApp.fn = WebApp.prototype;
+
+    return WebApp;
 
 });

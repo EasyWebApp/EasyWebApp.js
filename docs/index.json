@@ -4,12 +4,12 @@
     "Main_Nav":       [
         {
             "title":        "EasyWebApp",
-            "href":         "#!ReadMe.md",
+            "href":         "ReadMe.md",
             "autofocus":    true
         },
         {
             "title":    "快速入门",
-            "href":     "#!docs/index.md"
+            "href":     "docs/index.md"
         },
         {
             "title":    "小试牛刀",

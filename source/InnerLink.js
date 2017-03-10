@@ -16,7 +16,8 @@ define(['jquery', 'iQuery+'],  function ($) {
             this.href = Link_DOM.getAttribute(Link_DOM.href ? 'href' : 'action')
         )['for'];
 
-        if (! $.urlDomain( this.src ))  this.src = Glob_Env.dataBase + this.src;
+        if (this.src  &&  (! $.urlDomain( this.src )))
+            this.src = Glob_Env.dataBase + this.src;
 
         this.href = this.href.split('?')[0];
 
@@ -52,22 +53,22 @@ define(['jquery', 'iQuery+'],  function ($) {
             );
         },
         load:        function () {
-            var iData,  _This_ = this;
 
-            return Promise.all([
-                $.get( this.href ),  this.loadData()
-            ]).then(function () {
-
-                iData = arguments[0][1];
-
-                return  _This_.$_Target.empty().htmlExec( arguments[0][0] );
-
-            }).then(function () {
-
-                return iData;
-            });
+            return  Promise.all([$.get( this.href ),  this.loadData()]);
         },
-        prefetch:     function () {
+        valueOf:     function () {
+            var _This_ = { };
+
+            for (var iKey in this)
+                if (
+                    (typeof this[iKey] != 'object')  &&
+                    (typeof this[iKey] != 'function')
+                )
+                    _This_[iKey] = this[iKey];
+
+            return _This_;
+        },
+        prefetch:    function () {
             if ( this.href )
                 $_Prefetch.clone().attr('href', this.href).appendTo('head');
 
