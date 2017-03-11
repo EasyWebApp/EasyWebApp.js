@@ -622,7 +622,7 @@ var TreeBuilder = (function (BOM, DOM, $, ListView, HTMLView) {
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v3.8  (2017-03-10)  Beta
+//      [Version]    v3.8  (2017-03-11)  Beta
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //
@@ -698,30 +698,27 @@ var WebApp = (function (BOM, DOM, $, Observer, InnerLink, TreeBuilder, HTMLView)
             return  arguments[0].replace(this.pageRoot, '')
                 .replace(/\.\w+(\?.*)?/i, '.html');
         },
-        resolve:      function (CID, iPromise) {
+        promise:      function (CID) {
             var _This_ = this;
 
-            return (
-                this.loading[CID]  ?
-                    iPromise.then.apply(iPromise, this.loading[CID])  :
-                    Promise.all([iPromise,  new Promise(function () {
+            this.loading[CID] = [ ];
 
-                        _This_.loading[CID] = arguments;
-                    })])
-            ).then(function (iResult) {
+            var iPromise = new Promise(function () {
 
-                var VM = iResult[0],  AMD = iResult[1];
+                    _This_.loading[CID].push(arguments[0], arguments[1]);
+                });
 
-                if (iResult[0] instanceof Array)  VM = [AMD,  AMD = VM][0];
+            this.loading[CID].push( iPromise );
 
-                if (! AMD[0])  return  VM.view.render( VM.data );
+            return iPromise;
+        },
+        resolve:      function (CID, iValue) {
 
-                var iFactory = AMD.pop();
+            this.loading[CID][0]( iValue );
 
-                AMD.push( VM.data );
+            delete this.loading[CID];
 
-                return  VM.view.render(iFactory.apply(VM.view, AMD)  ||  VM.data);
-            });
+            return iValue;
         },
         load:         function (iLink) {
 
@@ -737,38 +734,47 @@ var WebApp = (function (BOM, DOM, $, Observer, InnerLink, TreeBuilder, HTMLView)
                 });
             }
 
-            var iData,  _This_ = this;
+            var iData,  _This_ = this,  JS_Load,  iView;
 
-            return  this.resolve(iLink.href,  iLink.load().then(function () {
+            return  iLink.load().then(function () {
 
                 var iEvent = iLink.valueOf();  iData = arguments[0][1];
 
                 if (iData != null)
                     iData = _This_.emit($.extend(iEvent, {type: 'data'}),  iData);
 
+                JS_Load = _This_.promise( iLink.href );
+
                 return iLink.$_Target.empty().htmlExec(
                     _This_.emit(
                         $.extend(iEvent, {type: 'template'}),  arguments[0][0]
                     )
                 );
-            }).then($.proxy(function () {
+            }).then(function () {
 
-                var iView = TreeBuilder( iLink.$_Target );
+                iView = TreeBuilder( iLink.$_Target );
 
                 if (
-                    (this.$_Page[0] == iLink.$_Target[0])  &&
-                    (this.indexOf( iLink )  ==  -1)
+                    (_This_.$_Page[0] == iLink.$_Target[0])  &&
+                    (_This_.indexOf( iLink )  ==  -1)
                 )
-                    this.setRoute( iLink );
+                    _This_.setRoute( iLink );
 
                 if (! iLink.$_Target.find('script[src]')[0])
-                    this.resolve(iLink.href,  Promise.resolve([1]));
+                    _This_.resolve( iLink.href );
 
-                return {
-                    view:    iView,
-                    data:    iData
-                };
-            }, this)));
+                return JS_Load;
+
+            }).then(function (iFactory) {
+
+                if ( iFactory ) {
+                    iFactory.push( iData );
+
+                    iData = iFactory.shift().apply(iView, iFactory)  ||  iData;
+                }
+
+                if (typeof iData == 'object')  iView.render( iData );
+            });
         },
         listenDOM:    function () {
             var _This_ = this;
@@ -822,16 +828,17 @@ var WebApp = (function (BOM, DOM, $, Observer, InnerLink, TreeBuilder, HTMLView)
                     'WebApp.prototype.define() can only be executed synchronously in script tags, not a callback function.'
                 );
 
-            return this.resolve(
-                this.getCID( document.currentScript.src ),
-                new Promise(function (iResolve) {
+            var _This_ = this,  CID = this.getCID( document.currentScript.src );
 
-                    self.require(iSuper,  function () {
+            return  new Promise(function (iResolve) {
 
-                        iResolve( $.makeArray( arguments ).concat( iFactory ) );
-                    });
-                })
-            );
+                self.require(iSuper,  function () {
+
+                    iResolve(_This_.resolve(
+                        CID,  Array.prototype.concat.apply([iFactory], arguments)
+                    ));
+                });
+            });
         }
     });
 
