@@ -16,14 +16,20 @@ define(['jquery', 'jQuery+'],  function ($) {
         return this;
     }
 
-    View.prototype.toString = function () {
+    $.extend(View.prototype, {
+        toString:       function () {
 
-        var iName = this.constructor.name;
+            var iName = this.constructor.name;
 
-        return  '[object ' + (
-            (typeof iName == 'function')  ?  this.constructor.name()  :  iName
-        )+ ']';
-    };
+            return  '[object ' + (
+                (typeof iName == 'function')  ?  this.constructor.name()  :  iName
+            )+ ']';
+        },
+        destructor:    function () {
+
+            this.$_View.data('[object View]', null).empty();
+        }
+    });
 
     $.extend(View, {
         getClass:        function () {

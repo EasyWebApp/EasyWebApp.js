@@ -1,10 +1,13 @@
-iWebApp.define(['jquery'],  function ($, Data_Fix) {
+iWebApp.define(['jquery'],  function ($, iData) {
 
-    $().iWebApp().component(function () {
+    var vm = this;
 
-        this.ownerApp.on('data',  '',  '/top/list',  function () {
+    iData.check = function () {
 
-            return arguments[1].tngou;
-        });
-    });
+        var iText = arguments[0].clipboardData.getData('text/plain');
+
+        var iMore = iText.length - 140;
+
+        if (iMore > 0)  self.alert("超出的 " + iMore + "个字会被丢弃……");
+    };
 });

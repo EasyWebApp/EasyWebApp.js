@@ -37,7 +37,7 @@ var Observer = (function (BOM, DOM, $) {
     });
 
     $.extend(Observer.prototype, {
-        sign:     function (iEvent, iCallback) {
+        sign:    function (iEvent, iCallback) {
 
             iEvent = Observer.getEvent(iEvent,  {handler: iCallback});
 
@@ -51,7 +51,7 @@ var Observer = (function (BOM, DOM, $) {
 
             return this;
         },
-        on:       function (iEvent, iCallback) {
+        on:      function (iEvent, iCallback) {
 
             if (typeof iCallback == 'function')
                 return  this.sign(iEvent, iCallback);
@@ -204,14 +204,20 @@ var View = (function (BOM, DOM, $) {
         return this;
     }
 
-    View.prototype.toString = function () {
+    $.extend(View.prototype, {
+        toString:       function () {
 
-        var iName = this.constructor.name;
+            var iName = this.constructor.name;
 
-        return  '[object ' + (
-            (typeof iName == 'function')  ?  this.constructor.name()  :  iName
-        )+ ']';
-    };
+            return  '[object ' + (
+                (typeof iName == 'function')  ?  this.constructor.name()  :  iName
+            )+ ']';
+        },
+        destructor:    function () {
+
+            this.$_View.data('[object View]', null).empty();
+        }
+    });
 
     $.extend(View, {
         getClass:        function () {
@@ -283,8 +289,13 @@ var Node_Template = (function (BOM, DOM, $) {
             }
         },
         safeEval:      function (iValue) {
-            if ((typeof iValue == 'string')  &&  (iValue[0] == '0')  &&  iValue[1])
-                return iValue;
+
+            switch (typeof iValue) {
+                case 'string':
+                    if ((iValue[0] != '0')  ||  (! iValue[1]))  break;
+                case 'function':
+                    return iValue;
+            }
 
             return  (iValue && this.eval(iValue))  ||  iValue;
         },
@@ -292,16 +303,19 @@ var Node_Template = (function (BOM, DOM, $) {
         reference:     /(this|vm)\.(\w+)/g
     });
 
-    var ES_ST = Node_Template.eval('`1`');
-
     $.extend(Node_Template.prototype, {
         eval:        function (iContext) {
-            return  ES_ST ?
-                Node_Template.eval.call(iContext,  '`' + this.raw + '`')  :
-                this.raw.replace(Node_Template.expression,  function () {
+            var iRefer;
 
-                    return  Node_Template.eval.call(iContext, arguments[1]);
+            var iText = this.raw.replace(Node_Template.expression,  function () {
+
+                    iRefer = Node_Template.eval.call(iContext, arguments[1]);
+
+                    return  (arguments[0] == arguments[3])  ?
+                        arguments[3]  :  iRefer;
                 });
+
+            return  (this.raw == iText)  ?  iRefer  :  iText;
         },
         getRefer:    function () {
             var iRefer = { };
@@ -493,19 +507,19 @@ var HTMLView = (function (BOM, DOM, $, View, Node_Template) {
                 iData = _Data_;
             }
 
-            $.extend(this.__data__, iData);
+            var _Data_ = $.extend(this.__data__, iData);
 
             $.each(this.getNode( iData ),  function () {
 
                 if (this instanceof Node_Template)
-                    this.render( iData );
+                    this.render(_Data_);
                 else if (this instanceof View)
-                    this.render( iData[this.__name__] );
+                    this.render(_Data_[this.__name__]);
                 else
                     $( this )[
                         ('value' in this)  ?  'val'  :  'html'
                     ](
-                        iData[this.name || this.getAttribute('name')]
+                        _Data_[this.name || this.getAttribute('name')]
                     );
             });
 
@@ -622,7 +636,7 @@ var TreeBuilder = (function (BOM, DOM, $, ListView, HTMLView) {
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v3.8  (2017-03-11)  Beta
+//      [Version]    v3.8  (2017-03-12)  Beta
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //
@@ -637,7 +651,7 @@ var TreeBuilder = (function (BOM, DOM, $, ListView, HTMLView) {
 
 
 
-var WebApp = (function (BOM, DOM, $, Observer, InnerLink, TreeBuilder, HTMLView) {
+var WebApp = (function (BOM, DOM, $, Observer, InnerLink, TreeBuilder, HTMLView, View) {
 
     function WebApp(Page_Box, API_Root) {
 
@@ -684,9 +698,10 @@ var WebApp = (function (BOM, DOM, $, Observer, InnerLink, TreeBuilder, HTMLView)
             self.history.pushState(
                 {index: this.length},
                 document.title = iLink.title,
-                '#!'  +  self.btoa(iLink.href + '?for=' + iLink.src)
+                '#!' + self.btoa(
+                    iLink.href  +  (iLink.src  ?  ('?for=' + iLink.src)  :  '')
+                )
             );
-
             this.push( iLink );
         },
         getRoute:     function () {
@@ -743,9 +758,13 @@ var WebApp = (function (BOM, DOM, $, Observer, InnerLink, TreeBuilder, HTMLView)
                 if (iData != null)
                     iData = _This_.emit($.extend(iEvent, {type: 'data'}),  iData);
 
+                var iPrev = View.instanceOf(iLink.$_Target, false);
+
+                if ( iPrev )  iPrev.destructor();
+
                 JS_Load = _This_.promise( iLink.href );
 
-                return iLink.$_Target.empty().htmlExec(
+                return iLink.$_Target.htmlExec(
                     _This_.emit(
                         $.extend(iEvent, {type: 'template'}),  arguments[0][0]
                     )
@@ -809,16 +828,13 @@ var WebApp = (function (BOM, DOM, $, Observer, InnerLink, TreeBuilder, HTMLView)
 
                 var Index = (arguments[0].originalEvent.state || '').index;
 
-                if ((! _This_[Index])  ||  (_This_.lastPage == Index))  return;
+                if (_This_[Index]  &&  (_This_.lastPage != Index))
+                    _This_.load(_This_[Index]).then(function () {
 
-                _This_.$_Page.empty();
+                        _This_.lastPage = Index;
 
-                _This_.load(_This_[Index]).then(function () {
-
-                    _This_.lastPage = Index;
-
-                    document.title = _This_[Index].title;
-                });
+                        document.title = _This_[Index].title;
+                    });
             });
         },
         define:       function (iSuper, iFactory) {
@@ -846,7 +862,7 @@ var WebApp = (function (BOM, DOM, $, Observer, InnerLink, TreeBuilder, HTMLView)
 
     return WebApp;
 
-})(self, self.document, self.jQuery, Observer, InnerLink, TreeBuilder, HTMLView);
+})(self, self.document, self.jQuery, Observer, InnerLink, TreeBuilder, HTMLView, View);
 
 
 });

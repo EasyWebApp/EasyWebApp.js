@@ -1,5 +1,9 @@
-<link target="_blank" src="docs/html/try.json" />
-
+<style>
+    fieldset > textarea {
+        width:     100%;
+        resize:    vertical;
+    }
+</style>
 <script src="docs/html/try.js"></script>
 
 <h3>数据绑定</h3>
@@ -7,18 +11,23 @@
     <fieldset>
         <legend>单一对象</legend>
         <input type="text" name="Nick_Name" />
-        <span title="Hi, ${this.Nick_Name} !">Hello, ${this.Nick_Name} !</span>
+        <span title="Hi, ${vm.Nick_Name} !">Hello, ${vm.Nick_Name} !</span>
     </fieldset>
     <fieldset>
         <legend>对象数组</legend>
         <ul name="People">
             <li>
                 <input type="text" name="Nick_Name" />
-                <span title="Hi, ${this.Nick_Name} !">
-                    Hello, ${this.Nick_Name} !
+                <span title="Hi, ${vm.Nick_Name} !">
+                    Hello, ${vm.Nick_Name} !
                 </span>
             </li>
         </ul>
+    </fieldset>
+    <fieldset>
+        <legend>表达式求值、事件回调</legend>
+        <textarea name="Twitter" maxlength="140" onpaste="${vm.check}" placeholder="一条微博"></textarea>
+        还可写 ${140 - vm.Twitter.length} 字
     </fieldset>
     <fieldset>
         <legend>多级联动选择</legend>
@@ -63,7 +72,7 @@
         </label>
     </fieldset>
 </form>
-<div href="component/Data_Table.html" rows="${this.pageSize}" page="${this.pageIndex}">
+<div href="component/Data_Table.html" rows="${vm.pageSize}" page="${vm.pageIndex}">
     <span slot="toolbar">
         <button>功能按钮</button>
     </span>
@@ -71,15 +80,15 @@
         <thead><tr>
             <th>标题</th><th>配图</th><th>时间</th><th>稿源</th>
         </tr></thead>
-        <tbody src="http://www.tngou.net/api/top/list?page=${this.page}&rows=${this.rows}&callback=?">
-            <tr title="${this.description}">
-                <td>${this.title}</td>
+        <tbody src="http://www.tngou.net/api/top/list?page=${vm.page}&rows=${vm.rows}&callback=?">
+            <tr title="${vm.description}">
+                <td>${vm.title}</td>
                 <td>
-                    <img class="Logo" src="http://tnfs.tngou.net/img${this.img}" />
+                    <img class="Logo" src="http://tnfs.tngou.net/img${vm.img}" />
                 </td>
-                <td>${(new Date(this.time)).toLocaleString()}</td>
-                <td><a target="_blank" href="${this.fromurl}">
-                    ${this.fromname}
+                <td>${(new Date(vm.time)).toLocaleString()}</td>
+                <td><a target="_blank" href="${vm.fromurl}">
+                    ${vm.fromname}
                 </a></td>
             </tr>
         </tbody>

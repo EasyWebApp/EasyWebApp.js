@@ -24,8 +24,13 @@ define(['jquery'],  function ($) {
             }
         },
         safeEval:      function (iValue) {
-            if ((typeof iValue == 'string')  &&  (iValue[0] == '0')  &&  iValue[1])
-                return iValue;
+
+            switch (typeof iValue) {
+                case 'string':
+                    if ((iValue[0] != '0')  ||  (! iValue[1]))  break;
+                case 'function':
+                    return iValue;
+            }
 
             return  (iValue && this.eval(iValue))  ||  iValue;
         },
@@ -33,16 +38,19 @@ define(['jquery'],  function ($) {
         reference:     /(this|vm)\.(\w+)/g
     });
 
-    var ES_ST = Node_Template.eval('`1`');
-
     $.extend(Node_Template.prototype, {
         eval:        function (iContext) {
-            return  ES_ST ?
-                Node_Template.eval.call(iContext,  '`' + this.raw + '`')  :
-                this.raw.replace(Node_Template.expression,  function () {
+            var iRefer;
 
-                    return  Node_Template.eval.call(iContext, arguments[1]);
+            var iText = this.raw.replace(Node_Template.expression,  function () {
+
+                    iRefer = Node_Template.eval.call(iContext, arguments[1]);
+
+                    return  (arguments[0] == arguments[3])  ?
+                        arguments[3]  :  iRefer;
                 });
+
+            return  (this.raw == iText)  ?  iRefer  :  iText;
         },
         getRefer:    function () {
             var iRefer = { };

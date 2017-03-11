@@ -2,7 +2,7 @@
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v3.8  (2017-03-11)  Beta
+//      [Version]    v3.8  (2017-03-12)  Beta
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //
@@ -17,8 +17,8 @@
 
 
 define([
-    'jquery', 'Observer', 'InnerLink', 'TreeBuilder', 'HTMLView'
-],  function ($, Observer, InnerLink, TreeBuilder, HTMLView) {
+    'jquery', 'Observer', 'InnerLink', 'TreeBuilder', 'HTMLView', 'View'
+],  function ($, Observer, InnerLink, TreeBuilder, HTMLView, View) {
 
     function WebApp(Page_Box, API_Root) {
 
@@ -65,9 +65,10 @@ define([
             self.history.pushState(
                 {index: this.length},
                 document.title = iLink.title,
-                '#!'  +  self.btoa(iLink.href + '?for=' + iLink.src)
+                '#!' + self.btoa(
+                    iLink.href  +  (iLink.src  ?  ('?for=' + iLink.src)  :  '')
+                )
             );
-
             this.push( iLink );
         },
         getRoute:     function () {
@@ -124,9 +125,13 @@ define([
                 if (iData != null)
                     iData = _This_.emit($.extend(iEvent, {type: 'data'}),  iData);
 
+                var iPrev = View.instanceOf(iLink.$_Target, false);
+
+                if ( iPrev )  iPrev.destructor();
+
                 JS_Load = _This_.promise( iLink.href );
 
-                return iLink.$_Target.empty().htmlExec(
+                return iLink.$_Target.htmlExec(
                     _This_.emit(
                         $.extend(iEvent, {type: 'template'}),  arguments[0][0]
                     )
@@ -190,16 +195,13 @@ define([
 
                 var Index = (arguments[0].originalEvent.state || '').index;
 
-                if ((! _This_[Index])  ||  (_This_.lastPage == Index))  return;
+                if (_This_[Index]  &&  (_This_.lastPage != Index))
+                    _This_.load(_This_[Index]).then(function () {
 
-                _This_.$_Page.empty();
+                        _This_.lastPage = Index;
 
-                _This_.load(_This_[Index]).then(function () {
-
-                    _This_.lastPage = Index;
-
-                    document.title = _This_[Index].title;
-                });
+                        document.title = _This_[Index].title;
+                    });
             });
         },
         define:       function (iSuper, iFactory) {

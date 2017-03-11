@@ -134,19 +134,19 @@ define([
                 iData = _Data_;
             }
 
-            $.extend(this.__data__, iData);
+            var _Data_ = $.extend(this.__data__, iData);
 
             $.each(this.getNode( iData ),  function () {
 
                 if (this instanceof Node_Template)
-                    this.render( iData );
+                    this.render(_Data_);
                 else if (this instanceof View)
-                    this.render( iData[this.__name__] );
+                    this.render(_Data_[this.__name__]);
                 else
                     $( this )[
                         ('value' in this)  ?  'val'  :  'html'
                     ](
-                        iData[this.name || this.getAttribute('name')]
+                        _Data_[this.name || this.getAttribute('name')]
                     );
             });
 
