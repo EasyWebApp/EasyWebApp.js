@@ -28,6 +28,16 @@ define(['jquery', 'jQuery+'],  function ($) {
         destructor:    function () {
 
             this.$_View.data('[object View]', null).empty();
+
+            delete this.__data__;
+        },
+        scope:         function (iSup) {
+            this.__data__ = iSup;
+
+            for (var i = 0;  this[i];  i++)
+                if (this[i] instanceof View)  this[i].scope( iSup );
+
+            return this;
         }
     });
 

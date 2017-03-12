@@ -216,6 +216,16 @@ var View = (function (BOM, DOM, $) {
         destructor:    function () {
 
             this.$_View.data('[object View]', null).empty();
+
+            delete this.__data__;
+        },
+        scope:         function (iSup) {
+            this.__data__ = iSup;
+
+            for (var i = 0;  this[i];  i++)
+                if (this[i] instanceof View)  this[i].scope( iSup );
+
+            return this;
         }
     });
 
@@ -275,13 +285,11 @@ var Node_Template = (function (BOM, DOM, $) {
     }
 
     $.extend(Node_Template, {
-        eval:          function () {
+        eval:          function (vm) {
             'use strict';
 
-            var vm = this;
-
             try {
-                var iValue = eval( arguments[0] );
+                var iValue = eval( arguments[1] );
 
                 return  (iValue != null)  ?  iValue  :  '';
             } catch (iError) {
@@ -297,19 +305,19 @@ var Node_Template = (function (BOM, DOM, $) {
                     return iValue;
             }
 
-            return  (iValue && this.eval(iValue))  ||  iValue;
+            return  (iValue  &&  this.eval('', iValue))  ||  iValue;
         },
         expression:    /\$\{([\s\S]+?)\}/g,
         reference:     /(this|vm)\.(\w+)/g
     });
 
     $.extend(Node_Template.prototype, {
-        eval:        function (iContext) {
+        eval:        function (iContext, iScope) {
             var iRefer;
 
             var iText = this.raw.replace(Node_Template.expression,  function () {
 
-                    iRefer = Node_Template.eval.call(iContext, arguments[1]);
+                    iRefer = Node_Template.eval.call(iContext, iScope, arguments[1]);
 
                     return  (arguments[0] == arguments[3])  ?
                         arguments[3]  :  iRefer;
@@ -334,8 +342,9 @@ var Node_Template = (function (BOM, DOM, $) {
 
             return  Object.keys( iRefer );
         },
-        render:      function () {
-            var iValue = this.eval( arguments[0] ),
+        render:      function (iContext, iScope) {
+
+            var iValue = this.eval(iContext, iScope),
                 iNode = this.ownerNode,
                 iParent = this.ownerElement;
 
@@ -373,7 +382,49 @@ var Node_Template = (function (BOM, DOM, $) {
 
 
 
-var HTMLView = (function (BOM, DOM, $, View, Node_Template) {
+var DS_Inherit = (function (BOM, DOM, $) {
+
+    function DataScope() {
+        this.extend( arguments[0] );
+    }
+
+    $.extend(DataScope.prototype, {
+        extend:     function (iData) {
+
+            if ($.likeArray( iData ))
+                Array.prototype.splice.apply(
+                    this,  Array.prototype.concat.apply([0, Infinity],  iData)
+                );
+            else if (! $.isEmptyObject(iData))
+                $.extend(this, iData);
+
+            return this;
+        },
+        valueOf:    function () {
+            if (this.hasOwnProperty('length'))  return $.makeArray(this);
+
+            var iValue = { };
+
+            for (var iKey in this)
+                if (this.hasOwnProperty( iKey )  &&  (! $.isNumeric(iKey)))
+                    iValue[iKey] = this[iKey];
+
+            return iValue;
+        }
+    });
+
+    return  function (iSup, iSub) {
+
+        return Object.create(
+            (iSup instanceof DataScope)  ?  iSup  :  DataScope.prototype
+        ).extend( iSub );
+    };
+
+})(self, self.document, self.jQuery);
+
+
+
+var HTMLView = (function (BOM, DOM, $, View, Node_Template, DS_Inherit) {
 
     function HTMLView($_View, $_Template) {
 
@@ -415,7 +466,8 @@ var HTMLView = (function (BOM, DOM, $, View, Node_Template) {
             if (! (iKey in this))
                 Object.defineProperty(this, iKey, {
                     get:    function () {
-                        return _This_.__data__[iKey];
+                        if (_This_.__data__.hasOwnProperty( iKey ))
+                            return _This_.__data__[iKey];
                     },
                     set:    function () {
                         _This_.render(iKey, arguments[0]);
@@ -487,6 +539,11 @@ var HTMLView = (function (BOM, DOM, $, View, Node_Template) {
 
             return this;
         },
+        scope:         function (iSup) {
+
+            return  (! iSup)  ?  this.__data__  :
+                View.prototype.scope.call(this,  DS_Inherit(iSup, this.__data__));
+        },
         getNode:       function () {
             var iMask = '0',  _This_ = this;
 
@@ -507,12 +564,16 @@ var HTMLView = (function (BOM, DOM, $, View, Node_Template) {
                 iData = _Data_;
             }
 
-            var _Data_ = $.extend(this.__data__, iData);
+            var _This_ = this,  _Data_ = $.extend(this.__data__, iData);
+
+            if (! $.browser.modern)
+                for (var iKey in iData)  if (this.__map__[iKey])
+                    this[iKey] = iData[iKey];
 
             $.each(this.getNode( iData ),  function () {
 
                 if (this instanceof Node_Template)
-                    this.render(_Data_);
+                    this.render(_This_, _Data_);
                 else if (this instanceof View)
                     this.render(_Data_[this.__name__]);
                 else
@@ -526,7 +587,7 @@ var HTMLView = (function (BOM, DOM, $, View, Node_Template) {
             return this;
         }
     });
-})(self, self.document, self.jQuery, View, Node_Template);
+})(self, self.document, self.jQuery, View, Node_Template, DS_Inherit);
 
 
 
@@ -554,7 +615,8 @@ var ListView = (function (BOM, DOM, $, View, HTMLView) {
         },
         insert:    function (iData, Index) {
 
-            var Item = (new HTMLView( this.template )).parse();
+            var Item = (new HTMLView( this.template ))
+                    .parse().scope( this.__data__ );
 
             Item.$_View.insertTo(this.$_View, Index);
 
@@ -591,7 +653,10 @@ var TreeBuilder = (function (BOM, DOM, $, ListView, HTMLView) {
 
         $_Root = $( $_Root );
 
-        var Sub_Component = [ ];
+        var Sub_Component = [ ],
+            iScope = HTMLView.instanceOf( $_Root.parents(':view')[0] );
+
+        iScope = iScope  ?  iScope.scope()  :  { };
 
         var iSearcher = document.createTreeWalker($_Root[0], 1, {
                 acceptNode:    function (iDOM) {
@@ -625,8 +690,10 @@ var TreeBuilder = (function (BOM, DOM, $, ListView, HTMLView) {
                     _This_ = (new HTMLView( iView[i] )).parse( Sub_Component );
         }
 
-        return  ((! _This_)  ||  (_This_.$_View[0] != $_Root[0]))  ?
-            (new HTMLView( $_Root )).parse( Sub_Component )  :  _This_;
+        return (
+            ((! _This_)  ||  (_This_.$_View[0] != $_Root[0]))  ?
+                (new HTMLView( $_Root )).parse( Sub_Component )  :  _This_
+        ).scope( iScope );
     };
 
 })(self, self.document, self.jQuery, ListView, HTMLView);

@@ -5,60 +5,27 @@ define(['jquery'],  function ($) {
     }
 
     $.extend(DataScope.prototype, {
-        extend:       function (iData) {
-            switch (true) {
-                case  $.likeArray( iData ):    {
-                    this.length = iData.length;
+        extend:     function (iData) {
 
-                    Array.prototype.splice.call(
-                        this,  iData.length,  iData.length
-                    );
-                }
-                case  (! $.isEmptyObject(iData)):    $.extend(this, iData);
-            }
+            if ($.likeArray( iData ))
+                Array.prototype.splice.apply(
+                    this,  Array.prototype.concat.apply([0, Infinity],  iData)
+                );
+            else if (! $.isEmptyObject(iData))
+                $.extend(this, iData);
 
             return this;
         },
-        setValue:     function (iName) {
-            var iScope = this,  _Parent_;
-
-            while (! (
-                $.isEmptyObject(iScope)  ||  iScope.hasOwnProperty(iName)
-            )) {
-                _Parent_ = Object.getPrototypeOf( iScope );
-
-                if (_Parent_ === DataScope.prototype) {
-                    iScope = this;
-                    break;
-                }
-                iScope = _Parent_;
-            }
-
-            iScope[iName] = arguments[1];
-
-            return iScope;
-        },
-        valueOf:      function () {
+        valueOf:    function () {
             if (this.hasOwnProperty('length'))  return $.makeArray(this);
 
             var iValue = { };
 
             for (var iKey in this)
-                if (
-                    this.hasOwnProperty(iKey)  &&
-                    (! iKey.match(/^(\d+|length)$/))  &&
-                    (typeof this[iKey] != 'function')
-                )
+                if (this.hasOwnProperty( iKey )  &&  (! $.isNumeric(iKey)))
                     iValue[iKey] = this[iKey];
 
             return iValue;
-        },
-        isNoValue:    function () {
-            for (var iKey in this)
-                if (typeof this[iKey] != 'function')
-                    return false;
-
-            return true;
         }
     });
 

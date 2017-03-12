@@ -1,6 +1,6 @@
 define([
-    'jquery', 'View', 'Node_Template', 'iQuery+'
-],  function ($, View, Node_Template) {
+    'jquery', 'View', 'Node_Template', 'DS_Inherit', 'iQuery+'
+],  function ($, View, Node_Template, DS_Inherit) {
 
     function HTMLView($_View, $_Template) {
 
@@ -42,7 +42,8 @@ define([
             if (! (iKey in this))
                 Object.defineProperty(this, iKey, {
                     get:    function () {
-                        return _This_.__data__[iKey];
+                        if (_This_.__data__.hasOwnProperty( iKey ))
+                            return _This_.__data__[iKey];
                     },
                     set:    function () {
                         _This_.render(iKey, arguments[0]);
@@ -114,6 +115,11 @@ define([
 
             return this;
         },
+        scope:         function (iSup) {
+
+            return  (! iSup)  ?  this.__data__  :
+                View.prototype.scope.call(this,  DS_Inherit(iSup, this.__data__));
+        },
         getNode:       function () {
             var iMask = '0',  _This_ = this;
 
@@ -134,12 +140,16 @@ define([
                 iData = _Data_;
             }
 
-            var _Data_ = $.extend(this.__data__, iData);
+            var _This_ = this,  _Data_ = $.extend(this.__data__, iData);
+
+            if (! $.browser.modern)
+                for (var iKey in iData)  if (this.__map__[iKey])
+                    this[iKey] = iData[iKey];
 
             $.each(this.getNode( iData ),  function () {
 
                 if (this instanceof Node_Template)
-                    this.render(_Data_);
+                    this.render(_This_, _Data_);
                 else if (this instanceof View)
                     this.render(_Data_[this.__name__]);
                 else

@@ -10,13 +10,11 @@ define(['jquery'],  function ($) {
     }
 
     $.extend(Node_Template, {
-        eval:          function () {
+        eval:          function (vm) {
             'use strict';
 
-            var vm = this;
-
             try {
-                var iValue = eval( arguments[0] );
+                var iValue = eval( arguments[1] );
 
                 return  (iValue != null)  ?  iValue  :  '';
             } catch (iError) {
@@ -32,19 +30,19 @@ define(['jquery'],  function ($) {
                     return iValue;
             }
 
-            return  (iValue && this.eval(iValue))  ||  iValue;
+            return  (iValue  &&  this.eval('', iValue))  ||  iValue;
         },
         expression:    /\$\{([\s\S]+?)\}/g,
         reference:     /(this|vm)\.(\w+)/g
     });
 
     $.extend(Node_Template.prototype, {
-        eval:        function (iContext) {
+        eval:        function (iContext, iScope) {
             var iRefer;
 
             var iText = this.raw.replace(Node_Template.expression,  function () {
 
-                    iRefer = Node_Template.eval.call(iContext, arguments[1]);
+                    iRefer = Node_Template.eval.call(iContext, iScope, arguments[1]);
 
                     return  (arguments[0] == arguments[3])  ?
                         arguments[3]  :  iRefer;
@@ -69,8 +67,9 @@ define(['jquery'],  function ($) {
 
             return  Object.keys( iRefer );
         },
-        render:      function () {
-            var iValue = this.eval( arguments[0] ),
+        render:      function (iContext, iScope) {
+
+            var iValue = this.eval(iContext, iScope),
                 iNode = this.ownerNode,
                 iParent = this.ownerElement;
 

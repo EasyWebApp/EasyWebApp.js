@@ -22,7 +22,8 @@ define(['jquery', 'View', 'HTMLView'],  function ($, View, HTMLView) {
         },
         insert:    function (iData, Index) {
 
-            var Item = (new HTMLView( this.template )).parse();
+            var Item = (new HTMLView( this.template ))
+                    .parse().scope( this.__data__ );
 
             Item.$_View.insertTo(this.$_View, Index);
 

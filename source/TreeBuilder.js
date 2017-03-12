@@ -14,7 +14,10 @@ define(['jquery', 'ListView', 'HTMLView'],  function ($, ListView, HTMLView) {
 
         $_Root = $( $_Root );
 
-        var Sub_Component = [ ];
+        var Sub_Component = [ ],
+            iScope = HTMLView.instanceOf( $_Root.parents(':view')[0] );
+
+        iScope = iScope  ?  iScope.scope()  :  { };
 
         var iSearcher = document.createTreeWalker($_Root[0], 1, {
                 acceptNode:    function (iDOM) {
@@ -48,8 +51,10 @@ define(['jquery', 'ListView', 'HTMLView'],  function ($, ListView, HTMLView) {
                     _This_ = (new HTMLView( iView[i] )).parse( Sub_Component );
         }
 
-        return  ((! _This_)  ||  (_This_.$_View[0] != $_Root[0]))  ?
-            (new HTMLView( $_Root )).parse( Sub_Component )  :  _This_;
+        return (
+            ((! _This_)  ||  (_This_.$_View[0] != $_Root[0]))  ?
+                (new HTMLView( $_Root )).parse( Sub_Component )  :  _This_
+        ).scope( iScope );
     };
 
 });
