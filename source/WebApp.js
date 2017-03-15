@@ -1,21 +1,3 @@
-//
-//                    >>>  EasyWebApp.js  <<<
-//
-//
-//      [Version]    v3.8  (2017-03-12)  Beta
-//
-//      [Require]    iQuery  ||  jQuery with jQuery+,
-//
-//                   iQuery+
-//
-//      [Usage]      A Light-weight SPA Engine with
-//                   jQuery Compatible API.
-//
-//
-//              (C)2015-2017    shiy2008@gmail.com
-//
-
-
 define([
     'jquery', 'Observer', 'InnerLink', 'TreeBuilder', 'HTMLView', 'View'
 ],  function ($, Observer, InnerLink, TreeBuilder, HTMLView, View) {
@@ -53,7 +35,7 @@ define([
             $('body a[href][autofocus]').eq(0).click();
     }
 
-    $.fn.iWebApp = $.inherit(Observer, WebApp, null, {
+    return  $.inherit(Observer, WebApp, null, {
         indexOf:      Array.prototype.indexOf,
         splice:       Array.prototype.splice,
         push:         Array.prototype.push,
@@ -80,27 +62,13 @@ define([
             return  arguments[0].replace(this.pageRoot, '')
                 .replace(/\.\w+(\?.*)?/i, '.html');
         },
-        promise:      function (CID) {
-            var _This_ = this;
+        resolve:      function (CID) {
 
-            this.loading[CID] = [ ];
-
-            var iPromise = new Promise(function () {
-
-                    _This_.loading[CID].push(arguments[0], arguments[1]);
-                });
-
-            this.loading[CID].push( iPromise );
-
-            return iPromise;
-        },
-        resolve:      function (CID, iValue) {
-
-            this.loading[CID][0]( iValue );
+            this.loading[CID].resolve( arguments[1] );
 
             delete this.loading[CID];
 
-            return iValue;
+            return this;
         },
         load:         function (iLink) {
 
@@ -116,11 +84,13 @@ define([
                 });
             }
 
-            var iData,  _This_ = this,  JS_Load,  iView;
+            this.loading[ iLink.href ] = iLink;
+
+            var iData,  iEvent = iLink.valueOf(),  _This_ = this,  JS_Load,  iView;
 
             return  iLink.load().then(function () {
 
-                var iEvent = iLink.valueOf();  iData = arguments[0][1];
+                iData = arguments[0][1];
 
                 if (iData != null)
                     iData = _This_.emit($.extend(iEvent, {type: 'data'}),  iData);
@@ -129,7 +99,7 @@ define([
 
                 if ( iPrev )  iPrev.destructor();
 
-                JS_Load = _This_.promise( iLink.href );
+                JS_Load = iLink.promise();
 
                 return iLink.$_Target.htmlExec(
                     _This_.emit(
@@ -153,13 +123,12 @@ define([
 
             }).then(function (iFactory) {
 
-                if ( iFactory ) {
-                    iFactory.push( iData );
+                if ( iFactory )  iData = iFactory.call(iView, iData)  ||  iData;
 
-                    iData = iFactory.shift().apply(iView, iFactory)  ||  iData;
-                }
-
-                if (typeof iData == 'object')  iView.render( iData );
+                _This_.emit(
+                    $.extend(iEvent,  {type: 'ready'}),
+                    (typeof iData == 'object')  ?  iView.render(iData)  :  iView
+                );
             });
         },
         listenDOM:    function () {
@@ -203,30 +172,6 @@ define([
                         document.title = _This_[Index].title;
                     });
             });
-        },
-        define:       function (iSuper, iFactory) {
-
-            if (! document.currentScript)
-                throw SyntaxError(
-                    'WebApp.prototype.define() can only be executed synchronously in script tags, not a callback function.'
-                );
-
-            var _This_ = this,  CID = this.getCID( document.currentScript.src );
-
-            return  new Promise(function (iResolve) {
-
-                self.require(iSuper,  function () {
-
-                    iResolve(_This_.resolve(
-                        CID,  Array.prototype.concat.apply([iFactory], arguments)
-                    ));
-                });
-            });
         }
     });
-
-    WebApp.fn = WebApp.prototype;
-
-    return WebApp;
-
 });

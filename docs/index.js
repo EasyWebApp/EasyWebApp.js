@@ -1,17 +1,11 @@
 define([
-    'jquery', 'marked', 'MediumEditor', 'EasyWebUI', 'EasyWebApp', 'QRcode'
-],  function ($, marked, MediumEditor) {
+    'jquery', 'marked', 'MediumEditor', 'TreeBuilder', 'EasyWebUI', 'EasyWebApp', 'QRcode'
+],  function ($, marked, MediumEditor, TreeBuilder) {
 
     $.ajaxSetup({
         dataFilter:    function (iData) {
-            var iName = $.fileName( this.url ).split('.');
 
-            switch (iName[1]  &&  (iName.slice(-1)[0] || '').toLowerCase()) {
-                case 'md':          ;
-                case 'markdown':    return  marked( iData );
-                case '':            break;
-                default:            return iData;
-            }
+            if ($.fileName( this.url ).indexOf('.')  >  0)  return iData;
 
             iData = JSON.parse( iData );
 
@@ -50,17 +44,34 @@ define([
             $_Toolkit = $('#Toolkit'),
             $_QRcode = $('#QRcode > .Body');
 
-        $_App.iWebApp().on('ready',  '(list\\.html|ReadMe\\.md)',  function () {
+    $.getJSON(this.body.getAttribute('src'),  function (iData) {
+
+        iView = TreeBuilder('body > .Head').render( iData );
+
+        iWebApp = $_App.iWebApp().on({
+            type:    'template',
+            href:    /\.md$/i
+        },  function () {
+
+            return  marked( arguments[1] );
+
+        }).on({
+            type:    'ready',
+            href:    /(List\.html|ReadMe\.md)/
+        },  function () {
 
             $_Toolkit.hide();
 
-        }).on('ready',  '(content\\.html|\\.md)',  function () {
+        }).on({
+            type:    'ready',
+            href:    /(content\.html|\.md)/
+        },  function () {
 
             $_ReadNav.trigger('Refresh');
 
             if (! $.browser.mobile)  $_Toolkit.show();
 
-            var iTitle = this.$_Root.find('h1').text() || '';
+            var iTitle = this.$_Page.find('h1').text() || '';
 
             document.title = iTitle + ' - EasyWiki';
 
@@ -74,5 +85,6 @@ define([
                 background:    'white'
             });
         });
+    });
     });
 });

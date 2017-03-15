@@ -43,23 +43,7 @@
             }
         });
 
-        require([
-            'jquery', 'marked', 'TreeBuilder', 'WebApp'
-        ],  function ($, marked, TreeBuilder, WebApp) {
-
-            $.getJSON(document.body.getAttribute('src'),  function (iData) {
-
-                iView = TreeBuilder('body > .Head').render( iData );
-
-                iWebApp = $('#Main_Content').iWebApp().on({
-                    type:    'template',
-                    href:    /\.md$/i
-                },  function () {
-
-                    return  marked( arguments[1] );
-                });
-            });
-        });
+        require(['../docs/index']);
     </script>
 </head><body src="docs/index.json">
     <div class="Head CenterX Black_O">

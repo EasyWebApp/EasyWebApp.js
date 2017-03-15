@@ -168,6 +168,33 @@ var InnerLink = (function (BOM, DOM, $) {
 
             return _This_;
         },
+        promise:      function () {
+
+            if ( this.ready )  return this.ready[0];
+
+            this.ready = [ ];
+
+            var _This_ = this;
+
+            var iPromise = new Promise(function () {
+
+                    _This_.ready.push(arguments[0], arguments[1]);
+                });
+
+            this.ready.unshift( iPromise );
+
+            return iPromise;
+        },
+        resolve:     function () {
+
+            this.ready[1]( arguments[0] );
+
+            var iPromise = this.ready[0];
+
+            delete this.ready;
+
+            return iPromise;
+        },
         prefetch:    function () {
             if ( this.href )
                 $_Prefetch.clone().attr('href', this.href).appendTo('head');
@@ -699,24 +726,6 @@ var TreeBuilder = (function (BOM, DOM, $, ListView, HTMLView) {
 })(self, self.document, self.jQuery, ListView, HTMLView);
 
 
-//
-//                    >>>  EasyWebApp.js  <<<
-//
-//
-//      [Version]    v3.8  (2017-03-12)  Beta
-//
-//      [Require]    iQuery  ||  jQuery with jQuery+,
-//
-//                   iQuery+
-//
-//      [Usage]      A Light-weight SPA Engine with
-//                   jQuery Compatible API.
-//
-//
-//              (C)2015-2017    shiy2008@gmail.com
-//
-
-
 
 var WebApp = (function (BOM, DOM, $, Observer, InnerLink, TreeBuilder, HTMLView, View) {
 
@@ -753,7 +762,7 @@ var WebApp = (function (BOM, DOM, $, Observer, InnerLink, TreeBuilder, HTMLView,
             $('body a[href][autofocus]').eq(0).click();
     }
 
-    $.fn.iWebApp = $.inherit(Observer, WebApp, null, {
+    return  $.inherit(Observer, WebApp, null, {
         indexOf:      Array.prototype.indexOf,
         splice:       Array.prototype.splice,
         push:         Array.prototype.push,
@@ -780,27 +789,13 @@ var WebApp = (function (BOM, DOM, $, Observer, InnerLink, TreeBuilder, HTMLView,
             return  arguments[0].replace(this.pageRoot, '')
                 .replace(/\.\w+(\?.*)?/i, '.html');
         },
-        promise:      function (CID) {
-            var _This_ = this;
+        resolve:      function (CID) {
 
-            this.loading[CID] = [ ];
-
-            var iPromise = new Promise(function () {
-
-                    _This_.loading[CID].push(arguments[0], arguments[1]);
-                });
-
-            this.loading[CID].push( iPromise );
-
-            return iPromise;
-        },
-        resolve:      function (CID, iValue) {
-
-            this.loading[CID][0]( iValue );
+            this.loading[CID].resolve( arguments[1] );
 
             delete this.loading[CID];
 
-            return iValue;
+            return this;
         },
         load:         function (iLink) {
 
@@ -816,11 +811,13 @@ var WebApp = (function (BOM, DOM, $, Observer, InnerLink, TreeBuilder, HTMLView,
                 });
             }
 
-            var iData,  _This_ = this,  JS_Load,  iView;
+            this.loading[ iLink.href ] = iLink;
+
+            var iData,  iEvent = iLink.valueOf(),  _This_ = this,  JS_Load,  iView;
 
             return  iLink.load().then(function () {
 
-                var iEvent = iLink.valueOf();  iData = arguments[0][1];
+                iData = arguments[0][1];
 
                 if (iData != null)
                     iData = _This_.emit($.extend(iEvent, {type: 'data'}),  iData);
@@ -829,7 +826,7 @@ var WebApp = (function (BOM, DOM, $, Observer, InnerLink, TreeBuilder, HTMLView,
 
                 if ( iPrev )  iPrev.destructor();
 
-                JS_Load = _This_.promise( iLink.href );
+                JS_Load = iLink.promise();
 
                 return iLink.$_Target.htmlExec(
                     _This_.emit(
@@ -853,13 +850,12 @@ var WebApp = (function (BOM, DOM, $, Observer, InnerLink, TreeBuilder, HTMLView,
 
             }).then(function (iFactory) {
 
-                if ( iFactory ) {
-                    iFactory.push( iData );
+                if ( iFactory )  iData = iFactory.call(iView, iData)  ||  iData;
 
-                    iData = iFactory.shift().apply(iView, iFactory)  ||  iData;
-                }
-
-                if (typeof iData == 'object')  iView.render( iData );
+                _This_.emit(
+                    $.extend(iEvent,  {type: 'ready'}),
+                    (typeof iData == 'object')  ?  iView.render(iData)  :  iView
+                );
             });
         },
         listenDOM:    function () {
@@ -903,33 +899,60 @@ var WebApp = (function (BOM, DOM, $, Observer, InnerLink, TreeBuilder, HTMLView,
                         document.title = _This_[Index].title;
                     });
             });
-        },
-        define:       function (iSuper, iFactory) {
-
-            if (! document.currentScript)
-                throw SyntaxError(
-                    'WebApp.prototype.define() can only be executed synchronously in script tags, not a callback function.'
-                );
-
-            var _This_ = this,  CID = this.getCID( document.currentScript.src );
-
-            return  new Promise(function (iResolve) {
-
-                self.require(iSuper,  function () {
-
-                    iResolve(_This_.resolve(
-                        CID,  Array.prototype.concat.apply([iFactory], arguments)
-                    ));
-                });
-            });
         }
     });
+})(self, self.document, self.jQuery, Observer, InnerLink, TreeBuilder, HTMLView, View);
+
+
+//
+//                    >>>  EasyWebApp.js  <<<
+//
+//
+//      [Version]    v3.8  (2017-03-15)  Beta
+//
+//      [Require]    iQuery  ||  jQuery with jQuery+,
+//
+//                   iQuery+
+//
+//      [Usage]      A Light-weight SPA Engine with
+//                   jQuery Compatible API.
+//
+//
+//              (C)2015-2017    shiy2008@gmail.com
+//
+
+
+
+var EasyWebApp = (function (BOM, DOM, $, WebApp) {
+
+    var _require_ = self.require,  _CID_;
+
+    self.require = function () {
+
+        if (! document.currentScript)  return _require_.apply(this, arguments);
+
+        var iArgs = arguments,  iWebApp = new WebApp();
+
+        var CID = iWebApp.getCID( document.currentScript.src );
+
+        _require_.call(this,  iArgs[0],  function () {
+
+            _CID_ = CID;
+
+            return  iArgs[1].apply(this, arguments);
+        });
+    };
 
     WebApp.fn = WebApp.prototype;
 
-    return WebApp;
+    WebApp.fn.component = function (iFactory) {
 
-})(self, self.document, self.jQuery, Observer, InnerLink, TreeBuilder, HTMLView, View);
+        return  this.resolve(_CID_, iFactory);
+    };
+
+    return  $.fn.iWebApp = WebApp;
+
+})(self, self.document, self.jQuery, WebApp);
 
 
 });
