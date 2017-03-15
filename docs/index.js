@@ -1,4 +1,4 @@
-define([
+require([
     'jquery', 'marked', 'MediumEditor', 'TreeBuilder', 'EasyWebUI', 'EasyWebApp', 'QRcode'
 ],  function ($, marked, MediumEditor, TreeBuilder) {
 
@@ -44,10 +44,6 @@ define([
             $_Toolkit = $('#Toolkit'),
             $_QRcode = $('#QRcode > .Body');
 
-    $.getJSON(this.body.getAttribute('src'),  function (iData) {
-
-        iView = TreeBuilder('body > .Head').render( iData );
-
         iWebApp = $_App.iWebApp().on({
             type:    'template',
             href:    /\.md$/i
@@ -85,6 +81,5 @@ define([
                 background:    'white'
             });
         });
-    });
     });
 });

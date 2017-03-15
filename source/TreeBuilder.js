@@ -10,7 +10,7 @@ define(['jquery', 'ListView', 'HTMLView'],  function ($, ListView, HTMLView) {
         );
     }
 
-    return  function ($_Root) {
+    return  function ($_Root, $_Template) {
 
         $_Root = $( $_Root );
 
@@ -37,7 +37,10 @@ define(['jquery', 'ListView', 'HTMLView'],  function ($, ListView, HTMLView) {
 
             if ($.expr[':'].list(_This_))
                 iList.unshift(_This_);
-            else if (! $.expr[':'].field(_This_))
+            else if (
+                (! $.expr[':'].field(_This_))  &&
+                (_This_.parentElement != document.head)
+            )
                 iView.unshift(_This_);
         }
 
@@ -53,7 +56,7 @@ define(['jquery', 'ListView', 'HTMLView'],  function ($, ListView, HTMLView) {
 
         return (
             ((! _This_)  ||  (_This_.$_View[0] != $_Root[0]))  ?
-                (new HTMLView( $_Root )).parse( Sub_Component )  :  _This_
+                (new HTMLView($_Root, $_Template)).parse( Sub_Component )  :  _This_
         ).scope( iScope );
     };
 

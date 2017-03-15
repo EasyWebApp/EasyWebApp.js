@@ -1,23 +1,20 @@
 define(['jquery', 'Observer', 'iQuery+'],  function ($, Observer) {
 
-    function InnerLink(Link_DOM, Glob_Env) {
+    function InnerLink(Link_DOM, API_Root) {
 
         Observer.call(this).$_View = $( Link_DOM );
 
-        this.$_Target = Glob_Env.target[
-            this.target = Link_DOM.target || '_self'
-        ]  ||  $(
-            '[name="' + this.target + '"]'
-        );
+        this.target = ('target' in Link_DOM)  &&  (Link_DOM.target || '_self');
 
         this.method = (Link_DOM.getAttribute('method') || 'Get').toUpperCase();
 
         this.src = $.paramJSON(
-            this.href = Link_DOM.getAttribute(Link_DOM.href ? 'href' : 'action')
-        )['for'];
+            this.href = Link_DOM.dataset.href ||
+                Link_DOM.getAttribute(Link_DOM.href ? 'href' : 'action')
+        )['data'];
 
         if (this.src  &&  (! $.urlDomain( this.src )))
-            this.src = Glob_Env.dataBase + this.src;
+            this.src = API_Root + this.src;
 
         this.href = this.href.split('?')[0];
 
@@ -32,7 +29,6 @@ define(['jquery', 'Observer', 'iQuery+'],  function ($, Observer) {
 
     return  $.inherit(Observer, InnerLink, null, {
         loadData:    function () {
-            if (! this.src)  return;
 
             if (this.$_View[0].tagName == 'A')
                 return  Promise.resolve($.getJSON( this.src ));
@@ -54,7 +50,10 @@ define(['jquery', 'Observer', 'iQuery+'],  function ($, Observer) {
         },
         load:        function () {
 
-            return  Promise.all([$.get( this.href ),  this.loadData()]);
+            return  Promise.all([
+                this.href  &&  $.get( this.href ),
+                this.src  &&  this.loadData()
+            ]);
         },
         valueOf:     function () {
             var _This_ = { };

@@ -103,24 +103,21 @@ var Observer = (function (BOM, DOM, $) {
 
 var InnerLink = (function (BOM, DOM, $, Observer) {
 
-    function InnerLink(Link_DOM, Glob_Env) {
+    function InnerLink(Link_DOM, API_Root) {
 
         Observer.call(this).$_View = $( Link_DOM );
 
-        this.$_Target = Glob_Env.target[
-            this.target = Link_DOM.target || '_self'
-        ]  ||  $(
-            '[name="' + this.target + '"]'
-        );
+        this.target = ('target' in Link_DOM)  &&  (Link_DOM.target || '_self');
 
         this.method = (Link_DOM.getAttribute('method') || 'Get').toUpperCase();
 
         this.src = $.paramJSON(
-            this.href = Link_DOM.getAttribute(Link_DOM.href ? 'href' : 'action')
-        )['for'];
+            this.href = Link_DOM.dataset.href ||
+                Link_DOM.getAttribute(Link_DOM.href ? 'href' : 'action')
+        )['data'];
 
         if (this.src  &&  (! $.urlDomain( this.src )))
-            this.src = Glob_Env.dataBase + this.src;
+            this.src = API_Root + this.src;
 
         this.href = this.href.split('?')[0];
 
@@ -135,7 +132,6 @@ var InnerLink = (function (BOM, DOM, $, Observer) {
 
     return  $.inherit(Observer, InnerLink, null, {
         loadData:    function () {
-            if (! this.src)  return;
 
             if (this.$_View[0].tagName == 'A')
                 return  Promise.resolve($.getJSON( this.src ));
@@ -157,7 +153,10 @@ var InnerLink = (function (BOM, DOM, $, Observer) {
         },
         load:        function () {
 
-            return  Promise.all([$.get( this.href ),  this.loadData()]);
+            return  Promise.all([
+                this.href  &&  $.get( this.href ),
+                this.src  &&  this.loadData()
+            ]);
         },
         valueOf:     function () {
             var _This_ = { };
@@ -651,7 +650,7 @@ var TreeBuilder = (function (BOM, DOM, $, ListView, HTMLView) {
         );
     }
 
-    return  function ($_Root) {
+    return  function ($_Root, $_Template) {
 
         $_Root = $( $_Root );
 
@@ -678,7 +677,10 @@ var TreeBuilder = (function (BOM, DOM, $, ListView, HTMLView) {
 
             if ($.expr[':'].list(_This_))
                 iList.unshift(_This_);
-            else if (! $.expr[':'].field(_This_))
+            else if (
+                (! $.expr[':'].field(_This_))  &&
+                (_This_.parentElement != document.head)
+            )
                 iView.unshift(_This_);
         }
 
@@ -694,7 +696,7 @@ var TreeBuilder = (function (BOM, DOM, $, ListView, HTMLView) {
 
         return (
             ((! _This_)  ||  (_This_.$_View[0] != $_Root[0]))  ?
-                (new HTMLView( $_Root )).parse( Sub_Component )  :  _This_
+                (new HTMLView($_Root, $_Template)).parse( Sub_Component )  :  _This_
         ).scope( iScope );
     };
 
@@ -727,14 +729,7 @@ var WebApp = (function (BOM, DOM, $, Observer, InnerLink, TreeBuilder, HTMLView,
         this.lastPage = -1;
         this.loading = { };
 
-        this.listenDOM().listenBOM();
-
-        var Init = this.getRoute();
-
-        if ( Init )
-            this.load( $('<a />',  {href: Init})[0] );
-        else
-            $('body a[href][autofocus]').eq(0).click();
+        this.listenDOM().listenBOM().boot();
     }
 
     return  $.inherit(Observer, WebApp, null, {
@@ -750,7 +745,7 @@ var WebApp = (function (BOM, DOM, $, Observer, InnerLink, TreeBuilder, HTMLView,
                 {index: this.length},
                 document.title = iLink.title,
                 '#!' + self.btoa(
-                    iLink.href  +  (iLink.src  ?  ('?for=' + iLink.src)  :  '')
+                    iLink.href  +  (iLink.src  ?  ('?data=' + iLink.src)  :  '')
                 )
             );
             this.push( iLink );
@@ -764,19 +759,48 @@ var WebApp = (function (BOM, DOM, $, Observer, InnerLink, TreeBuilder, HTMLView,
             return  arguments[0].replace(this.pageRoot, '')
                 .replace(/\.\w+(\?.*)?/i, '.html');
         },
+        loadView:     function (iLink, iHTML) {
+
+            var $_Target,  $_Template;
+
+            switch ( iLink.target ) {
+                case '_blank':    return;
+                case '_self':     {
+                    var iPrev = View.instanceOf(this.$_Page, false);
+
+                    if ( iPrev )  iPrev.destructor();
+
+                    if (this.indexOf( iLink )  ==  -1)  this.setRoute( iLink );
+
+                    $_Target = this.$_Page;    break;
+                }
+                default:          {
+                    $_Target = iLink.$_View;
+
+                    if ( iLink.href ) {
+                        $_Template = $_Target[0].innerHTML;
+
+                        $_Target.empty();
+                    }
+                }
+            }
+
+            return  ((! iHTML)  ?  Promise.resolve('')  :  $_Target.htmlExec(
+                this.emit(
+                    $.extend(iLink.valueOf(), {type: 'template'}),  iHTML
+                )
+            )).then(function () {
+
+                if (! $_Target.find('script[src]:not(head > *)')[0])
+                    iLink.emit('load');
+
+                return  TreeBuilder($_Target, $_Template);
+            });
+        },
         load:         function (iLink) {
 
-            if (iLink instanceof Element) {
-
-                var iName = iLink.href ? 'href' : 'action';
-
-                iLink.setAttribute(iName, iLink[iName].replace(this.pageRoot, ''));
-
-                iLink = new InnerLink(iLink, {
-                    target:      {_self:  this.$_Page},
-                    dataBase:    this.apiRoot
-                });
-            }
+            if (iLink instanceof Element)
+                iLink = new InnerLink(iLink, this.apiRoot);
 
             this.loading[ iLink.href ] = iLink;
 
@@ -789,29 +813,13 @@ var WebApp = (function (BOM, DOM, $, Observer, InnerLink, TreeBuilder, HTMLView,
                 if (iData != null)
                     iData = _This_.emit($.extend(iEvent, {type: 'data'}),  iData);
 
-                var iPrev = View.instanceOf(iLink.$_Target, false);
-
-                if ( iPrev )  iPrev.destructor();
-
                 JS_Load = iLink.on('load');
 
-                return iLink.$_Target.htmlExec(
-                    _This_.emit(
-                        $.extend(iEvent, {type: 'template'}),  arguments[0][0]
-                    )
-                );
+                return  _This_.loadView(iLink, arguments[0][0]);
+
             }).then(function () {
 
-                iView = TreeBuilder( iLink.$_Target );
-
-                if (
-                    (_This_.$_Page[0] == iLink.$_Target[0])  &&
-                    (_This_.indexOf( iLink )  ==  -1)
-                )
-                    _This_.setRoute( iLink );
-
-                if (! iLink.$_Target.find('script[src]')[0])
-                    iLink.emit('load');
+                iView = arguments[0];
 
                 return JS_Load;
 
@@ -868,6 +876,24 @@ var WebApp = (function (BOM, DOM, $, Observer, InnerLink, TreeBuilder, HTMLView,
                         document.title = _This_[Index].title;
                     });
             });
+
+            return this;
+        },
+        boot:         function () {
+
+            var $_Init = $('[data-href]').not( this.$_Page.find('[data-href]') ),
+                _This_ = this;
+
+            return  ($_Init[0]  ?  this.load( $_Init[0] )  :  Promise.resolve(''))
+                .then(function () {
+
+                    var Init = _This_.getRoute();
+
+                    if ( Init )
+                        return  _This_.load( $('<a />',  {href: Init})[0] );
+
+                    $('a[href][data-autofocus]').eq(0).click();
+                });
         }
     });
 })(self, self.document, self.jQuery, Observer, InnerLink, TreeBuilder, HTMLView, View);

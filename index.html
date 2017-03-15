@@ -1,5 +1,5 @@
 <!DocType HTML>
-<html><head>
+<html data-href="?data=docs/index.json"><head>
     <meta http-equiv="Cache-Control"
           content="no-cache, no-store, must-revalidate" />
     <meta http-equiv="Pragma" content="no-cache" />
@@ -9,7 +9,7 @@
 
     <meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
 
-    <title>EasyWebApp 官方网站 - EWAwiki</title>
+    <title>${vm.Title} 官方网站 - EWAwiki</title>
 
     <link rel="stylesheet" href="//tech_query.oschina.io/css/EasyWebUI.css" />
     <link rel="stylesheet" href="docs/css/index.css" />
@@ -20,32 +20,31 @@
 
     <script src="//cdn.bootcss.com/require.js/2.3.0/require.min.js"></script>
     <script>
-        require.config({
-            baseUrl:    'source/',
-            paths:      {
-                jquery:             '//cdn.bootcss.com/jquery/1.12.4/jquery.min',
-                'jQuery+':          'http://tech_query.oschina.io/iquery/jQuery+',
-                'iQuery+':          'http://tech_query.oschina.io/iquery/iQuery+',
-                MutationObserver:
-                    '//cdn.bootcss.com/MutationObserver.js/0.3.2/mutationobserver.min',
-                EasyWebUI:          '//tech_query.oschina.io/css/EasyWebUI',
-                marked:             '//cdn.bootcss.com/marked/0.3.6/marked.min',
-                MediumEditor:
-                    '//cdn.bootcss.com/medium-editor/5.22.1/js/medium-editor.min',
-                QRcode:
-                    '//cdn.bootcss.com/lrsjng.jquery-qrcode/0.14.0/jquery-qrcode.min',
-                Git_List:           '../docs/html/Git_List',
-                Data_Table:         '../component/Data_Table'
-            },
-            shim:       {
-                MutationObserver:    {exports:  'MutationObserver'},
-                QRcode:              ['jquery']
-            }
-        });
-
-        require(['../docs/index']);
+    require.config({
+        baseUrl:    'source/',
+        paths:      {
+            jquery:             '//cdn.bootcss.com/jquery/1.12.4/jquery.min',
+            'jQuery+':          'http://tech_query.oschina.io/iquery/jQuery+',
+            'iQuery+':          'http://tech_query.oschina.io/iquery/iQuery+',
+            MutationObserver:
+                '//cdn.bootcss.com/MutationObserver.js/0.3.2/mutationobserver.min',
+            EasyWebUI:          '//tech_query.oschina.io/css/EasyWebUI',
+            marked:             '//cdn.bootcss.com/marked/0.3.6/marked.min',
+            MediumEditor:
+                '//cdn.bootcss.com/medium-editor/5.22.1/js/medium-editor.min',
+            QRcode:
+                '//cdn.bootcss.com/lrsjng.jquery-qrcode/0.14.0/jquery-qrcode.min',
+            Git_List:           '../docs/html/Git_List',
+            Data_Table:         '../component/Data_Table'
+        },
+        shim:       {
+            MutationObserver:    {exports:  'MutationObserver'},
+            QRcode:              ['jquery']
+        }
+    });
     </script>
-</head><body src="docs/index.json">
+    <script src="docs/index.js"></script>
+</head><body>
     <div class="Head CenterX Black_O">
         <div class="Grid-Row CenterY">
             <div id="Main_Title">
@@ -58,7 +57,7 @@
         <div class="DropDown Head">
             <ul class="NavBar Black_O" id="Main_Nav" name="Main_Nav">
                 <li><a target="${vm.target || '_self'}" href="${vm.href}"
-                       autofocus="${vm.autofocus}">
+                       data-autofocus="${vm.autofocus}">
                     ${vm.title}
                 </a></li>
             </ul>
