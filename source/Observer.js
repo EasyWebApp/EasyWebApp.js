@@ -27,7 +27,7 @@ define(['jquery', 'jQuery+'],  function ($) {
     });
 
     $.extend(Observer.prototype, {
-        sign:     function (iEvent, iCallback) {
+        sign:    function (iEvent, iCallback) {
 
             iEvent = Observer.getEvent(iEvent,  {handler: iCallback});
 
@@ -41,16 +41,19 @@ define(['jquery', 'jQuery+'],  function ($) {
 
             return this;
         },
-        on:       function (iEvent, iCallback) {
+        on:      function (iEvent, iCallback) {
 
             if (typeof iCallback == 'function')
                 return  this.sign(iEvent, iCallback);
 
             var _This_ = this;
 
-            return  new Promise(function () {
+            return  new Promise(function (iResolve) {
 
-                _This_.sign(iEvent, arguments[0]);
+                _This_.sign(iEvent,  function () {
+
+                    iResolve( arguments[1] );
+                });
             });
         },
         emit:    function (iEvent, iData) {

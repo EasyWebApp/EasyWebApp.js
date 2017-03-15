@@ -40,7 +40,9 @@ define(['jquery', 'WebApp'],  function ($, WebApp) {
 
     WebApp.fn.component = function (iFactory) {
 
-        return  this.resolve(_CID_, iFactory);
+        if ( this.loading[_CID_] )  this.loading[_CID_].emit('load', iFactory);
+
+        return this;
     };
 
     return  $.fn.iWebApp = WebApp;

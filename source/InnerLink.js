@@ -1,8 +1,8 @@
-define(['jquery', 'iQuery+'],  function ($) {
+define(['jquery', 'Observer', 'iQuery+'],  function ($, Observer) {
 
     function InnerLink(Link_DOM, Glob_Env) {
 
-        this.$_View = $( Link_DOM );
+        Observer.call(this).$_View = $( Link_DOM );
 
         this.$_Target = Glob_Env.target[
             this.target = Link_DOM.target || '_self'
@@ -30,7 +30,7 @@ define(['jquery', 'iQuery+'],  function ($) {
             $(this).remove();
         });
 
-    $.extend(InnerLink.prototype, {
+    return  $.inherit(Observer, InnerLink, null, {
         loadData:    function () {
             if (! this.src)  return;
 
@@ -68,33 +68,6 @@ define(['jquery', 'iQuery+'],  function ($) {
 
             return _This_;
         },
-        promise:      function () {
-
-            if ( this.ready )  return this.ready[0];
-
-            this.ready = [ ];
-
-            var _This_ = this;
-
-            var iPromise = new Promise(function () {
-
-                    _This_.ready.push(arguments[0], arguments[1]);
-                });
-
-            this.ready.unshift( iPromise );
-
-            return iPromise;
-        },
-        resolve:     function () {
-
-            this.ready[1]( arguments[0] );
-
-            var iPromise = this.ready[0];
-
-            delete this.ready;
-
-            return iPromise;
-        },
         prefetch:    function () {
             if ( this.href )
                 $_Prefetch.clone().attr('href', this.href).appendTo('head');
@@ -106,7 +79,4 @@ define(['jquery', 'iQuery+'],  function ($) {
                 $_Prefetch.clone().attr('href', this.src).appendTo('head');
         }
     });
-
-    return InnerLink;
-
 });

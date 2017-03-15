@@ -62,14 +62,6 @@ define([
             return  arguments[0].replace(this.pageRoot, '')
                 .replace(/\.\w+(\?.*)?/i, '.html');
         },
-        resolve:      function (CID) {
-
-            this.loading[CID].resolve( arguments[1] );
-
-            delete this.loading[CID];
-
-            return this;
-        },
         load:         function (iLink) {
 
             if (iLink instanceof Element) {
@@ -99,7 +91,7 @@ define([
 
                 if ( iPrev )  iPrev.destructor();
 
-                JS_Load = iLink.promise();
+                JS_Load = iLink.on('load');
 
                 return iLink.$_Target.htmlExec(
                     _This_.emit(
@@ -117,11 +109,13 @@ define([
                     _This_.setRoute( iLink );
 
                 if (! iLink.$_Target.find('script[src]')[0])
-                    _This_.resolve( iLink.href );
+                    iLink.emit('load');
 
                 return JS_Load;
 
             }).then(function (iFactory) {
+
+                delete _This_.loading[ iLink.href ];
 
                 if ( iFactory )  iData = iFactory.call(iView, iData)  ||  iData;
 

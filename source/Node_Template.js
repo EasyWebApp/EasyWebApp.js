@@ -9,28 +9,29 @@ define(['jquery'],  function ($) {
         this.ownerElement = iNode.parentNode || iNode.ownerElement;
     }
 
+    function Eval(vm) {
+        'use strict';
+
+        try {
+            var iValue = eval( arguments[1] );
+
+            return  (iValue != null)  ?  iValue  :  '';
+        } catch (iError) {
+            return '';
+        }
+    }
+
     $.extend(Node_Template, {
-        eval:          function (vm) {
-            'use strict';
-
-            try {
-                var iValue = eval( arguments[1] );
-
-                return  (iValue != null)  ?  iValue  :  '';
-            } catch (iError) {
-                return '';
-            }
-        },
         safeEval:      function (iValue) {
 
             switch (typeof iValue) {
                 case 'string':
                     if ((iValue[0] != '0')  ||  (! iValue[1]))  break;
                 case 'function':
-                    return iValue;
+                    return  $.proxy(iValue, this);
             }
 
-            return  (iValue  &&  this.eval('', iValue))  ||  iValue;
+            return  (iValue  &&  Eval('', iValue))  ||  iValue;
         },
         expression:    /\$\{([\s\S]+?)\}/g,
         reference:     /(this|vm)\.(\w+)/g
@@ -42,7 +43,7 @@ define(['jquery'],  function ($) {
 
             var iText = this.raw.replace(Node_Template.expression,  function () {
 
-                    iRefer = Node_Template.eval.call(iContext, iScope, arguments[1]);
+                    iRefer = Eval.call(iContext, iScope, arguments[1]);
 
                     return  (arguments[0] == arguments[3])  ?
                         arguments[3]  :  iRefer;
@@ -83,8 +84,9 @@ define(['jquery'],  function ($) {
                 case 2:    if (
                     (this.name != 'style')  &&  (this.name in iParent)
                 ) {
-                    iParent[ this.name ] = Node_Template.safeEval( iValue );
-
+                    iParent[ this.name ] = Node_Template.safeEval.call(
+                        iContext,  iValue
+                    );
                     return;
 
                 } else if (! iNode.ownerElement) {

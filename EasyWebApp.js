@@ -58,9 +58,12 @@ var Observer = (function (BOM, DOM, $) {
 
             var _This_ = this;
 
-            return  new Promise(function () {
+            return  new Promise(function (iResolve) {
 
-                _This_.sign(iEvent, arguments[0]);
+                _This_.sign(iEvent,  function () {
+
+                    iResolve( arguments[1] );
+                });
             });
         },
         emit:    function (iEvent, iData) {
@@ -98,11 +101,11 @@ var Observer = (function (BOM, DOM, $) {
 
 
 
-var InnerLink = (function (BOM, DOM, $) {
+var InnerLink = (function (BOM, DOM, $, Observer) {
 
     function InnerLink(Link_DOM, Glob_Env) {
 
-        this.$_View = $( Link_DOM );
+        Observer.call(this).$_View = $( Link_DOM );
 
         this.$_Target = Glob_Env.target[
             this.target = Link_DOM.target || '_self'
@@ -130,7 +133,7 @@ var InnerLink = (function (BOM, DOM, $) {
             $(this).remove();
         });
 
-    $.extend(InnerLink.prototype, {
+    return  $.inherit(Observer, InnerLink, null, {
         loadData:    function () {
             if (! this.src)  return;
 
@@ -168,33 +171,6 @@ var InnerLink = (function (BOM, DOM, $) {
 
             return _This_;
         },
-        promise:      function () {
-
-            if ( this.ready )  return this.ready[0];
-
-            this.ready = [ ];
-
-            var _This_ = this;
-
-            var iPromise = new Promise(function () {
-
-                    _This_.ready.push(arguments[0], arguments[1]);
-                });
-
-            this.ready.unshift( iPromise );
-
-            return iPromise;
-        },
-        resolve:     function () {
-
-            this.ready[1]( arguments[0] );
-
-            var iPromise = this.ready[0];
-
-            delete this.ready;
-
-            return iPromise;
-        },
         prefetch:    function () {
             if ( this.href )
                 $_Prefetch.clone().attr('href', this.href).appendTo('head');
@@ -206,10 +182,7 @@ var InnerLink = (function (BOM, DOM, $) {
                 $_Prefetch.clone().attr('href', this.src).appendTo('head');
         }
     });
-
-    return InnerLink;
-
-})(self, self.document, self.jQuery);
+})(self, self.document, self.jQuery, Observer);
 
 
 
@@ -311,28 +284,29 @@ var Node_Template = (function (BOM, DOM, $) {
         this.ownerElement = iNode.parentNode || iNode.ownerElement;
     }
 
+    function Eval(vm) {
+        'use strict';
+
+        try {
+            var iValue = eval( arguments[1] );
+
+            return  (iValue != null)  ?  iValue  :  '';
+        } catch (iError) {
+            return '';
+        }
+    }
+
     $.extend(Node_Template, {
-        eval:          function (vm) {
-            'use strict';
-
-            try {
-                var iValue = eval( arguments[1] );
-
-                return  (iValue != null)  ?  iValue  :  '';
-            } catch (iError) {
-                return '';
-            }
-        },
         safeEval:      function (iValue) {
 
             switch (typeof iValue) {
                 case 'string':
                     if ((iValue[0] != '0')  ||  (! iValue[1]))  break;
                 case 'function':
-                    return iValue;
+                    return  $.proxy(iValue, this);
             }
 
-            return  (iValue  &&  this.eval('', iValue))  ||  iValue;
+            return  (iValue  &&  Eval('', iValue))  ||  iValue;
         },
         expression:    /\$\{([\s\S]+?)\}/g,
         reference:     /(this|vm)\.(\w+)/g
@@ -344,7 +318,7 @@ var Node_Template = (function (BOM, DOM, $) {
 
             var iText = this.raw.replace(Node_Template.expression,  function () {
 
-                    iRefer = Node_Template.eval.call(iContext, iScope, arguments[1]);
+                    iRefer = Eval.call(iContext, iScope, arguments[1]);
 
                     return  (arguments[0] == arguments[3])  ?
                         arguments[3]  :  iRefer;
@@ -385,8 +359,9 @@ var Node_Template = (function (BOM, DOM, $) {
                 case 2:    if (
                     (this.name != 'style')  &&  (this.name in iParent)
                 ) {
-                    iParent[ this.name ] = Node_Template.safeEval( iValue );
-
+                    iParent[ this.name ] = Node_Template.safeEval.call(
+                        iContext,  iValue
+                    );
                     return;
 
                 } else if (! iNode.ownerElement) {
@@ -789,14 +764,6 @@ var WebApp = (function (BOM, DOM, $, Observer, InnerLink, TreeBuilder, HTMLView,
             return  arguments[0].replace(this.pageRoot, '')
                 .replace(/\.\w+(\?.*)?/i, '.html');
         },
-        resolve:      function (CID) {
-
-            this.loading[CID].resolve( arguments[1] );
-
-            delete this.loading[CID];
-
-            return this;
-        },
         load:         function (iLink) {
 
             if (iLink instanceof Element) {
@@ -826,7 +793,7 @@ var WebApp = (function (BOM, DOM, $, Observer, InnerLink, TreeBuilder, HTMLView,
 
                 if ( iPrev )  iPrev.destructor();
 
-                JS_Load = iLink.promise();
+                JS_Load = iLink.on('load');
 
                 return iLink.$_Target.htmlExec(
                     _This_.emit(
@@ -844,11 +811,13 @@ var WebApp = (function (BOM, DOM, $, Observer, InnerLink, TreeBuilder, HTMLView,
                     _This_.setRoute( iLink );
 
                 if (! iLink.$_Target.find('script[src]')[0])
-                    _This_.resolve( iLink.href );
+                    iLink.emit('load');
 
                 return JS_Load;
 
             }).then(function (iFactory) {
+
+                delete _This_.loading[ iLink.href ];
 
                 if ( iFactory )  iData = iFactory.call(iView, iData)  ||  iData;
 
@@ -947,7 +916,9 @@ var EasyWebApp = (function (BOM, DOM, $, WebApp) {
 
     WebApp.fn.component = function (iFactory) {
 
-        return  this.resolve(_CID_, iFactory);
+        if ( this.loading[_CID_] )  this.loading[_CID_].emit('load', iFactory);
+
+        return this;
     };
 
     return  $.fn.iWebApp = WebApp;
