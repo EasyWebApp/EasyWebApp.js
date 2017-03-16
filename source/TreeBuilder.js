@@ -1,16 +1,6 @@
 define(['jquery', 'ListView', 'HTMLView'],  function ($, ListView, HTMLView) {
 
-    function is_Component(iDOM) {
-        return (
-            (iDOM.tagName != 'A')  &&
-            (! iDOM.getAttribute('target'))  &&
-            (! $.expr[':'].media( iDOM ))  &&  (
-                iDOM.getAttribute('href')  ||  iDOM.getAttribute('src')
-            )
-        );
-    }
-
-    return  function ($_Root, $_Template) {
+    return  function ($_Root, iTemplate) {
 
         $_Root = $( $_Root );
 
@@ -22,7 +12,7 @@ define(['jquery', 'ListView', 'HTMLView'],  function ($, ListView, HTMLView) {
         var iSearcher = document.createTreeWalker($_Root[0], 1, {
                 acceptNode:    function (iDOM) {
 
-                    if (is_Component( iDOM )) {
+                    if ( iDOM.dataset.href ) {
                         Sub_Component.push( iDOM );
 
                         return NodeFilter.FILTER_REJECT;
@@ -54,10 +44,14 @@ define(['jquery', 'ListView', 'HTMLView'],  function ($, ListView, HTMLView) {
                     _This_ = (new HTMLView( iView[i] )).parse( Sub_Component );
         }
 
-        return (
-            ((! _This_)  ||  (_This_.$_View[0] != $_Root[0]))  ?
-                (new HTMLView($_Root, $_Template)).parse( Sub_Component )  :  _This_
-        ).scope( iScope );
+        return {
+            root:     (
+                (_This_  &&  (_This_.$_View[0] == $_Root[0]))  ?
+                    _This_  :  new HTMLView($_Root, iTemplate)
+            ),
+            sub:      Sub_Component,
+            scope:    iScope
+        };
     };
 
 });

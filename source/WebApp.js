@@ -1,6 +1,6 @@
 define([
-    'jquery', 'Observer', 'InnerLink', 'TreeBuilder', 'HTMLView', 'View'
-],  function ($, Observer, InnerLink, TreeBuilder, HTMLView, View) {
+    'jquery', 'Observer', 'View', 'HTMLView', 'ListView', 'InnerLink', 'TreeBuilder'
+],  function ($, Observer, View, HTMLView, ListView, InnerLink, TreeBuilder) {
 
     function WebApp(Page_Box, API_Root) {
 
@@ -28,7 +28,11 @@ define([
         this.listenDOM().listenBOM().boot();
     }
 
-    return  $.inherit(Observer, WebApp, null, {
+    return  $.inherit(Observer, WebApp, {
+        View:        View,
+        HTMLView:    HTMLView,
+        ListView:    ListView
+    }, {
         indexOf:      Array.prototype.indexOf,
         splice:       Array.prototype.splice,
         push:         Array.prototype.push,
@@ -57,7 +61,7 @@ define([
         },
         loadView:     function (iLink, iHTML) {
 
-            var $_Target,  $_Template;
+            var $_Target;
 
             switch ( iLink.target ) {
                 case '_blank':    return;
@@ -70,27 +74,25 @@ define([
 
                     $_Target = this.$_Page;    break;
                 }
-                default:          {
-                    $_Target = iLink.$_View;
-
-                    if ( iLink.href ) {
-                        $_Template = $_Target[0].innerHTML;
-
-                        $_Target.empty();
-                    }
-                }
+                default:          $_Target = iLink.$_View;
             }
 
-            return  ((! iHTML)  ?  Promise.resolve('')  :  $_Target.htmlExec(
-                this.emit(
+            return HTMLView.build(
+                $_Target,  this.emit(
                     $.extend(iLink.valueOf(), {type: 'template'}),  iHTML
                 )
-            )).then(function () {
+            ).then(function ($_Content) {
 
                 if (! $_Target.find('script[src]:not(head > *)')[0])
                     iLink.emit('load');
 
-                return  TreeBuilder($_Target, $_Template);
+                var iView = TreeBuilder( $_Target );
+
+                if ( $_Content )  iView.root.parseSlot( $_Content );
+
+                iView.root.parse( iView.sub ).scope( iView.scope );
+
+                return iView;
             });
         },
         load:         function (iLink) {
@@ -123,12 +125,17 @@ define([
 
                 delete _This_.loading[ iLink.href ];
 
-                if ( iFactory )  iData = iFactory.call(iView, iData)  ||  iData;
+                if ( iFactory )
+                    iData = iFactory.call(iView.root, iData)  ||  iData;
 
-                _This_.emit(
-                    $.extend(iEvent,  {type: 'ready'}),
-                    (typeof iData == 'object')  ?  iView.render(iData)  :  iView
-                );
+                if (typeof iData == 'object')  iView.root.render( iData );
+
+                return Promise.all($.map(
+                    iView.sub,  $.proxy(_This_.load, _This_)
+                ));
+            }).then(function () {
+
+                _This_.emit($.extend(iEvent, {type: 'ready'}),  iView.root);
             });
         },
         listenDOM:    function () {
@@ -143,7 +150,7 @@ define([
                         this.name || this.getAttribute('name'),
                         $(this).value('name')
                     );
-            })).on('click submit',  'a[href], form[action]',  function () {
+            })).on('click submit',  InnerLink.HTML_Link,  function () {
 
                 var CID = (this.href || this.action).match(_This_.pageRoot);
 

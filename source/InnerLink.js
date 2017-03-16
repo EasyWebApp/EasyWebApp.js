@@ -8,10 +8,14 @@ define(['jquery', 'Observer', 'iQuery+'],  function ($, Observer) {
 
         this.method = (Link_DOM.getAttribute('method') || 'Get').toUpperCase();
 
-        this.src = $.paramJSON(
-            this.href = Link_DOM.dataset.href ||
-                Link_DOM.getAttribute(Link_DOM.href ? 'href' : 'action')
-        )['data'];
+        this.href = Link_DOM.dataset.href ||
+            Link_DOM.getAttribute(Link_DOM.href ? 'href' : 'action');
+
+        this.src = this.href.split('?data=');
+
+        this.href = this.src[0];
+
+        this.src = this.src[1];
 
         if (this.src  &&  (! $.urlDomain( this.src )))
             this.src = API_Root + this.src;
@@ -27,7 +31,10 @@ define(['jquery', 'Observer', 'iQuery+'],  function ($, Observer) {
             $(this).remove();
         });
 
-    return  $.inherit(Observer, InnerLink, null, {
+    return  $.inherit(Observer, InnerLink, {
+        HTML_Link:    'a[href], form[action]',
+        Self_Link:    '[data-href]:not(a, form)'
+    }, {
         loadData:    function () {
 
             if (this.$_View[0].tagName == 'A')
@@ -64,6 +71,8 @@ define(['jquery', 'Observer', 'iQuery+'],  function ($, Observer) {
                     (typeof this[iKey] != 'function')
                 )
                     _This_[iKey] = this[iKey];
+
+            _This_.target = this.$_View[0];
 
             return _This_;
         },

@@ -17,7 +17,7 @@ define(['jquery', 'jQuery+'],  function ($) {
     }
 
     $.extend(View.prototype, {
-        toString:       function () {
+        toString:      function () {
 
             var iName = this.constructor.name;
 
@@ -39,6 +39,18 @@ define(['jquery', 'jQuery+'],  function ($) {
 
             return this;
         }
+    });
+
+    $.each(['trigger', 'on', 'one', 'off'],  function (Index, iName) {
+
+        View.prototype[this] = function () {
+
+            if ( Index )  arguments[0] += '.EWA_View';
+
+            $.fn[iName].apply(this.$_View, arguments);
+
+            return this;
+        };
     });
 
     $.extend(View, {

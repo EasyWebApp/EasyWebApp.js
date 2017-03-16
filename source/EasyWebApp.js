@@ -2,7 +2,7 @@
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v3.8  (2017-03-15)  Beta
+//      [Version]    v3.8  (2017-03-16)  Beta
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //
@@ -17,6 +17,8 @@
 
 
 define(['jquery', 'WebApp'],  function ($, WebApp) {
+
+/* ---------- AMD based Component API ---------- */
 
     var _require_ = self.require,  _CID_;
 
@@ -43,6 +45,15 @@ define(['jquery', 'WebApp'],  function ($, WebApp) {
         if ( this.loading[_CID_] )  this.loading[_CID_].emit('load', iFactory);
 
         return this;
+    };
+
+/* ---------- jQuery based Helper API ---------- */
+
+    $.fn.view = function (Class_Name) {
+
+        return  Class_Name  ?
+            (new WebApp[Class_Name](this[0], arguments[1]))  :
+            WebApp.View.instanceOf(this[0], false);
     };
 
     return  $.fn.iWebApp = WebApp;

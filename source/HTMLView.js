@@ -2,7 +2,7 @@ define([
     'jquery', 'View', 'Node_Template', 'DS_Inherit', 'iQuery+'
 ],  function ($, View, Node_Template, DS_Inherit) {
 
-    function HTMLView($_View, $_Template) {
+    function HTMLView($_View) {
 
         var _This_ = View.call(this, $_View);
 
@@ -13,19 +13,29 @@ define([
             __map__:     { },
             __data__:    { }
         });
-
-        if ( $_Template )  this.parseSlot( $_Template );
     }
 
     return  View.extend(HTMLView, {
+        build:         function ($_View, iTemplate) {
+
+            var $_Content = $_View.children();
+
+            $_Content = (iTemplate && $_Content[0])  &&  $_Content.detach();
+
+            return (
+                iTemplate ?
+                    $_View.htmlExec( iTemplate )  :  Promise.resolve('')
+            ).then(function () {
+
+                return  iTemplate && $_Content;
+            });
+        },
         rawSelector:    'code, xmp, template'
     }, {
-        parseSlot:     function ($_Template) {
+        parseSlot:     function ($_Content) {
 
-            var $_All = this.$_View.children().detach();
-
-            var $_Slot = this.$_View.append( $_Template ).find('slot'),
-                $_Named = $_All.filter('[slot]');
+            var $_Slot = this.$_View.find('slot'),
+                $_Named = $_Content.filter('[slot]');
 
             if ( $_Named[0] )
                 $_Slot.filter('[name]').replaceWith(function () {
@@ -34,7 +44,9 @@ define([
                     );
                 });
 
-            $_Slot.not('[name]').replaceWith( $_All.not( $_Named ) );
+            $_Slot.not('[name]').replaceWith( $_Content.not( $_Named ) );
+
+            return this;
         },
         watch:         function (iKey) {
             var _This_ = this;

@@ -13,16 +13,16 @@ define(['jquery', 'jQuery+'],  function ($) {
                 arguments[1]  ||  { }
             );
         },
-        match:       function (iEvent, iHandle) {
+        diff:        function (iEvent, iHandle) {
 
             for (var iKey in iHandle)
                 if (
                     (typeof iHandle[iKey] != 'function')  &&
                     (! (iEvent[iKey] || '').match( iHandle[iKey] ))
                 )
-                    return false;
+                    return true;
 
-            return true;
+            return null;
         }
     });
 
@@ -63,10 +63,11 @@ define(['jquery', 'jQuery+'],  function ($) {
             return  (this.__handle__[iEvent.type] || [ ]).reduce(
                 $.proxy(function (_Data_, iHandle) {
 
-                    var iResult = Observer.match(iEvent, iHandle)  &&
-                            iHandle.handler.call(this, iEvent, _Data_);
+                    if (Observer.diff(iEvent, iHandle))  return _Data_;
 
-                    return  iResult || _Data_;
+                    var iResult = iHandle.handler.call(this, iEvent, _Data_);
+
+                    return  (iResult != null)  ?  iResult  :  _Data_;
 
                 },  this),
                 iData
@@ -78,7 +79,7 @@ define(['jquery', 'jQuery+'],  function ($) {
 
             this.__handle__[iEvent.type] = $.map(
                 this.__handle__[iEvent.type],
-                $.proxy(Observer.match, Observer, iEvent)
+                $.proxy(Observer.diff, Observer, iEvent)
             );
 
             return this;
