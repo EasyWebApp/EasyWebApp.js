@@ -1,4 +1,4 @@
-define(['jquery', 'jQuery+'],  function ($) {
+define(['jquery', 'Node_Template', 'jQuery+'],  function ($, Node_Template) {
 
     function View($_View) {
 
@@ -54,7 +54,7 @@ define(['jquery', 'jQuery+'],  function ($) {
 
                 if (iName == 'href')  return;
 
-                _This_.__data__[iName] = iValue;
+                _This_.__data__[iName] = Node_Template.safeEval( iValue );
 
                 _This_.watch( iName );
             });

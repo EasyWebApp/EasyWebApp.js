@@ -1,24 +1,39 @@
-define(['jquery', 'EasyWebApp'],  function ($) {
+require(['jquery', 'EasyWebApp'],  function ($) {
 
-    function PageData(_, iData) {
+    var iWebApp = $().iWebApp();
 
-        this.getParent().update(
-            'pageSum',  Math.ceil(iData.total / this.template.scope.rows)
-        );
+    iWebApp.component(function () {
 
-        return iData.list;
-    }
+        var iEvent = {
+                type:      'data',
+                target:    this.$_View.find('[data-href]')[0]
+            },
+            VM = this;
 
-    return  function () {
-        this.bind('data', 'tbody', PageData);
+        var iList = $( iEvent.target ).view('ListView');
 
-        var $_Number = this.$_View.find('table + * [type="number"]');
+        iWebApp.off( iEvent ).on(iEvent,  function (iEvent, iData) {
 
-        this.$_View.on('click',  'table + * li',  function () {
+            VM.render('pageSum',  Math.ceil(iData.total / VM.rows));
 
-            var Index = parseInt( this.textContent );
-
-            if ( Index )  $_Number.val( Index ).change();
+            return iData.list;
         });
-    };
+
+        return {
+            pageChange:    function () {
+
+                var iTarget = arguments[0].target;
+
+                var iValue = parseInt(iTarget.value || iTarget.textContent);
+
+                this.render(
+                    (iTarget.tagName == 'SELECT')  ?  'rows'  :  'page',  iValue
+                );
+
+                iList.clear();
+
+                iWebApp.load( iEvent.target );
+            }
+        };
+    });
 });

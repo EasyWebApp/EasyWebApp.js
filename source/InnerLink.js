@@ -40,7 +40,11 @@ define(['jquery', 'Observer', 'iQuery+'],  function ($, Observer) {
             if (this.$_View[0].tagName == 'A')
                 return  Promise.resolve($.getJSON( this.src ));
 
-            var iOption = {type: this.method};
+            var iOption = {
+                    type:        this.method,
+                    dataType:
+                        (this.src.match(/\?/g) || '')[1]  ?  'jsonp'  :  'json'
+                };
 
             if (! this.$_View.find('input[type="file"]')[0])
                 iOption.data = this.$_View.serialize();

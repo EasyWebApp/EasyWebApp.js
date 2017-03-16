@@ -6,7 +6,7 @@ define(['jquery', 'View', 'HTMLView'],  function ($, View, HTMLView) {
 
         if (this != _This_)  return _This_;
 
-        this.template = this.$_View.html();
+        this.__HTML__ = this.$_View.html();
 
         this.clear();
     }
@@ -22,8 +22,7 @@ define(['jquery', 'View', 'HTMLView'],  function ($, View, HTMLView) {
         },
         insert:    function (iData, Index) {
 
-            var Item = (new HTMLView( this.template ))
-                    .parse().scope( this.__data__ );
+            var Item = (new HTMLView(this.__HTML__)).parse().scope(this.__data__);
 
             Item.$_View.insertTo(this.$_View, Index);
 
@@ -31,7 +30,8 @@ define(['jquery', 'View', 'HTMLView'],  function ($, View, HTMLView) {
         },
         render:    function (iList) {
 
-            $.map(iList,  $.proxy(this.insert, this));
+            if ($.likeArray( iList ))
+                $.map(iList,  $.proxy(this.insert, this));
 
             return this;
         },

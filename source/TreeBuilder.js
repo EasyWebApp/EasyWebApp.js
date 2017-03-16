@@ -1,19 +1,26 @@
-define(['jquery', 'ListView', 'HTMLView'],  function ($, ListView, HTMLView) {
+define([
+    'jquery', 'View', 'HTMLView', 'ListView'
+],  function ($, View, HTMLView, ListView) {
 
-    return  function ($_Root, iTemplate) {
+    return  function ($_Root) {
 
         $_Root = $( $_Root );
 
-        var Sub_Component = [ ],
-            iScope = HTMLView.instanceOf( $_Root.parents(':view')[0] );
+        var iTree = {
+                root:     View.instanceOf($_Root, false),
+                scope:    HTMLView.instanceOf( $_Root.parents(':view')[0] ),
+                sub:      [ ]
+            };
 
-        iScope = iScope  ?  iScope.scope()  :  { };
+        iTree.scope = iTree.scope  ?  iTree.scope.scope()  :  { };
+
+        if ( iTree.root )  return iTree;
 
         var iSearcher = document.createTreeWalker($_Root[0], 1, {
                 acceptNode:    function (iDOM) {
 
                     if ( iDOM.dataset.href ) {
-                        Sub_Component.push( iDOM );
+                        iTree.sub.push( iDOM );
 
                         return NodeFilter.FILTER_REJECT;
                     }
@@ -44,16 +51,12 @@ define(['jquery', 'ListView', 'HTMLView'],  function ($, ListView, HTMLView) {
 
             for (var i = 0;  iView[i];  i++)
                 if ($( iView[i] ).parents( $_Root )[0])
-                    _This_ = (new HTMLView( iView[i] )).parse( Sub_Component );
+                    _This_ = (new HTMLView( iView[i] )).parse( iTree.sub );
         }
 
-        return {
-            root:     (
-                (_This_  &&  (_This_.$_View[0] == $_Root[0]))  ?
-                    _This_  :  new HTMLView($_Root, iTemplate)
-            ),
-            sub:      Sub_Component,
-            scope:    iScope
-        };
+        iTree.root = (_This_  &&  (_This_.$_View[0] == $_Root[0]))  ?
+            _This_  :  new HTMLView( $_Root );
+
+        return iTree;
     };
 });

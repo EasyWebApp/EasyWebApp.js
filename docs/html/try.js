@@ -1,6 +1,17 @@
 require(['jquery'],  function ($) {
 
-    $().iWebApp().component(function (iData) {
+    var OpenAPI = {
+            type:    'data',
+            src:     'tngou.net'
+        };
+
+    $().iWebApp().off( OpenAPI ).on(OpenAPI,  function (_, iData) {
+
+        if (iData.total != null) {
+            iData.list = iData.tngou;
+            delete iData.tngou;
+        }
+    }).component(function (iData) {
 
         iData.check = function () {
 

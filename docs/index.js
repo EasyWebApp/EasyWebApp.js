@@ -5,9 +5,10 @@ require([
     $.ajaxSetup({
         dataFilter:    function (iData) {
 
-            if ($.fileName( this.url ).indexOf('.')  >  0)  return iData;
+            if (($.fileName( this.url ).indexOf('.')  >  0)  ||  (! iData))
+                return iData;
 
-            iData = JSON.parse( iData );
+            if (this.dataType != 'jsonp')  iData = JSON.parse( iData );
 
             if ( iData.code )
                 self.alert( iData.message );
@@ -18,7 +19,8 @@ require([
                 iData = iData.data || iData;
             }
 
-            return  JSON.stringify( iData );
+            return  (this.dataType == 'jsonp')  ?
+                iData  :  JSON.stringify( iData );
         }
     });
 
@@ -44,7 +46,7 @@ require([
             $_Toolkit = $('#Toolkit'),
             $_QRcode = $('#QRcode > .Body');
 
-        iWebApp = $_App.iWebApp().on({
+        $_App.iWebApp().on({
             type:    'template',
             href:    /\.md$/i
         },  function () {

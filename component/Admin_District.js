@@ -5,14 +5,14 @@
 
 require(['jquery'],  function ($) {
 
-    function Select_Render($_Item, iValue) {
-
-        $_Item.attr('value', iValue.adcode)[0].textContent = iValue.name;
-    }
-
     var iWebApp = $().iWebApp();
 
     iWebApp.component(function () {
+
+        this.$_View.find('select').each(function () {
+
+            $( this ).view('ListView');
+        });
 
         var iEvent = {
                 type:      'data',
@@ -26,12 +26,15 @@ require(['jquery'],  function ($) {
 
             if (! iData[0])  return;
 
-            var $_Select = $(
+            var iList = $(
                     'select[name="' + iData[0].level + '"]',  iEvent.target
-                );
-            if (! $_Select[0])  return;
+                ).view('ListView');
 
-            $.ListView($_Select, Select_Render).clear().render( iData );
+            if (! iList)  return;
+
+            iList.clear().render( iData );
+
+            var $_Select = iList.$_View;
 
             var iValue = VM[ $_Select[0].name ];
 
@@ -60,7 +63,7 @@ require(['jquery'],  function ($) {
 
                 if ($_Select.nextAll('select').each(function () {
 
-                    $.ListView( this ).clear();
+                    $( this ).view('ListView').clear();
                 })[0])
                     iWebApp.load( iLink );
             }

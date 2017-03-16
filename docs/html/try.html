@@ -74,7 +74,8 @@
         </label>
     </fieldset>
 </form>
-<div data-href="component/Data_Table.html" rows="${vm.pageSize}" page="${vm.pageIndex}">
+<div data-href="component/Data_Table.html"
+     data-rows="${vm.pageSize}" data-page="${vm.pageIndex}">
     <span slot="toolbar">
         <button>功能按钮</button>
     </span>
@@ -82,7 +83,7 @@
         <thead><tr>
             <th>标题</th><th>配图</th><th>时间</th><th>稿源</th>
         </tr></thead>
-        <tbody src="http://www.tngou.net/api/top/list?page=${vm.page}&rows=${vm.rows}&callback=?">
+        <tbody data-href="?data=http://www.tngou.net/api/top/list?page=${vm.page}&rows=${vm.rows}&callback=?">
             <tr title="${vm.description}">
                 <td>${vm.title}</td>
                 <td>

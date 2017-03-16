@@ -89,9 +89,15 @@ define([
 
                 var iView = TreeBuilder( $_Target );
 
-                if ( $_Content )  iView.root.parseSlot( $_Content );
+                if ( $_Content ) {
+                    iView.root.parseSlot( $_Content );
 
-                iView.root.parse( iView.sub ).scope( iView.scope );
+                    $.merge(iView.sub, iView.root.$_View.find('[data-href]'));
+                }
+
+                if ( iView.root.parse )  iView.root.parse( iView.sub );
+
+                iView.root.scope( iView.scope );
 
                 return iView;
             });
@@ -129,7 +135,7 @@ define([
                 if ( iFactory )
                     iData = iFactory.call(iView.root, iData)  ||  iData;
 
-                if (typeof iData == 'object')  iView.root.render( iData );
+                iView.root.render(((typeof iData == 'object') && iData)  ||  { });
 
                 return Promise.all($.map(
                     iView.sub,  $.proxy(_This_.load, _This_)

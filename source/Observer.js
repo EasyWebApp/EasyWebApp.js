@@ -84,8 +84,10 @@ define(['jquery', 'jQuery+'],  function ($) {
             iEvent = Observer.getEvent(iEvent,  {handler: iCallback});
 
             this.__handle__[iEvent.type] = $.map(
-                this.__handle__[iEvent.type],
-                $.proxy(Observer.match, Observer, iEvent)
+                this.__handle__[iEvent.type],  function (iHandle) {
+
+                    return  Observer.match(iEvent, iHandle)  ?  null  :  iHandle;
+                }
             );
 
             return this;

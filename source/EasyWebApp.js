@@ -2,7 +2,7 @@
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v3.8  (2017-03-16)  Beta
+//      [Version]    v3.8  (2017-03-17)  Beta
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //
@@ -50,6 +50,8 @@ define(['jquery', 'WebApp'],  function ($, WebApp) {
 /* ---------- jQuery based Helper API ---------- */
 
     $.fn.view = function (Class_Name) {
+
+        if (! this[0])  return;
 
         return  Class_Name  ?
             (new WebApp[Class_Name](this[0], arguments[1]))  :
