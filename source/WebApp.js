@@ -78,7 +78,8 @@ define([
             }
 
             return HTMLView.build(
-                $_Target,  this.emit(
+                $_Target,
+                iHTML && this.emit(
                     $.extend(iLink.valueOf(), {type: 'template'}),  iHTML
                 )
             ).then(function ($_Content) {

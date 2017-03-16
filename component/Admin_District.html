@@ -1,50 +1,7 @@
-<script>
-/* ---------- 行政区 联动查询 ---------- */
+<script src="component/Admin_District.js"></script>
 
-// 【文档】http://lbs.amap.com/api/webservice/guide/api/district/
-
-require(['jquery', 'EasyWebApp'],  function ($) {
-
-    function Select_Render($_Item, iValue) {
-
-        $_Item.attr('value', iValue.adcode)[0].textContent = iValue.name;
-    }
-
-    $().iWebApp().component('Admin_District',  function () {
-
-        this.bind('data',  'span[src]',  function (iLink, iData) {
-
-            iData = iData.districts[0].districts;
-
-            var $_Select = iData[0]  &&
-                    iLink.$_DOM.find('select[name="' + iData[0].level + '"]');
-
-            if (($_Select || '')[0])
-                $.ListView($_Select, Select_Render).clear().render( iData );
-
-            return  { };
-        });
-
-        var iModule = this,  iSum = this.$_View.find('select').length;
-
-        this.$_View.on('change',  'select',  function () {
-
-            var $_This = $(this);
-
-            $_This.next().nextAll().each(function () {
-
-                $.ListView( this ).clear();
-
-                iModule[0].template.scope.setValue(this.name, 0);
-            });
-
-            if ($_This.index() + 1  <  iSum)
-                iModule.update('zip_code', this.value);
-        });
-    });
-});
-</script>
-<span src="//restapi.amap.com/v3/config/district?key=${this.user_key}&extensions=base&keywords=${this.zip_code}">
+<span data-href="?data=//restapi.amap.com/v3/config/district?key=${vm.key}&extensions=base&keywords=100000&subdistrict=1"
+      onchange="${this.getSub}">
     <select name="province">
         <option>请选择</option>
     </select>

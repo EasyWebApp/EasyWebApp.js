@@ -13,16 +13,22 @@ define(['jquery', 'jQuery+'],  function ($) {
                 arguments[1]  ||  { }
             );
         },
-        diff:        function (iEvent, iHandle) {
+        match:       function (iEvent, iHandle) {
 
-            for (var iKey in iHandle)
-                if (
-                    (typeof iHandle[iKey] != 'function')  &&
-                    (! (iEvent[iKey] || '').match( iHandle[iKey] ))
-                )
-                    return true;
+            for (var iKey in iHandle)  switch (typeof iHandle[iKey]) {
+                case 'object':
+                    if (! (iHandle[iKey] instanceof RegExp)) {
+                        if (iEvent[iKey] !== iHandle[iKey])
+                            return;
+                        break;
+                    }
+                case 'string':
+                    if (! (iEvent[iKey] || '').match( iHandle[iKey] ))
+                        return;
+                case 'function':    ;
+            }
 
-            return null;
+            return iHandle;
         }
     });
 
@@ -63,7 +69,7 @@ define(['jquery', 'jQuery+'],  function ($) {
             return  (this.__handle__[iEvent.type] || [ ]).reduce(
                 $.proxy(function (_Data_, iHandle) {
 
-                    if (Observer.diff(iEvent, iHandle))  return _Data_;
+                    if (! Observer.match(iEvent, iHandle))  return _Data_;
 
                     var iResult = iHandle.handler.call(this, iEvent, _Data_);
 
@@ -79,7 +85,7 @@ define(['jquery', 'jQuery+'],  function ($) {
 
             this.__handle__[iEvent.type] = $.map(
                 this.__handle__[iEvent.type],
-                $.proxy(Observer.diff, Observer, iEvent)
+                $.proxy(Observer.match, Observer, iEvent)
             );
 
             return this;

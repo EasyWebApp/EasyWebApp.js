@@ -23,16 +23,19 @@ define(['jquery', 'ListView', 'HTMLView'],  function ($, ListView, HTMLView) {
             }),
             _This_,  iList = [ ],  iView = [ ];
 
-        while (_This_ = iSearcher.nextNode())  if (_This_.getAttribute('name')) {
-
-            if ($.expr[':'].list(_This_))
-                iList.unshift(_This_);
-            else if (
-                (! $.expr[':'].field(_This_))  &&
-                (_This_.parentElement != document.head)
-            )
-                iView.unshift(_This_);
-        }
+        while (_This_ = iSearcher.nextNode())
+            if (
+                _This_.getAttribute('name')  &&
+                (_This_.tagName.toLowerCase() != 'slot')
+            ) {
+                if ($.expr[':'].list(_This_))
+                    iList.unshift(_This_);
+                else if (
+                    (! $.expr[':'].field(_This_))  &&
+                    (_This_.parentElement != document.head)
+                )
+                    iView.unshift(_This_);
+            }
 
         for (var i = 0;  iList[i];  i++)
             _This_ = new ListView( iList[i] );
@@ -53,5 +56,4 @@ define(['jquery', 'ListView', 'HTMLView'],  function ($, ListView, HTMLView) {
             scope:    iScope
         };
     };
-
 });

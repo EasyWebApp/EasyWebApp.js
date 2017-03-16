@@ -1,6 +1,6 @@
 define([
-    'jquery', 'View', 'Node_Template', 'DS_Inherit', 'iQuery+'
-],  function ($, View, Node_Template, DS_Inherit) {
+    'jquery', 'View', 'MutationObserver', 'Node_Template', 'DS_Inherit', 'iQuery+'
+],  function ($, View, MutationObserver, Node_Template, DS_Inherit) {
 
     function HTMLView($_View) {
 
@@ -11,7 +11,7 @@ define([
         $.extend(this, {
             length:      0,
             __map__:     { },
-            __data__:    { }
+            __last__:    0
         });
     }
 
@@ -47,20 +47,6 @@ define([
             $_Slot.not('[name]').replaceWith( $_Content.not( $_Named ) );
 
             return this;
-        },
-        watch:         function (iKey) {
-            var _This_ = this;
-
-            if (! (iKey in this))
-                Object.defineProperty(this, iKey, {
-                    get:    function () {
-                        if (_This_.__data__.hasOwnProperty( iKey ))
-                            return _This_.__data__[iKey];
-                    },
-                    set:    function () {
-                        _This_.render(iKey, arguments[0]);
-                    }
-                });
         },
         signIn:        function (iNode, iName) {
 
@@ -152,13 +138,13 @@ define([
                 iData = _Data_;
             }
 
-            var _This_ = this,  _Data_ = $.extend(this.__data__, iData);
+            var _This_ = this;  _Data_ = $.extend(this.__data__, iData);
 
             if (! $.browser.modern)
                 for (var iKey in iData)  if (this.__map__[iKey])
                     this[iKey] = iData[iKey];
 
-            $.each(this.getNode( iData ),  function () {
+            $.each(this.getNode(this.__last__ ? iData : _Data_),  function () {
 
                 if (this instanceof Node_Template)
                     this.render(_This_, _Data_);
@@ -171,6 +157,8 @@ define([
                         _Data_[this.name || this.getAttribute('name')]
                     );
             });
+
+            this.__last__ = $.now();
 
             return this;
         }

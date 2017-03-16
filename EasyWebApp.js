@@ -23,16 +23,22 @@ var Observer = (function (BOM, DOM, $) {
                 arguments[1]  ||  { }
             );
         },
-        diff:        function (iEvent, iHandle) {
+        match:       function (iEvent, iHandle) {
 
-            for (var iKey in iHandle)
-                if (
-                    (typeof iHandle[iKey] != 'function')  &&
-                    (! (iEvent[iKey] || '').match( iHandle[iKey] ))
-                )
-                    return true;
+            for (var iKey in iHandle)  switch (typeof iHandle[iKey]) {
+                case 'object':
+                    if (! (iHandle[iKey] instanceof RegExp)) {
+                        if (iEvent[iKey] !== iHandle[iKey])
+                            return;
+                        break;
+                    }
+                case 'string':
+                    if (! (iEvent[iKey] || '').match( iHandle[iKey] ))
+                        return;
+                case 'function':    ;
+            }
 
-            return null;
+            return iHandle;
         }
     });
 
@@ -73,7 +79,7 @@ var Observer = (function (BOM, DOM, $) {
             return  (this.__handle__[iEvent.type] || [ ]).reduce(
                 $.proxy(function (_Data_, iHandle) {
 
-                    if (Observer.diff(iEvent, iHandle))  return _Data_;
+                    if (! Observer.match(iEvent, iHandle))  return _Data_;
 
                     var iResult = iHandle.handler.call(this, iEvent, _Data_);
 
@@ -89,7 +95,7 @@ var Observer = (function (BOM, DOM, $) {
 
             this.__handle__[iEvent.type] = $.map(
                 this.__handle__[iEvent.type],
-                $.proxy(Observer.diff, Observer, iEvent)
+                $.proxy(Observer.match, Observer, iEvent)
             );
 
             return this;
@@ -106,18 +112,26 @@ var View = (function (BOM, DOM, $) {
 
     function View($_View) {
 
+        if (this.constructor == arguments.callee)
+            throw TypeError(
+                "View() is an Abstract Base Class which can't be instantiated."
+            );
+
         this.$_View = ($_View instanceof $)  ?  $_View  :  $( $_View );
 
         var _This_ = this.constructor.instanceOf(this.$_View, false);
 
         if ((_This_ != null)  &&  (_This_ != this))  return _This_;
 
-        this.__id__ = $.uuid('View');
-        this.__name__ = this.$_View.attr('name');
+        $.extend(this, {
+            __id__:      $.uuid('View'),
+            __name__:    this.$_View.attr('name'),
+            __data__:    { }
+        });
 
         this.$_View.data('[object View]', this);
 
-        return this;
+        return this.attrWatch();
     }
 
     $.extend(View.prototype, {
@@ -129,9 +143,64 @@ var View = (function (BOM, DOM, $) {
                 (typeof iName == 'function')  ?  this.constructor.name()  :  iName
             )+ ']';
         },
+        watch:         function (iKey) {
+            var _This_ = this;
+
+            if (! (iKey in this))
+                Object.defineProperty(this, iKey, {
+                    get:    function () {
+                        if (_This_.__data__.hasOwnProperty( iKey ))
+                            return _This_.__data__[iKey];
+                    },
+                    set:    function () {
+                        _This_.render(iKey, arguments[0]);
+                    }
+                });
+        },
+        attrWatch:     function () {
+            var _This_ = this;
+
+            $.each(this.$_View[0].dataset,  function (iName, iValue) {
+
+                if (iName == 'href')  return;
+
+                _This_.__data__[iName] = iValue;
+
+                _This_.watch( iName );
+            });
+
+            this.__observer__ = new self.MutationObserver(function () {
+
+                var iData = { };
+
+                $.each(arguments[0],  function () {
+
+                    var iNew = this.target.getAttribute( this.attributeName ),
+                        iOld = this.oldValue;
+
+                    if (
+                        (iNew != iOld)  &&
+                        (! (iOld || '').match( Node_Template.expression ))
+                    )
+                        iData[ this.attributeName ] = iNew;
+                });
+
+                _This_.render( iData );
+            });
+
+            this.__observer__.observe(this.$_View[0], {
+                attributes:           true,
+                attributeOldValue:    true,
+                attributeFilter:      Object.keys(this.__data__)
+            });
+
+            return this;
+        },
         destructor:    function () {
 
             this.$_View.data('[object View]', null).empty();
+
+            this.__observer__.disconnect();
 
             delete this.__data__;
         },
@@ -354,7 +423,7 @@ var DS_Inherit = (function (BOM, DOM, $) {
 
 
 
-var HTMLView = (function (BOM, DOM, $, View, Node_Template, DS_Inherit) {
+var HTMLView = (function (BOM, DOM, $, View, MutationObserver, Node_Template, DS_Inherit) {
 
     function HTMLView($_View) {
 
@@ -365,7 +434,7 @@ var HTMLView = (function (BOM, DOM, $, View, Node_Template, DS_Inherit) {
         $.extend(this, {
             length:      0,
             __map__:     { },
-            __data__:    { }
+            __last__:    0
         });
     }
 
@@ -401,20 +470,6 @@ var HTMLView = (function (BOM, DOM, $, View, Node_Template, DS_Inherit) {
             $_Slot.not('[name]').replaceWith( $_Content.not( $_Named ) );
 
             return this;
-        },
-        watch:         function (iKey) {
-            var _This_ = this;
-
-            if (! (iKey in this))
-                Object.defineProperty(this, iKey, {
-                    get:    function () {
-                        if (_This_.__data__.hasOwnProperty( iKey ))
-                            return _This_.__data__[iKey];
-                    },
-                    set:    function () {
-                        _This_.render(iKey, arguments[0]);
-                    }
-                });
         },
         signIn:        function (iNode, iName) {
 
@@ -506,13 +561,13 @@ var HTMLView = (function (BOM, DOM, $, View, Node_Template, DS_Inherit) {
                 iData = _Data_;
             }
 
-            var _This_ = this,  _Data_ = $.extend(this.__data__, iData);
+            var _This_ = this;  _Data_ = $.extend(this.__data__, iData);
 
             if (! $.browser.modern)
                 for (var iKey in iData)  if (this.__map__[iKey])
                     this[iKey] = iData[iKey];
 
-            $.each(this.getNode( iData ),  function () {
+            $.each(this.getNode(this.__last__ ? iData : _Data_),  function () {
 
                 if (this instanceof Node_Template)
                     this.render(_This_, _Data_);
@@ -526,10 +581,12 @@ var HTMLView = (function (BOM, DOM, $, View, Node_Template, DS_Inherit) {
                     );
             });
 
+            this.__last__ = $.now();
+
             return this;
         }
     });
-})(self, self.document, self.jQuery, View, Node_Template, DS_Inherit);
+})(self, self.document, self.jQuery, View, MutationObserver, Node_Template, DS_Inherit);
 
 
 
@@ -697,16 +754,19 @@ var TreeBuilder = (function (BOM, DOM, $, ListView, HTMLView) {
             }),
             _This_,  iList = [ ],  iView = [ ];
 
-        while (_This_ = iSearcher.nextNode())  if (_This_.getAttribute('name')) {
-
-            if ($.expr[':'].list(_This_))
-                iList.unshift(_This_);
-            else if (
-                (! $.expr[':'].field(_This_))  &&
-                (_This_.parentElement != document.head)
-            )
-                iView.unshift(_This_);
-        }
+        while (_This_ = iSearcher.nextNode())
+            if (
+                _This_.getAttribute('name')  &&
+                (_This_.tagName.toLowerCase() != 'slot')
+            ) {
+                if ($.expr[':'].list(_This_))
+                    iList.unshift(_This_);
+                else if (
+                    (! $.expr[':'].field(_This_))  &&
+                    (_This_.parentElement != document.head)
+                )
+                    iView.unshift(_This_);
+            }
 
         for (var i = 0;  iList[i];  i++)
             _This_ = new ListView( iList[i] );
@@ -727,7 +787,6 @@ var TreeBuilder = (function (BOM, DOM, $, ListView, HTMLView) {
             scope:    iScope
         };
     };
-
 })(self, self.document, self.jQuery, ListView, HTMLView);
 
 
@@ -810,7 +869,8 @@ var WebApp = (function (BOM, DOM, $, Observer, View, HTMLView, ListView, InnerLi
             }
 
             return HTMLView.build(
-                $_Target,  this.emit(
+                $_Target,
+                iHTML && this.emit(
                     $.extend(iLink.valueOf(), {type: 'template'}),  iHTML
                 )
             ).then(function ($_Content) {

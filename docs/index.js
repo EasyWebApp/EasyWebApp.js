@@ -15,7 +15,7 @@ require([
                 if (this.type.toUpperCase() != 'GET')
                     self.alert( iData.message );
 
-                iData = iData.data || { };
+                iData = iData.data || iData;
             }
 
             return  JSON.stringify( iData );
