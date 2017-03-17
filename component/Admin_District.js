@@ -5,7 +5,15 @@
 
 require(['jquery'],  function ($) {
 
-    var iWebApp = $().iWebApp();
+    var iWebApp = $().iWebApp(),  iLevel = ['province', 'city', 'district'];
+
+    function codeOf(_Level_) {
+
+        var iCount = iLevel.indexOf(_Level_) + 1;
+
+        return  this.adcode.toString().slice(0,  2 * iCount)  +
+            '00'.repeat(3 - iCount);
+    }
 
     iWebApp.component(function () {
 
@@ -34,9 +42,7 @@ require(['jquery'],  function ($) {
 
             iList.clear().render( iData );
 
-            var $_Select = iList.$_View;
-
-            var iValue = VM[ $_Select[0].name ];
+            var iValue = VM.codeOf( iData[0].level ),  $_Select = iList.$_View;
 
             if ( iValue ) {
                 $_Select[0].value = iValue;
@@ -49,23 +55,18 @@ require(['jquery'],  function ($) {
         });
 
         return {
+            codeOf:    codeOf,
             getSub:    function (iEvent) {
 
                 var $_Select = $( iEvent.target );
-
-                var iLink = $_Select.parents(':view')[0];
-
-                iLink.dataset.href = '?data=' + $.extendURL(
-                    iLink.dataset.href.replace(/^\?data=/, ''),  {
-                        keywords:    $_Select[0].value
-                    }
-                );
 
                 if ($_Select.nextAll('select').each(function () {
 
                     $( this ).view('ListView').clear();
                 })[0])
-                    iWebApp.load( iLink );
+                    iWebApp.load($_Select.parents(':view')[0], {
+                        keywords:    $_Select[0].value
+                    });
             }
         };
     });

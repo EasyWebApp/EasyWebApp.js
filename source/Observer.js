@@ -91,6 +91,16 @@ define(['jquery', 'jQuery+'],  function ($) {
             );
 
             return this;
+        },
+        one:     function (iEvent, iCallback) {
+
+            return  this.on(iEvent,  function () {
+
+                this.off(iEvent, arguments.callee);
+
+                if (typeof iCallback == 'function')
+                    return  iCallback.apply(this, arguments);
+            });
         }
     });
 

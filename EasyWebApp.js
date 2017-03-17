@@ -101,6 +101,15 @@ var Observer = (function (BOM, DOM, $) {
             );
 
             return this;
+        },
+        one:     function (iEvent, iCallback) {
+
+            return  this.on(iEvent,  function () {
+
+                return iCallback.apply(
+                    this.off(iEvent, arguments.callee),  arguments
+                );
+            });
         }
     });
 
@@ -479,12 +488,9 @@ var HTMLView = (function (BOM, DOM, $, View, MutationObserver, Node_Template, DS
 
             this[this.length++] = iNode;
 
-            for (var j = 0;  iName[j];  j++) {
+            for (var j = 0;  iName[j];  j++)
                 this.__map__[iName[j]] = (this.__map__[iName[j]] || 0)  +
                     Math.pow(2, i);
-
-                if ( $.browser.modern )  this.watch( iName[j] );
-            }
         },
         parsePlain:    function (iDOM) {
             var _This_ = this;
@@ -555,6 +561,18 @@ var HTMLView = (function (BOM, DOM, $, View, MutationObserver, Node_Template, DS
                 return  (arguments[0] > 0)  ?  _This_[ arguments[1] ]  :  null;
             });
         },
+        extend:        function (iData) {
+
+            for (var iKey in iData)
+                if (iData.hasOwnProperty( iKey )) {
+
+                    this.__data__[iKey] = iData[iKey];
+
+                    this.watch( iKey );
+                }
+
+            return this.__data__;
+        },
         render:        function (iData) {
 
             if (typeof iData.valueOf() == 'string') {
@@ -563,7 +581,7 @@ var HTMLView = (function (BOM, DOM, $, View, MutationObserver, Node_Template, DS
                 iData = _Data_;
             }
 
-            var _This_ = this;  _Data_ = $.extend(this.__data__, iData);
+            var _This_ = this;  _Data_ = this.extend( iData );
 
             if (! $.browser.modern)
                 for (var iKey in iData)  if (this.__map__[iKey])
@@ -693,18 +711,12 @@ var InnerLink = (function (BOM, DOM, $, Observer) {
                 iOption.contentType = iOption.processData = false;
             }
 
-            var URI = iOption.type.toUpperCase() + ' ' + this.src;
+            var URI = iOption.type.toUpperCase() + ' ' + this.src,
+                iJSON = Promise.resolve($.ajax(this.src, iOption));
 
-            return  Promise.resolve($.ajax(this.src, iOption)).then(
+            return  (this.method != 'get')  ?  iJSON  :  iJSON.then(
                 $.proxy($.storage, $, URI),  $.proxy($.storage, $, URI, null)
             );
-        },
-        load:        function () {
-
-            return  Promise.all([
-                this.href  &&  $.get( this.href ),
-                this.src  &&  this.loadData()
-            ]);
         },
         valueOf:     function () {
             var _This_ = { };
@@ -900,27 +912,13 @@ var WebApp = (function (BOM, DOM, $, Observer, View, HTMLView, ListView, InnerLi
                 return iView;
             });
         },
-        load:         function (iLink) {
-
-            if (iLink instanceof Element)
-                iLink = new InnerLink(iLink, this.apiRoot);
+        loadComponent:    function (iLink, iHTML, iData) {
 
             this.loading[ iLink.href ] = iLink;
 
-            var iData,  iEvent = iLink.valueOf(),  _This_ = this,  JS_Load,  iView;
+            var iView,  JS_Load = iLink.one('load'),  _This_ = this;
 
-            return  iLink.load().then(function () {
-
-                iData = arguments[0][1];
-
-                if (iData != null)
-                    iData = _This_.emit($.extend(iEvent, {type: 'data'}),  iData);
-
-                JS_Load = iLink.on('load');
-
-                return  _This_.loadView(iLink, arguments[0][0]);
-
-            }).then(function () {
+            return  this.loadView(iLink, iHTML).then(function () {
 
                 iView = arguments[0];
 
@@ -935,12 +933,57 @@ var WebApp = (function (BOM, DOM, $, Observer, View, HTMLView, ListView, InnerLi
 
                 iView.root.render(((typeof iData == 'object') && iData)  ||  { });
 
+                return iView;
+            });
+        },
+        loadData:     function (iLink) {
+            var _This_ = this;
+
+            return  iLink.loadData().then(function (iData) {
+
+                if (iData != null)
+                    iData = _This_.emit(
+                        $.extend(iLink.valueOf(), {type: 'data'}),  iData
+                    );
+
+                return iData;
+            });
+        },
+        load:         function (iLink, URL_Data) {
+
+            if (iLink instanceof Element) {
+                if ($.isPlainObject( URL_Data ))
+                    iLink.dataset.href = '?data=' + $.extendURL(
+                        iLink.dataset.href.replace(/^\?data=/, ''),  URL_Data
+                    );
+                iLink = new InnerLink(iLink, this.apiRoot);
+            }
+
+            if ((! iLink.href)  &&  iLink.target)
+                return  this.loadData( iLink );
+
+            var _This_ = this,  iView;
+
+            return  Promise.all([
+                iLink.href  &&  $.get( iLink.href ),
+                iLink.src  &&  this.loadData( iLink )
+            ]).then(function () {
+
+                return  _This_.loadComponent(
+                    iLink,  arguments[0][0],  arguments[0][1]
+                );
+            }).then(function () {
+
+                iView = arguments[0];
+
                 return Promise.all($.map(
                     iView.sub,  $.proxy(_This_.load, _This_)
                 ));
             }).then(function () {
 
-                _This_.emit($.extend(iEvent, {type: 'ready'}),  iView.root);
+                _This_.emit(
+                    $.extend(iLink.valueOf(), {type: 'ready'}),  iView.root
+                );
             });
         },
         listenDOM:    function () {
@@ -955,13 +998,16 @@ var WebApp = (function (BOM, DOM, $, Observer, View, HTMLView, ListView, InnerLi
                         this.name || this.getAttribute('name'),
                         $(this).value('name')
                     );
-            })).on('click submit',  InnerLink.HTML_Link,  function () {
+            })).on('click submit',  InnerLink.HTML_Link,  function (iEvent) {
+
+                if ((this.tagName == 'FORM')  &&  (iEvent.type != 'submit'))
+                    return;
 
                 var CID = (this.href || this.action).match(_This_.pageRoot);
 
                 if ((CID || '').index === 0) {
 
-                    arguments[0].preventDefault();
+                    iEvent.preventDefault();
 
                     _This_.load( this );
                 }

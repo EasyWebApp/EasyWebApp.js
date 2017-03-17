@@ -53,18 +53,12 @@ define(['jquery', 'Observer', 'iQuery+'],  function ($, Observer) {
                 iOption.contentType = iOption.processData = false;
             }
 
-            var URI = iOption.type.toUpperCase() + ' ' + this.src;
+            var URI = iOption.type.toUpperCase() + ' ' + this.src,
+                iJSON = Promise.resolve($.ajax(this.src, iOption));
 
-            return  Promise.resolve($.ajax(this.src, iOption)).then(
+            return  (this.method != 'get')  ?  iJSON  :  iJSON.then(
                 $.proxy($.storage, $, URI),  $.proxy($.storage, $, URI, null)
             );
-        },
-        load:        function () {
-
-            return  Promise.all([
-                this.href  &&  $.get( this.href ),
-                this.src  &&  this.loadData()
-            ]);
         },
         valueOf:     function () {
             var _This_ = { };

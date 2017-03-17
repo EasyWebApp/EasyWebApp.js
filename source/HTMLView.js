@@ -54,12 +54,9 @@ define([
 
             this[this.length++] = iNode;
 
-            for (var j = 0;  iName[j];  j++) {
+            for (var j = 0;  iName[j];  j++)
                 this.__map__[iName[j]] = (this.__map__[iName[j]] || 0)  +
                     Math.pow(2, i);
-
-                if ( $.browser.modern )  this.watch( iName[j] );
-            }
         },
         parsePlain:    function (iDOM) {
             var _This_ = this;
@@ -130,6 +127,18 @@ define([
                 return  (arguments[0] > 0)  ?  _This_[ arguments[1] ]  :  null;
             });
         },
+        extend:        function (iData) {
+
+            for (var iKey in iData)
+                if (iData.hasOwnProperty( iKey )) {
+
+                    this.__data__[iKey] = iData[iKey];
+
+                    this.watch( iKey );
+                }
+
+            return this.__data__;
+        },
         render:        function (iData) {
 
             if (typeof iData.valueOf() == 'string') {
@@ -138,7 +147,7 @@ define([
                 iData = _Data_;
             }
 
-            var _This_ = this;  _Data_ = $.extend(this.__data__, iData);
+            var _This_ = this;  _Data_ = this.extend( iData );
 
             if (! $.browser.modern)
                 for (var iKey in iData)  if (this.__map__[iKey])
