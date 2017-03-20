@@ -106,7 +106,7 @@ define([
 
             this.loading[ iLink.href ] = iLink;
 
-            var iView,  JS_Load = iLink.on('load'),  _This_ = this;
+            var iView,  JS_Load = iLink.one('load'),  _This_ = this;
 
             return  this.loadView(iLink, iHTML).then(function () {
 
@@ -139,15 +139,10 @@ define([
                 return iData;
             });
         },
-        load:         function (iLink, URL_Data) {
+        load:         function (iLink) {
 
-            if (iLink instanceof Element) {
-                if ($.isPlainObject( URL_Data ))
-                    iLink.dataset.href = '?data=' + $.extendURL(
-                        iLink.dataset.href.replace(/^\?data=/, ''),  URL_Data
-                    );
+            if (iLink instanceof Element)
                 iLink = new InnerLink(iLink, this.apiRoot);
-            }
 
             if ((! iLink.href)  &&  iLink.target)
                 return  this.loadData( iLink );

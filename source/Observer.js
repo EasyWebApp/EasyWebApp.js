@@ -9,8 +9,9 @@ define(['jquery', 'jQuery+'],  function ($) {
     $.extend(Observer, {
         getEvent:    function (iEvent) {
             return $.extend(
+                { },
                 (typeof iEvent == 'string')  ?  {type: iEvent}  :  iEvent,
-                arguments[1]  ||  { }
+                arguments[1]
             );
         },
         match:       function (iEvent, iHandle) {
@@ -33,7 +34,7 @@ define(['jquery', 'jQuery+'],  function ($) {
     });
 
     $.extend(Observer.prototype, {
-        sign:    function (iEvent, iCallback) {
+        on:      function (iEvent, iCallback) {
 
             iEvent = Observer.getEvent(iEvent,  {handler: iCallback});
 
@@ -46,21 +47,6 @@ define(['jquery', 'jQuery+'],  function ($) {
             iHandle.push( iEvent );
 
             return this;
-        },
-        on:      function (iEvent, iCallback) {
-
-            if (typeof iCallback == 'function')
-                return  this.sign(iEvent, iCallback);
-
-            var _This_ = this;
-
-            return  new Promise(function (iResolve) {
-
-                _This_.sign(iEvent,  function () {
-
-                    iResolve( arguments[1] );
-                });
-            });
         },
         emit:    function (iEvent, iData) {
 
@@ -85,21 +71,29 @@ define(['jquery', 'jQuery+'],  function ($) {
 
             this.__handle__[iEvent.type] = $.map(
                 this.__handle__[iEvent.type],  function (iHandle) {
-
-                    return  Observer.match(iEvent, iHandle)  ?  null  :  iHandle;
+                    return (
+                        Observer.match(iEvent, iHandle)  &&  (
+                            (! iEvent.handler)  ||
+                            (iEvent.handler == iHandle.handler)
+                        )
+                    )  ?  null  :  iHandle;
                 }
             );
 
             return this;
         },
-        one:     function (iEvent, iCallback) {
+        one:     function () {
 
-            return  this.on(iEvent,  function () {
+            var _This_ = this,  iArgs = $.makeArray( arguments );
 
-                this.off(iEvent, arguments.callee);
+            return  new Promise(function (iResolve) {
 
-                if (typeof iCallback == 'function')
-                    return  iCallback.apply(this, arguments);
+                _This_.on.apply(_This_,  iArgs.concat(function () {
+
+                    _This_.off.apply(_This_,  iArgs.concat( arguments.callee ));
+
+                    iResolve( arguments[1] );
+                }));
             });
         }
     });

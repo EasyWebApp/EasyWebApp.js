@@ -1,4 +1,6 @@
-define(['jquery', 'Node_Template', 'jQuery+'],  function ($, Node_Template) {
+define([
+    'jquery', 'Node_Template', 'Observer', 'jQuery+'
+],  function ($, Node_Template, Observer) {
 
     function View($_View) {
 
@@ -21,7 +23,9 @@ define(['jquery', 'Node_Template', 'jQuery+'],  function ($, Node_Template) {
 
         this.$_View.data('[object View]', this);
 
-        return this.attrWatch();
+        if ( this.$_View[0].dataset.href )  this.attrWatch();
+
+        return this;
     }
 
     $.extend(View.prototype, {
@@ -47,17 +51,22 @@ define(['jquery', 'Node_Template', 'jQuery+'],  function ($, Node_Template) {
                     }
                 });
         },
+        extend:        function (iData) {
+
+            for (var iKey in iData)
+                if (iData.hasOwnProperty( iKey )) {
+
+                    this.__data__[iKey] = iData[iKey];
+
+                    this.watch( iKey );
+                }
+
+            return this.__data__;
+        },
         attrWatch:     function () {
             var _This_ = this;
 
-            $.each(this.$_View[0].dataset,  function (iName, iValue) {
-
-                if (iName == 'href')  return;
-
-                _This_.__data__[iName] = Node_Template.safeEval( iValue );
-
-                _This_.watch( iName );
-            });
+            this.extend( this.$_View[0].dataset );
 
             this.__observer__ = new self.MutationObserver(function () {
 
@@ -72,25 +81,31 @@ define(['jquery', 'Node_Template', 'jQuery+'],  function ($, Node_Template) {
                         (iNew != iOld)  &&
                         (! (iOld || '').match( Node_Template.expression ))
                     )
-                        iData[ this.attributeName ] = iNew;
+                        iData[ this.attributeName.slice(5) ] = iNew;
                 });
 
-                _This_.render( iData );
+                if (! $.isEmptyObject( iData ))
+                    _This_.render( iData ).trigger('update', iData);
             });
 
             this.__observer__.observe(this.$_View[0], {
                 attributes:           true,
                 attributeOldValue:    true,
-                attributeFilter:      Object.keys(this.__data__)
-            });
+                attributeFilter:      $.map(
+                    this.$_View[0].attributes,
+                    function (iNode) {
 
-            return this;
+                        return  iNode.nodeName.match(/^data-[\w\-]+$/i) ?
+                            iNode.nodeName : null;
+                    }
+                )
+            });
         },
         destructor:    function () {
 
             this.$_View.data('[object View]', null).empty();
 
-            this.__observer__.disconnect();
+            if (this.__observer__)  this.__observer__.disconnect();
 
             delete this.__data__;
         },
@@ -104,7 +119,7 @@ define(['jquery', 'Node_Template', 'jQuery+'],  function ($, Node_Template) {
         }
     });
 
-    $.each(['trigger', 'on', 'one', 'off'],  function (Index, iName) {
+    $.each(['trigger', 'on', 'off'],  function (Index, iName) {
 
         View.prototype[this] = function () {
 
@@ -115,6 +130,8 @@ define(['jquery', 'Node_Template', 'jQuery+'],  function ($, Node_Template) {
             return this;
         };
     });
+
+    View.prototype.one = Observer.prototype.one;
 
     $.extend(View, {
         getClass:        function () {

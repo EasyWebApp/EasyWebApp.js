@@ -53,13 +53,13 @@
         <li class="active">
             ${vm.page}
         </li>
-        <li style="display: ${(vm.page + 1 > vm.pageSum) ? 'none' : ''}">
-            ${vm.page + 1}
+        <li style="display: ${(+vm.page + 1 > vm.pageSum) ? 'none' : ''}">
+            ${+vm.page + 1}
         </li>
-        <li style="display: ${(vm.pageSum < 6) || (vm.page + 3 > vm.pageSum) ? 'none' : ''}">
+        <li style="display: ${(vm.pageSum < 6) || (+vm.page + 3 > vm.pageSum) ? 'none' : ''}">
             …
         </li>
-        <li style="display: ${(vm.page + 2 > vm.pageSum) ? 'none' : ''}">
+        <li style="display: ${(+vm.page + 2 > vm.pageSum) ? 'none' : ''}">
             ${vm.pageSum}
         </li>
     </ul>

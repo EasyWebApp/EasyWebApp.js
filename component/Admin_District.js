@@ -26,7 +26,12 @@ require(['jquery'],  function ($) {
                 type:      'data',
                 target:    this.$_View.find('[data-href]')[0]
             },
-            VM = this;
+            $_adCode = this.$_View.find('[type="hidden"]');
+
+        var VM = this.on('update',  function () {
+
+                iWebApp.load( iEvent.target );
+            });
 
         iWebApp.off( iEvent ).on(iEvent,  function (iEvent, iData) {
 
@@ -42,13 +47,12 @@ require(['jquery'],  function ($) {
 
             iList.clear().render( iData );
 
-            var iValue = VM.codeOf( iData[0].level ),  $_Select = iList.$_View;
+            var $_Select = iList.$_View;
 
-            if ( iValue ) {
-                $_Select[0].value = iValue;
-
-                if (! $_Select[0].value)  $_Select[0].selectedIndex = 0;
-            }
+            if (! $_Select.children(
+                '[data-adcode="'  +  VM.codeOf( iData[0].level )  +  '"]'
+            ).prop('selected', true)[0])
+                $_Select[0].selectedIndex = 0;
 
             if ( $_Select[0].value )
                 setTimeout($.proxy($.fn.change, $_Select));
@@ -58,15 +62,22 @@ require(['jquery'],  function ($) {
             codeOf:    codeOf,
             getSub:    function (iEvent) {
 
-                var $_Select = $( iEvent.target );
+                var $_Select = $( iEvent.target ),
+                    iLink = $_adCode.parents(':view')[0];
+
+                $_adCode[0].value = $_Select[0].selectedOptions[0].dataset.adcode;
 
                 if ($_Select.nextAll('select').each(function () {
 
                     $( this ).view('ListView').clear();
                 })[0])
-                    iWebApp.load($_Select.parents(':view')[0], {
-                        keywords:    $_Select[0].value
-                    });
+                    iLink.dataset.href = '?data=' + $.extendURL(
+                        iLink.dataset.href.replace(/^\?data=/, ''), {
+                            keywords:    $_adCode[0].value
+                        }
+                    );
+                else
+                    this.trigger('loadAll');
             }
         };
     });

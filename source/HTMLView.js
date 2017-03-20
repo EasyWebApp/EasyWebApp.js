@@ -127,18 +127,6 @@ define([
                 return  (arguments[0] > 0)  ?  _This_[ arguments[1] ]  :  null;
             });
         },
-        extend:        function (iData) {
-
-            for (var iKey in iData)
-                if (iData.hasOwnProperty( iKey )) {
-
-                    this.__data__[iKey] = iData[iKey];
-
-                    this.watch( iKey );
-                }
-
-            return this.__data__;
-        },
         render:        function (iData) {
 
             if (typeof iData.valueOf() == 'string') {
@@ -148,10 +136,6 @@ define([
             }
 
             var _This_ = this;  _Data_ = this.extend( iData );
-
-            if (! $.browser.modern)
-                for (var iKey in iData)  if (this.__map__[iKey])
-                    this[iKey] = iData[iKey];
 
             $.each(this.getNode(this.__last__ ? iData : _Data_),  function () {
 

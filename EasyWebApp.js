@@ -19,8 +19,9 @@ var Observer = (function (BOM, DOM, $) {
     $.extend(Observer, {
         getEvent:    function (iEvent) {
             return $.extend(
+                { },
                 (typeof iEvent == 'string')  ?  {type: iEvent}  :  iEvent,
-                arguments[1]  ||  { }
+                arguments[1]
             );
         },
         match:       function (iEvent, iHandle) {
@@ -43,7 +44,7 @@ var Observer = (function (BOM, DOM, $) {
     });
 
     $.extend(Observer.prototype, {
-        sign:    function (iEvent, iCallback) {
+        on:      function (iEvent, iCallback) {
 
             iEvent = Observer.getEvent(iEvent,  {handler: iCallback});
 
@@ -56,21 +57,6 @@ var Observer = (function (BOM, DOM, $) {
             iHandle.push( iEvent );
 
             return this;
-        },
-        on:      function (iEvent, iCallback) {
-
-            if (typeof iCallback == 'function')
-                return  this.sign(iEvent, iCallback);
-
-            var _This_ = this;
-
-            return  new Promise(function (iResolve) {
-
-                _This_.sign(iEvent,  function () {
-
-                    iResolve( arguments[1] );
-                });
-            });
         },
         emit:    function (iEvent, iData) {
 
@@ -95,20 +81,29 @@ var Observer = (function (BOM, DOM, $) {
 
             this.__handle__[iEvent.type] = $.map(
                 this.__handle__[iEvent.type],  function (iHandle) {
-
-                    return  Observer.match(iEvent, iHandle)  ?  null  :  iHandle;
+                    return (
+                        Observer.match(iEvent, iHandle)  &&  (
+                            (! iEvent.handler)  ||
+                            (iEvent.handler == iHandle.handler)
+                        )
+                    )  ?  null  :  iHandle;
                 }
             );
 
             return this;
         },
-        one:     function (iEvent, iCallback) {
+        one:     function () {
 
-            return  this.on(iEvent,  function () {
+            var _This_ = this,  iArgs = $.makeArray( arguments );
 
-                return iCallback.apply(
-                    this.off(iEvent, arguments.callee),  arguments
-                );
+            return  new Promise(function (iResolve) {
+
+                _This_.on.apply(_This_,  iArgs.concat(function () {
+
+                    _This_.off.apply(_This_,  iArgs.concat( arguments.callee ));
+
+                    iResolve( arguments[1] );
+                }));
             });
         }
     });
@@ -230,7 +225,7 @@ var Node_Template = (function (BOM, DOM, $) {
 
 
 
-var View = (function (BOM, DOM, $, Node_Template) {
+var View = (function (BOM, DOM, $, Node_Template, Observer) {
 
     function View($_View) {
 
@@ -253,7 +248,9 @@ var View = (function (BOM, DOM, $, Node_Template) {
 
         this.$_View.data('[object View]', this);
 
-        return this.attrWatch();
+        if ( this.$_View[0].dataset.href )  this.attrWatch();
+
+        return this;
     }
 
     $.extend(View.prototype, {
@@ -279,17 +276,22 @@ var View = (function (BOM, DOM, $, Node_Template) {
                     }
                 });
         },
+        extend:        function (iData) {
+
+            for (var iKey in iData)
+                if (iData.hasOwnProperty( iKey )) {
+
+                    this.__data__[iKey] = iData[iKey];
+
+                    this.watch( iKey );
+                }
+
+            return this.__data__;
+        },
         attrWatch:     function () {
             var _This_ = this;
 
-            $.each(this.$_View[0].dataset,  function (iName, iValue) {
-
-                if (iName == 'href')  return;
-
-                _This_.__data__[iName] = Node_Template.safeEval( iValue );
-
-                _This_.watch( iName );
-            });
+            this.extend( this.$_View[0].dataset );
 
             this.__observer__ = new self.MutationObserver(function () {
 
@@ -304,25 +306,31 @@ var View = (function (BOM, DOM, $, Node_Template) {
                         (iNew != iOld)  &&
                         (! (iOld || '').match( Node_Template.expression ))
                     )
-                        iData[ this.attributeName ] = iNew;
+                        iData[ this.attributeName.slice(5) ] = iNew;
                 });
 
-                _This_.render( iData );
+                if (! $.isEmptyObject( iData ))
+                    _This_.render( iData ).trigger('update', iData);
             });
 
             this.__observer__.observe(this.$_View[0], {
                 attributes:           true,
                 attributeOldValue:    true,
-                attributeFilter:      Object.keys(this.__data__)
-            });
+                attributeFilter:      $.map(
+                    this.$_View[0].attributes,
+                    function (iNode) {
 
-            return this;
+                        return  iNode.nodeName.match(/^data-[\w\-]+$/i) ?
+                            iNode.nodeName : null;
+                    }
+                )
+            });
         },
         destructor:    function () {
 
             this.$_View.data('[object View]', null).empty();
 
-            this.__observer__.disconnect();
+            if (this.__observer__)  this.__observer__.disconnect();
 
             delete this.__data__;
         },
@@ -336,7 +344,7 @@ var View = (function (BOM, DOM, $, Node_Template) {
         }
     });
 
-    $.each(['trigger', 'on', 'one', 'off'],  function (Index, iName) {
+    $.each(['trigger', 'on', 'off'],  function (Index, iName) {
 
         View.prototype[this] = function () {
 
@@ -347,6 +355,8 @@ var View = (function (BOM, DOM, $, Node_Template) {
             return this;
         };
     });
+
+    View.prototype.one = Observer.prototype.one;
 
     $.extend(View, {
         getClass:        function () {
@@ -388,7 +398,7 @@ var View = (function (BOM, DOM, $, Node_Template) {
             } while ($_Instance[0]  &&  (Check_Parent !== false));
         }
     });
-})(self, self.document, self.jQuery, Node_Template);
+})(self, self.document, self.jQuery, Node_Template, Observer);
 
 
 
@@ -561,18 +571,6 @@ var HTMLView = (function (BOM, DOM, $, View, MutationObserver, Node_Template, DS
                 return  (arguments[0] > 0)  ?  _This_[ arguments[1] ]  :  null;
             });
         },
-        extend:        function (iData) {
-
-            for (var iKey in iData)
-                if (iData.hasOwnProperty( iKey )) {
-
-                    this.__data__[iKey] = iData[iKey];
-
-                    this.watch( iKey );
-                }
-
-            return this.__data__;
-        },
         render:        function (iData) {
 
             if (typeof iData.valueOf() == 'string') {
@@ -582,10 +580,6 @@ var HTMLView = (function (BOM, DOM, $, View, MutationObserver, Node_Template, DS
             }
 
             var _This_ = this;  _Data_ = this.extend( iData );
-
-            if (! $.browser.modern)
-                for (var iKey in iData)  if (this.__map__[iKey])
-                    this[iKey] = iData[iKey];
 
             $.each(this.getNode(this.__last__ ? iData : _Data_),  function () {
 
@@ -949,15 +943,10 @@ var WebApp = (function (BOM, DOM, $, Observer, View, HTMLView, ListView, InnerLi
                 return iData;
             });
         },
-        load:         function (iLink, URL_Data) {
+        load:         function (iLink) {
 
-            if (iLink instanceof Element) {
-                if ($.isPlainObject( URL_Data ))
-                    iLink.dataset.href = '?data=' + $.extendURL(
-                        iLink.dataset.href.replace(/^\?data=/, ''),  URL_Data
-                    );
+            if (iLink instanceof Element)
                 iLink = new InnerLink(iLink, this.apiRoot);
-            }
 
             if ((! iLink.href)  &&  iLink.target)
                 return  this.loadData( iLink );
@@ -1057,7 +1046,7 @@ var WebApp = (function (BOM, DOM, $, Observer, View, HTMLView, ListView, InnerLi
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v3.8  (2017-03-17)  Beta
+//      [Version]    v3.8  (2017-03-20)  Beta
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //
