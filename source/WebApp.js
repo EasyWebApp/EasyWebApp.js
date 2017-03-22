@@ -44,9 +44,7 @@ define([
             self.history.pushState(
                 {index: this.length},
                 document.title = iLink.title,
-                '#!' + self.btoa(
-                    iLink.href  +  (iLink.src  ?  ('?data=' + iLink.src)  :  '')
-                )
+                '#!'  +  self.btoa( iLink.getURI() )
             );
             this.push( iLink );
         },
@@ -93,9 +91,11 @@ define([
 
                 if ( iView.parse )  iView.parse();
 
-                var iParent = HTMLView.instanceOf( iView.$_View.parents() );
+                var iParent = HTMLView.instanceOf( iView.$_View[0].parentNode );
 
-                iView.scope(iParent  ?  iParent.scope()  :  { });
+                iView.scope(
+                    $.extend(iParent ? iParent.scope() : { },  iLink.data)
+                );
 
                 return iView;
             });

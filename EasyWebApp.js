@@ -233,7 +233,7 @@ var Node_Template = (function (BOM, DOM, $) {
 
 
 
-var View = (function (BOM, DOM, $, Node_Template, Observer) {
+var View = (function (BOM, DOM, $, MutationObserver, Node_Template, Observer) {
 
     function View($_View) {
 
@@ -373,14 +373,6 @@ var View = (function (BOM, DOM, $, Node_Template, Observer) {
                     iParser.call(_This_, Sub_View[i]);
             });
         },
-        destructor:    function () {
-
-            this.$_View.data('[object View]', null).empty();
-
-            if (this.__observer__)  this.__observer__.disconnect();
-
-            delete this.__data__;
-        },
         scope:         function (iSup) {
             this.__data__ = iSup;
 
@@ -395,15 +387,34 @@ var View = (function (BOM, DOM, $, Node_Template, Observer) {
 
         View.prototype[this] = function () {
 
-            if ( Index )  arguments[0] += '.EWA_View';
+            var iArgs = $.makeArray( arguments );
 
-            $.fn[iName].apply(this.$_View, arguments);
+            if ( Index ) {
+                iArgs[0] += '.EWA_View';
+
+                if (typeof iArgs.slice(-1)[0] == 'function') {
+
+                    iArgs = iArgs.concat($.proxy(iArgs.pop(), this));
+                }
+            }
+
+            $.fn[iName].apply(this.$_View, iArgs);
 
             return this;
         };
     });
 
-    View.prototype.one = Observer.prototype.one;
+    $.extend(View.prototype, {
+        one:           Observer.prototype.one,
+        destructor:    function () {
+
+            this.off('').$_View.data('[object View]', null).empty();
+
+            if (this.__observer__)  this.__observer__.disconnect();
+
+            delete this.__data__;
+        }
+    });
 
     $.extend(View, {
         getClass:        function () {
@@ -455,7 +466,7 @@ var View = (function (BOM, DOM, $, Node_Template, Observer) {
             } while ($_Instance[0]  &&  (Check_Parent !== false));
         }
     });
-})(self, self.document, self.jQuery, Node_Template, Observer);
+})(self, self.document, self.jQuery, MutationObserver, Node_Template, Observer);
 
 
 
@@ -501,7 +512,7 @@ var DS_Inherit = (function (BOM, DOM, $) {
 
 
 
-var HTMLView = (function (BOM, DOM, $, View, MutationObserver, Node_Template, DS_Inherit) {
+var HTMLView = (function (BOM, DOM, $, View, Node_Template, DS_Inherit) {
 
     function HTMLView($_View) {
 
@@ -595,7 +606,7 @@ var HTMLView = (function (BOM, DOM, $, View, MutationObserver, Node_Template, DS
 
                         this.signIn(iNode, [iNode.__name__]);    break;
                     }
-                    case $.expr[':'].field( iNode ):  {
+                    case ($.expr[':'].field( iNode )  &&  (! iNode.value)):  {
 
                         this.signIn(iNode, [iNode.name]);
                     }
@@ -654,7 +665,7 @@ var HTMLView = (function (BOM, DOM, $, View, MutationObserver, Node_Template, DS
             return this;
         }
     });
-})(self, self.document, self.jQuery, View, MutationObserver, Node_Template, DS_Inherit);
+})(self, self.document, self.jQuery, View, Node_Template, DS_Inherit);
 
 
 
@@ -716,21 +727,7 @@ var InnerLink = (function (BOM, DOM, $, Observer) {
 
         this.method = (Link_DOM.getAttribute('method') || 'Get').toUpperCase();
 
-        this.href = Link_DOM.dataset.href ||
-            Link_DOM.getAttribute(Link_DOM.href ? 'href' : 'action');
-
-        this.src = this.href.split('?data=');
-
-        this.href = this.src[0];
-
-        this.src = this.src[1];
-
-        if (this.src  &&  (! $.urlDomain( this.src )))
-            this.src = API_Root + this.src;
-
-        this.href = this.href.split('?')[0];
-
-        this.title = Link_DOM.title || document.title;
+        this.setURI(Link_DOM, API_Root).title = Link_DOM.title || document.title;
     }
 
     var $_Prefetch = $(
@@ -743,10 +740,42 @@ var InnerLink = (function (BOM, DOM, $, Observer) {
         HTML_Link:    'a[href], form[action]',
         Self_Link:    '[data-href]:not(a, form)'
     }, {
+        setURI:      function (Link_DOM, API_Root) {
+
+            this.href = Link_DOM.dataset.href ||
+                Link_DOM.getAttribute(Link_DOM.href ? 'href' : 'action');
+
+            this.src = this.href.split('?data=');
+
+            this.href = this.src[0];
+
+            this.fullSrc = this.src = this.src[1];
+
+            if (this.src  &&  (! $.urlDomain( this.src )))
+                this.fullSrc = API_Root + this.src;
+
+            this.data = $.paramJSON( this.href );
+
+            this.href = this.href.split('?')[0];
+
+            return this;
+        },
+        getURI:      function () {
+
+            var iData = [$.param( this.data )];
+
+            if (! iData[0])  iData.length = 0;
+
+            if ( this.src )  iData.push('data=' + this.src);
+
+            iData = iData.join('&');
+
+            return  (this.href || '')  +  (iData  &&  ('?' + iData));
+        },
         loadData:    function () {
 
             if (this.$_View[0].tagName == 'A')
-                return  Promise.resolve($.getJSON( this.src ));
+                return  Promise.resolve($.getJSON( this.fullSrc ));
 
             var iOption = {
                     type:        this.method,
@@ -761,8 +790,8 @@ var InnerLink = (function (BOM, DOM, $, Observer) {
                 iOption.contentType = iOption.processData = false;
             }
 
-            var URI = iOption.type.toUpperCase() + ' ' + this.src,
-                iJSON = Promise.resolve($.ajax(this.src, iOption));
+            var URI = iOption.type.toUpperCase() + ' ' + this.fullSrc,
+                iJSON = Promise.resolve($.ajax(this.fullSrc, iOption));
 
             return  (this.method != 'get')  ?  iJSON  :  iJSON.then(
                 $.proxy($.storage, $, URI),  $.proxy($.storage, $, URI, null)
@@ -790,7 +819,7 @@ var InnerLink = (function (BOM, DOM, $, Observer) {
                 (this.method == 'GET')  &&
                 this.src  &&  (this.src.indexOf('?') == -1)
             )
-                $_Prefetch.clone().attr('href', this.src).appendTo('head');
+                $_Prefetch.clone().attr('href', this.fullSrc).appendTo('head');
         }
     });
 })(self, self.document, self.jQuery, Observer);
@@ -841,9 +870,7 @@ var WebApp = (function (BOM, DOM, $, Observer, View, HTMLView, ListView, InnerLi
             self.history.pushState(
                 {index: this.length},
                 document.title = iLink.title,
-                '#!' + self.btoa(
-                    iLink.href  +  (iLink.src  ?  ('?data=' + iLink.src)  :  '')
-                )
+                '#!'  +  self.btoa( iLink.getURI() )
             );
             this.push( iLink );
         },
@@ -890,9 +917,11 @@ var WebApp = (function (BOM, DOM, $, Observer, View, HTMLView, ListView, InnerLi
 
                 if ( iView.parse )  iView.parse();
 
-                var iParent = HTMLView.instanceOf( iView.$_View.parents() );
+                var iParent = HTMLView.instanceOf( iView.$_View[0].parentNode );
 
-                iView.scope(iParent  ?  iParent.scope()  :  { });
+                iView.scope(
+                    $.extend(iParent ? iParent.scope() : { },  iLink.data)
+                );
 
                 return iView;
             });

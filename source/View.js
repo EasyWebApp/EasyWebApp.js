@@ -1,6 +1,6 @@
 define([
-    'jquery', 'Node_Template', 'Observer', 'jQuery+'
-],  function ($, Node_Template, Observer) {
+    'jquery', 'MutationObserver', 'Node_Template', 'Observer', 'jQuery+'
+],  function ($, MutationObserver, Node_Template, Observer) {
 
     function View($_View) {
 
@@ -140,14 +140,6 @@ define([
                     iParser.call(_This_, Sub_View[i]);
             });
         },
-        destructor:    function () {
-
-            this.$_View.data('[object View]', null).empty();
-
-            if (this.__observer__)  this.__observer__.disconnect();
-
-            delete this.__data__;
-        },
         scope:         function (iSup) {
             this.__data__ = iSup;
 
@@ -162,15 +154,34 @@ define([
 
         View.prototype[this] = function () {
 
-            if ( Index )  arguments[0] += '.EWA_View';
+            var iArgs = $.makeArray( arguments );
 
-            $.fn[iName].apply(this.$_View, arguments);
+            if ( Index ) {
+                iArgs[0] += '.EWA_View';
+
+                if (typeof iArgs.slice(-1)[0] == 'function') {
+
+                    iArgs = iArgs.concat($.proxy(iArgs.pop(), this));
+                }
+            }
+
+            $.fn[iName].apply(this.$_View, iArgs);
 
             return this;
         };
     });
 
-    View.prototype.one = Observer.prototype.one;
+    $.extend(View.prototype, {
+        one:           Observer.prototype.one,
+        destructor:    function () {
+
+            this.off('').$_View.data('[object View]', null).empty();
+
+            if (this.__observer__)  this.__observer__.disconnect();
+
+            delete this.__data__;
+        }
+    });
 
     $.extend(View, {
         getClass:        function () {

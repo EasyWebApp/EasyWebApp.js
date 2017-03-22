@@ -1,6 +1,6 @@
 define([
-    'jquery', 'View', 'MutationObserver', 'Node_Template', 'DS_Inherit', 'iQuery+'
-],  function ($, View, MutationObserver, Node_Template, DS_Inherit) {
+    'jquery', 'View', 'Node_Template', 'DS_Inherit', 'iQuery+'
+],  function ($, View, Node_Template, DS_Inherit) {
 
     function HTMLView($_View) {
 
@@ -94,7 +94,7 @@ define([
 
                         this.signIn(iNode, [iNode.__name__]);    break;
                     }
-                    case $.expr[':'].field( iNode ):  {
+                    case ($.expr[':'].field( iNode )  &&  (! iNode.value)):  {
 
                         this.signIn(iNode, [iNode.name]);
                     }

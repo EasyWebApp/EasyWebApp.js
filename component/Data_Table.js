@@ -8,7 +8,13 @@ require(['jquery', 'EasyWebApp'],  function ($) {
                 type:      'data',
                 target:    this.$_View.find('[data-href]')[0]
             },
-            VM = this;
+            $_tBody = this.$_View.find('tbody');
+
+        var VM = this.on('update',  function () {
+
+                if ($_tBody.children()[0]  &&  arguments[1].href)
+                    this.$_View.find('[type="number"]').val(1).change();
+            });
 
         var iList = $( iEvent.target ).view('ListView');
 
