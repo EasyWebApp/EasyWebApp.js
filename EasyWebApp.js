@@ -96,15 +96,23 @@ var Observer = (function (BOM, DOM, $) {
 
             var _This_ = this,  iArgs = $.makeArray( arguments );
 
-            return  new Promise(function (iResolve) {
+            var iCallback = iArgs.slice(-1)[0];
 
-                _This_.on.apply(_This_,  iArgs.concat(function () {
+            iCallback = (typeof iCallback == 'function')  &&  iArgs.pop();
 
-                    _This_.off.apply(_This_,  iArgs.concat( arguments.callee ));
+            var iPromise = new Promise(function (iResolve) {
 
-                    iResolve( arguments[1] );
-                }));
-            });
+                    _This_.on.apply(_This_,  iArgs.concat(function () {
+
+                        _This_.off.apply(_This_,  iArgs.concat( arguments.callee ));
+
+                        if ( iCallback )  return  iCallback.apply(this, arguments);
+
+                        iResolve( arguments[1] );
+                    }));
+                });
+
+            return  iCallback ? this : iPromise;
         }
     });
 
@@ -241,9 +249,10 @@ var View = (function (BOM, DOM, $, Node_Template, Observer) {
         if ((_This_ != null)  &&  (_This_ != this))  return _This_;
 
         $.extend(this, {
-            __id__:      $.uuid('View'),
-            __name__:    this.$_View.attr('name'),
-            __data__:    { }
+            __id__:       $.uuid('View'),
+            __name__:     this.$_View[0].dataset.name,
+            __data__:     { },
+            __child__:    [ ]
         });
 
         this.$_View.data('[object View]', this);
@@ -326,6 +335,44 @@ var View = (function (BOM, DOM, $, Node_Template, Observer) {
                 )
             });
         },
+        scan:          function (iParser) {
+
+            var Sub_View = [ ],  _This_ = this,  iPointer;
+
+            this.$_View.each(function () {
+
+                var iSearcher = document.createTreeWalker(this, 1, {
+                        acceptNode:    function (iDOM) {
+
+                            if ( iDOM.dataset.href ) {
+
+                                _This_.__child__.push( iDOM );
+
+                                return NodeFilter.FILTER_REJECT;
+
+                            } else if ( iDOM.dataset.name ) {
+
+                                Sub_View.push( View.getSub( iDOM ) );
+
+                                return NodeFilter.FILTER_REJECT;
+                            }
+
+                            return NodeFilter.FILTER_ACCEPT;
+                        }
+                    });
+
+                iParser.call(_This_, this);
+
+                while (iPointer = iSearcher.nextNode())
+                    iParser.call(_This_, iPointer);
+
+                for (var i = 0;  _This_.__child__[i];  i++)
+                    iParser.call(_This_, _This_.__child__[i]);
+
+                for (var i = 0;  Sub_View[i];  i++)
+                    iParser.call(_This_, Sub_View[i]);
+            });
+        },
         destructor:    function () {
 
             this.$_View.data('[object View]', null).empty();
@@ -378,8 +425,18 @@ var View = (function (BOM, DOM, $, Node_Template, Observer) {
         }
     });
 
-    return  $.extend(View.signSelector(),  {
+    return  $.extend(View.signSelector(), {
+        Sub_Class:     [ ],
+        getSub:        function (iDOM) {
+
+            for (var i = this.Sub_Class.length - 1;  this.Sub_Class[i];  i--)
+                if (this.Sub_Class[i].is( iDOM ))
+                    return  new this.Sub_Class[i]( iDOM );
+        },
         extend:        function (iConstructor, iStatic, iPrototype) {
+
+            this.Sub_Class.push( iConstructor );
+
             return $.inherit(
                 this, iConstructor, iStatic, iPrototype
             ).signSelector();
@@ -460,6 +517,9 @@ var HTMLView = (function (BOM, DOM, $, View, MutationObserver, Node_Template, DS
     }
 
     return  View.extend(HTMLView, {
+        is:            function () {
+            return true;
+        },
         build:         function ($_View, iTemplate) {
 
             var $_Content = $_View.children();
@@ -474,7 +534,7 @@ var HTMLView = (function (BOM, DOM, $, View, MutationObserver, Node_Template, DS
                 return  iTemplate && $_Content;
             });
         },
-        rawSelector:    'code, xmp, template'
+        rawSelector:    $.makeSet('code', 'xmp', 'template')
     }, {
         parseSlot:     function ($_Content) {
 
@@ -526,30 +586,24 @@ var HTMLView = (function (BOM, DOM, $, View, MutationObserver, Node_Template, DS
                 }
             );
         },
-        parse:         function ($_Exclude) {
+        parse:         function () {
 
-            var _This_ = this,  $_Sub = this.$_View.find(':view');
+            this.scan(function (iNode) {
 
-            for (var i = 0;  $_Sub[i];  i++)
-                this.signIn(
-                    View.instanceOf( $_Sub[i] ),  [ $_Sub[i].getAttribute('name') ]
-                );
+                switch (true) {
+                    case (iNode instanceof View):  {
 
-            $_Exclude = $( $_Exclude ).add( $_Sub ).find('*').add( $_Sub );
+                        this.signIn(iNode, [iNode.__name__]);    break;
+                    }
+                    case $.expr[':'].field( iNode ):  {
 
-            this.$_View.each(function () {
+                        this.signIn(iNode, [iNode.name]);
+                    }
+                    case !(iNode.tagName.toLowerCase() in HTMLView.rawSelector):  {
 
-                var $_All = $('*', this).not( $_Exclude ).add( this );
-
-                var $_Input = $_All.filter(':field');
-
-                for (var i = 0;  $_Input[i];  i++)
-                    _This_.signIn($_Input[i], [$_Input[i].name]);
-
-                var $_Plain = $_All.not( HTMLView.rawSelector );
-
-                for (var i = 0;  $_Plain[i];  i++)
-                    _This_.parsePlain( $_Plain[i] );
+                        this.parsePlain( iNode );
+                    }
+                }
             });
 
             return this;
@@ -617,7 +671,9 @@ var ListView = (function (BOM, DOM, $, View, HTMLView) {
         this.clear();
     }
 
-    return  View.extend(ListView, null, {
+    return  View.extend(ListView, {
+        is:    $.expr[':'].list
+    }, {
         splice:    Array.prototype.splice,
         clear:     function () {
             this.$_View.empty();
@@ -741,70 +797,7 @@ var InnerLink = (function (BOM, DOM, $, Observer) {
 
 
 
-var TreeBuilder = (function (BOM, DOM, $, View, HTMLView, ListView) {
-
-    return  function ($_Root) {
-
-        $_Root = $( $_Root );
-
-        var iTree = {
-                root:     View.instanceOf($_Root, false),
-                scope:    HTMLView.instanceOf( $_Root.parents(':view')[0] ),
-                sub:      [ ]
-            };
-
-        iTree.scope = iTree.scope  ?  iTree.scope.scope()  :  { };
-
-        if ( iTree.root )  return iTree;
-
-        var iSearcher = document.createTreeWalker($_Root[0], 1, {
-                acceptNode:    function (iDOM) {
-
-                    if ( iDOM.dataset.href ) {
-                        iTree.sub.push( iDOM );
-
-                        return NodeFilter.FILTER_REJECT;
-                    }
-
-                    return NodeFilter.FILTER_ACCEPT;
-                }
-            }),
-            _This_,  iList = [ ],  iView = [ ];
-
-        while (_This_ = iSearcher.nextNode())
-            if (
-                _This_.getAttribute('name')  &&
-                (_This_.tagName.toLowerCase() != 'slot')
-            ) {
-                if ($.expr[':'].list(_This_))
-                    iList.unshift(_This_);
-                else if (
-                    (! $.expr[':'].field(_This_))  &&
-                    (_This_.parentElement != document.head)
-                )
-                    iView.unshift(_This_);
-            }
-
-        for (var i = 0;  iList[i];  i++)
-            _This_ = new ListView( iList[i] );
-
-        if (iList[i] != $_Root[0]) {
-
-            for (var i = 0;  iView[i];  i++)
-                if ($( iView[i] ).parents( $_Root )[0])
-                    _This_ = (new HTMLView( iView[i] )).parse( iTree.sub );
-        }
-
-        iTree.root = (_This_  &&  (_This_.$_View[0] == $_Root[0]))  ?
-            _This_  :  new HTMLView( $_Root );
-
-        return iTree;
-    };
-})(self, self.document, self.jQuery, View, HTMLView, ListView);
-
-
-
-var WebApp = (function (BOM, DOM, $, Observer, View, HTMLView, ListView, InnerLink, TreeBuilder) {
+var WebApp = (function (BOM, DOM, $, Observer, View, HTMLView, ListView, InnerLink) {
 
     function WebApp(Page_Box, API_Root) {
 
@@ -891,17 +884,15 @@ var WebApp = (function (BOM, DOM, $, Observer, View, HTMLView, ListView, InnerLi
                 if (! $_Target.find('script[src]:not(head > *)')[0])
                     iLink.emit('load');
 
-                var iView = TreeBuilder( $_Target );
+                var iView = View.getSub( $_Target[0] );
 
-                if ( $_Content ) {
-                    iView.root.parseSlot( $_Content );
+                if ( $_Content )  iView.parseSlot( $_Content );
 
-                    $.merge(iView.sub, iView.root.$_View.find('[data-href]'));
-                }
+                if ( iView.parse )  iView.parse();
 
-                if ( iView.root.parse )  iView.root.parse( iView.sub );
+                var iParent = HTMLView.instanceOf( iView.$_View.parents() );
 
-                iView.root.scope( iView.scope );
+                iView.scope(iParent  ?  iParent.scope()  :  { });
 
                 return iView;
             });
@@ -923,9 +914,9 @@ var WebApp = (function (BOM, DOM, $, Observer, View, HTMLView, ListView, InnerLi
                 delete _This_.loading[ iLink.href ];
 
                 if ( iFactory )
-                    iData = iFactory.call(iView.root, iData)  ||  iData;
+                    iData = iFactory.call(iView, iData)  ||  iData;
 
-                iView.root.render(((typeof iData == 'object') && iData)  ||  { });
+                iView.render(((typeof iData == 'object') && iData)  ||  { });
 
                 return iView;
             });
@@ -966,19 +957,19 @@ var WebApp = (function (BOM, DOM, $, Observer, View, HTMLView, ListView, InnerLi
                 iView = arguments[0];
 
                 return Promise.all($.map(
-                    iView.sub,  $.proxy(_This_.load, _This_)
+                    iView.__child__,  $.proxy(_This_.load, _This_)
                 ));
             }).then(function () {
 
                 _This_.emit(
-                    $.extend(iLink.valueOf(), {type: 'ready'}),  iView.root
+                    $.extend(iLink.valueOf(), {type: 'ready'}),  iView
                 );
             });
         },
         listenDOM:    function () {
             var _This_ = this;
 
-            $(document).on('input change',  ':field',  $.throttle(function () {
+            $('html').on('input change',  ':field',  $.throttle(function () {
 
                 var iView = HTMLView.instanceOf( this );
 
@@ -1039,14 +1030,14 @@ var WebApp = (function (BOM, DOM, $, Observer, View, HTMLView, ListView, InnerLi
                 });
         }
     });
-})(self, self.document, self.jQuery, Observer, View, HTMLView, ListView, InnerLink, TreeBuilder);
+})(self, self.document, self.jQuery, Observer, View, HTMLView, ListView, InnerLink);
 
 
 //
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v3.8  (2017-03-20)  Beta
+//      [Version]    v3.8  (2017-03-22)  Beta
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //

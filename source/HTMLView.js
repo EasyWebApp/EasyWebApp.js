@@ -16,6 +16,9 @@ define([
     }
 
     return  View.extend(HTMLView, {
+        is:            function () {
+            return true;
+        },
         build:         function ($_View, iTemplate) {
 
             var $_Content = $_View.children();
@@ -30,7 +33,7 @@ define([
                 return  iTemplate && $_Content;
             });
         },
-        rawSelector:    'code, xmp, template'
+        rawSelector:    $.makeSet('code', 'xmp', 'template')
     }, {
         parseSlot:     function ($_Content) {
 
@@ -82,30 +85,24 @@ define([
                 }
             );
         },
-        parse:         function ($_Exclude) {
+        parse:         function () {
 
-            var _This_ = this,  $_Sub = this.$_View.find(':view');
+            this.scan(function (iNode) {
 
-            for (var i = 0;  $_Sub[i];  i++)
-                this.signIn(
-                    View.instanceOf( $_Sub[i] ),  [ $_Sub[i].getAttribute('name') ]
-                );
+                switch (true) {
+                    case (iNode instanceof View):  {
 
-            $_Exclude = $( $_Exclude ).add( $_Sub ).find('*').add( $_Sub );
+                        this.signIn(iNode, [iNode.__name__]);    break;
+                    }
+                    case $.expr[':'].field( iNode ):  {
 
-            this.$_View.each(function () {
+                        this.signIn(iNode, [iNode.name]);
+                    }
+                    case !(iNode.tagName.toLowerCase() in HTMLView.rawSelector):  {
 
-                var $_All = $('*', this).not( $_Exclude ).add( this );
-
-                var $_Input = $_All.filter(':field');
-
-                for (var i = 0;  $_Input[i];  i++)
-                    _This_.signIn($_Input[i], [$_Input[i].name]);
-
-                var $_Plain = $_All.not( HTMLView.rawSelector );
-
-                for (var i = 0;  $_Plain[i];  i++)
-                    _This_.parsePlain( $_Plain[i] );
+                        this.parsePlain( iNode );
+                    }
+                }
             });
 
             return this;

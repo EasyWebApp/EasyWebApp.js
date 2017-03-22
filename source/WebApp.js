@@ -1,6 +1,6 @@
 define([
-    'jquery', 'Observer', 'View', 'HTMLView', 'ListView', 'InnerLink', 'TreeBuilder'
-],  function ($, Observer, View, HTMLView, ListView, InnerLink, TreeBuilder) {
+    'jquery', 'Observer', 'View', 'HTMLView', 'ListView', 'InnerLink'
+],  function ($, Observer, View, HTMLView, ListView, InnerLink) {
 
     function WebApp(Page_Box, API_Root) {
 
@@ -87,17 +87,15 @@ define([
                 if (! $_Target.find('script[src]:not(head > *)')[0])
                     iLink.emit('load');
 
-                var iView = TreeBuilder( $_Target );
+                var iView = View.getSub( $_Target[0] );
 
-                if ( $_Content ) {
-                    iView.root.parseSlot( $_Content );
+                if ( $_Content )  iView.parseSlot( $_Content );
 
-                    $.merge(iView.sub, iView.root.$_View.find('[data-href]'));
-                }
+                if ( iView.parse )  iView.parse();
 
-                if ( iView.root.parse )  iView.root.parse( iView.sub );
+                var iParent = HTMLView.instanceOf( iView.$_View.parents() );
 
-                iView.root.scope( iView.scope );
+                iView.scope(iParent  ?  iParent.scope()  :  { });
 
                 return iView;
             });
@@ -119,9 +117,9 @@ define([
                 delete _This_.loading[ iLink.href ];
 
                 if ( iFactory )
-                    iData = iFactory.call(iView.root, iData)  ||  iData;
+                    iData = iFactory.call(iView, iData)  ||  iData;
 
-                iView.root.render(((typeof iData == 'object') && iData)  ||  { });
+                iView.render(((typeof iData == 'object') && iData)  ||  { });
 
                 return iView;
             });
@@ -162,19 +160,19 @@ define([
                 iView = arguments[0];
 
                 return Promise.all($.map(
-                    iView.sub,  $.proxy(_This_.load, _This_)
+                    iView.__child__,  $.proxy(_This_.load, _This_)
                 ));
             }).then(function () {
 
                 _This_.emit(
-                    $.extend(iLink.valueOf(), {type: 'ready'}),  iView.root
+                    $.extend(iLink.valueOf(), {type: 'ready'}),  iView
                 );
             });
         },
         listenDOM:    function () {
             var _This_ = this;
 
-            $(document).on('input change',  ':field',  $.throttle(function () {
+            $('html').on('input change',  ':field',  $.throttle(function () {
 
                 var iView = HTMLView.instanceOf( this );
 

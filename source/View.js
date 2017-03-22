@@ -16,9 +16,10 @@ define([
         if ((_This_ != null)  &&  (_This_ != this))  return _This_;
 
         $.extend(this, {
-            __id__:      $.uuid('View'),
-            __name__:    this.$_View.attr('name'),
-            __data__:    { }
+            __id__:       $.uuid('View'),
+            __name__:     this.$_View[0].dataset.name,
+            __data__:     { },
+            __child__:    [ ]
         });
 
         this.$_View.data('[object View]', this);
@@ -101,6 +102,44 @@ define([
                 )
             });
         },
+        scan:          function (iParser) {
+
+            var Sub_View = [ ],  _This_ = this,  iPointer;
+
+            this.$_View.each(function () {
+
+                var iSearcher = document.createTreeWalker(this, 1, {
+                        acceptNode:    function (iDOM) {
+
+                            if ( iDOM.dataset.href ) {
+
+                                _This_.__child__.push( iDOM );
+
+                                return NodeFilter.FILTER_REJECT;
+
+                            } else if ( iDOM.dataset.name ) {
+
+                                Sub_View.push( View.getSub( iDOM ) );
+
+                                return NodeFilter.FILTER_REJECT;
+                            }
+
+                            return NodeFilter.FILTER_ACCEPT;
+                        }
+                    });
+
+                iParser.call(_This_, this);
+
+                while (iPointer = iSearcher.nextNode())
+                    iParser.call(_This_, iPointer);
+
+                for (var i = 0;  _This_.__child__[i];  i++)
+                    iParser.call(_This_, _This_.__child__[i]);
+
+                for (var i = 0;  Sub_View[i];  i++)
+                    iParser.call(_This_, Sub_View[i]);
+            });
+        },
         destructor:    function () {
 
             this.$_View.data('[object View]', null).empty();
@@ -153,8 +192,18 @@ define([
         }
     });
 
-    return  $.extend(View.signSelector(),  {
+    return  $.extend(View.signSelector(), {
+        Sub_Class:     [ ],
+        getSub:        function (iDOM) {
+
+            for (var i = this.Sub_Class.length - 1;  this.Sub_Class[i];  i--)
+                if (this.Sub_Class[i].is( iDOM ))
+                    return  new this.Sub_Class[i]( iDOM );
+        },
         extend:        function (iConstructor, iStatic, iPrototype) {
+
+            this.Sub_Class.push( iConstructor );
+
             return $.inherit(
                 this, iConstructor, iStatic, iPrototype
             ).signSelector();

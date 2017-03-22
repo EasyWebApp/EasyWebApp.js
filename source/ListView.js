@@ -11,7 +11,9 @@ define(['jquery', 'View', 'HTMLView'],  function ($, View, HTMLView) {
         this.clear();
     }
 
-    return  View.extend(ListView, null, {
+    return  View.extend(ListView, {
+        is:    $.expr[':'].list
+    }, {
         splice:    Array.prototype.splice,
         clear:     function () {
             this.$_View.empty();

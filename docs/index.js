@@ -1,6 +1,6 @@
 require([
-    'jquery', 'marked', 'MediumEditor', 'TreeBuilder', 'EasyWebUI', 'EasyWebApp', 'QRcode'
-],  function ($, marked, MediumEditor, TreeBuilder) {
+    'jquery', 'marked', 'MediumEditor', 'EasyWebUI', 'EasyWebApp', 'QRcode'
+],  function ($, marked, MediumEditor) {
 
     $.ajaxSetup({
         dataFilter:    function (iData) {

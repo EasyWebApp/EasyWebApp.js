@@ -86,15 +86,23 @@ define(['jquery', 'jQuery+'],  function ($) {
 
             var _This_ = this,  iArgs = $.makeArray( arguments );
 
-            return  new Promise(function (iResolve) {
+            var iCallback = iArgs.slice(-1)[0];
 
-                _This_.on.apply(_This_,  iArgs.concat(function () {
+            iCallback = (typeof iCallback == 'function')  &&  iArgs.pop();
 
-                    _This_.off.apply(_This_,  iArgs.concat( arguments.callee ));
+            var iPromise = new Promise(function (iResolve) {
 
-                    iResolve( arguments[1] );
-                }));
-            });
+                    _This_.on.apply(_This_,  iArgs.concat(function () {
+
+                        _This_.off.apply(_This_,  iArgs.concat( arguments.callee ));
+
+                        if ( iCallback )  return  iCallback.apply(this, arguments);
+
+                        iResolve( arguments[1] );
+                    }));
+                });
+
+            return  iCallback ? this : iPromise;
         }
     });
 
