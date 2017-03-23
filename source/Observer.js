@@ -15,18 +15,31 @@ define(['jquery', 'jQuery+'],  function ($) {
             );
         },
         match:       function (iEvent, iHandle) {
+            var iRegExp;
 
-            for (var iKey in iHandle)  switch (typeof iHandle[iKey]) {
-                case 'object':
-                    if (! (iHandle[iKey] instanceof RegExp)) {
-                        if (iEvent[iKey] !== iHandle[iKey])
+            for (var iKey in iHandle) {
+
+                iRegExp = iEvent[iKey] instanceof RegExp;
+
+                switch ($.Type( iHandle[iKey] )) {
+                    case 'RegExp':
+                        if ( iRegExp ) {
+                            if (iEvent[iKey].toString() != iHandle[iKey].toString())
+                                return;
+                            break;
+                        }
+                    case 'String':    {
+                        if (! (iEvent[iKey] || '')[iRegExp ? 'test' : 'match'](
+                            iHandle[iKey]
+                        ))
                             return;
                         break;
                     }
-                case 'string':
-                    if (! (iEvent[iKey] || '').match( iHandle[iKey] ))
-                        return;
-                case 'function':    ;
+                    case 'Function':
+                        if (typeof iEvent[iKey] != 'function')  break;
+                    default:
+                        if (iEvent[iKey] !== iHandle[iKey])  return;
+                }
             }
 
             return iHandle;
@@ -71,12 +84,8 @@ define(['jquery', 'jQuery+'],  function ($) {
 
             this.__handle__[iEvent.type] = $.map(
                 this.__handle__[iEvent.type],  function (iHandle) {
-                    return (
-                        Observer.match(iEvent, iHandle)  &&  (
-                            (! iEvent.handler)  ||
-                            (iEvent.handler == iHandle.handler)
-                        )
-                    )  ?  null  :  iHandle;
+
+                    return  Observer.match(iEvent, iHandle)  ?  null  :  iHandle;
                 }
             );
 

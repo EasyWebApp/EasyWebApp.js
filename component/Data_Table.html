@@ -1,18 +1,18 @@
 <style>
-    [href] > .Grid-Row > * {
+    [data-href] > .Grid-Row > * {
         padding:    1em;
     }
-    [href] > .Grid-Row > *:first-child {
+    [data-href] > .Grid-Row > *:first-child {
         text-align:    left;
     }
-    [href] > .Grid-Row > *:last-child {
+    [data-href] > .Grid-Row > *:last-child {
         text-align:    right;
     }
-	[href] > .Foot {
+	[data-href] > .Foot {
 		border-top:    1px  solid  lightgray;
         text-align:    center;
 	}
-    [href] > .Foot .NavBar > li {
+    [data-href] > .Foot .NavBar > li {
         border-top:       1px  solid;
         border-bottom:    1px  solid;
         padding:          0.5em  1em;
@@ -34,6 +34,7 @@
 </div>
 <slot name="table"></slot>
 <div class="Grid-Row CenterY Foot">
+    <span>共 ${vm.total} 行</span>
     <label>
         跳转到
         <input type="number" name="page"

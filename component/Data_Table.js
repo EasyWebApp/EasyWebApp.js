@@ -20,7 +20,10 @@ require(['jquery', 'EasyWebApp'],  function ($) {
 
         iWebApp.off( iEvent ).on(iEvent,  function (iEvent, iData) {
 
-            VM.render('pageSum',  Math.ceil(iData.total / VM.rows));
+            VM.render({
+                total:      iData.total,
+                pageSum:    Math.ceil(iData.total / VM.rows)
+            });
 
             return iData.list;
         });

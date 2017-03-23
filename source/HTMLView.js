@@ -90,18 +90,17 @@ define([
             this.scan(function (iNode) {
 
                 switch (true) {
-                    case (iNode instanceof View):  {
-
+                    case (iNode instanceof View):
                         this.signIn(iNode, [iNode.__name__]);    break;
-                    }
-                    case ($.expr[':'].field( iNode )  &&  (! iNode.value)):  {
-
+                    case (
+                        $.expr[':'].field( iNode )  &&  (iNode.type != 'file')  &&
+                        (! iNode.defaultValue)
+                    ):
                         this.signIn(iNode, [iNode.name]);
-                    }
-                    case !(iNode.tagName.toLowerCase() in HTMLView.rawSelector):  {
-
+                    case !(
+                        iNode.tagName.toLowerCase() in HTMLView.rawSelector
+                    ):
                         this.parsePlain( iNode );
-                    }
                 }
             });
 

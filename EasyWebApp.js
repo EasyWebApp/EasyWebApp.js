@@ -25,18 +25,31 @@ var Observer = (function (BOM, DOM, $) {
             );
         },
         match:       function (iEvent, iHandle) {
+            var iRegExp;
 
-            for (var iKey in iHandle)  switch (typeof iHandle[iKey]) {
-                case 'object':
-                    if (! (iHandle[iKey] instanceof RegExp)) {
-                        if (iEvent[iKey] !== iHandle[iKey])
+            for (var iKey in iHandle) {
+
+                iRegExp = iEvent[iKey] instanceof RegExp;
+
+                switch ($.Type( iHandle[iKey] )) {
+                    case 'RegExp':
+                        if ( iRegExp ) {
+                            if (iEvent[iKey].toString() != iHandle[iKey].toString())
+                                return;
+                            break;
+                        }
+                    case 'String':    {
+                        if (! (iEvent[iKey] || '')[iRegExp ? 'test' : 'match'](
+                            iHandle[iKey]
+                        ))
                             return;
                         break;
                     }
-                case 'string':
-                    if (! (iEvent[iKey] || '').match( iHandle[iKey] ))
-                        return;
-                case 'function':    ;
+                    case 'Function':
+                        if (typeof iEvent[iKey] != 'function')  break;
+                    default:
+                        if (iEvent[iKey] !== iHandle[iKey])  return;
+                }
             }
 
             return iHandle;
@@ -81,12 +94,8 @@ var Observer = (function (BOM, DOM, $) {
 
             this.__handle__[iEvent.type] = $.map(
                 this.__handle__[iEvent.type],  function (iHandle) {
-                    return (
-                        Observer.match(iEvent, iHandle)  &&  (
-                            (! iEvent.handler)  ||
-                            (iEvent.handler == iHandle.handler)
-                        )
-                    )  ?  null  :  iHandle;
+
+                    return  Observer.match(iEvent, iHandle)  ?  null  :  iHandle;
                 }
             );
 
@@ -250,7 +259,7 @@ var View = (function (BOM, DOM, $, MutationObserver, Node_Template, Observer) {
 
         $.extend(this, {
             __id__:       $.uuid('View'),
-            __name__:     this.$_View[0].dataset.name,
+            __name__:     (this.$_View[0].name || this.$_View[0].dataset.name),
             __data__:     { },
             __child__:    [ ]
         });
@@ -315,7 +324,7 @@ var View = (function (BOM, DOM, $, MutationObserver, Node_Template, Observer) {
                         (iNew != iOld)  &&
                         (! (iOld || '').match( Node_Template.expression ))
                     )
-                        iData[ this.attributeName.slice(5) ] = iNew;
+                        iData[$.camelCase( this.attributeName.slice(5) )] = iNew;
                 });
 
                 if (! $.isEmptyObject( iData ))
@@ -343,6 +352,7 @@ var View = (function (BOM, DOM, $, MutationObserver, Node_Template, Observer) {
 
                 var iSearcher = document.createTreeWalker(this, 1, {
                         acceptNode:    function (iDOM) {
+                            var iView;
 
                             if ( iDOM.dataset.href ) {
 
@@ -350,9 +360,11 @@ var View = (function (BOM, DOM, $, MutationObserver, Node_Template, Observer) {
 
                                 return NodeFilter.FILTER_REJECT;
 
-                            } else if ( iDOM.dataset.name ) {
-
-                                Sub_View.push( View.getSub( iDOM ) );
+                            } else if (
+                                iDOM.dataset.name  ||
+                                (iView = View.instanceOf(iDOM, false))
+                            ) {
+                                Sub_View.push(iView  ||  View.getSub( iDOM ));
 
                                 return NodeFilter.FILTER_REJECT;
                             }
@@ -602,18 +614,17 @@ var HTMLView = (function (BOM, DOM, $, View, Node_Template, DS_Inherit) {
             this.scan(function (iNode) {
 
                 switch (true) {
-                    case (iNode instanceof View):  {
-
+                    case (iNode instanceof View):
                         this.signIn(iNode, [iNode.__name__]);    break;
-                    }
-                    case ($.expr[':'].field( iNode )  &&  (! iNode.value)):  {
-
+                    case (
+                        $.expr[':'].field( iNode )  &&  (iNode.type != 'file')  &&
+                        (! iNode.defaultValue)
+                    ):
                         this.signIn(iNode, [iNode.name]);
-                    }
-                    case !(iNode.tagName.toLowerCase() in HTMLView.rawSelector):  {
-
+                    case !(
+                        iNode.tagName.toLowerCase() in HTMLView.rawSelector
+                    ):
                         this.parsePlain( iNode );
-                    }
                 }
             });
 
@@ -1008,8 +1019,10 @@ var WebApp = (function (BOM, DOM, $, Observer, View, HTMLView, ListView, InnerLi
                         $(this).value('name')
                     );
             })).on('click submit',  InnerLink.HTML_Link,  function (iEvent) {
-
-                if ((this.tagName == 'FORM')  &&  (iEvent.type != 'submit'))
+                if (
+                    ((this.tagName == 'FORM')  &&  (iEvent.type != 'submit'))  ||
+                    (this.target  &&  (this.target != '_self'))
+                )
                     return;
 
                 var CID = (this.href || this.action).match(_This_.pageRoot);
@@ -1066,7 +1079,7 @@ var WebApp = (function (BOM, DOM, $, Observer, View, HTMLView, ListView, InnerLi
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v3.8  (2017-03-22)  Beta
+//      [Version]    v3.8  (2017-03-23)  Beta
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //

@@ -182,8 +182,10 @@ define([
                         $(this).value('name')
                     );
             })).on('click submit',  InnerLink.HTML_Link,  function (iEvent) {
-
-                if ((this.tagName == 'FORM')  &&  (iEvent.type != 'submit'))
+                if (
+                    ((this.tagName == 'FORM')  &&  (iEvent.type != 'submit'))  ||
+                    (this.target  &&  (this.target != '_self'))
+                )
                     return;
 
                 var CID = (this.href || this.action).match(_This_.pageRoot);

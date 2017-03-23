@@ -17,7 +17,7 @@ define([
 
         $.extend(this, {
             __id__:       $.uuid('View'),
-            __name__:     this.$_View[0].dataset.name,
+            __name__:     (this.$_View[0].name || this.$_View[0].dataset.name),
             __data__:     { },
             __child__:    [ ]
         });
@@ -82,7 +82,7 @@ define([
                         (iNew != iOld)  &&
                         (! (iOld || '').match( Node_Template.expression ))
                     )
-                        iData[ this.attributeName.slice(5) ] = iNew;
+                        iData[$.camelCase( this.attributeName.slice(5) )] = iNew;
                 });
 
                 if (! $.isEmptyObject( iData ))
@@ -110,6 +110,7 @@ define([
 
                 var iSearcher = document.createTreeWalker(this, 1, {
                         acceptNode:    function (iDOM) {
+                            var iView;
 
                             if ( iDOM.dataset.href ) {
 
@@ -117,9 +118,11 @@ define([
 
                                 return NodeFilter.FILTER_REJECT;
 
-                            } else if ( iDOM.dataset.name ) {
-
-                                Sub_View.push( View.getSub( iDOM ) );
+                            } else if (
+                                iDOM.dataset.name  ||
+                                (iView = View.instanceOf(iDOM, false))
+                            ) {
+                                Sub_View.push(iView  ||  View.getSub( iDOM ));
 
                                 return NodeFilter.FILTER_REJECT;
                             }
