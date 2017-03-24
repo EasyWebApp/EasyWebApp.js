@@ -80,7 +80,11 @@ define([
 
                     _This_.signIn(iTemplate, iName);
 
-                    if ((! this.nodeValue)  &&  (this.nodeType == 2))
+                    if (
+                        (! this.nodeValue)  &&
+                        (this.nodeType == 2)  &&
+                        (this.nodeName.slice(0, 5) != 'data-')
+                    )
                         this.ownerElement.removeAttribute( this.nodeName );
                 }
             );
@@ -150,6 +154,10 @@ define([
             this.__last__ = $.now();
 
             return this;
+        },
+        clear:         function () {
+
+            return  this.render( this.__data__.clear() );
         }
     });
 });

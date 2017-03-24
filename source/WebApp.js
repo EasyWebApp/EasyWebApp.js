@@ -59,20 +59,17 @@ define([
         },
         loadView:     function (iLink, iHTML) {
 
-            var $_Target;
+            var $_Target = iLink.$_View;
 
-            switch ( iLink.target ) {
-                case '_blank':    return;
-                case '_self':     {
-                    var iPrev = View.instanceOf(this.$_Page, false);
+            if (iLink.target == 'page') {
 
-                    if ( iPrev )  iPrev.destructor();
+                var iPrev = View.instanceOf(this.$_Page, false);
 
-                    if (this.indexOf( iLink )  ==  -1)  this.setRoute( iLink );
+                if ( iPrev )  iPrev.destructor();
 
-                    $_Target = this.$_Page;    break;
-                }
-                default:          $_Target = iLink.$_View;
+                if (this.indexOf( iLink )  ==  -1)  this.setRoute( iLink );
+
+                $_Target = this.$_Page;
             }
 
             return HTMLView.build(
@@ -142,7 +139,7 @@ define([
             if (iLink instanceof Element)
                 iLink = new InnerLink(iLink, this.apiRoot);
 
-            if ((! iLink.href)  &&  iLink.target)
+            if ((! iLink.href)  &&  (iLink.target != 'view'))
                 return  this.loadData( iLink );
 
             var _This_ = this,  iView;
@@ -231,7 +228,7 @@ define([
                     if ( Init )
                         return  _This_.load( $('<a />',  {href: Init})[0] );
 
-                    $('a[href][data-autofocus]').eq(0).click();
+                    $('a[href][data-autofocus="true"]').eq(0).click();
                 });
         }
     });

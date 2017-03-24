@@ -17,6 +17,7 @@ define(['jquery'],  function ($) {
             return this;
         },
         valueOf:    function () {
+
             if (this.hasOwnProperty('length'))  return $.makeArray(this);
 
             var iValue = { };
@@ -26,6 +27,20 @@ define(['jquery'],  function ($) {
                     iValue[iKey] = this[iKey];
 
             return iValue;
+        },
+        clear:      function () {
+
+            if (this.hasOwnProperty('length'))  this.extend([ ]);
+
+            for (var iKey in this)  if (this.hasOwnProperty( iKey )) {
+
+                if ($.likeArray( this[iKey] ))
+                    this[iKey].length = 0;
+                else
+                    this[iKey] = '';
+            }
+
+            return this;
         }
     });
 

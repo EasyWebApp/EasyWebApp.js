@@ -4,9 +4,11 @@ define(['jquery', 'Observer', 'iQuery+'],  function ($, Observer) {
 
         Observer.call(this).$_View = $( Link_DOM );
 
-        this.target = ('target' in Link_DOM)  &&  (Link_DOM.target || '_self');
+        this.target = Link_DOM.tagName.match(/^(a|form)$/i) ? 'page' : 'view';
 
-        this.method = (Link_DOM.getAttribute('method') || 'Get').toUpperCase();
+        this.method = (
+            Link_DOM.getAttribute('method') || Link_DOM.dataset.method || 'Get'
+        ).toUpperCase();
 
         this.setURI(Link_DOM, API_Root).title = Link_DOM.title || document.title;
     }
@@ -64,9 +66,14 @@ define(['jquery', 'Observer', 'iQuery+'],  function ($, Observer) {
                         (this.src.match(/\?/g) || '')[1]  ?  'jsonp'  :  'json'
                 };
 
-            if (! this.$_View.find('input[type="file"]')[0])
+            if (this.$_View[0].tagName == 'A') {
+
+                iOption.data = $.extend({ }, this.$_View[0].dataset);
+
+            } else if (! this.$_View.find('input[type="file"]')[0]) {
+
                 iOption.data = this.$_View.serialize();
-            else {
+            } else {
                 iOption.data = new BOM.FormData( this.$_View[0] );
                 iOption.contentType = iOption.processData = false;
             }
@@ -98,7 +105,8 @@ define(['jquery', 'Observer', 'iQuery+'],  function ($, Observer) {
 
             if (
                 (this.method == 'GET')  &&
-                this.src  &&  (this.src.indexOf('?') == -1)
+                this.src  &&  (this.src.indexOf('?') == -1)  &&
+                $.isEmptyObject( this.$_View[0].dataset )
             )
                 $_Prefetch.clone().attr('href', this.fullSrc).appendTo('head');
         }
