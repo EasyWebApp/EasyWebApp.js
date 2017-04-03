@@ -1,8 +1,8 @@
 define([
-    'jquery', 'MutationObserver', 'Node_Template', 'Observer', 'jQuery+'
-],  function ($, MutationObserver, Node_Template, Observer) {
+    'jquery', 'DS_Inherit', 'MutationObserver', 'Node_Template', 'Observer', 'jQuery+'
+],  function ($, DS_Inherit, MutationObserver, Node_Template, Observer) {
 
-    function View($_View) {
+    function View($_View, iScope) {
 
         if (this.constructor == arguments.callee)
             throw TypeError(
@@ -13,20 +13,14 @@ define([
 
         var _This_ = this.constructor.instanceOf(this.$_View, false);
 
-        if ((_This_ != null)  &&  (_This_ != this))  return _This_;
-
-        $.extend(this, {
-            __id__:       $.uuid('View'),
-            __name__:     (this.$_View[0].name || this.$_View[0].dataset.name),
-            __data__:     { },
-            __child__:    [ ]
-        });
-
-        this.$_View.data('[object View]', this);
-
-        if ( this.$_View[0].dataset.href )  this.attrWatch();
-
-        return this;
+        return  ((_This_ != null)  &&  (_This_ != this))  ?
+            _This_  :
+            $.extend(this, {
+                __id__:       $.uuid('View'),
+                __name__:     this.$_View[0].name || this.$_View[0].dataset.name,
+                __data__:     DS_Inherit(iScope, { }),
+                __child__:    [ ]
+            }).attach();
     }
 
     $.extend(View.prototype, {
@@ -67,7 +61,7 @@ define([
         attrWatch:     function () {
             var _This_ = this;
 
-            this.extend( this.$_View[0].dataset );
+            if (! this.__observer__)  this.extend( this.$_View[0].dataset );
 
             this.__observer__ = new self.MutationObserver(function () {
 
@@ -93,64 +87,97 @@ define([
                 attributes:           true,
                 attributeOldValue:    true,
                 attributeFilter:      $.map(
-                    this.$_View[0].attributes,
-                    function (iNode) {
-
-                        return  iNode.nodeName.match(/^data-[\w\-]+$/i) ?
-                            iNode.nodeName : null;
+                    Object.keys( this.$_View[0].dataset ),
+                    function () {
+                        return  'data-'  +  $.hyphenCase( arguments[0] );
                     }
                 )
             });
         },
-        scan:          function (iParser) {
+        attach:        function () {
 
-            var Sub_View = [ ],  _This_ = this,  iPointer;
+            this.$_View.data('[object View]', this);
 
-            this.$_View.each(function () {
+            if ( this.$_View[0].dataset.href )  this.attrWatch();
 
-                var iSearcher = document.createTreeWalker(this, 1, {
-                        acceptNode:    function (iDOM) {
-                            var iView;
-
-                            if ( iDOM.dataset.href ) {
-
-                                _This_.__child__.push( iDOM );
-
-                                return NodeFilter.FILTER_REJECT;
-
-                            } else if (
-                                iDOM.dataset.name  ||
-                                (iView = View.instanceOf(iDOM, false))
-                            ) {
-                                Sub_View.push(iView  ||  View.getSub( iDOM ));
-
-                                return NodeFilter.FILTER_REJECT;
-                            }
-
-                            return NodeFilter.FILTER_ACCEPT;
-                        }
-                    });
-
-                iParser.call(_This_, this);
-
-                while (iPointer = iSearcher.nextNode())
-                    iParser.call(_This_, iPointer);
-
-                for (var i = 0;  _This_.__child__[i];  i++)
-                    iParser.call(_This_, _This_.__child__[i]);
-
-                for (var i = 0;  Sub_View[i];  i++)
-                    iParser.call(_This_, Sub_View[i]);
-            });
-        },
-        scope:         function (iSup) {
-            this.__data__ = iSup;
-
-            for (var i = 0;  this[i];  i++)
-                if (this[i] instanceof View)  this[i].scope( iSup );
+            this.$_View.append( this.$_Content );
 
             return this;
-        }
+        },
+        detach:        function () {
+
+            this.$_View.data('[object View]', null);
+
+            if (this.__observer__) {
+                this.__observer__.disconnect();
+
+                delete this.__observer__;
+            }
+
+            this.$_Content = this.$_View.children().detach();
+
+            return this;
+        },
+        scan:          function (iParser) {
+
+            var Sub_View = [ ],  _This_ = this;
+
+            var iSearcher = document.createTreeWalker(this.$_View[0], 1, {
+                    acceptNode:    function (iDOM) {
+                        var iView;
+
+                        if ( iDOM.dataset.href ) {
+
+                            _This_.__child__.push( iDOM );
+
+                            return NodeFilter.FILTER_REJECT;
+
+                        } else if (
+                            iDOM.dataset.name  ||
+                            (iView = View.instanceOf(iDOM, false))
+                        ) {
+                            Sub_View.push(iView  ||  View.getSub( iDOM ));
+
+                            return NodeFilter.FILTER_REJECT;
+                        } else if (
+                            (iDOM.parentNode == document.head)  &&
+                            (iDOM.tagName.toLowerCase() != 'title')
+                        )
+                            return NodeFilter.FILTER_REJECT;
+
+                        return NodeFilter.FILTER_ACCEPT;
+                    }
+                });
+
+            iParser.call(this, this.$_View[0]);
+
+            var iPointer,  iNew,  iOld;
+
+            while (iPointer = iPointer || iSearcher.nextNode()) {
+
+                iNew = iParser.call(this, iPointer);
+
+                if (iNew == iPointer) {
+                    iPointer = null;
+                    continue;
+                }
+
+                $( iNew ).insertTo(iPointer.parentNode,  $( iPointer ).index());
+
+                iOld = iPointer;
+
+                iPointer = iSearcher.nextNode();
+
+                $( iOld ).remove();
+            }
+
+            for (var i = 0;  this.__child__[i];  i++)
+                iParser.call(this, this.__child__[i]);
+
+            for (var i = 0;  Sub_View[i];  i++)
+                iParser.call(this, Sub_View[i]);
+        },
+        one:           Observer.prototype.one
     });
 
     $.each(['trigger', 'on', 'off'],  function (Index, iName) {
@@ -172,18 +199,6 @@ define([
 
             return this;
         };
-    });
-
-    $.extend(View.prototype, {
-        one:           Observer.prototype.one,
-        destructor:    function () {
-
-            this.off('').$_View.data('[object View]', null).empty();
-
-            if (this.__observer__)  this.__observer__.disconnect();
-
-            delete this.__data__;
-        }
     });
 
     $.extend(View, {
@@ -212,7 +227,10 @@ define([
 
             for (var i = this.Sub_Class.length - 1;  this.Sub_Class[i];  i--)
                 if (this.Sub_Class[i].is( iDOM ))
-                    return  new this.Sub_Class[i]( iDOM );
+                    return  new this.Sub_Class[i](
+                        iDOM,
+                        (this.instanceOf( iDOM.parentNode )  ||  '').__data__
+                    );
         },
         extend:        function (iConstructor, iStatic, iPrototype) {
 

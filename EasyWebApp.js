@@ -131,6 +131,63 @@ var Observer = (function (BOM, DOM, $) {
 
 
 
+var DS_Inherit = (function (BOM, DOM, $) {
+
+    function DataScope() {
+        this.extend( arguments[0] );
+    }
+
+    $.extend(DataScope.prototype, {
+        extend:     function (iData) {
+
+            if ($.likeArray( iData ))
+                Array.prototype.splice.apply(
+                    this,  Array.prototype.concat.apply([0, Infinity],  iData)
+                );
+            else if (! $.isEmptyObject(iData))
+                $.extend(this, iData);
+
+            return this;
+        },
+        valueOf:    function () {
+
+            if (this.hasOwnProperty('length'))  return $.makeArray(this);
+
+            var iValue = { };
+
+            for (var iKey in this)
+                if (this.hasOwnProperty( iKey )  &&  (! $.isNumeric(iKey)))
+                    iValue[iKey] = this[iKey];
+
+            return iValue;
+        },
+        clear:      function () {
+
+            if (this.hasOwnProperty('length'))  this.extend([ ]);
+
+            for (var iKey in this)  if (this.hasOwnProperty( iKey )) {
+
+                if ($.likeArray( this[iKey] ))
+                    this[iKey].length = 0;
+                else
+                    this[iKey] = '';
+            }
+
+            return this;
+        }
+    });
+
+    return  function (iSup, iSub) {
+
+        return Object.create(
+            (iSup instanceof DataScope)  ?  iSup  :  DataScope.prototype
+        ).extend( iSub );
+    };
+
+})(self, self.document, self.jQuery);
+
+
+
 var Node_Template = (function (BOM, DOM, $) {
 
     function Node_Template(iNode) {
@@ -242,9 +299,9 @@ var Node_Template = (function (BOM, DOM, $) {
 
 
 
-var View = (function (BOM, DOM, $, MutationObserver, Node_Template, Observer) {
+var View = (function (BOM, DOM, $, DS_Inherit, MutationObserver, Node_Template, Observer) {
 
-    function View($_View) {
+    function View($_View, iScope) {
 
         if (this.constructor == arguments.callee)
             throw TypeError(
@@ -255,20 +312,14 @@ var View = (function (BOM, DOM, $, MutationObserver, Node_Template, Observer) {
 
         var _This_ = this.constructor.instanceOf(this.$_View, false);
 
-        if ((_This_ != null)  &&  (_This_ != this))  return _This_;
-
-        $.extend(this, {
-            __id__:       $.uuid('View'),
-            __name__:     (this.$_View[0].name || this.$_View[0].dataset.name),
-            __data__:     { },
-            __child__:    [ ]
-        });
-
-        this.$_View.data('[object View]', this);
-
-        if ( this.$_View[0].dataset.href )  this.attrWatch();
-
-        return this;
+        return  ((_This_ != null)  &&  (_This_ != this))  ?
+            _This_  :
+            $.extend(this, {
+                __id__:       $.uuid('View'),
+                __name__:     this.$_View[0].name || this.$_View[0].dataset.name,
+                __data__:     DS_Inherit(iScope, { }),
+                __child__:    [ ]
+            }).attach();
     }
 
     $.extend(View.prototype, {
@@ -309,7 +360,7 @@ var View = (function (BOM, DOM, $, MutationObserver, Node_Template, Observer) {
         attrWatch:     function () {
             var _This_ = this;
 
-            this.extend( this.$_View[0].dataset );
+            if (! this.__observer__)  this.extend( this.$_View[0].dataset );
 
             this.__observer__ = new self.MutationObserver(function () {
 
@@ -335,64 +386,97 @@ var View = (function (BOM, DOM, $, MutationObserver, Node_Template, Observer) {
                 attributes:           true,
                 attributeOldValue:    true,
                 attributeFilter:      $.map(
-                    this.$_View[0].attributes,
-                    function (iNode) {
-
-                        return  iNode.nodeName.match(/^data-[\w\-]+$/i) ?
-                            iNode.nodeName : null;
+                    Object.keys( this.$_View[0].dataset ),
+                    function () {
+                        return  'data-'  +  $.hyphenCase( arguments[0] );
                     }
                 )
             });
         },
-        scan:          function (iParser) {
+        attach:        function () {
 
-            var Sub_View = [ ],  _This_ = this,  iPointer;
+            this.$_View.data('[object View]', this);
 
-            this.$_View.each(function () {
+            if ( this.$_View[0].dataset.href )  this.attrWatch();
 
-                var iSearcher = document.createTreeWalker(this, 1, {
-                        acceptNode:    function (iDOM) {
-                            var iView;
-
-                            if ( iDOM.dataset.href ) {
-
-                                _This_.__child__.push( iDOM );
-
-                                return NodeFilter.FILTER_REJECT;
-
-                            } else if (
-                                iDOM.dataset.name  ||
-                                (iView = View.instanceOf(iDOM, false))
-                            ) {
-                                Sub_View.push(iView  ||  View.getSub( iDOM ));
-
-                                return NodeFilter.FILTER_REJECT;
-                            }
-
-                            return NodeFilter.FILTER_ACCEPT;
-                        }
-                    });
-
-                iParser.call(_This_, this);
-
-                while (iPointer = iSearcher.nextNode())
-                    iParser.call(_This_, iPointer);
-
-                for (var i = 0;  _This_.__child__[i];  i++)
-                    iParser.call(_This_, _This_.__child__[i]);
-
-                for (var i = 0;  Sub_View[i];  i++)
-                    iParser.call(_This_, Sub_View[i]);
-            });
-        },
-        scope:         function (iSup) {
-            this.__data__ = iSup;
-
-            for (var i = 0;  this[i];  i++)
-                if (this[i] instanceof View)  this[i].scope( iSup );
+            this.$_View.append( this.$_Content );
 
             return this;
-        }
+        },
+        detach:        function () {
+
+            this.$_View.data('[object View]', null);
+
+            if (this.__observer__) {
+                this.__observer__.disconnect();
+
+                delete this.__observer__;
+            }
+
+            this.$_Content = this.$_View.children().detach();
+
+            return this;
+        },
+        scan:          function (iParser) {
+
+            var Sub_View = [ ],  _This_ = this;
+
+            var iSearcher = document.createTreeWalker(this.$_View[0], 1, {
+                    acceptNode:    function (iDOM) {
+                        var iView;
+
+                        if ( iDOM.dataset.href ) {
+
+                            _This_.__child__.push( iDOM );
+
+                            return NodeFilter.FILTER_REJECT;
+
+                        } else if (
+                            iDOM.dataset.name  ||
+                            (iView = View.instanceOf(iDOM, false))
+                        ) {
+                            Sub_View.push(iView  ||  View.getSub( iDOM ));
+
+                            return NodeFilter.FILTER_REJECT;
+                        } else if (
+                            (iDOM.parentNode == document.head)  &&
+                            (iDOM.tagName.toLowerCase() != 'title')
+                        )
+                            return NodeFilter.FILTER_REJECT;
+
+                        return NodeFilter.FILTER_ACCEPT;
+                    }
+                });
+
+            iParser.call(this, this.$_View[0]);
+
+            var iPointer,  iNew,  iOld;
+
+            while (iPointer = iPointer || iSearcher.nextNode()) {
+
+                iNew = iParser.call(this, iPointer);
+
+                if (iNew == iPointer) {
+                    iPointer = null;
+                    continue;
+                }
+
+                $( iNew ).insertTo(iPointer.parentNode,  $( iPointer ).index());
+
+                iOld = iPointer;
+
+                iPointer = iSearcher.nextNode();
+
+                $( iOld ).remove();
+            }
+
+            for (var i = 0;  this.__child__[i];  i++)
+                iParser.call(this, this.__child__[i]);
+
+            for (var i = 0;  Sub_View[i];  i++)
+                iParser.call(this, Sub_View[i]);
+        },
+        one:           Observer.prototype.one
     });
 
     $.each(['trigger', 'on', 'off'],  function (Index, iName) {
@@ -414,18 +498,6 @@ var View = (function (BOM, DOM, $, MutationObserver, Node_Template, Observer) {
 
             return this;
         };
-    });
-
-    $.extend(View.prototype, {
-        one:           Observer.prototype.one,
-        destructor:    function () {
-
-            this.off('').$_View.data('[object View]', null).empty();
-
-            if (this.__observer__)  this.__observer__.disconnect();
-
-            delete this.__data__;
-        }
     });
 
     $.extend(View, {
@@ -454,7 +526,10 @@ var View = (function (BOM, DOM, $, MutationObserver, Node_Template, Observer) {
 
             for (var i = this.Sub_Class.length - 1;  this.Sub_Class[i];  i--)
                 if (this.Sub_Class[i].is( iDOM ))
-                    return  new this.Sub_Class[i]( iDOM );
+                    return  new this.Sub_Class[i](
+                        iDOM,
+                        (this.instanceOf( iDOM.parentNode )  ||  '').__data__
+                    );
         },
         extend:        function (iConstructor, iStatic, iPrototype) {
 
@@ -478,72 +553,15 @@ var View = (function (BOM, DOM, $, MutationObserver, Node_Template, Observer) {
             } while ($_Instance[0]  &&  (Check_Parent !== false));
         }
     });
-})(self, self.document, self.jQuery, MutationObserver, Node_Template, Observer);
-
-
-
-var DS_Inherit = (function (BOM, DOM, $) {
-
-    function DataScope() {
-        this.extend( arguments[0] );
-    }
-
-    $.extend(DataScope.prototype, {
-        extend:     function (iData) {
-
-            if ($.likeArray( iData ))
-                Array.prototype.splice.apply(
-                    this,  Array.prototype.concat.apply([0, Infinity],  iData)
-                );
-            else if (! $.isEmptyObject(iData))
-                $.extend(this, iData);
-
-            return this;
-        },
-        valueOf:    function () {
-
-            if (this.hasOwnProperty('length'))  return $.makeArray(this);
-
-            var iValue = { };
-
-            for (var iKey in this)
-                if (this.hasOwnProperty( iKey )  &&  (! $.isNumeric(iKey)))
-                    iValue[iKey] = this[iKey];
-
-            return iValue;
-        },
-        clear:      function () {
-
-            if (this.hasOwnProperty('length'))  this.extend([ ]);
-
-            for (var iKey in this)  if (this.hasOwnProperty( iKey )) {
-
-                if ($.likeArray( this[iKey] ))
-                    this[iKey].length = 0;
-                else
-                    this[iKey] = '';
-            }
-
-            return this;
-        }
-    });
-
-    return  function (iSup, iSub) {
-
-        return Object.create(
-            (iSup instanceof DataScope)  ?  iSup  :  DataScope.prototype
-        ).extend( iSub );
-    };
-
-})(self, self.document, self.jQuery);
+})(self, self.document, self.jQuery, DS_Inherit, MutationObserver, Node_Template, Observer);
 
 
 
 var HTMLView = (function (BOM, DOM, $, View, Node_Template, DS_Inherit) {
 
-    function HTMLView($_View) {
+    function HTMLView($_View, iScope) {
 
-        var _This_ = View.call(this, $_View);
+        var _This_ = View.call(this, $_View, iScope);
 
         if (this != _This_)  return _This_;
 
@@ -558,37 +576,69 @@ var HTMLView = (function (BOM, DOM, $, View, Node_Template, DS_Inherit) {
         is:            function () {
             return true;
         },
-        build:         function ($_View, iTemplate) {
+        parsePath:     function (iPath) {
 
-            var $_Content = $_View.children();
+            var iNew;  iPath = iPath.replace(/^\.\//, '').replace(/\/\.\//g, '/');
 
-            $_Content = (iTemplate && $_Content[0])  &&  $_Content.detach();
+            do {
+                iPath = iNew || iPath;
 
-            return (
-                iTemplate ?
-                    $_View.htmlExec( iTemplate )  :  Promise.resolve('')
-            ).then(function () {
+                iNew = iPath.replace(/[^\/]+\/\.\.\//g, '');
 
-                return  iTemplate && $_Content;
-            });
+            } while (iNew != iPath);
+
+            return iNew;
+        },
+        fixDOM:        function (iDOM, BaseURL) {
+            var iKey = 'src';
+
+            switch ( iDOM.tagName.toLowerCase() ) {
+                case 'img':       ;
+                case 'iframe':    ;
+                case 'audio':     ;
+                case 'video':     break;
+                case 'script':    {
+                    var iAttr = { };
+
+                    $.each(iDOM.attributes,  function () {
+
+                        iAttr[ this.nodeName ] = this.nodeValue;
+                    });
+
+                    iDOM = $('<script />', iAttr)[0];    break;
+                }
+                case 'link':      {
+                    if (('rel' in iDOM)  &&  (iDOM.rel != 'stylesheet'))
+                        return iDOM;
+
+                    iKey = 'href';    break;
+                }
+                default:          {
+                    if (! (iDOM.dataset.href || '').split('?')[0])  return iDOM;
+
+                    iKey = 'data-href';
+                }
+            }
+            var iURL = iDOM.getAttribute( iKey );
+
+            if (iURL  &&  (iURL.indexOf( BaseURL )  <  0))
+                iDOM.setAttribute(iKey,  this.parsePath(BaseURL + iURL));
+
+            return iDOM;
         },
         rawSelector:    $.makeSet('code', 'xmp', 'template')
     }, {
-        parseSlot:     function ($_Content) {
+        parseSlot:     function (iNode) {
 
-            var $_Slot = this.$_View.find('slot'),
-                $_Named = $_Content.filter('[slot]');
+            iNode = iNode.getAttribute('name');
 
-            if ( $_Named[0] )
-                $_Slot.filter('[name]').replaceWith(function () {
-                    return $_Named.filter(
-                        '[slot="' + this.getAttribute('name') + '"]'
-                    );
-                });
+            var $_Slot = this.$_Content.filter(
+                    iNode  ?
+                        ('[slot="' + iNode + '"]')  :  '[slot=""], :not([slot])'
+                );
+            this.$_Content = this.$_Content.not( $_Slot );
 
-            $_Slot.not('[name]').replaceWith( $_Content.not( $_Named ) );
-
-            return this;
+            return $_Slot;
         },
         signIn:        function (iNode, iName) {
 
@@ -628,9 +678,26 @@ var HTMLView = (function (BOM, DOM, $, View, Node_Template, DS_Inherit) {
                 }
             );
         },
-        parse:         function () {
+        parse:         function (BaseURL, iTemplate) {
+            if ( iTemplate ) {
+                this.$_Content = this.$_View.children().detach();
+
+                this.$_View[0].innerHTML = iTemplate;
+            }
 
             this.scan(function (iNode) {
+
+                if (iNode instanceof Element) {
+
+                    if (iNode.tagName.toLowerCase() == 'slot')
+                        return $.map(
+                            this.parseSlot( iNode ),
+                            $.proxy(arguments.callee, this)
+                        );
+
+                    if (iNode != this.$_View[0])
+                        iNode = HTMLView.fixDOM(iNode, BaseURL);
+                }
 
                 switch (true) {
                     case (iNode instanceof View):
@@ -645,14 +712,13 @@ var HTMLView = (function (BOM, DOM, $, View, Node_Template, DS_Inherit) {
                     ):
                         this.parsePlain( iNode );
                 }
+
+                return iNode;
             });
 
-            return this;
-        },
-        scope:         function (iSup) {
+            delete this.$_Content;
 
-            return  (! iSup)  ?  this.__data__  :
-                View.prototype.scope.call(this,  DS_Inherit(iSup, this.__data__));
+            return this;
         },
         getNode:       function () {
             var iMask = '0',  _This_ = this;
@@ -729,7 +795,7 @@ var ListView = (function (BOM, DOM, $, View, HTMLView) {
         },
         insert:    function (iData, Index) {
 
-            var Item = (new HTMLView(this.__HTML__)).parse().scope(this.__data__);
+            var Item = (new HTMLView(this.__HTML__, this.__data__)).parse();
 
             Item.$_View.insertTo(this.$_View, Index);
 
@@ -814,7 +880,8 @@ var InnerLink = (function (BOM, DOM, $, Observer) {
                 return  Promise.resolve($.getJSON( this.fullSrc ));
 
             var iOption = {
-                    type:        this.method,
+                    type:          this.method,
+                    beforeSend:    arguments[0],
                     dataType:
                         (this.src.match(/\?/g) || '')[1]  ?  'jsonp'  :  'json'
                 };
@@ -837,6 +904,17 @@ var InnerLink = (function (BOM, DOM, $, Observer) {
             return  (this.method != 'get')  ?  iJSON  :  iJSON.then(
                 $.proxy($.storage, $, URI),  $.proxy($.storage, $, URI, null)
             );
+        },
+        load:        function (onRequest) {
+
+            return Promise.all([
+                this.href  &&  $.ajax({
+                    type:          'GET',
+                    url:           this.href,
+                    beforeSend:    onRequest
+                }),
+                this.src  &&  this.loadData( onRequest )
+            ]);
         },
         valueOf:     function () {
             var _This_ = { };
@@ -933,73 +1011,53 @@ var WebApp = (function (BOM, DOM, $, Observer, View, HTMLView, ListView, InnerLi
 
                 var iPrev = View.instanceOf(this.$_Page, false);
 
-                if ( iPrev )  iPrev.destructor();
+                if ( iPrev )  iPrev.detach();
 
                 if (this.indexOf( iLink )  ==  -1)  this.setRoute( iLink );
 
                 $_Target = this.$_Page;
             }
 
-            return HTMLView.build(
-                $_Target,
-                iHTML && this.emit(
-                    $.extend(iLink.valueOf(), {type: 'template'}),  iHTML
-                )
-            ).then(function ($_Content) {
+            iHTML = this.emit(
+                $.extend(iLink.valueOf(),  {type: 'template'}),  iHTML
+            );
 
-                if (! $_Target.find('script[src]:not(head > *)')[0])
-                    iLink.emit('load');
+            var iView = View.getSub( $_Target[0] );
 
-                var iView = View.getSub( $_Target[0] );
+            if (! $_Target.children()[0]) {
 
-                if ( $_Content )  iView.parseSlot( $_Content );
+                $_Target[0].innerHTML = iHTML;
 
-                if ( iView.parse )  iView.parse();
+                iHTML = '';
+            }
+            if ( iView.parse )
+                iView.parse($.filePath(iLink.href) + '/',  iHTML);
 
-                var iParent = HTMLView.instanceOf( iView.$_View[0].parentNode );
+            if (! $_Target.find('script[src]:not(head > *)')[0])
+                iLink.emit('load');
 
-                iView.scope(
-                    $.extend(iParent ? iParent.scope() : { },  iLink.data)
-                );
+            iView.__data__.extend( iLink.data );
 
-                return iView;
-            });
+            return iView;
         },
         loadComponent:    function (iLink, iHTML, iData) {
 
             this.loading[ iLink.href ] = iLink;
 
-            var iView,  JS_Load = iLink.one('load'),  _This_ = this;
+            var JS_Load = iLink.one('load');
 
-            return  this.loadView(iLink, iHTML).then(function () {
+            var iView = this.loadView(iLink, iHTML),  _This_ = this;
 
-                iView = arguments[0];
-
-                return JS_Load;
-
-            }).then(function (iFactory) {
+            return  JS_Load.then(function (iFactory) {
 
                 delete _This_.loading[ iLink.href ];
 
                 if ( iFactory )
                     iData = iFactory.call(iView, iData)  ||  iData;
 
-                iView.render(((typeof iData == 'object') && iData)  ||  { });
-
-                return iView;
-            });
-        },
-        loadData:     function (iLink) {
-            var _This_ = this;
-
-            return  iLink.loadData().then(function (iData) {
-
-                if (iData != null)
-                    iData = _This_.emit(
-                        $.extend(iLink.valueOf(), {type: 'data'}),  iData
-                    );
-
-                return iData;
+                return iView.render(
+                    ((typeof iData == 'object') && iData)  ||  { }
+                );
             });
         },
         load:         function (iLink) {
@@ -1012,14 +1070,23 @@ var WebApp = (function (BOM, DOM, $, Observer, View, HTMLView, ListView, InnerLi
 
             var _This_ = this,  iView;
 
-            return  Promise.all([
-                iLink.href  &&  $.get( iLink.href ),
-                iLink.src  &&  this.loadData( iLink )
-            ]).then(function () {
+            return  iLink.load(function () {
 
-                return  _This_.loadComponent(
-                    iLink,  arguments[0][0],  arguments[0][1]
+                _This_.emit(
+                    $.extend(iLink.valueOf(), {type: 'request'}),
+                    [this, arguments[0]]
                 );
+            }).then(function () {
+
+                var iData = arguments[0][1];
+
+                if (iData != null)
+                    iData = _This_.emit(
+                        $.extend(iLink.valueOf(), {type: 'data'}),  iData
+                    );
+
+                return  _This_.loadComponent(iLink, arguments[0][0], iData);
+
             }).then(function () {
 
                 iView = arguments[0];
@@ -1107,7 +1174,7 @@ var WebApp = (function (BOM, DOM, $, Observer, View, HTMLView, ListView, InnerLi
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v3.8  (2017-03-24)  Beta
+//      [Version]    v4.0  (2017-04-03)  Alpha
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //

@@ -2,9 +2,9 @@ define([
     'jquery', 'View', 'Node_Template', 'DS_Inherit', 'iQuery+'
 ],  function ($, View, Node_Template, DS_Inherit) {
 
-    function HTMLView($_View) {
+    function HTMLView($_View, iScope) {
 
-        var _This_ = View.call(this, $_View);
+        var _This_ = View.call(this, $_View, iScope);
 
         if (this != _This_)  return _This_;
 
@@ -19,37 +19,69 @@ define([
         is:            function () {
             return true;
         },
-        build:         function ($_View, iTemplate) {
+        parsePath:     function (iPath) {
 
-            var $_Content = $_View.children();
+            var iNew;  iPath = iPath.replace(/^\.\//, '').replace(/\/\.\//g, '/');
 
-            $_Content = (iTemplate && $_Content[0])  &&  $_Content.detach();
+            do {
+                iPath = iNew || iPath;
 
-            return (
-                iTemplate ?
-                    $_View.htmlExec( iTemplate )  :  Promise.resolve('')
-            ).then(function () {
+                iNew = iPath.replace(/[^\/]+\/\.\.\//g, '');
 
-                return  iTemplate && $_Content;
-            });
+            } while (iNew != iPath);
+
+            return iNew;
+        },
+        fixDOM:        function (iDOM, BaseURL) {
+            var iKey = 'src';
+
+            switch ( iDOM.tagName.toLowerCase() ) {
+                case 'img':       ;
+                case 'iframe':    ;
+                case 'audio':     ;
+                case 'video':     break;
+                case 'script':    {
+                    var iAttr = { };
+
+                    $.each(iDOM.attributes,  function () {
+
+                        iAttr[ this.nodeName ] = this.nodeValue;
+                    });
+
+                    iDOM = $('<script />', iAttr)[0];    break;
+                }
+                case 'link':      {
+                    if (('rel' in iDOM)  &&  (iDOM.rel != 'stylesheet'))
+                        return iDOM;
+
+                    iKey = 'href';    break;
+                }
+                default:          {
+                    if (! (iDOM.dataset.href || '').split('?')[0])  return iDOM;
+
+                    iKey = 'data-href';
+                }
+            }
+            var iURL = iDOM.getAttribute( iKey );
+
+            if (iURL  &&  (iURL.indexOf( BaseURL )  <  0))
+                iDOM.setAttribute(iKey,  this.parsePath(BaseURL + iURL));
+
+            return iDOM;
         },
         rawSelector:    $.makeSet('code', 'xmp', 'template')
     }, {
-        parseSlot:     function ($_Content) {
+        parseSlot:     function (iNode) {
 
-            var $_Slot = this.$_View.find('slot'),
-                $_Named = $_Content.filter('[slot]');
+            iNode = iNode.getAttribute('name');
 
-            if ( $_Named[0] )
-                $_Slot.filter('[name]').replaceWith(function () {
-                    return $_Named.filter(
-                        '[slot="' + this.getAttribute('name') + '"]'
-                    );
-                });
+            var $_Slot = this.$_Content.filter(
+                    iNode  ?
+                        ('[slot="' + iNode + '"]')  :  '[slot=""], :not([slot])'
+                );
+            this.$_Content = this.$_Content.not( $_Slot );
 
-            $_Slot.not('[name]').replaceWith( $_Content.not( $_Named ) );
-
-            return this;
+            return $_Slot;
         },
         signIn:        function (iNode, iName) {
 
@@ -89,9 +121,26 @@ define([
                 }
             );
         },
-        parse:         function () {
+        parse:         function (BaseURL, iTemplate) {
+            if ( iTemplate ) {
+                this.$_Content = this.$_View.children().detach();
+
+                this.$_View[0].innerHTML = iTemplate;
+            }
 
             this.scan(function (iNode) {
+
+                if (iNode instanceof Element) {
+
+                    if (iNode.tagName.toLowerCase() == 'slot')
+                        return $.map(
+                            this.parseSlot( iNode ),
+                            $.proxy(arguments.callee, this)
+                        );
+
+                    if (iNode != this.$_View[0])
+                        iNode = HTMLView.fixDOM(iNode, BaseURL);
+                }
 
                 switch (true) {
                     case (iNode instanceof View):
@@ -106,14 +155,13 @@ define([
                     ):
                         this.parsePlain( iNode );
                 }
+
+                return iNode;
             });
 
-            return this;
-        },
-        scope:         function (iSup) {
+            delete this.$_Content;
 
-            return  (! iSup)  ?  this.__data__  :
-                View.prototype.scope.call(this,  DS_Inherit(iSup, this.__data__));
+            return this;
         },
         getNode:       function () {
             var iMask = '0',  _This_ = this;

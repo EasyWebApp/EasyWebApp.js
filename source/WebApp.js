@@ -65,73 +65,53 @@ define([
 
                 var iPrev = View.instanceOf(this.$_Page, false);
 
-                if ( iPrev )  iPrev.destructor();
+                if ( iPrev )  iPrev.detach();
 
                 if (this.indexOf( iLink )  ==  -1)  this.setRoute( iLink );
 
                 $_Target = this.$_Page;
             }
 
-            return HTMLView.build(
-                $_Target,
-                iHTML && this.emit(
-                    $.extend(iLink.valueOf(), {type: 'template'}),  iHTML
-                )
-            ).then(function ($_Content) {
+            iHTML = this.emit(
+                $.extend(iLink.valueOf(),  {type: 'template'}),  iHTML
+            );
 
-                if (! $_Target.find('script[src]:not(head > *)')[0])
-                    iLink.emit('load');
+            var iView = View.getSub( $_Target[0] );
 
-                var iView = View.getSub( $_Target[0] );
+            if (! $_Target.children()[0]) {
 
-                if ( $_Content )  iView.parseSlot( $_Content );
+                $_Target[0].innerHTML = iHTML;
 
-                if ( iView.parse )  iView.parse();
+                iHTML = '';
+            }
+            if ( iView.parse )
+                iView.parse($.filePath(iLink.href) + '/',  iHTML);
 
-                var iParent = HTMLView.instanceOf( iView.$_View[0].parentNode );
+            if (! $_Target.find('script[src]:not(head > *)')[0])
+                iLink.emit('load');
 
-                iView.scope(
-                    $.extend(iParent ? iParent.scope() : { },  iLink.data)
-                );
+            iView.__data__.extend( iLink.data );
 
-                return iView;
-            });
+            return iView;
         },
         loadComponent:    function (iLink, iHTML, iData) {
 
             this.loading[ iLink.href ] = iLink;
 
-            var iView,  JS_Load = iLink.one('load'),  _This_ = this;
+            var JS_Load = iLink.one('load');
 
-            return  this.loadView(iLink, iHTML).then(function () {
+            var iView = this.loadView(iLink, iHTML),  _This_ = this;
 
-                iView = arguments[0];
-
-                return JS_Load;
-
-            }).then(function (iFactory) {
+            return  JS_Load.then(function (iFactory) {
 
                 delete _This_.loading[ iLink.href ];
 
                 if ( iFactory )
                     iData = iFactory.call(iView, iData)  ||  iData;
 
-                iView.render(((typeof iData == 'object') && iData)  ||  { });
-
-                return iView;
-            });
-        },
-        loadData:     function (iLink) {
-            var _This_ = this;
-
-            return  iLink.loadData().then(function (iData) {
-
-                if (iData != null)
-                    iData = _This_.emit(
-                        $.extend(iLink.valueOf(), {type: 'data'}),  iData
-                    );
-
-                return iData;
+                return iView.render(
+                    ((typeof iData == 'object') && iData)  ||  { }
+                );
             });
         },
         load:         function (iLink) {
@@ -144,14 +124,23 @@ define([
 
             var _This_ = this,  iView;
 
-            return  Promise.all([
-                iLink.href  &&  $.get( iLink.href ),
-                iLink.src  &&  this.loadData( iLink )
-            ]).then(function () {
+            return  iLink.load(function () {
 
-                return  _This_.loadComponent(
-                    iLink,  arguments[0][0],  arguments[0][1]
+                _This_.emit(
+                    $.extend(iLink.valueOf(), {type: 'request'}),
+                    [this, arguments[0]]
                 );
+            }).then(function () {
+
+                var iData = arguments[0][1];
+
+                if (iData != null)
+                    iData = _This_.emit(
+                        $.extend(iLink.valueOf(), {type: 'data'}),  iData
+                    );
+
+                return  _This_.loadComponent(iLink, arguments[0][0], iData);
+
             }).then(function () {
 
                 iView = arguments[0];

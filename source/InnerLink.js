@@ -61,7 +61,8 @@ define(['jquery', 'Observer', 'iQuery+'],  function ($, Observer) {
                 return  Promise.resolve($.getJSON( this.fullSrc ));
 
             var iOption = {
-                    type:        this.method,
+                    type:          this.method,
+                    beforeSend:    arguments[0],
                     dataType:
                         (this.src.match(/\?/g) || '')[1]  ?  'jsonp'  :  'json'
                 };
@@ -84,6 +85,17 @@ define(['jquery', 'Observer', 'iQuery+'],  function ($, Observer) {
             return  (this.method != 'get')  ?  iJSON  :  iJSON.then(
                 $.proxy($.storage, $, URI),  $.proxy($.storage, $, URI, null)
             );
+        },
+        load:        function (onRequest) {
+
+            return Promise.all([
+                this.href  &&  $.ajax({
+                    type:          'GET',
+                    url:           this.href,
+                    beforeSend:    onRequest
+                }),
+                this.src  &&  this.loadData( onRequest )
+            ]);
         },
         valueOf:     function () {
             var _This_ = { };

@@ -20,6 +20,7 @@ MVVM 引擎必需的所有 UI 结构，全部以 **完全标准的 HTML 5 代码
 
  6. 若不存在指向 解挂的 VM 或摘下的容器元素的其它引用，整个视图将被 **自动垃圾回收**
 
+
 ### 内置视图对象
 
  - `View( $_Box )` 抽象视图（不可实例化）
@@ -35,6 +36,7 @@ MVVM 引擎必需的所有 UI 结构，全部以 **完全标准的 HTML 5 代码
    - `ListView.prototype.insert( iObject )` 插入一个普通视图
    - `ListView.prototype.render( iArray )` 渲染列表
    - `ListView.prototype.remove( Index )` 删除一个普通视图
+
 
 
 ## 【声明式 AJAX】
@@ -143,7 +145,7 @@ $().iWebApp().on({
 
 ```JavaScript
 $().iWebApp().on({
-    type:    'response',
+    type:    'template',
     href:    /\.md$/i
 },  function (iEvent, iData) {
 
@@ -152,7 +154,7 @@ $().iWebApp().on({
     return  marked( iData );
 
 }).on({
-    type:    'response',
+    type:    'data',
     src:     'api.test.com'
 },  function (iEvent, iData) {
 
@@ -218,4 +220,4 @@ require([
     });
 });
 ```
-当其所对应的 HTML 文件用 `<script src="path/to/module.js"></script>` 引用了它，EWA 引擎就会自动用它返回的数据对象来更新 VM。
+当其所对应的 HTML 文件用 `<script src="module.js"></script>` 引用了它，EWA 引擎就会自动用它返回的数据对象来更新 VM。
