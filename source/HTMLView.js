@@ -32,43 +32,6 @@ define([
 
             return iNew;
         },
-        fixDOM:         function (iDOM, BaseURL) {
-            var iKey = 'src';
-
-            switch ( iDOM.tagName.toLowerCase() ) {
-                case 'img':       ;
-                case 'iframe':    ;
-                case 'audio':     ;
-                case 'video':     break;
-                case 'script':    {
-                    var iAttr = { };
-
-                    $.each(iDOM.attributes,  function () {
-
-                        iAttr[ this.nodeName ] = this.nodeValue;
-                    });
-
-                    iDOM = $('<script />', iAttr)[0];    break;
-                }
-                case 'link':      {
-                    if (('rel' in iDOM)  &&  (iDOM.rel != 'stylesheet'))
-                        return iDOM;
-
-                    iKey = 'href';    break;
-                }
-                default:          {
-                    if (! (iDOM.dataset.href || '').split('?')[0])  return iDOM;
-
-                    iKey = 'data-href';
-                }
-            }
-            var iURL = iDOM.getAttribute( iKey );
-
-            if (iURL  &&  (! $.urlDomain(iURL))  &&  (iURL.indexOf( BaseURL )  <  0))
-                iDOM.setAttribute(iKey,  this.parsePath(BaseURL + iURL));
-
-            return iDOM;
-        },
         rawSelector:    $.makeSet('code', 'xmp', 'template')
     }, {
         parseSlot:     function (iNode) {
@@ -82,6 +45,63 @@ define([
             this.$_Content = this.$_Content.not( $_Slot );
 
             return $_Slot;
+        },
+        fixStyle:       function (iDOM) {
+
+            var CSS_Rule = $.map(iDOM.sheet.cssRules,  function (iRule) {
+
+                    switch ( iRule.type ) {
+                        case 1:    return  iRule;
+                        case 4:    return  Array.apply(null, iRule.cssRules);
+                    }
+                });
+
+            for (var i = 0;  CSS_Rule[i];  i++)
+                CSS_Rule[i].selectorText = '#' + this.__id__ + ' ' +
+                    CSS_Rule[i].selectorText;
+
+            iDOM.disabled = false;
+        },
+        fixScript:      function (iDOM) {
+            var iAttr = { };
+
+            $.each(iDOM.attributes,  function () {
+
+                iAttr[ this.nodeName ] = this.nodeValue;
+            });
+
+            iDOM = $('<script />', iAttr)[0];
+
+            return iDOM;
+        },
+        fixDOM:         function (iDOM, BaseURL) {
+            var iKey = 'src';
+
+            switch ( iDOM.tagName.toLowerCase() ) {
+                case 'link':      {
+                    if (('rel' in iDOM)  &&  (iDOM.rel != 'stylesheet'))
+                        return iDOM;
+
+                    iKey = 'href';
+                }
+                case 'style':     this.fixStyle( iDOM );    break;
+                case 'script':    iDOM = this.fixScript( iDOM );    break;
+                case 'img':       ;
+                case 'iframe':    ;
+                case 'audio':     ;
+                case 'video':     break;
+                default:          {
+                    if (! (iDOM.dataset.href || '').split('?')[0])  return iDOM;
+
+                    iKey = 'data-href';
+                }
+            }
+            var iURL = iDOM.getAttribute( iKey );
+
+            if (iURL  &&  (! $.urlDomain(iURL))  &&  (iURL.indexOf( BaseURL )  <  0))
+                iDOM.setAttribute(iKey,  HTMLView.parsePath(BaseURL + iURL));
+
+            return iDOM;
         },
         signIn:        function (iNode, iName) {
 
@@ -112,11 +132,10 @@ define([
 
                     _This_.signIn(iTemplate, iName);
 
-                    if (
-                        (! this.nodeValue)  &&
-                        (this.nodeType == 2)  &&
-                        (this.nodeName.slice(0, 5) != 'data-')
-                    )
+                    if ((! this.nodeValue)  &&  (this.nodeType == 2)  &&  (
+                        ($.propFix[this.nodeName] || this.nodeName)  in
+                        this.ownerElement
+                    ))
                         this.ownerElement.removeAttribute( this.nodeName );
                 }
             );
@@ -142,7 +161,7 @@ define([
                         (iNode != this.$_View[0])  &&
                         (iNode.outerHTML != this.lastParsed)
                     ) {
-                        iNode = HTMLView.fixDOM(iNode, BaseURL);
+                        iNode = this.fixDOM(iNode, BaseURL);
 
                         this.lastParsed = iNode.outerHTML;
                     }

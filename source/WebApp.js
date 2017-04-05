@@ -9,9 +9,9 @@ define([
 
         var _This_ = $('*:data("_EWA_")').data('_EWA_') || this;
 
-        if (_This_ !== this)  return _This_;
+        if ((_This_ != null)  &&  (_This_ != this))  return _This_;
 
-        Observer.call( this ).$_Page = $( Page_Box ).data('_EWA_', this);
+        Observer.call(this, Page_Box).destructor().$_View.data('_EWA_', this);
 
         this.apiRoot = API_Root || '';
 
@@ -63,13 +63,13 @@ define([
 
             if (iLink.target == 'page') {
 
-                var iPrev = View.instanceOf(this.$_Page, false);
+                var iPrev = View.instanceOf(this.$_View, false);
 
                 if ( iPrev )  iPrev.detach();
 
                 if (this.indexOf( iLink )  ==  -1)  this.setRoute( iLink );
 
-                $_Target = this.$_Page;
+                $_Target = this.$_View;
             }
 
             iHTML = this.emit(
@@ -206,7 +206,7 @@ define([
         },
         boot:         function () {
 
-            var $_Init = $('[data-href]').not( this.$_Page.find('[data-href]') ),
+            var $_Init = $('[data-href]').not( this.$_View.find('[data-href]') ),
                 _This_ = this;
 
             return  ($_Init[0]  ?  this.load( $_Init[0] )  :  Promise.resolve(''))

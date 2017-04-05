@@ -69,7 +69,7 @@ require([
 
             if (! $.browser.mobile)  $_Toolkit.show();
 
-            var iTitle = this.$_Page.find('h1').text() || '';
+            var iTitle = this.$_View.find('h1').text() || '';
 
             document.title = iTitle + ' - EasyWiki';
 

@@ -1,6 +1,15 @@
 define(['jquery', 'jQuery+'],  function ($) {
 
-    function Observer() {
+    function Observer($_View) {
+
+        this.$_View = ($_View instanceof $)  ?  $_View  :  $( $_View );
+
+        var _This_ = this.$_View.data('[object Observer]');
+
+        if ((_This_ != null)  &&  (_This_ != this))  return _This_;
+
+        this.$_View.data('[object Observer]', this);
+
         this.__handle__ = { };
 
         return this;
@@ -43,15 +52,27 @@ define(['jquery', 'jQuery+'],  function ($) {
             }
 
             return iHandle;
+        },
+        getClass:        function () {
+
+            return this.prototype.toString.call(
+                {constructor: this}
+            ).split(' ')[1].slice(0, -1);
         }
     });
 
     $.extend(Observer.prototype, {
-        toString:    function () {
+        toString:      function () {
 
             return  '[object ' + this.constructor.name + ']';
         },
-        valueOf:     function (iEvent, iKey) {
+        destructor:    function () {
+
+            this.$_View.data('[object Observer]', null);
+
+            return  $.extend({ }, this);
+        },
+        valueOf:       function (iEvent, iKey) {
 
             if (! iEvent)  return  this.__handle__;
 
@@ -61,7 +82,7 @@ define(['jquery', 'jQuery+'],  function ($) {
                     return  arguments[0][ iKey ];
                 });
         },
-        on:          function (iEvent, iCallback) {
+        on:            function (iEvent, iCallback) {
 
             iEvent = Observer.getEvent(iEvent,  {handler: iCallback});
 
@@ -75,12 +96,12 @@ define(['jquery', 'jQuery+'],  function ($) {
 
             return this;
         },
-        emit:        function (iEvent, iData) {
+        emit:          function (iEvent, iData) {
 
             iEvent = Observer.getEvent( iEvent );
 
             return  (this.__handle__[iEvent.type] || [ ]).reduce(
-                $.proxy(function (_Data_, iHandle) {
+                (function (_Data_, iHandle) {
 
                     if (! Observer.match(iEvent, iHandle))  return _Data_;
 
@@ -88,11 +109,11 @@ define(['jquery', 'jQuery+'],  function ($) {
 
                     return  (iResult != null)  ?  iResult  :  _Data_;
 
-                },  this),
+                }).bind( this ),
                 iData
             );
         },
-        off:         function (iEvent, iCallback) {
+        off:           function (iEvent, iCallback) {
 
             iEvent = Observer.getEvent(iEvent,  {handler: iCallback});
 
@@ -105,7 +126,7 @@ define(['jquery', 'jQuery+'],  function ($) {
 
             return this;
         },
-        one:         function () {
+        one:           function () {
 
             var _This_ = this,  iArgs = $.makeArray( arguments );
 

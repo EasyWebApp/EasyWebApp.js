@@ -78,7 +78,7 @@ require(['jquery'],  function ($) {
             },
             onUpdate:    function () {
 
-                iWebApp.load( this.$_View[0] );
+                iWebApp.load( arguments[0].target );
             }
         };
     });

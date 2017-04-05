@@ -9,15 +9,15 @@ define([
                 "View() is an Abstract Base Class which can't be instantiated."
             );
 
-        Observer.call( this ).$_View =
-            ($_View instanceof $)  ?  $_View  :  $( $_View );
+        var _This_ = Observer.call(this, $_View);
 
-        var _This_ = this.constructor.instanceOf(this.$_View, false);
+        if (_This_ != this)  $.extend(this, _This_.destructor());
+
+        _This_ = this.constructor.instanceOf(this.$_View, false);
 
         return  ((_This_ != null)  &&  (_This_ != this))  ?
             _This_  :
             $.extend(this, {
-                __id__:       $.uuid('View'),
                 __name__:     this.$_View[0].name || this.$_View[0].dataset.name,
                 __data__:     DS_Inherit(iScope, { }),
                 __child__:    [ ]
@@ -25,12 +25,6 @@ define([
     }
 
     return  $.inherit(Observer, View, {
-        getClass:        function () {
-
-            return this.prototype.toString.call(
-                {constructor: this}
-            ).split(' ')[1].slice(0, -1);
-        },
         signSelector:    function () {
             var _This_ = this;
 
@@ -72,6 +66,39 @@ define([
                 $_Instance = $_Instance.parent();
 
             } while ($_Instance[0]  &&  (Check_Parent !== false));
+        },
+        getObserver:     function (iDOM) {
+
+            return  this.instanceOf(iDOM, false)  ||  new Observer( iDOM );
+        },
+        setEvent:        function (iDOM) {
+
+            $.each(iDOM.attributes,  function () {
+
+                var iName = (this.nodeName.match(/^on(\w+)/i) || '')[1];
+
+                if ((! iName)  ||  (this.nodeName in iDOM))  return;
+
+                Object.defineProperty(iDOM,  'on' + iName,  {
+                    set:    function (iHandler) {
+
+                        var iView = View.getObserver( iDOM );
+
+                        iView.off( iName );
+
+                        if (typeof iHandler == 'function')
+                            iView.on(iName, iHandler);
+                    },
+                    get:    function () {
+
+                        return Observer.prototype.valueOf.call(
+                            View.getObserver( iDOM ),  iName,  'handler'
+                        )[0];
+                    }
+                });
+            });
+
+            return iDOM;
         }
     }, {
         watch:         function (iKey) {
@@ -122,7 +149,10 @@ define([
                 });
 
                 if (! $.isEmptyObject( iData ))
-                    _This_.render( iData ).emit('update', iData);
+                    _This_.render( iData ).emit({
+                        type:      'update',
+                        target:    _This_.$_View[0]
+                    }, iData);
             });
 
             this.__observer__.observe(this.$_View[0], {
@@ -136,44 +166,24 @@ define([
                 )
             });
         },
-        listen:        function () {
-            var _This_ = this;
-
-            $.each(this.$_View[0].attributes,  function () {
-
-                var iName = (this.nodeName.match(/^on(\w+)/i) || '')[1];
-
-                if ((! iName)  ||  (this.nodeName in _This_.$_View[0]))  return;
-
-                Object.defineProperty(_This_.$_View[0],  'on' + iName,  {
-                    set:    function (iHandler) {
-
-                        _This_.off( iName );
-
-                        if (typeof iHandler == 'function')
-                            _This_.on(iName, iHandler);
-                    },
-                    get:    function () {
-
-                        return Observer.prototype.valueOf
-                            .call(_This_, iName, 'handler')[0];
-                    }
-                });
-            });
-
-            return this;
-        },
         attach:        function () {
+
+            if (! this.$_View[0].id)
+                this.$_View[0].id = this.__id__ || $.uuid('View');
+
+            this.__id__ = this.$_View[0].id;
 
             this.$_View.data('[object View]', this);
 
             if ( this.$_View[0].dataset.href )  this.attrWatch();
 
-            this.listen().$_View.append( this.$_Content );
+            this.$_View.append( this.$_Content );
 
             return this;
         },
         detach:        function () {
+
+            if ( this.$_View[0].id.match(/^View_\w+/) )  this.$_View[0].id = '';
 
             this.$_View.data('[object View]', null);
 
@@ -240,12 +250,8 @@ define([
                 $( iOld ).remove();
             }
 
-            for (var i = 0;  this.__child__[i];  i++) {
-
-                this.__child__[i] = View.getSub( this.__child__[i] );
-
-                iParser.call(this, this.__child__[i].$_View[0]);
-            }
+            for (var i = 0;  this.__child__[i];  i++)
+                iParser.call(this,  View.setEvent( this.__child__[i] ));
 
             for (var i = 0;  Sub_View[i];  i++)
                 iParser.call(this, Sub_View[i]);
