@@ -1,6 +1,6 @@
 define([
-    'jquery', 'View', 'Node_Template', 'DS_Inherit', 'iQuery+'
-],  function ($, View, Node_Template, DS_Inherit) {
+    'jquery', 'View', 'Observer', 'Node_Template', 'DS_Inherit', 'iQuery+'
+],  function ($, View, Observer, Node_Template, DS_Inherit) {
 
     function HTMLView($_View, iScope) {
 
@@ -16,10 +16,10 @@ define([
     }
 
     return  View.extend(HTMLView, {
-        is:            function () {
+        is:             function () {
             return true;
         },
-        parsePath:     function (iPath) {
+        parsePath:      function (iPath) {
 
             var iNew;  iPath = iPath.replace(/^\.\//, '').replace(/\/\.\//g, '/');
 
@@ -32,7 +32,7 @@ define([
 
             return iNew;
         },
-        fixDOM:        function (iDOM, BaseURL) {
+        fixDOM:         function (iDOM, BaseURL) {
             var iKey = 'src';
 
             switch ( iDOM.tagName.toLowerCase() ) {
@@ -64,7 +64,7 @@ define([
             }
             var iURL = iDOM.getAttribute( iKey );
 
-            if (iURL  &&  (iURL.indexOf( BaseURL )  <  0))
+            if (iURL  &&  (! $.urlDomain(iURL))  &&  (iURL.indexOf( BaseURL )  <  0))
                 iDOM.setAttribute(iKey,  this.parsePath(BaseURL + iURL));
 
             return iDOM;
@@ -138,8 +138,14 @@ define([
                             $.proxy(arguments.callee, this)
                         );
 
-                    if (iNode != this.$_View[0])
+                    if (
+                        (iNode != this.$_View[0])  &&
+                        (iNode.outerHTML != this.lastParsed)
+                    ) {
                         iNode = HTMLView.fixDOM(iNode, BaseURL);
+
+                        this.lastParsed = iNode.outerHTML;
+                    }
                 }
 
                 switch (true) {

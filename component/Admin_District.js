@@ -28,10 +28,7 @@ require(['jquery'],  function ($) {
             },
             $_adCode = this.$_View.find('[type="hidden"]');
 
-        var VM = this.on('update',  function () {
-
-                iWebApp.load( iEvent.target );
-            });
+        var VM = this;
 
         iWebApp.off( iEvent ).on(iEvent,  function (iEvent, iData) {
 
@@ -77,7 +74,11 @@ require(['jquery'],  function ($) {
                         }
                     );
                 else
-                    this.trigger('loadAll');
+                    this.emit('loadAll');
+            },
+            onUpdate:    function () {
+
+                iWebApp.load( this.$_View[0] );
             }
         };
     });

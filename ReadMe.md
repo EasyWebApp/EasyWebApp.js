@@ -23,19 +23,23 @@ MVVM 引擎必需的所有 UI 结构，全部以 **完全标准的 HTML 5 代码
 
 ### 内置视图对象
 
- - `View( $_Box )` 抽象视图（不可实例化）
-   - `View.extend()` 继承视图
-   - `View.instanceOf()` 查找视图对象
-   - `View.prototype.scan()` 遍历视图 DOM 树
- - `HTMLView( $_Box )` 普通视图（对应 JSON 对象）
-   - `HTMLView.prototype.parse()` 解析视图 DOM 树
-   - `HTMLView.prototype.render( iObject )` 渲染视图
-   - `HTMLView.prototype.valueOf()` 获取视图完整数据
- - `ListView( $_Box )` 迭代视图（对应 JSON 数组）
-   - `ListView.prototype.clear()` 清空列表
-   - `ListView.prototype.insert( iObject )` 插入一个普通视图
-   - `ListView.prototype.render( iArray )` 渲染列表
-   - `ListView.prototype.remove( Index )` 删除一个普通视图
+ - **抽象视图** `View( $_Box )`（不可实例化）
+   - 继承父类：`Observer()`
+   - 继承视图：`View.extend(iConstructor, iStatic, iPrototype)`
+   - 查找实例：`View.instanceOf(iDOM, Check_Parent)` 
+   - 遍历 DOM：`View.prototype.scan( iParser )` 
+   - 获取数据：`View.prototype.valueOf()`
+   - 查子组件：`View.prototype.childOf( iSelector )`
+ - **普通视图** `HTMLView( $_Box )`（对应 JSON 对象）
+   - 继承父类：`View()`
+   - 解析 DOM：`HTMLView.prototype.parse( Template_with_Slot )`
+   - 渲染数据：`HTMLView.prototype.render( iObject )`
+ - **迭代视图** `ListView( $_Box )`（对应 JSON 数组）
+   - 继承父类：`View()`
+   - 清空列表：`ListView.prototype.clear()`
+   - 插入一项：`ListView.prototype.insert( iObject )`
+   - 渲染列表：`ListView.prototype.render( iArray )` 
+   - 删除一项：`ListView.prototype.remove( Index )`
 
 
 
@@ -127,17 +131,17 @@ path/to/template.html?key1=value1&keyN=valueN&data=/path/to/json
 $().iWebApp().on({
     type:    'request',
     src:     'api.test.com'
-},  function (iEvent, AJAX_Option) {
+},  function (iEvent, iAJAX) {
 
     //  基于两个 iQuery 扩展的实用方法，处理 jQuery AJAX 选项对象
 
-    AJAX_Option.url = $.extendURL(AJAX_Option.url, {
+    iAJAX.option.url = $.extendURL(iAJAX.option.url, {
         token:    self.sessionStorage.token
     });
 
-    AJAX_Option.contentType = 'application/json';
+    iAJAX.option.contentType = 'application/json';
 
-    AJAX_Option.data = JSON.stringify($.paramJSON('?' + AJAX_Option.data));
+    iAJAX.option.data = JSON.stringify($.paramJSON('?' + iAJAX.option.data));
 });
 ```
 

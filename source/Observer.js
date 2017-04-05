@@ -47,7 +47,21 @@ define(['jquery', 'jQuery+'],  function ($) {
     });
 
     $.extend(Observer.prototype, {
-        on:      function (iEvent, iCallback) {
+        toString:    function () {
+
+            return  '[object ' + this.constructor.name + ']';
+        },
+        valueOf:     function (iEvent, iKey) {
+
+            if (! iEvent)  return  this.__handle__;
+
+            return  (! iKey)  ?  this.__handle__[iEvent]  :
+                $.map(this.__handle__[iEvent],  function () {
+
+                    return  arguments[0][ iKey ];
+                });
+        },
+        on:          function (iEvent, iCallback) {
 
             iEvent = Observer.getEvent(iEvent,  {handler: iCallback});
 
@@ -61,7 +75,7 @@ define(['jquery', 'jQuery+'],  function ($) {
 
             return this;
         },
-        emit:    function (iEvent, iData) {
+        emit:        function (iEvent, iData) {
 
             iEvent = Observer.getEvent( iEvent );
 
@@ -78,7 +92,7 @@ define(['jquery', 'jQuery+'],  function ($) {
                 iData
             );
         },
-        off:     function (iEvent, iCallback) {
+        off:         function (iEvent, iCallback) {
 
             iEvent = Observer.getEvent(iEvent,  {handler: iCallback});
 
@@ -91,7 +105,7 @@ define(['jquery', 'jQuery+'],  function ($) {
 
             return this;
         },
-        one:     function () {
+        one:         function () {
 
             var _This_ = this,  iArgs = $.makeArray( arguments );
 

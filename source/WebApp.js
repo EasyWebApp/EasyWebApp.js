@@ -126,10 +126,10 @@ define([
 
             return  iLink.load(function () {
 
-                _This_.emit(
-                    $.extend(iLink.valueOf(), {type: 'request'}),
-                    [this, arguments[0]]
-                );
+                _This_.emit($.extend(iLink.valueOf(), {type: 'request'}),  {
+                    option:       this,
+                    transport:    arguments[0]
+                });
             }).then(function () {
 
                 var iData = arguments[0][1];

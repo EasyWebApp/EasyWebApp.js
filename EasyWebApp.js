@@ -57,7 +57,21 @@ var Observer = (function (BOM, DOM, $) {
     });
 
     $.extend(Observer.prototype, {
-        on:      function (iEvent, iCallback) {
+        toString:    function () {
+
+            return  '[object ' + this.constructor.name + ']';
+        },
+        valueOf:     function (iEvent, iKey) {
+
+            if (! iEvent)  return  this.__handle__;
+
+            return  (! iKey)  ?  this.__handle__[iEvent]  :
+                $.map(this.__handle__[iEvent],  function () {
+
+                    return  arguments[0][ iKey ];
+                });
+        },
+        on:          function (iEvent, iCallback) {
 
             iEvent = Observer.getEvent(iEvent,  {handler: iCallback});
 
@@ -71,7 +85,7 @@ var Observer = (function (BOM, DOM, $) {
 
             return this;
         },
-        emit:    function (iEvent, iData) {
+        emit:        function (iEvent, iData) {
 
             iEvent = Observer.getEvent( iEvent );
 
@@ -88,7 +102,7 @@ var Observer = (function (BOM, DOM, $) {
                 iData
             );
         },
-        off:     function (iEvent, iCallback) {
+        off:         function (iEvent, iCallback) {
 
             iEvent = Observer.getEvent(iEvent,  {handler: iCallback});
 
@@ -101,7 +115,7 @@ var Observer = (function (BOM, DOM, $) {
 
             return this;
         },
-        one:     function () {
+        one:         function () {
 
             var _This_ = this,  iArgs = $.makeArray( arguments );
 
@@ -299,7 +313,7 @@ var Node_Template = (function (BOM, DOM, $) {
 
 
 
-var View = (function (BOM, DOM, $, DS_Inherit, MutationObserver, Node_Template, Observer) {
+var View = (function (BOM, DOM, $, Observer, DS_Inherit, MutationObserver, Node_Template) {
 
     function View($_View, iScope) {
 
@@ -308,7 +322,8 @@ var View = (function (BOM, DOM, $, DS_Inherit, MutationObserver, Node_Template, 
                 "View() is an Abstract Base Class which can't be instantiated."
             );
 
-        this.$_View = ($_View instanceof $)  ?  $_View  :  $( $_View );
+        Observer.call( this ).$_View =
+            ($_View instanceof $)  ?  $_View  :  $( $_View );
 
         var _This_ = this.constructor.instanceOf(this.$_View, false);
 
@@ -322,15 +337,56 @@ var View = (function (BOM, DOM, $, DS_Inherit, MutationObserver, Node_Template, 
             }).attach();
     }
 
-    $.extend(View.prototype, {
-        toString:      function () {
+    return  $.inherit(Observer, View, {
+        getClass:        function () {
 
-            var iName = this.constructor.name;
-
-            return  '[object ' + (
-                (typeof iName == 'function')  ?  this.constructor.name()  :  iName
-            )+ ']';
+            return this.prototype.toString.call(
+                {constructor: this}
+            ).split(' ')[1].slice(0, -1);
         },
+        signSelector:    function () {
+            var _This_ = this;
+
+            $.expr[':'][ this.getClass().toLowerCase() ] = function () {
+                return (
+                    ($.data(arguments[0], '[object View]') || '') instanceof _This_
+                );
+            };
+
+            return this;
+        },
+        Sub_Class:       [ ],
+        getSub:          function (iDOM) {
+
+            for (var i = this.Sub_Class.length - 1;  this.Sub_Class[i];  i--)
+                if (this.Sub_Class[i].is( iDOM ))
+                    return  new this.Sub_Class[i](
+                        iDOM,
+                        (this.instanceOf( iDOM.parentNode )  ||  '').__data__
+                    );
+        },
+        extend:          function (iConstructor, iStatic, iPrototype) {
+
+            this.Sub_Class.push( iConstructor );
+
+            return $.inherit(
+                this, iConstructor, iStatic, iPrototype
+            ).signSelector();
+        },
+        instanceOf:      function ($_Instance, Check_Parent) {
+
+            var _Instance_;  $_Instance = $( $_Instance );
+
+            do {
+                _Instance_ = $_Instance.data('[object View]');
+
+                if (_Instance_ instanceof this)  return _Instance_;
+
+                $_Instance = $_Instance.parent();
+
+            } while ($_Instance[0]  &&  (Check_Parent !== false));
+        }
+    }, {
         watch:         function (iKey) {
             var _This_ = this;
 
@@ -379,7 +435,7 @@ var View = (function (BOM, DOM, $, DS_Inherit, MutationObserver, Node_Template, 
                 });
 
                 if (! $.isEmptyObject( iData ))
-                    _This_.render( iData ).trigger('update', iData);
+                    _This_.render( iData ).emit('update', iData);
             });
 
             this.__observer__.observe(this.$_View[0], {
@@ -393,13 +449,40 @@ var View = (function (BOM, DOM, $, DS_Inherit, MutationObserver, Node_Template, 
                 )
             });
         },
+        listen:        function () {
+            var _This_ = this;
+
+            $.each(this.$_View[0].attributes,  function () {
+
+                var iName = (this.nodeName.match(/^on(\w+)/i) || '')[1];
+
+                if ((! iName)  ||  (this.nodeName in _This_.$_View[0]))  return;
+
+                Object.defineProperty(_This_.$_View[0],  'on' + iName,  {
+                    set:    function (iHandler) {
+
+                        _This_.off( iName );
+
+                        if (typeof iHandler == 'function')
+                            _This_.on(iName, iHandler);
+                    },
+                    get:    function () {
+
+                        return Observer.prototype.valueOf
+                            .call(_This_, iName, 'handler')[0];
+                    }
+                });
+            });
+
+            return this;
+        },
         attach:        function () {
 
             this.$_View.data('[object View]', this);
 
             if ( this.$_View[0].dataset.href )  this.attrWatch();
 
-            this.$_View.append( this.$_Content );
+            this.listen().$_View.append( this.$_Content );
 
             return this;
         },
@@ -461,7 +544,7 @@ var View = (function (BOM, DOM, $, DS_Inherit, MutationObserver, Node_Template, 
                     continue;
                 }
 
-                $( iNew ).insertTo(iPointer.parentNode,  $( iPointer ).index());
+                $( iNew ).insertTo(iPointer.parentNode,  $( iPointer ).index() + 1);
 
                 iOld = iPointer;
 
@@ -470,94 +553,32 @@ var View = (function (BOM, DOM, $, DS_Inherit, MutationObserver, Node_Template, 
                 $( iOld ).remove();
             }
 
-            for (var i = 0;  this.__child__[i];  i++)
-                iParser.call(this, this.__child__[i]);
+            for (var i = 0;  this.__child__[i];  i++) {
+
+                this.__child__[i] = View.getSub( this.__child__[i] );
+
+                iParser.call(this, this.__child__[i].$_View[0]);
+            }
 
             for (var i = 0;  Sub_View[i];  i++)
                 iParser.call(this, Sub_View[i]);
         },
-        one:           Observer.prototype.one
-    });
-
-    $.each(['trigger', 'on', 'off'],  function (Index, iName) {
-
-        View.prototype[this] = function () {
-
-            var iArgs = $.makeArray( arguments );
-
-            if ( Index ) {
-                iArgs[0] += '.EWA_View';
-
-                if (typeof iArgs.slice(-1)[0] == 'function') {
-
-                    iArgs = iArgs.concat($.proxy(iArgs.pop(), this));
-                }
-            }
-
-            $.fn[iName].apply(this.$_View, iArgs);
-
-            return this;
-        };
-    });
-
-    $.extend(View, {
-        getClass:        function () {
-
-            return this.prototype.toString.call(
-                {constructor: this}
-            ).split(' ')[1].slice(0, -1);
+        valueOf:       function () {
+            return  this.__data__.valueOf();
         },
-        signSelector:    function () {
-            var _This_ = this;
+        childOf:       function (iSelector) {
 
-            $.expr[':'][ this.getClass().toLowerCase() ] = function () {
-                return (
-                    ($.data(arguments[0], '[object View]') || '') instanceof _This_
-                );
-            };
-
-            return this;
+            return  iSelector  ?
+                View.instanceOf(this.$_View.find(iSelector + '[data-href]'))  :
+                this.__child__;
         }
-    });
+    }).signSelector();
 
-    return  $.extend(View.signSelector(), {
-        Sub_Class:     [ ],
-        getSub:        function (iDOM) {
-
-            for (var i = this.Sub_Class.length - 1;  this.Sub_Class[i];  i--)
-                if (this.Sub_Class[i].is( iDOM ))
-                    return  new this.Sub_Class[i](
-                        iDOM,
-                        (this.instanceOf( iDOM.parentNode )  ||  '').__data__
-                    );
-        },
-        extend:        function (iConstructor, iStatic, iPrototype) {
-
-            this.Sub_Class.push( iConstructor );
-
-            return $.inherit(
-                this, iConstructor, iStatic, iPrototype
-            ).signSelector();
-        },
-        instanceOf:    function ($_Instance, Check_Parent) {
-
-            var _Instance_;  $_Instance = $( $_Instance );
-
-            do {
-                _Instance_ = $_Instance.data('[object View]');
-
-                if (_Instance_ instanceof this)  return _Instance_;
-
-                $_Instance = $_Instance.parent();
-
-            } while ($_Instance[0]  &&  (Check_Parent !== false));
-        }
-    });
-})(self, self.document, self.jQuery, DS_Inherit, MutationObserver, Node_Template, Observer);
+})(self, self.document, self.jQuery, Observer, DS_Inherit, MutationObserver, Node_Template);
 
 
 
-var HTMLView = (function (BOM, DOM, $, View, Node_Template, DS_Inherit) {
+var HTMLView = (function (BOM, DOM, $, View, Observer, Node_Template, DS_Inherit) {
 
     function HTMLView($_View, iScope) {
 
@@ -573,10 +594,10 @@ var HTMLView = (function (BOM, DOM, $, View, Node_Template, DS_Inherit) {
     }
 
     return  View.extend(HTMLView, {
-        is:            function () {
+        is:             function () {
             return true;
         },
-        parsePath:     function (iPath) {
+        parsePath:      function (iPath) {
 
             var iNew;  iPath = iPath.replace(/^\.\//, '').replace(/\/\.\//g, '/');
 
@@ -589,7 +610,7 @@ var HTMLView = (function (BOM, DOM, $, View, Node_Template, DS_Inherit) {
 
             return iNew;
         },
-        fixDOM:        function (iDOM, BaseURL) {
+        fixDOM:         function (iDOM, BaseURL) {
             var iKey = 'src';
 
             switch ( iDOM.tagName.toLowerCase() ) {
@@ -621,7 +642,7 @@ var HTMLView = (function (BOM, DOM, $, View, Node_Template, DS_Inherit) {
             }
             var iURL = iDOM.getAttribute( iKey );
 
-            if (iURL  &&  (iURL.indexOf( BaseURL )  <  0))
+            if (iURL  &&  (! $.urlDomain(iURL))  &&  (iURL.indexOf( BaseURL )  <  0))
                 iDOM.setAttribute(iKey,  this.parsePath(BaseURL + iURL));
 
             return iDOM;
@@ -695,8 +716,14 @@ var HTMLView = (function (BOM, DOM, $, View, Node_Template, DS_Inherit) {
                             $.proxy(arguments.callee, this)
                         );
 
-                    if (iNode != this.$_View[0])
+                    if (
+                        (iNode != this.$_View[0])  &&
+                        (iNode.outerHTML != this.lastParsed)
+                    ) {
                         iNode = HTMLView.fixDOM(iNode, BaseURL);
+
+                        this.lastParsed = iNode.outerHTML;
+                    }
                 }
 
                 switch (true) {
@@ -765,7 +792,7 @@ var HTMLView = (function (BOM, DOM, $, View, Node_Template, DS_Inherit) {
             return  this.render( this.__data__.clear() );
         }
     });
-})(self, self.document, self.jQuery, View, Node_Template, DS_Inherit);
+})(self, self.document, self.jQuery, View, Observer, Node_Template, DS_Inherit);
 
 
 
@@ -1072,10 +1099,10 @@ var WebApp = (function (BOM, DOM, $, Observer, View, HTMLView, ListView, InnerLi
 
             return  iLink.load(function () {
 
-                _This_.emit(
-                    $.extend(iLink.valueOf(), {type: 'request'}),
-                    [this, arguments[0]]
-                );
+                _This_.emit($.extend(iLink.valueOf(), {type: 'request'}),  {
+                    option:       this,
+                    transport:    arguments[0]
+                });
             }).then(function () {
 
                 var iData = arguments[0][1];
@@ -1174,7 +1201,7 @@ var WebApp = (function (BOM, DOM, $, Observer, View, HTMLView, ListView, InnerLi
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v4.0  (2017-04-03)  Alpha
+//      [Version]    v4.0  (2017-04-04)  Alpha
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //
