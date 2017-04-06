@@ -36,7 +36,25 @@ define([
         indexOf:      Array.prototype.indexOf,
         splice:       Array.prototype.splice,
         push:         Array.prototype.push,
+        switchTo:     function (Index) {
+
+            if (this.lastPage == Index)  return;
+
+            var iPage = View.instanceOf(this.$_View, false);
+
+            if ( iPage )  iPage.detach();
+
+            if (this.lastPage > -1)  this[ this.lastPage ].view = iPage;
+
+            iPage = (this[ Index ]  ||  '').view;
+
+            return  iPage && iPage.attach();
+        },
         setRoute:     function (iLink) {
+
+            this.switchTo();
+
+            if (this.indexOf( iLink )  >  -1)  return;
 
             if (++this.lastPage != this.length)
                 this.splice(this.lastPage, Infinity);
@@ -63,11 +81,7 @@ define([
 
             if (iLink.target == 'page') {
 
-                var iPrev = View.instanceOf(this.$_View, false);
-
-                if ( iPrev )  iPrev.detach();
-
-                if (this.indexOf( iLink )  ==  -1)  this.setRoute( iLink );
+                this.setRoute( iLink );
 
                 $_Target = this.$_View;
             }
@@ -146,7 +160,7 @@ define([
                 iView = arguments[0];
 
                 return Promise.all($.map(
-                    iView.__child__,  $.proxy(_This_.load, _This_)
+                    iView.__child__,  _This_.load.bind(_This_)
                 ));
             }).then(function () {
 
@@ -194,7 +208,9 @@ define([
                 var Index = (arguments[0].originalEvent.state || '').index;
 
                 if (_This_[Index]  &&  (_This_.lastPage != Index))
-                    _This_.load(_This_[Index]).then(function () {
+                    Promise.resolve(
+                        _This_.switchTo( Index )  ||  _This_.load( _This_[Index] )
+                    ).then(function () {
 
                         _This_.lastPage = Index;
 

@@ -10,8 +10,16 @@ define([
 
         $.extend(this, {
             length:      0,
+            __CSS__:     [ ],
             __map__:     { },
             __last__:    0
+        }).on('attach',  function () {
+
+            this.$_View.find(':htmlview').addBack().each(function () {
+                $.map(
+                    View.instanceOf( this ).__CSS__,  _This_.fixStyle.bind(_This_)
+                );
+            });
         });
     }
 
@@ -61,6 +69,8 @@ define([
                     CSS_Rule[i].selectorText;
 
             iDOM.disabled = false;
+
+            return iDOM;
         },
         fixScript:      function (iDOM) {
             var iAttr = { };
@@ -84,7 +94,9 @@ define([
 
                     iKey = 'href';
                 }
-                case 'style':     this.fixStyle( iDOM );    break;
+                case 'style':
+                    this.__CSS__.push( this.fixStyle( iDOM ) );
+                    break;
                 case 'script':    iDOM = this.fixScript( iDOM );    break;
                 case 'img':       ;
                 case 'iframe':    ;
@@ -153,8 +165,7 @@ define([
 
                     if (iNode.tagName.toLowerCase() == 'slot')
                         return $.map(
-                            this.parseSlot( iNode ),
-                            $.proxy(arguments.callee, this)
+                            this.parseSlot( iNode ),  arguments.callee.bind( this )
                         );
 
                     if (

@@ -1,10 +1,24 @@
 # 声明式 MVVM 引擎 —— EasyWebApp v4
 
-MVVM 引擎必需的所有 UI 结构，全部以 **完全标准的 HTML 5 代码**写出，其文本、属性也可以是 **合法的 ECMAScript 6 模板字符串**。MVVM 引擎只需扫描 DOM 树，即可 **自动加载 HTML、JSON** 来构建 VM 树，开发者专注于数据整理、事件回调即可，无需任何本地编译、打包环境，享受低学习成本的 **原生 HTML、JavaScript 开发体验**。
+
+
+## 【原生态模板】
+
+**EWA 模板语法**完全沿用各种 **Web 前端原生技术**的标准语义 ——
+
+ - **UI 结构**：HTML 5+ 标准标签、`data-*` 自定义属性
+
+ - **数据绑定**：HTML 标签文本、属性中书写 **ECMAScript 6 模板字符串**（形如 `${vm.propX}`）
+
+ - **事件回调**：像绑定数据一样去绑定函数
+
+ - **资源加载**：可带参数的 HTTP URL，并自动处理相对路径
+
+MVVM 引擎只需扫描 DOM 树，即可 **自动加载 HTML、JSON** 来构建 VM 树，开发者专注于数据整理、事件回调即可，无需任何本地编译、打包环境，享受低学习成本的 **原生 HTML、JavaScript 开发体验**。
 
 
 
-## 【视图模型】
+## 【易拆分视图】
 
 **ViewModel** 是对 View (HTML/DOM) 基于 **“数据驱动”模型**的面向对象封装 ——
 
@@ -25,21 +39,23 @@ MVVM 引擎必需的所有 UI 结构，全部以 **完全标准的 HTML 5 代码
 
  - **抽象视图** `View( $_Box )`（不可实例化）
    - 继承父类：`Observer()`
-   - 继承视图：`View.extend(iConstructor, iStatic, iPrototype)`
-   - 查找实例：`View.instanceOf(iDOM, Check_Parent)` 
-   - 遍历 DOM：`View.prototype.scan( iParser )` 
-   - 获取数据：`View.prototype.valueOf()`
-   - 查子组件：`View.prototype.childOf( iSelector )`
+   - 继承视图：`.extend(iConstructor, iStatic, iPrototype)`
+   - 查找实例：`.instanceOf(iDOM, Check_Parent)` 
+   - 遍历 DOM：`.prototype.scan( iParser )` 
+   - 获取数据：`.prototype.valueOf()`
+   - 查子组件：`.prototype.childOf( iSelector )`
  - **普通视图** `HTMLView( $_Box )`（对应 JSON 对象）
    - 继承父类：`View()`
-   - 解析 DOM：`HTMLView.prototype.parse( Template_with_Slot )`
-   - 渲染数据：`HTMLView.prototype.render( iObject )`
+   - 解析 DOM：`.prototype.parse( Template_with_Slot )`
+   - 渲染数据：`.prototype.render( iObject )`
  - **迭代视图** `ListView( $_Box )`（对应 JSON 数组）
    - 继承父类：`View()`
-   - 清空列表：`ListView.prototype.clear()`
-   - 插入一项：`ListView.prototype.insert( iObject )`
-   - 渲染列表：`ListView.prototype.render( iArray )` 
-   - 删除一项：`ListView.prototype.remove( Index )`
+   - 清空列表：`.prototype.clear()`
+   - 插入一项：`.prototype.insert( iObject )`
+   - 渲染列表：`.prototype.render( iArray )` 
+   - 删除一项：`.prototype.remove( Index )`
+
+以上视图的构造函数 均可从 `$.fn.iWebApp` 命名空间访问到，并可无需 `WebApp()` 实例初始化即可单独使用。
 
 
 
@@ -184,11 +200,35 @@ $().iWebApp().on({
 ```
 
 
-## 【AMD 模块化规范】
+## 【异步式组件】
 
-无论 EWA 引擎本身，还是 EWA 组件的 JS 代码，均遵循 [AMD 规范](https://github.com/amdjs/amdjs-api/wiki/AMD)。
 
-并且一个组件的 JS 代码必须写在其 HTML 文件同目录的同名 `.js` 文件中，必要格式如下 ——
+### （〇）HTML 模板
+
+**EWA 组件**代码本身是完全合法的 HTML 片段，可直接被 AJAX 加载并在 DOM 树中实例化 ——
+
+```HTML
+<style disabled>
+    /*  此处的 disabled 标准属性是为了防止 DOM 子树初始化时影响全局 CSS，
+     *  组件 VM 对象初始化时会自动生成 CSS 作用域
+     */
+</style>
+<!--
+    组件的 JS 代码必须全写在其 HTML 文件同目录的同名 .js 文件中
+-->
+<script src="component.js"></script>
+<!--
+    组件 UI 结构完全是普通的 HTML、JavaScript 表达式
+-->
+<div>
+    现在是 ${(new Date()).toLocaleString()}
+    <slot name="Slot_1" />
+</div>
+```
+
+### （一）JavaScript 模块
+
+无论 EWA 引擎本身，还是 EWA 组件的 JS 代码，均遵循 [AMD 规范](https://github.com/amdjs/amdjs-api/wiki/AMD)，其必要格式如下 ——
 
 ```JavaScript
 require([
@@ -224,4 +264,4 @@ require([
     });
 });
 ```
-当其所对应的 HTML 文件用 `<script src="module.js"></script>` 引用了它，EWA 引擎就会自动用它返回的数据对象来更新 VM。
+EWA 引擎会自动用它返回的数据对象来更新 VM。

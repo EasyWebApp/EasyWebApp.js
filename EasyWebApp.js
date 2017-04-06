@@ -444,9 +444,7 @@ var View = (function (BOM, DOM, $, Observer, DS_Inherit, MutationObserver, Node_
                         if (_This_.__data__.hasOwnProperty( iKey ))
                             return _This_.__data__[iKey];
                     },
-                    set:    function () {
-                        _This_.render(iKey, arguments[0]);
-                    }
+                    set:    this.render.bind(this, iKey)
                 });
         },
         extend:        function (iData) {
@@ -511,7 +509,10 @@ var View = (function (BOM, DOM, $, Observer, DS_Inherit, MutationObserver, Node_
 
             if ( this.$_View[0].dataset.href )  this.attrWatch();
 
-            this.$_View.append( this.$_Content );
+            this.emit({
+                type:      'attach',
+                target:    this.$_View.append( this.$_Content )[0]
+            });
 
             return this;
         },
@@ -615,8 +616,16 @@ var HTMLView = (function (BOM, DOM, $, View, Observer, Node_Template, DS_Inherit
 
         $.extend(this, {
             length:      0,
+            __CSS__:     [ ],
             __map__:     { },
             __last__:    0
+        }).on('attach',  function () {
+
+            this.$_View.find(':htmlview').addBack().each(function () {
+                $.map(
+                    View.instanceOf( this ).__CSS__,  _This_.fixStyle.bind(_This_)
+                );
+            });
         });
     }
 
@@ -666,6 +675,8 @@ var HTMLView = (function (BOM, DOM, $, View, Observer, Node_Template, DS_Inherit
                     CSS_Rule[i].selectorText;
 
             iDOM.disabled = false;
+
+            return iDOM;
         },
         fixScript:      function (iDOM) {
             var iAttr = { };
@@ -689,7 +700,9 @@ var HTMLView = (function (BOM, DOM, $, View, Observer, Node_Template, DS_Inherit
 
                     iKey = 'href';
                 }
-                case 'style':     this.fixStyle( iDOM );    break;
+                case 'style':
+                    this.__CSS__.push( this.fixStyle( iDOM ) );
+                    break;
                 case 'script':    iDOM = this.fixScript( iDOM );    break;
                 case 'img':       ;
                 case 'iframe':    ;
@@ -758,8 +771,7 @@ var HTMLView = (function (BOM, DOM, $, View, Observer, Node_Template, DS_Inherit
 
                     if (iNode.tagName.toLowerCase() == 'slot')
                         return $.map(
-                            this.parseSlot( iNode ),
-                            $.proxy(arguments.callee, this)
+                            this.parseSlot( iNode ),  arguments.callee.bind( this )
                         );
 
                     if (
@@ -1055,7 +1067,25 @@ var WebApp = (function (BOM, DOM, $, Observer, View, HTMLView, ListView, InnerLi
         indexOf:      Array.prototype.indexOf,
         splice:       Array.prototype.splice,
         push:         Array.prototype.push,
+        switchTo:     function (Index) {
+
+            if (this.lastPage == Index)  return;
+
+            var iPage = View.instanceOf(this.$_View, false);
+
+            if ( iPage )  iPage.detach();
+
+            if (this.lastPage > -1)  this[ this.lastPage ].view = iPage;
+
+            iPage = (this[ Index ]  ||  '').view;
+
+            return  iPage && iPage.attach();
+        },
         setRoute:     function (iLink) {
+
+            this.switchTo();
+
+            if (this.indexOf( iLink )  >  -1)  return;
 
             if (++this.lastPage != this.length)
                 this.splice(this.lastPage, Infinity);
@@ -1082,11 +1112,7 @@ var WebApp = (function (BOM, DOM, $, Observer, View, HTMLView, ListView, InnerLi
 
             if (iLink.target == 'page') {
 
-                var iPrev = View.instanceOf(this.$_View, false);
-
-                if ( iPrev )  iPrev.detach();
-
-                if (this.indexOf( iLink )  ==  -1)  this.setRoute( iLink );
+                this.setRoute( iLink );
 
                 $_Target = this.$_View;
             }
@@ -1165,7 +1191,7 @@ var WebApp = (function (BOM, DOM, $, Observer, View, HTMLView, ListView, InnerLi
                 iView = arguments[0];
 
                 return Promise.all($.map(
-                    iView.__child__,  $.proxy(_This_.load, _This_)
+                    iView.__child__,  _This_.load.bind(_This_)
                 ));
             }).then(function () {
 
@@ -1213,7 +1239,9 @@ var WebApp = (function (BOM, DOM, $, Observer, View, HTMLView, ListView, InnerLi
                 var Index = (arguments[0].originalEvent.state || '').index;
 
                 if (_This_[Index]  &&  (_This_.lastPage != Index))
-                    _This_.load(_This_[Index]).then(function () {
+                    Promise.resolve(
+                        _This_.switchTo( Index )  ||  _This_.load( _This_[Index] )
+                    ).then(function () {
 
                         _This_.lastPage = Index;
 
@@ -1247,7 +1275,7 @@ var WebApp = (function (BOM, DOM, $, Observer, View, HTMLView, ListView, InnerLi
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v4.0  (2017-04-05)  Alpha
+//      [Version]    v4.0  (2017-04-06)  Beta
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //

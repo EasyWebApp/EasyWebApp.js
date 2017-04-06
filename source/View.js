@@ -110,9 +110,7 @@ define([
                         if (_This_.__data__.hasOwnProperty( iKey ))
                             return _This_.__data__[iKey];
                     },
-                    set:    function () {
-                        _This_.render(iKey, arguments[0]);
-                    }
+                    set:    this.render.bind(this, iKey)
                 });
         },
         extend:        function (iData) {
@@ -177,7 +175,10 @@ define([
 
             if ( this.$_View[0].dataset.href )  this.attrWatch();
 
-            this.$_View.append( this.$_Content );
+            this.emit({
+                type:      'attach',
+                target:    this.$_View.append( this.$_Content )[0]
+            });
 
             return this;
         },
