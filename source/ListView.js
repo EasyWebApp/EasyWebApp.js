@@ -28,12 +28,16 @@ define(['jquery', 'View', 'HTMLView'],  function ($, View, HTMLView) {
 
             Item.$_View.insertTo(this.$_View, Index);
 
-            this.splice(Index || 0,  0,  Item.render( iData ));
+            iData._index_ = Index || 0;
+
+            this.splice(iData._index_,  0,  Item.render( iData ));
+
+            return Item;
         },
         render:    function (iList) {
 
             if ($.likeArray( iList ))
-                $.map(iList,  $.proxy(this.insert, this));
+                $.map(iList,  this.insert.bind( this ));
 
             return this;
         },

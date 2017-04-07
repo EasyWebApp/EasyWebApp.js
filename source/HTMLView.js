@@ -23,6 +23,11 @@ define([
         });
     }
 
+    function CSS_Push(iDOM) {
+
+        this.__CSS__.push( this.fixStyle( iDOM ) );
+    }
+
     return  View.extend(HTMLView, {
         is:             function () {
             return true;
@@ -88,15 +93,15 @@ define([
             var iKey = 'src';
 
             switch ( iDOM.tagName.toLowerCase() ) {
+                case 'style':     CSS_Push.call(this, iDOM);    break;
                 case 'link':      {
                     if (('rel' in iDOM)  &&  (iDOM.rel != 'stylesheet'))
                         return iDOM;
 
                     iKey = 'href';
+
+                    iDOM.onload = CSS_Push.bind(this, iDOM);    break;
                 }
-                case 'style':
-                    this.__CSS__.push( this.fixStyle( iDOM ) );
-                    break;
                 case 'script':    iDOM = this.fixScript( iDOM );    break;
                 case 'img':       ;
                 case 'iframe':    ;

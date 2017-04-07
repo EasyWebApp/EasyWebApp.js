@@ -25,7 +25,7 @@ define([
         this.lastPage = -1;
         this.loading = { };
 
-        this.listenDOM().listenBOM().boot();
+        self.setTimeout( this.listenDOM().listenBOM().boot.bind( this ) );
     }
 
     return  $.inherit(Observer, WebApp, {
@@ -126,17 +126,19 @@ define([
                 return iView.render(
                     ((typeof iData == 'object') && iData)  ||  { }
                 );
-            });
+            }).then(function () {
+
+                return Promise.all($.map(
+                    iView.__child__,  _This_.load.bind(_This_)
+                ));
+            }).then(function () {  return iView;  });
         },
         load:         function (iLink) {
 
             if (iLink instanceof Element)
                 iLink = new InnerLink(iLink, this.apiRoot);
 
-            if ((! iLink.href)  &&  (iLink.target != 'view'))
-                return  this.loadData( iLink );
-
-            var _This_ = this,  iView;
+            var _This_ = this;
 
             return  iLink.load(function () {
 
@@ -146,27 +148,22 @@ define([
                 });
             }).then(function () {
 
-                var iData = arguments[0][1];
+                var iHTML = arguments[0][0],  iData = arguments[0][1];
 
                 if (iData != null)
                     iData = _This_.emit(
                         $.extend(iLink.valueOf(), {type: 'data'}),  iData
                     );
 
-                return  _This_.loadComponent(iLink, arguments[0][0], iData);
+                if (iLink.href  ||  (iLink.target == 'view'))
+                    return  _This_.loadComponent(iLink, iHTML, iData);
 
-            }).then(function () {
+            }).then(function (iView) {
 
-                iView = arguments[0];
-
-                return Promise.all($.map(
-                    iView.__child__,  _This_.load.bind(_This_)
-                ));
-            }).then(function () {
-
-                _This_.emit(
-                    $.extend(iLink.valueOf(), {type: 'ready'}),  iView
-                );
+                if (iView instanceof View)
+                    _This_.emit(
+                        $.extend(iLink.valueOf(), {type: 'ready'}),  iView
+                    );
             });
         },
         listenDOM:    function () {

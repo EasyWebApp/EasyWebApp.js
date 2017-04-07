@@ -2,28 +2,6 @@ require([
     'jquery', 'marked', 'MediumEditor', 'EasyWebUI', 'EasyWebApp', 'QRcode'
 ],  function ($, marked, MediumEditor) {
 
-    $.ajaxSetup({
-        dataFilter:    function (iData) {
-
-            if (($.fileName( this.url ).indexOf('.')  >  0)  ||  (! iData))
-                return iData;
-
-            if (this.dataType != 'jsonp')  iData = JSON.parse( iData );
-
-            if ( iData.code )
-                self.alert( iData.message );
-            else {
-                if (this.type.toUpperCase() != 'GET')
-                    self.alert( iData.message );
-
-                iData = iData.data || iData;
-            }
-
-            return  (this.dataType == 'jsonp')  ?
-                iData  :  JSON.stringify( iData );
-        }
-    });
-
     $(document).ready(function () {
 
         $('#Main_Nav').scrollFixed(function () {
@@ -53,6 +31,12 @@ require([
 
             return  marked( arguments[1] );
 
+        }).on('data',  function (iEvent, iData) {
+
+            if (iData.code  ||  (iEvent.method.toUpperCase() != 'GET'))
+                self.alert( iData.message );
+
+            return  iData.data || iData;
         }).on({
             type:    'ready',
             href:    /(List\.html|ReadMe\.md)/

@@ -11,7 +11,7 @@ define([
 
         var _This_ = Observer.call(this, $_View);
 
-        if (_This_ != this)  $.extend(this, _This_.destructor());
+        $.extend(this, _This_.destructor());
 
         _This_ = this.constructor.instanceOf(this.$_View, false);
 

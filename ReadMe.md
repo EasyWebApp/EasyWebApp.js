@@ -97,7 +97,7 @@ path/to/template.html?key1=value1&keyN=valueN&data=/path/to/json
 ### （一）提交表单
 
 ```HTML
-<form method="post" action="?data=/path/to/submit">
+<form method="put" enctype="application/json" action="?data=/path/to/submit">
     <input type="hidden" name="extraParam" />
 
     <input type="text" name="key1" required /> 已填 ${vm.key1.length} 字
@@ -105,7 +105,9 @@ path/to/template.html?key1=value1&keyN=valueN&data=/path/to/json
     <input type="submit" />
 </form>
 ```
-**表单数据校验**完全依赖 HTML 5 Form API，但 `method` 支持 **RESTful API 规范**中的常用 HTTP 动词。
+ - `method` 属性支持 [RESTful API 规范](http://www.ruanyifeng.com/blog/2014/05/restful_api.html)中的常用 HTTP 动词
+ - `enctype` 属性支持 [MIME-Type 标准](http://www.iana.org/assignments/media-types/media-types.xhtml)中的常用类型（如 `application/json`）
+ - **数据字段校验**：完全依赖 HTML 5 Form API
 
 
 ### （二）引用组件
@@ -127,7 +129,7 @@ path/to/template.html?key1=value1&keyN=valueN&data=/path/to/json
 <h3>列个表</h3>
 <div data-href="?data=/path/to/list?count=10&page=1">
     <ul data-name="list">
-        <li></li>
+        <li>内置索引号：${this._index_}</li>
     </ul>
     共 ${this.total} 项
 </div>

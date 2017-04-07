@@ -70,7 +70,10 @@ define(['jquery', 'jQuery+'],  function ($) {
 
             this.$_View.data('[object Observer]', null);
 
-            return  $.extend({ }, this);
+            return {
+                $_View:        this.$_View,
+                __handle__:    this.__handle__
+            };
         },
         valueOf:       function (iEvent, iKey) {
 

@@ -80,7 +80,10 @@ var Observer = (function (BOM, DOM, $) {
 
             this.$_View.data('[object Observer]', null);
 
-            return  $.extend({ }, this);
+            return {
+                $_View:        this.$_View,
+                __handle__:    this.__handle__
+            };
         },
         valueOf:       function (iEvent, iKey) {
 
@@ -345,7 +348,7 @@ var View = (function (BOM, DOM, $, Observer, DS_Inherit, MutationObserver, Node_
 
         var _This_ = Observer.call(this, $_View);
 
-        if (_This_ != this)  $.extend(this, _This_.destructor());
+        $.extend(this, _This_.destructor());
 
         _This_ = this.constructor.instanceOf(this.$_View, false);
 
@@ -629,6 +632,11 @@ var HTMLView = (function (BOM, DOM, $, View, Observer, Node_Template, DS_Inherit
         });
     }
 
+    function CSS_Push(iDOM) {
+
+        this.__CSS__.push( this.fixStyle( iDOM ) );
+    }
+
     return  View.extend(HTMLView, {
         is:             function () {
             return true;
@@ -694,15 +702,15 @@ var HTMLView = (function (BOM, DOM, $, View, Observer, Node_Template, DS_Inherit
             var iKey = 'src';
 
             switch ( iDOM.tagName.toLowerCase() ) {
+                case 'style':     CSS_Push.call(this, iDOM);    break;
                 case 'link':      {
                     if (('rel' in iDOM)  &&  (iDOM.rel != 'stylesheet'))
                         return iDOM;
 
                     iKey = 'href';
+
+                    iDOM.onload = CSS_Push.bind(this, iDOM);    break;
                 }
-                case 'style':
-                    this.__CSS__.push( this.fixStyle( iDOM ) );
-                    break;
                 case 'script':    iDOM = this.fixScript( iDOM );    break;
                 case 'img':       ;
                 case 'iframe':    ;
@@ -884,12 +892,16 @@ var ListView = (function (BOM, DOM, $, View, HTMLView) {
 
             Item.$_View.insertTo(this.$_View, Index);
 
-            this.splice(Index || 0,  0,  Item.render( iData ));
+            iData._index_ = Index || 0;
+
+            this.splice(iData._index_,  0,  Item.render( iData ));
+
+            return Item;
         },
         render:    function (iList) {
 
             if ($.likeArray( iList ))
-                $.map(iList,  $.proxy(this.insert, this));
+                $.map(iList,  this.insert.bind( this ));
 
             return this;
         },
@@ -914,6 +926,10 @@ var InnerLink = (function (BOM, DOM, $, Observer) {
             Link_DOM.getAttribute('method') || Link_DOM.dataset.method || 'Get'
         ).toUpperCase();
 
+        this.contentType =
+            Link_DOM.getAttribute('type') || Link_DOM.getAttribute('enctype') ||
+            'application/x-www-form-urlencoded';
+
         this.setURI(Link_DOM, API_Root).title = Link_DOM.title || document.title;
     }
 
@@ -924,7 +940,7 @@ var InnerLink = (function (BOM, DOM, $, Observer) {
         });
 
     return  $.inherit(Observer, InnerLink, {
-        HTML_Link:    'a[href], form[action]',
+        HTML_Link:    'a[href], area[href], form[action]',
         Self_Link:    '[data-href]:not(a, form)'
     }, {
         setURI:      function (Link_DOM, API_Root) {
@@ -960,24 +976,21 @@ var InnerLink = (function (BOM, DOM, $, Observer) {
             return  (this.href || '')  +  (iData  &&  ('?' + iData));
         },
         loadData:    function () {
-
-            if (this.$_View[0].tagName == 'A')
-                return  Promise.resolve($.getJSON( this.fullSrc ));
-
             var iOption = {
-                    type:          this.method,
-                    beforeSend:    arguments[0],
+                    type:           this.method,
+                    beforeSend:     arguments[0],
+                    contentType:    this.contentType,
                     dataType:
                         (this.src.match(/\?/g) || '')[1]  ?  'jsonp'  :  'json'
                 };
 
-            if (this.$_View[0].tagName == 'A') {
+            if ( this.$_View[0].tagName.match(/^(a|area)$/i) ) {
 
                 iOption.data = $.extend({ }, this.$_View[0].dataset);
 
             } else if (! this.$_View.find('input[type="file"]')[0]) {
 
-                iOption.data = this.$_View.serialize();
+                iOption.data = $.paramJSON('?' + this.$_View.serialize());
             } else {
                 iOption.data = new BOM.FormData( this.$_View[0] );
                 iOption.contentType = iOption.processData = false;
@@ -1056,7 +1069,7 @@ var WebApp = (function (BOM, DOM, $, Observer, View, HTMLView, ListView, InnerLi
         this.lastPage = -1;
         this.loading = { };
 
-        this.listenDOM().listenBOM().boot();
+        self.setTimeout( this.listenDOM().listenBOM().boot.bind( this ) );
     }
 
     return  $.inherit(Observer, WebApp, {
@@ -1157,17 +1170,19 @@ var WebApp = (function (BOM, DOM, $, Observer, View, HTMLView, ListView, InnerLi
                 return iView.render(
                     ((typeof iData == 'object') && iData)  ||  { }
                 );
-            });
+            }).then(function () {
+
+                return Promise.all($.map(
+                    iView.__child__,  _This_.load.bind(_This_)
+                ));
+            }).then(function () {  return iView;  });
         },
         load:         function (iLink) {
 
             if (iLink instanceof Element)
                 iLink = new InnerLink(iLink, this.apiRoot);
 
-            if ((! iLink.href)  &&  (iLink.target != 'view'))
-                return  this.loadData( iLink );
-
-            var _This_ = this,  iView;
+            var _This_ = this;
 
             return  iLink.load(function () {
 
@@ -1177,27 +1192,22 @@ var WebApp = (function (BOM, DOM, $, Observer, View, HTMLView, ListView, InnerLi
                 });
             }).then(function () {
 
-                var iData = arguments[0][1];
+                var iHTML = arguments[0][0],  iData = arguments[0][1];
 
                 if (iData != null)
                     iData = _This_.emit(
                         $.extend(iLink.valueOf(), {type: 'data'}),  iData
                     );
 
-                return  _This_.loadComponent(iLink, arguments[0][0], iData);
+                if (iLink.href  ||  (iLink.target == 'view'))
+                    return  _This_.loadComponent(iLink, iHTML, iData);
 
-            }).then(function () {
+            }).then(function (iView) {
 
-                iView = arguments[0];
-
-                return Promise.all($.map(
-                    iView.__child__,  _This_.load.bind(_This_)
-                ));
-            }).then(function () {
-
-                _This_.emit(
-                    $.extend(iLink.valueOf(), {type: 'ready'}),  iView
-                );
+                if (iView instanceof View)
+                    _This_.emit(
+                        $.extend(iLink.valueOf(), {type: 'ready'}),  iView
+                    );
             });
         },
         listenDOM:    function () {
@@ -1275,7 +1285,7 @@ var WebApp = (function (BOM, DOM, $, Observer, View, HTMLView, ListView, InnerLi
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v4.0  (2017-04-06)  Beta
+//      [Version]    v4.0  (2017-04-07)  Beta
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //

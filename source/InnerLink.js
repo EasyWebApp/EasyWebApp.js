@@ -10,6 +10,10 @@ define(['jquery', 'Observer', 'iQuery+'],  function ($, Observer) {
             Link_DOM.getAttribute('method') || Link_DOM.dataset.method || 'Get'
         ).toUpperCase();
 
+        this.contentType =
+            Link_DOM.getAttribute('type') || Link_DOM.getAttribute('enctype') ||
+            'application/x-www-form-urlencoded';
+
         this.setURI(Link_DOM, API_Root).title = Link_DOM.title || document.title;
     }
 
@@ -20,7 +24,7 @@ define(['jquery', 'Observer', 'iQuery+'],  function ($, Observer) {
         });
 
     return  $.inherit(Observer, InnerLink, {
-        HTML_Link:    'a[href], form[action]',
+        HTML_Link:    'a[href], area[href], form[action]',
         Self_Link:    '[data-href]:not(a, form)'
     }, {
         setURI:      function (Link_DOM, API_Root) {
@@ -56,24 +60,21 @@ define(['jquery', 'Observer', 'iQuery+'],  function ($, Observer) {
             return  (this.href || '')  +  (iData  &&  ('?' + iData));
         },
         loadData:    function () {
-
-            if (this.$_View[0].tagName == 'A')
-                return  Promise.resolve($.getJSON( this.fullSrc ));
-
             var iOption = {
-                    type:          this.method,
-                    beforeSend:    arguments[0],
+                    type:           this.method,
+                    beforeSend:     arguments[0],
+                    contentType:    this.contentType,
                     dataType:
                         (this.src.match(/\?/g) || '')[1]  ?  'jsonp'  :  'json'
                 };
 
-            if (this.$_View[0].tagName == 'A') {
+            if ( this.$_View[0].tagName.match(/^(a|area)$/i) ) {
 
                 iOption.data = $.extend({ }, this.$_View[0].dataset);
 
             } else if (! this.$_View.find('input[type="file"]')[0]) {
 
-                iOption.data = this.$_View.serialize();
+                iOption.data = $.paramJSON('?' + this.$_View.serialize());
             } else {
                 iOption.data = new BOM.FormData( this.$_View[0] );
                 iOption.contentType = iOption.processData = false;
