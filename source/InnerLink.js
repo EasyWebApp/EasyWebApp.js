@@ -1,8 +1,10 @@
 define(['jquery', 'Observer', 'iQuery+'],  function ($, Observer) {
 
-    function InnerLink(Link_DOM, API_Root) {
+    function InnerLink(Link_DOM) {
 
-        Observer.call(this).$_View = $( Link_DOM );
+        var _This_ = Observer.call(this, Link_DOM);
+
+        if (_This_ != this)  this.__handle__ = _This_.__handle__;
 
         this.target = Link_DOM.tagName.match(/^(a|form)$/i) ? 'page' : 'view';
 
@@ -14,20 +16,16 @@ define(['jquery', 'Observer', 'iQuery+'],  function ($, Observer) {
             Link_DOM.getAttribute('type') || Link_DOM.getAttribute('enctype') ||
             'application/x-www-form-urlencoded';
 
-        this.setURI(Link_DOM, API_Root).title = Link_DOM.title || document.title;
+        this.setURI().title = Link_DOM.title || document.title;
     }
-
-    var $_Prefetch = $(
-            '<link rel="'  +  ($.browser.modern ? 'prefetch' : 'next')  +  '" />'
-        ).on('load error',  function () {
-            $(this).remove();
-        });
 
     return  $.inherit(Observer, InnerLink, {
         HTML_Link:    'a[href], area[href], form[action]',
         Self_Link:    '[data-href]:not(a, form)'
     }, {
-        setURI:      function (Link_DOM, API_Root) {
+        setURI:      function () {
+
+            var Link_DOM = this.$_View[0];
 
             this.href = Link_DOM.dataset.href ||
                 Link_DOM.getAttribute(Link_DOM.href ? 'href' : 'action');
@@ -36,10 +34,7 @@ define(['jquery', 'Observer', 'iQuery+'],  function ($, Observer) {
 
             this.href = this.src[0];
 
-            this.fullSrc = this.src = this.src[1];
-
-            if (this.src  &&  (! $.urlDomain( this.src )))
-                this.fullSrc = API_Root + this.src;
+            this.src = this.src[1];
 
             this.data = $.paramJSON( this.href );
 
@@ -60,12 +55,18 @@ define(['jquery', 'Observer', 'iQuery+'],  function ($, Observer) {
             return  (this.href || '')  +  (iData  &&  ('?' + iData));
         },
         loadData:    function () {
+
+            var URI = this.method + ' ';
+
             var iOption = {
                     type:           this.method,
                     beforeSend:     arguments[0],
                     contentType:    this.contentType,
                     dataType:
-                        (this.src.match(/\?/g) || '')[1]  ?  'jsonp'  :  'json'
+                        (this.src.match(/\?/g) || '')[1]  ?  'jsonp'  :  'json',
+                    complete:       function () {
+                        URI += this.url;
+                    }
                 };
 
             if ( this.$_View[0].tagName.match(/^(a|area)$/i) ) {
@@ -80,11 +81,15 @@ define(['jquery', 'Observer', 'iQuery+'],  function ($, Observer) {
                 iOption.contentType = iOption.processData = false;
             }
 
-            var URI = iOption.type.toUpperCase() + ' ' + this.fullSrc,
-                iJSON = Promise.resolve($.ajax(this.fullSrc, iOption));
+            var iJSON = Promise.resolve( $.ajax(this.src, iOption) );
 
-            return  (this.method != 'get')  ?  iJSON  :  iJSON.then(
-                $.proxy($.storage, $, URI),  $.proxy($.storage, $, URI, null)
+            return  (this.method != 'GET')  ?  iJSON  :  iJSON.then(
+                function () {
+                    return  $.storage(URI, arguments[0]);
+                },
+                function () {
+                    return  $.storage( URI );
+                }
             );
         },
         load:        function (onRequest) {
@@ -111,17 +116,6 @@ define(['jquery', 'Observer', 'iQuery+'],  function ($, Observer) {
             _This_.target = this.$_View[0];
 
             return _This_;
-        },
-        prefetch:    function () {
-            if ( this.href )
-                $_Prefetch.clone().attr('href', this.href).appendTo('head');
-
-            if (
-                (this.method == 'GET')  &&
-                this.src  &&  (this.src.indexOf('?') == -1)  &&
-                $.isEmptyObject( this.$_View[0].dataset )
-            )
-                $_Prefetch.clone().attr('href', this.fullSrc).appendTo('head');
         }
     });
 });

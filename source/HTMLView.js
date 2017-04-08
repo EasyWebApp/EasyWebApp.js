@@ -1,6 +1,6 @@
 define([
-    'jquery', 'View', 'Observer', 'Node_Template', 'DS_Inherit', 'iQuery+'
-],  function ($, View, Observer, Node_Template, DS_Inherit) {
+    'jquery', 'View', 'DOMkit', 'Node_Template', 'iQuery+'
+],  function ($, View, DOMkit, Node_Template) {
 
     function HTMLView($_View, iScope) {
 
@@ -10,40 +10,20 @@ define([
 
         $.extend(this, {
             length:      0,
-            __CSS__:     [ ],
             __map__:     { },
             __last__:    0
         }).on('attach',  function () {
 
-            this.$_View.find(':htmlview').addBack().each(function () {
-                $.map(
-                    View.instanceOf( this ).__CSS__,  _This_.fixStyle.bind(_This_)
-                );
+            this.$_View.find('style, link[rel="stylesheet"]').each(function () {
+
+                View.instanceOf( this ).fixStyle( this );
             });
         });
-    }
-
-    function CSS_Push(iDOM) {
-
-        this.__CSS__.push( this.fixStyle( iDOM ) );
     }
 
     return  View.extend(HTMLView, {
         is:             function () {
             return true;
-        },
-        parsePath:      function (iPath) {
-
-            var iNew;  iPath = iPath.replace(/^\.\//, '').replace(/\/\.\//g, '/');
-
-            do {
-                iPath = iNew || iPath;
-
-                iNew = iPath.replace(/[^\/]+\/\.\.\//g, '');
-
-            } while (iNew != iPath);
-
-            return iNew;
         },
         rawSelector:    $.makeSet('code', 'xmp', 'template')
     }, {
@@ -77,46 +57,35 @@ define([
 
             return iDOM;
         },
-        fixScript:      function (iDOM) {
-            var iAttr = { };
-
-            $.each(iDOM.attributes,  function () {
-
-                iAttr[ this.nodeName ] = this.nodeValue;
-            });
-
-            iDOM = $('<script />', iAttr)[0];
-
-            return iDOM;
-        },
         fixDOM:         function (iDOM, BaseURL) {
             var iKey = 'src';
 
             switch ( iDOM.tagName.toLowerCase() ) {
-                case 'style':     CSS_Push.call(this, iDOM);    break;
+                case 'style':     this.fixStyle( iDOM );    break;
                 case 'link':      {
                     if (('rel' in iDOM)  &&  (iDOM.rel != 'stylesheet'))
                         return iDOM;
 
                     iKey = 'href';
 
-                    iDOM.onload = CSS_Push.bind(this, iDOM);    break;
+                    iDOM.onload = this.fixStyle.bind(this, iDOM);    break;
                 }
-                case 'script':    iDOM = this.fixScript( iDOM );    break;
+                case 'script':    iDOM = DOMkit.fixScript( iDOM );    break;
                 case 'img':       ;
                 case 'iframe':    ;
                 case 'audio':     ;
                 case 'video':     break;
-                default:          {
-                    if (! (iDOM.dataset.href || '').split('?')[0])  return iDOM;
+                case 'a':         ;
+                case 'area':      ;
+                case 'form':      {
+                    iKey = ('href' in iDOM)  ?  'href'  :  'action';
 
-                    iKey = 'data-href';
+                    DOMkit.fixLink( iDOM );    break;
                 }
+                default:          iKey = 'data-href';
             }
-            var iURL = iDOM.getAttribute( iKey );
 
-            if (iURL  &&  (! $.urlDomain(iURL))  &&  (iURL.indexOf( BaseURL )  <  0))
-                iDOM.setAttribute(iKey,  HTMLView.parsePath(BaseURL + iURL));
+            DOMkit.prefetch(iDOM,  DOMkit.fixURL(iDOM, iKey, BaseURL));
 
             return iDOM;
         },

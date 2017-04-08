@@ -33,9 +33,7 @@ define([
         HTMLView:    HTMLView,
         ListView:    ListView
     }, {
-        indexOf:      Array.prototype.indexOf,
         splice:       Array.prototype.splice,
-        push:         Array.prototype.push,
         switchTo:     function (Index) {
 
             if (this.lastPage == Index)  return;
@@ -54,7 +52,9 @@ define([
 
             this.switchTo();
 
-            if (this.indexOf( iLink )  >  -1)  return;
+            var iLast = this[ this.lastPage ],  iURI = iLink.getURI();
+
+            if (iLast  &&  (iLast.getURI()  ==  iURI))  return;
 
             if (++this.lastPage != this.length)
                 this.splice(this.lastPage, Infinity);
@@ -62,9 +62,9 @@ define([
             self.history.pushState(
                 {index: this.length},
                 document.title = iLink.title,
-                '#!'  +  self.btoa( iLink.getURI() )
+                '#!'  +  self.btoa( iURI )
             );
-            this.push( iLink );
+            this[ this.length++ ] = iLink;
         },
         getRoute:     function () {
             return self.atob(
@@ -98,8 +98,11 @@ define([
 
                 iHTML = '';
             }
+
             if ( iView.parse )
-                iView.parse($.filePath(iLink.href) + '/',  iHTML);
+                iView.parse(
+                    iLink.href  &&  ($.filePath(iLink.href) + '/'),  iHTML
+                );
 
             if (! $_Target.find('script[src]:not(head > *)')[0])
                 iLink.emit('load');
@@ -136,11 +139,16 @@ define([
         load:         function (iLink) {
 
             if (iLink instanceof Element)
-                iLink = new InnerLink(iLink, this.apiRoot);
+                iLink = new InnerLink( iLink );
 
             var _This_ = this;
 
             return  iLink.load(function () {
+                if (
+                    ((this.dataType || '').slice(0, 4) == 'json')  &&
+                    (! $.urlDomain( this.url ))
+                )
+                    this.url = _This_.apiRoot + this.url;
 
                 _This_.emit($.extend(iLink.valueOf(), {type: 'request'}),  {
                     option:       this,
@@ -181,7 +189,7 @@ define([
             })).on('click submit',  InnerLink.HTML_Link,  function (iEvent) {
                 if (
                     ((this.tagName == 'FORM')  &&  (iEvent.type != 'submit'))  ||
-                    (this.target  &&  (this.target != '_self'))
+                    ((this.target || '_self')  !=  '_self')
                 )
                     return;
 

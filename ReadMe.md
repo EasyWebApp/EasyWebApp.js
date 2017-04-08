@@ -1,5 +1,9 @@
 # 声明式 MVVM 引擎 —— EasyWebApp v4
 
+基于 jQuery v3.2+ 构建 —— IE 9+、ECMAScript 5+、HTML 5+
+
+[![Join the chat at https://gitter.im/EasyWebApp-js/Lobby](https://badges.gitter.im/EasyWebApp-js/Lobby.svg)](https://gitter.im/EasyWebApp-js/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 
 
 ## 【原生态模板】
@@ -37,25 +41,31 @@ MVVM 引擎只需扫描 DOM 树，即可 **自动加载 HTML、JSON** 来构建 
 
 ### 内置视图对象
 
- - **抽象视图** `View( $_Box )`（不可实例化）
+ - **抽象视图** `View($_Box, iScope)`（不可实例化）
    - 继承父类：`Observer()`
    - 继承视图：`.extend(iConstructor, iStatic, iPrototype)`
    - 查找实例：`.instanceOf(iDOM, Check_Parent)` 
    - 遍历 DOM：`.prototype.scan( iParser )` 
    - 获取数据：`.prototype.valueOf()`
    - 查子组件：`.prototype.childOf( iSelector )`
- - **普通视图** `HTMLView( $_Box )`（对应 JSON 对象）
+ - **普通视图** `HTMLView($_Box, iScope)`（对应 JSON 对象）
    - 继承父类：`View()`
-   - 解析 DOM：`.prototype.parse( Template_with_Slot )`
+   - 解析 DOM：`.prototype.parse(BaseURL, Template_with_Slot)`
    - 渲染数据：`.prototype.render( iObject )`
- - **迭代视图** `ListView( $_Box )`（对应 JSON 数组）
+ - **迭代视图** `ListView($_Box, iScope)`（对应 JSON 数组）
    - 继承父类：`View()`
+   - 默认匹配：设置了 `data-name` 属性的 `ul, ol, tbody, datalist` 元素
    - 清空列表：`.prototype.clear()`
-   - 插入一项：`.prototype.insert( iObject )`
+   - 插入一项：`.prototype.insert(iObject, Index)`
    - 渲染列表：`.prototype.render( iArray )` 
    - 删除一项：`.prototype.remove( Index )`
 
 以上视图的构造函数 均可从 `$.fn.iWebApp` 命名空间访问到，并可无需 `WebApp()` 实例初始化即可单独使用。
+
+【jQuery 快捷方法】
+
+ - 构建视图：`$('selector of view').view(Class_Name, iScope)`
+ - 查找视图：`$(':view', Root_DOM).view()`
 
 
 
@@ -267,3 +277,22 @@ require([
 });
 ```
 EWA 引擎会自动用它返回的数据对象来更新 VM。
+
+
+### （二）官方组件
+
+ 1. [行政区多级联动选择](component/Admin_District.html)（基于高德地图 HTTP API）
+
+ 2. [分页数据表](component/Data_Table.html)
+
+
+
+## 【沉浸式体验】
+
+EWA 充分利用现有技术，实现 [Google PWA 规范](https://developers.google.cn/web/progressive-web-apps/)一般的 App 体验，并且一切都是自动完成的 ——
+
+ 1. **跨域超链接** 自动在新网页中打开，不会全局刷新当前页，防止丢失应用状态
+
+ 2. 组件模板 **预加载**：基于 `<link rel="prefetch" />`，支持 IE 11+ 及所有非 Safari/Webkit 浏览器
+
+ 3. HTTP API **数据缓存**：基于 `Window.localStorage`，GET 请求失败也可正常显示页面

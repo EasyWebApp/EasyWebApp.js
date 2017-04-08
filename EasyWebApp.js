@@ -609,37 +609,29 @@ var View = (function (BOM, DOM, $, Observer, DS_Inherit, MutationObserver, Node_
 
 
 
-var HTMLView = (function (BOM, DOM, $, View, Observer, Node_Template, DS_Inherit) {
+var DOMkit = (function (BOM, DOM, $, Node_Template) {
 
-    function HTMLView($_View, iScope) {
+    var Link_Name = $.makeSet('a', 'area', 'form');
 
-        var _This_ = View.call(this, $_View, iScope);
+    return {
+        fixScript:      function (iDOM) {
+            var iAttr = { };
 
-        if (this != _This_)  return _This_;
+            $.each(iDOM.attributes,  function () {
 
-        $.extend(this, {
-            length:      0,
-            __CSS__:     [ ],
-            __map__:     { },
-            __last__:    0
-        }).on('attach',  function () {
-
-            this.$_View.find(':htmlview').addBack().each(function () {
-                $.map(
-                    View.instanceOf( this ).__CSS__,  _This_.fixStyle.bind(_This_)
-                );
+                iAttr[ this.nodeName ] = this.nodeValue;
             });
-        });
-    }
 
-    function CSS_Push(iDOM) {
+            iDOM = $('<script />', iAttr)[0];
 
-        this.__CSS__.push( this.fixStyle( iDOM ) );
-    }
-
-    return  View.extend(HTMLView, {
-        is:             function () {
-            return true;
+            return iDOM;
+        },
+        fixLink:        function (iDOM) {
+            if (
+                ((iDOM.target || '_self')  ==  '_self')  &&
+                ($.urlDomain(iDOM.href || iDOM.action)  !=  $.urlDomain())
+            )
+                iDOM.target = '_blank';
         },
         parsePath:      function (iPath) {
 
@@ -653,6 +645,66 @@ var HTMLView = (function (BOM, DOM, $, View, Observer, Node_Template, DS_Inherit
             } while (iNew != iPath);
 
             return iNew;
+        },
+        fixURL:         function (iDOM, iKey, iBase) {
+
+            var iURL = (iDOM.getAttribute( iKey )  ||  '').split('?')[0];
+
+            if (
+                iBase  &&  iURL  &&
+                (! $.urlDomain(iURL))  &&  (iURL.indexOf( iBase )  <  0)
+            ) {
+                iURL = this.parsePath(iBase + iURL);
+
+                iDOM.setAttribute(iKey, iURL);
+            }
+
+            return iURL;
+        },
+        prefetch:       function (iDOM, iURL) {
+            if (
+                (iDOM.tagName.toLowerCase() in Link_Name)  &&
+                ((iDOM.target || '_self')  ==  '_self')  &&
+                (! (
+                    iURL.match( Node_Template.expression )  ||
+                    $('head link[href="' + iURL + '"]')[0]
+                ))
+            )
+                $('<link />', {
+                    rel:     (($.browser.msie < 11)  ||  $.browser.ios)  ?
+                        'next'  :  'prefetch',
+                    href:    iURL
+                }).appendTo( document.head );
+        }
+    };
+})(self, self.document, self.jQuery, Node_Template);
+
+
+
+var HTMLView = (function (BOM, DOM, $, View, DOMkit, Node_Template) {
+
+    function HTMLView($_View, iScope) {
+
+        var _This_ = View.call(this, $_View, iScope);
+
+        if (this != _This_)  return _This_;
+
+        $.extend(this, {
+            length:      0,
+            __map__:     { },
+            __last__:    0
+        }).on('attach',  function () {
+
+            this.$_View.find('style, link[rel="stylesheet"]').each(function () {
+
+                View.instanceOf( this ).fixStyle( this );
+            });
+        });
+    }
+
+    return  View.extend(HTMLView, {
+        is:             function () {
+            return true;
         },
         rawSelector:    $.makeSet('code', 'xmp', 'template')
     }, {
@@ -686,46 +738,35 @@ var HTMLView = (function (BOM, DOM, $, View, Observer, Node_Template, DS_Inherit
 
             return iDOM;
         },
-        fixScript:      function (iDOM) {
-            var iAttr = { };
-
-            $.each(iDOM.attributes,  function () {
-
-                iAttr[ this.nodeName ] = this.nodeValue;
-            });
-
-            iDOM = $('<script />', iAttr)[0];
-
-            return iDOM;
-        },
         fixDOM:         function (iDOM, BaseURL) {
             var iKey = 'src';
 
             switch ( iDOM.tagName.toLowerCase() ) {
-                case 'style':     CSS_Push.call(this, iDOM);    break;
+                case 'style':     this.fixStyle( iDOM );    break;
                 case 'link':      {
                     if (('rel' in iDOM)  &&  (iDOM.rel != 'stylesheet'))
                         return iDOM;
 
                     iKey = 'href';
 
-                    iDOM.onload = CSS_Push.bind(this, iDOM);    break;
+                    iDOM.onload = this.fixStyle.bind(this, iDOM);    break;
                 }
-                case 'script':    iDOM = this.fixScript( iDOM );    break;
+                case 'script':    iDOM = DOMkit.fixScript( iDOM );    break;
                 case 'img':       ;
                 case 'iframe':    ;
                 case 'audio':     ;
                 case 'video':     break;
-                default:          {
-                    if (! (iDOM.dataset.href || '').split('?')[0])  return iDOM;
+                case 'a':         ;
+                case 'area':      ;
+                case 'form':      {
+                    iKey = ('href' in iDOM)  ?  'href'  :  'action';
 
-                    iKey = 'data-href';
+                    DOMkit.fixLink( iDOM );    break;
                 }
+                default:          iKey = 'data-href';
             }
-            var iURL = iDOM.getAttribute( iKey );
 
-            if (iURL  &&  (! $.urlDomain(iURL))  &&  (iURL.indexOf( BaseURL )  <  0))
-                iDOM.setAttribute(iKey,  HTMLView.parsePath(BaseURL + iURL));
+            DOMkit.prefetch(iDOM,  DOMkit.fixURL(iDOM, iKey, BaseURL));
 
             return iDOM;
         },
@@ -858,7 +899,7 @@ var HTMLView = (function (BOM, DOM, $, View, Observer, Node_Template, DS_Inherit
             return  this.render( this.__data__.clear() );
         }
     });
-})(self, self.document, self.jQuery, View, Observer, Node_Template, DS_Inherit);
+})(self, self.document, self.jQuery, View, DOMkit, Node_Template);
 
 
 
@@ -916,9 +957,11 @@ var ListView = (function (BOM, DOM, $, View, HTMLView) {
 
 var InnerLink = (function (BOM, DOM, $, Observer) {
 
-    function InnerLink(Link_DOM, API_Root) {
+    function InnerLink(Link_DOM) {
 
-        Observer.call(this).$_View = $( Link_DOM );
+        var _This_ = Observer.call(this, Link_DOM);
+
+        if (_This_ != this)  this.__handle__ = _This_.__handle__;
 
         this.target = Link_DOM.tagName.match(/^(a|form)$/i) ? 'page' : 'view';
 
@@ -930,20 +973,16 @@ var InnerLink = (function (BOM, DOM, $, Observer) {
             Link_DOM.getAttribute('type') || Link_DOM.getAttribute('enctype') ||
             'application/x-www-form-urlencoded';
 
-        this.setURI(Link_DOM, API_Root).title = Link_DOM.title || document.title;
+        this.setURI().title = Link_DOM.title || document.title;
     }
-
-    var $_Prefetch = $(
-            '<link rel="'  +  ($.browser.modern ? 'prefetch' : 'next')  +  '" />'
-        ).on('load error',  function () {
-            $(this).remove();
-        });
 
     return  $.inherit(Observer, InnerLink, {
         HTML_Link:    'a[href], area[href], form[action]',
         Self_Link:    '[data-href]:not(a, form)'
     }, {
-        setURI:      function (Link_DOM, API_Root) {
+        setURI:      function () {
+
+            var Link_DOM = this.$_View[0];
 
             this.href = Link_DOM.dataset.href ||
                 Link_DOM.getAttribute(Link_DOM.href ? 'href' : 'action');
@@ -952,10 +991,7 @@ var InnerLink = (function (BOM, DOM, $, Observer) {
 
             this.href = this.src[0];
 
-            this.fullSrc = this.src = this.src[1];
-
-            if (this.src  &&  (! $.urlDomain( this.src )))
-                this.fullSrc = API_Root + this.src;
+            this.src = this.src[1];
 
             this.data = $.paramJSON( this.href );
 
@@ -976,12 +1012,18 @@ var InnerLink = (function (BOM, DOM, $, Observer) {
             return  (this.href || '')  +  (iData  &&  ('?' + iData));
         },
         loadData:    function () {
+
+            var URI = this.method + ' ';
+
             var iOption = {
                     type:           this.method,
                     beforeSend:     arguments[0],
                     contentType:    this.contentType,
                     dataType:
-                        (this.src.match(/\?/g) || '')[1]  ?  'jsonp'  :  'json'
+                        (this.src.match(/\?/g) || '')[1]  ?  'jsonp'  :  'json',
+                    complete:       function () {
+                        URI += this.url;
+                    }
                 };
 
             if ( this.$_View[0].tagName.match(/^(a|area)$/i) ) {
@@ -996,11 +1038,15 @@ var InnerLink = (function (BOM, DOM, $, Observer) {
                 iOption.contentType = iOption.processData = false;
             }
 
-            var URI = iOption.type.toUpperCase() + ' ' + this.fullSrc,
-                iJSON = Promise.resolve($.ajax(this.fullSrc, iOption));
+            var iJSON = Promise.resolve( $.ajax(this.src, iOption) );
 
-            return  (this.method != 'get')  ?  iJSON  :  iJSON.then(
-                $.proxy($.storage, $, URI),  $.proxy($.storage, $, URI, null)
+            return  (this.method != 'GET')  ?  iJSON  :  iJSON.then(
+                function () {
+                    return  $.storage(URI, arguments[0]);
+                },
+                function () {
+                    return  $.storage( URI );
+                }
             );
         },
         load:        function (onRequest) {
@@ -1027,17 +1073,6 @@ var InnerLink = (function (BOM, DOM, $, Observer) {
             _This_.target = this.$_View[0];
 
             return _This_;
-        },
-        prefetch:    function () {
-            if ( this.href )
-                $_Prefetch.clone().attr('href', this.href).appendTo('head');
-
-            if (
-                (this.method == 'GET')  &&
-                this.src  &&  (this.src.indexOf('?') == -1)  &&
-                $.isEmptyObject( this.$_View[0].dataset )
-            )
-                $_Prefetch.clone().attr('href', this.fullSrc).appendTo('head');
         }
     });
 })(self, self.document, self.jQuery, Observer);
@@ -1077,9 +1112,7 @@ var WebApp = (function (BOM, DOM, $, Observer, View, HTMLView, ListView, InnerLi
         HTMLView:    HTMLView,
         ListView:    ListView
     }, {
-        indexOf:      Array.prototype.indexOf,
         splice:       Array.prototype.splice,
-        push:         Array.prototype.push,
         switchTo:     function (Index) {
 
             if (this.lastPage == Index)  return;
@@ -1098,7 +1131,9 @@ var WebApp = (function (BOM, DOM, $, Observer, View, HTMLView, ListView, InnerLi
 
             this.switchTo();
 
-            if (this.indexOf( iLink )  >  -1)  return;
+            var iLast = this[ this.lastPage ],  iURI = iLink.getURI();
+
+            if (iLast  &&  (iLast.getURI()  ==  iURI))  return;
 
             if (++this.lastPage != this.length)
                 this.splice(this.lastPage, Infinity);
@@ -1106,9 +1141,9 @@ var WebApp = (function (BOM, DOM, $, Observer, View, HTMLView, ListView, InnerLi
             self.history.pushState(
                 {index: this.length},
                 document.title = iLink.title,
-                '#!'  +  self.btoa( iLink.getURI() )
+                '#!'  +  self.btoa( iURI )
             );
-            this.push( iLink );
+            this[ this.length++ ] = iLink;
         },
         getRoute:     function () {
             return self.atob(
@@ -1142,8 +1177,11 @@ var WebApp = (function (BOM, DOM, $, Observer, View, HTMLView, ListView, InnerLi
 
                 iHTML = '';
             }
+
             if ( iView.parse )
-                iView.parse($.filePath(iLink.href) + '/',  iHTML);
+                iView.parse(
+                    iLink.href  &&  ($.filePath(iLink.href) + '/'),  iHTML
+                );
 
             if (! $_Target.find('script[src]:not(head > *)')[0])
                 iLink.emit('load');
@@ -1180,11 +1218,16 @@ var WebApp = (function (BOM, DOM, $, Observer, View, HTMLView, ListView, InnerLi
         load:         function (iLink) {
 
             if (iLink instanceof Element)
-                iLink = new InnerLink(iLink, this.apiRoot);
+                iLink = new InnerLink( iLink );
 
             var _This_ = this;
 
             return  iLink.load(function () {
+                if (
+                    ((this.dataType || '').slice(0, 4) == 'json')  &&
+                    (! $.urlDomain( this.url ))
+                )
+                    this.url = _This_.apiRoot + this.url;
 
                 _This_.emit($.extend(iLink.valueOf(), {type: 'request'}),  {
                     option:       this,
@@ -1225,7 +1268,7 @@ var WebApp = (function (BOM, DOM, $, Observer, View, HTMLView, ListView, InnerLi
             })).on('click submit',  InnerLink.HTML_Link,  function (iEvent) {
                 if (
                     ((this.tagName == 'FORM')  &&  (iEvent.type != 'submit'))  ||
-                    (this.target  &&  (this.target != '_self'))
+                    ((this.target || '_self')  !=  '_self')
                 )
                     return;
 
@@ -1285,7 +1328,7 @@ var WebApp = (function (BOM, DOM, $, Observer, View, HTMLView, ListView, InnerLi
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v4.0  (2017-04-07)  Beta
+//      [Version]    v4.0  (2017-04-08)  Beta
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //
