@@ -1,12 +1,15 @@
 define(['jquery'],  function ($) {
 
     function Node_Template(iNode) {
+
         this.ownerNode = iNode;
 
         this.name = iNode.nodeName;
         this.raw = iNode.nodeValue;
 
         this.ownerElement = iNode.parentNode || iNode.ownerElement;
+
+        this.hasScope = false;
     }
 
     function Eval(vm) {
@@ -52,12 +55,15 @@ define(['jquery'],  function ($) {
             return  (this.raw == iText)  ?  iRefer  :  iText;
         },
         getRefer:    function () {
-            var iRefer = { };
+
+            var _This_ = this,  iRefer = { };
 
             this.ownerNode.nodeValue = this.raw.replace(
                 Node_Template.expression,  function () {
 
                     arguments[1].replace(Node_Template.reference,  function () {
+
+                        if (arguments[1] == 'vm')  _This_.hasScope = true;
 
                         iRefer[ arguments[2] ] = 1;
                     });
@@ -70,7 +76,7 @@ define(['jquery'],  function ($) {
         },
         render:      function (iContext, iScope) {
 
-            var iValue = this.eval(iContext, iScope),
+            var iValue = this.eval(iContext.valueOf(), iScope),
                 iNode = this.ownerNode,
                 iParent = this.ownerElement;
 
@@ -104,5 +110,4 @@ define(['jquery'],  function ($) {
     });
 
     return Node_Template;
-
 });

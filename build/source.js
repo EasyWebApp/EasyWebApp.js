@@ -2,32 +2,18 @@
     name:            'EasyWebApp',
     baseUrl:         '../source',
     paths:           {
-        jquery:             '//cdn.bootcss.com/jquery/1.12.4/jquery',
-        'jQuery+':          '//tech_query.oschina.io/iquery/jQuery+',
-        'iQuery+':          '//tech_query.oschina.io/iquery/iQuery+',
-        MutationObserver:
-            '//cdn.bootcss.com/MutationObserver.js/0.3.2/mutationobserver'
+        jquery:       '//cdn.bootcss.com/jquery/1.12.4/jquery',
+        'jQuery+':    '//tech_query.oschina.io/iquery/jQuery+',
+        'iQuery+':    '//tech_query.oschina.io/iquery/iQuery+'
     },
     out:             '../EasyWebApp.js',
-    onBuildWrite:    function (iName) {
-        var fParameter = 'BOM, DOM, $',
-            aParameter = 'self, self.document, self.jQuery',
-            iDependence = arguments[2].match(
-                /^define[\s\S]+?function \(\$([^\)]*)/m
-            )[1];
+    onBuildWrite:    function () {
 
-        aParameter += iDependence;
-
-        return arguments[2].replace(
-            /^define[\s\S]+?(function) \(\$/m,
-            "\nvar " + iName + " = ($1 (" + fParameter
-        )
-            .replace(/\s+var BOM.+?;/, '')
-            .replace(/\}\);\s*$/,  '})(' + aParameter + ");\n\n");
+        return  (arguments[0] != 'EasyWebApp')  ?
+            arguments[2]  :  arguments[2].replace(
+                /^define\([^\]]+\]/m,  '$&.concat( EWA_Polyfill )'
+            );
     },
-    wrap:            {
-        startFile:    'xWrap.txt',
-        end:          '});'
-    },
+    wrap:            {startFile: 'Polyfill.js'},
     optimize:        'none'
 });

@@ -9,9 +9,8 @@ define([
         if (this != _This_)  return _This_;
 
         $.extend(this, {
-            length:      0,
-            __map__:     { },
-            __last__:    0
+            length:     0,
+            __map__:    { },
         }).on('attach',  function () {
 
             this.$_View.find('style, link[rel="stylesheet"]').each(function () {
@@ -180,22 +179,24 @@ define([
                 if (this.__map__.hasOwnProperty( iName ))
                     iMask = $.bitOperate('|',  iMask,  this.__map__[ iName ]);
 
-            return  $.map(iMask.split('').reverse(),  function () {
+            return  $.map(iMask.split('').reverse(),  function (iBit, Index) {
 
-                return  (arguments[0] > 0)  ?  _This_[ arguments[1] ]  :  null;
+                if ((iBit > 0)  ||  (_This_[Index] || '').hasScope)
+                    return _This_[Index];
             });
         },
         render:        function (iData) {
+            var _Data_ = { };
 
             if (typeof iData.valueOf() == 'string') {
-                var _Data_ = { };
+
                 _Data_[iData] = arguments[1];
                 iData = _Data_;
             }
 
             var _This_ = this;  _Data_ = this.extend( iData );
 
-            $.each(this.getNode(this.__last__ ? iData : _Data_),  function () {
+            $.each(this.getNode( iData ),  function () {
 
                 if (this instanceof Node_Template)
                     this.render(_This_, _Data_);
@@ -208,8 +209,6 @@ define([
                         _Data_[this.name || this.getAttribute('name')]
                     );
             });
-
-            this.__last__ = $.now();
 
             return this;
         },
