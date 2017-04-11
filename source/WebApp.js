@@ -107,8 +107,6 @@ define([
             if (! $_Target.find('script[src]:not(head > *)')[0])
                 iLink.emit('load');
 
-            iView.__data__.extend( iLink.data );
-
             return iView;
         },
         loadComponent:    function (iLink, iHTML, iData) {
@@ -123,12 +121,17 @@ define([
 
                 delete _This_.loading[ iLink.href ];
 
-                if ( iFactory )
-                    iData = iFactory.call(iView, iData)  ||  iData;
+                var _Data_ = (iData instanceof Array)  ?  [ ]  :  { };
 
-                return iView.render(
-                    ((typeof iData == 'object') && iData)  ||  { }
+                iData = $.extend(
+                    _Data_,  iLink.data,  iLink.$_View[0].dataset,  iData
                 );
+
+                if ( iFactory )
+                    iData = $.extend(_Data_,  iData,  iFactory.call(iView, iData));
+
+                iView.render( iData );
+
             }).then(function () {
 
                 return Promise.all($.map(
@@ -182,10 +185,9 @@ define([
                 var iView = HTMLView.instanceOf( this );
 
                 if ( iView )
-                    iView.render(
-                        this.name || this.getAttribute('name'),
-                        $(this).value('name')
-                    );
+                    iView[this.name || this.getAttribute('name')] =
+                        $(this).value('name');
+
             })).on('click submit',  InnerLink.HTML_Link,  function (iEvent) {
                 if (
                     ((this.tagName == 'FORM')  &&  (iEvent.type != 'submit'))  ||

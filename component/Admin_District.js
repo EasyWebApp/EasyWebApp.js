@@ -15,6 +15,36 @@ require(['jquery'],  function ($) {
             '00'.repeat(3 - iCount);
     }
 
+    function codeMatch(_Level_) {
+
+        var $_Select = this.$_View.find('select[name="' + _Level_ + '"]');
+
+        return $_Select.children(
+            '[data-adcode="'  +  this.codeOf(_Level_)  +  '"]'
+        ).prop('selected', true);
+    }
+
+    function reload() {
+
+        this.dataset.href = '?data=' + $.extendURL(
+            this.dataset.href.replace(/^\?data=/, ''), {
+                keywords:    arguments[0]
+            }
+        );
+    }
+
+    function outerChange() {
+
+        for (var i = iLevel.length - 1, $_Match;  iLevel[i];  i--) {
+
+            $_Match = this.codeMatch( iLevel[i] );
+
+            if ( $_Match[0] )  return $_Match.parent().change();
+        }
+
+        reload.call(this.childOf()[0].$_View[0], '100000');
+    }
+
     iWebApp.component(function () {
 
         this.$_View.find('select').each(function () {
@@ -28,7 +58,7 @@ require(['jquery'],  function ($) {
             },
             $_adCode = this.$_View.find('[type="hidden"]');
 
-        var VM = this;
+        var VM = this.on('update', outerChange);
 
         iWebApp.off( iEvent ).on(iEvent,  function (iEvent, iData) {
 
@@ -46,9 +76,7 @@ require(['jquery'],  function ($) {
 
             var $_Select = iList.$_View;
 
-            if (! $_Select.children(
-                '[data-adcode="'  +  VM.codeOf( iData[0].level )  +  '"]'
-            ).prop('selected', true)[0])
+            if (! VM.codeMatch( iData[0].level )[0])
                 $_Select[0].selectedIndex = 0;
 
             if ( $_Select[0].value )
@@ -56,8 +84,9 @@ require(['jquery'],  function ($) {
         });
 
         return {
-            codeOf:    codeOf,
-            getSub:    function (iEvent) {
+            codeOf:       codeOf,
+            codeMatch:    codeMatch,
+            getSub:       function (iEvent) {
 
                 var $_Select = $( iEvent.target ),
                     iLink = $_adCode.parents(':view')[0];
@@ -68,15 +97,11 @@ require(['jquery'],  function ($) {
 
                     $( this ).view('ListView').clear();
                 })[0])
-                    iLink.dataset.href = '?data=' + $.extendURL(
-                        iLink.dataset.href.replace(/^\?data=/, ''), {
-                            keywords:    $_adCode[0].value
-                        }
-                    );
+                    reload.call(iLink, $_adCode[0].value);
                 else
-                    this.emit('loadAll');
+                    this.emit('loaded');
             },
-            onUpdate:    function () {
+            onUpdate:     function () {
 
                 iWebApp.load( arguments[0].target );
             }

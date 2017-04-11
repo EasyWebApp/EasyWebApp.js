@@ -173,6 +173,7 @@ define([
             return this;
         },
         getNode:       function () {
+
             var iMask = '0',  _This_ = this;
 
             for (var iName in arguments[0])
@@ -186,7 +187,8 @@ define([
             });
         },
         render:        function (iData) {
-            var _Data_ = { };
+
+            var _This_ = this,  _Data_ = { };
 
             if (typeof iData.valueOf() == 'string') {
 
@@ -194,21 +196,22 @@ define([
                 iData = _Data_;
             }
 
-            var _This_ = this;  _Data_ = this.extend( iData );
+            iData = this.extend( iData );  _Data_ = this.__data__;
 
-            $.each(this.getNode( iData ),  function () {
+            if ( iData )
+                $.each(this.getNode( iData ),  function () {
 
-                if (this instanceof Node_Template)
-                    this.render(_This_, _Data_);
-                else if (this instanceof View)
-                    this.render(_Data_[this.__name__]);
-                else
-                    $( this )[
-                        ('value' in this)  ?  'val'  :  'html'
-                    ](
-                        _Data_[this.name || this.getAttribute('name')]
-                    );
-            });
+                    if (this instanceof Node_Template)
+                        this.render(_This_, _Data_);
+                    else if (this instanceof View)
+                        this.render(_Data_[this.__name__]);
+                    else
+                        $( this )[
+                            ('value' in this)  ?  'val'  :  'html'
+                        ](
+                            _Data_[this.name || this.getAttribute('name')]
+                        );
+                });
 
             return this;
         },

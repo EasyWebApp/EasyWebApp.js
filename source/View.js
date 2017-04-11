@@ -1,6 +1,6 @@
 define([
-    'jquery', 'Observer', 'DS_Inherit', 'MutationObserver', 'Node_Template', 'jQuery+'
-],  function ($, Observer, DS_Inherit, MutationObserver, Node_Template) {
+    'jquery', 'Observer', 'DataScope', 'Node_Template', 'jQuery+'
+],  function ($, Observer, DataScope, Node_Template) {
 
     function View($_View, iScope) {
 
@@ -19,7 +19,7 @@ define([
             _This_  :
             $.extend(this, {
                 __name__:     this.$_View[0].name || this.$_View[0].dataset.name,
-                __data__:     DS_Inherit(iScope, { }),
+                __data__:     new DataScope( iScope ),
                 __child__:    [ ]
             }).attach();
     }
@@ -107,28 +107,22 @@ define([
             if (! (iKey in this))
                 Object.defineProperty(this, iKey, {
                     get:    function () {
-                        if (_This_.__data__.hasOwnProperty( iKey ))
-                            return _This_.__data__[iKey];
+
+                        return  _This_.__data__[iKey];
                     },
                     set:    this.render.bind(this, iKey)
                 });
         },
         extend:        function (iData) {
 
-            for (var iKey in iData)
-                if (iData.hasOwnProperty( iKey )) {
+            iData = this.__data__.commit( iData );
 
-                    this.__data__[iKey] = iData[iKey];
+            for (var iKey in iData)  this.watch( iKey );
 
-                    this.watch( iKey );
-                }
-
-            return this.__data__;
+            if (! $.isEmptyObject( iData ))  return iData;
         },
         attrWatch:     function () {
             var _This_ = this;
-
-            if (! this.__observer__)  this.extend( this.$_View[0].dataset );
 
             this.__observer__ = new self.MutationObserver(function () {
 
@@ -136,12 +130,11 @@ define([
 
                 $.each(arguments[0],  function () {
 
-                    var iNew = this.target.getAttribute( this.attributeName ),
-                        iOld = this.oldValue;
+                    var iNew = this.target.getAttribute( this.attributeName );
 
                     if (
-                        (iNew != iOld)  &&
-                        (! (iOld || '').match( Node_Template.expression ))
+                        (iNew != this.oldValue)  &&
+                        (! (this.oldValue || '').match( Node_Template.expression ))
                     )
                         iData[$.camelCase( this.attributeName.slice(5) )] = iNew;
                 });
@@ -267,5 +260,4 @@ define([
                 this.__child__;
         }
     }).signSelector();
-
 });
