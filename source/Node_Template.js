@@ -76,7 +76,7 @@ define(['jquery'],  function ($) {
         },
         render:      function (iContext, iScope) {
 
-            var iValue = this.eval(iContext.valueOf(), iScope),
+            var iValue = this.eval(iContext, iScope),
                 iNode = this.ownerNode,
                 iParent = this.ownerElement;
 

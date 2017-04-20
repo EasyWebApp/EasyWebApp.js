@@ -173,53 +173,66 @@ define('DataScope',['jquery', 'jQuery+'],  function ($) {
 
     function DataScope(iSuper) {
 
-        return  (iSuper instanceof DataScope)  ?
-            Object.create( iSuper )  :  this;
+        this.__data__ = Object.create(iSuper || { });
+
+        this.__data__.splice = this.__data__.splice || Array.prototype.splice;
     }
 
     $.extend(DataScope.prototype, {
-        splice:      Array.prototype.splice,
         commit:      function (iData) {
             var _Data_ = { };
 
             if ($.likeArray( iData )) {
                 _Data_ = [ ];
 
-                this.splice(0, Infinity);
+                this.__data__.splice(0, Infinity);
             }
 
             for (var iKey in iData)
                 if (
                     iData.hasOwnProperty( iKey )  &&  (iData[iKey] != null)  &&  (
                         (typeof iData[iKey] == 'object')  ||
-                        (! this.hasOwnProperty( iKey ))  ||
-                        (iData[iKey] != this[iKey])
+                        (! this.__data__.hasOwnProperty( iKey ))  ||
+                        (iData[iKey] != this.__data__[iKey])
                     )
-                )  _Data_[iKey] = this[iKey] = iData[iKey];
+                )  _Data_[iKey] = this.__data__[iKey] = iData[iKey];
 
             return _Data_;
         },
+        watch:       function (iKey, iSetter) {
+
+            if (! (iKey in this))
+                Object.defineProperty(this, iKey, {
+                    get:    function () {
+
+                        return  this.__data__[iKey];
+                    },
+                    set:    iSetter.bind(this, iKey)
+                });
+        },
         valueOf:     function () {
 
-            var iValue = this.hasOwnProperty('length')  ?
-                    Array.apply(null, this)  :  { };
+            var iValue = this.__data__.hasOwnProperty('length')  ?
+                    Array.apply(null, this.__data__)  :  { };
 
-            for (var iKey in this)
-                if (this.hasOwnProperty( iKey )  &&  (! $.isNumeric(iKey)))
+            for (var iKey in this.__data__)
+                if (this.__data__.hasOwnProperty( iKey )  &&  (! $.isNumeric(iKey)))
                     iValue[iKey] = this[iKey];
 
             return iValue;
         },
         clear:       function () {
 
-            if (this.hasOwnProperty('length'))  this.splice(0, Infinity);
+            var iData = this.__data__;
 
-            for (var iKey in this)  if (this.hasOwnProperty( iKey )) {
+            if ( iData.hasOwnProperty('length') )  iData.splice(0, Infinity);
 
-                if ($.likeArray( this[iKey] ))
-                    this.splice.call(this[iKey], 0, Infinity);
+            for (var iKey in iData)  if (iData.hasOwnProperty( iKey )) {
+
+                if ($.likeArray( iData[iKey] ))
+                    iData.splice.call(iData[iKey], 0, Infinity);
                 else
-                    this[iKey] = '';
+                    iData[iKey] = '';
             }
 
             return this;
@@ -356,7 +369,7 @@ define('View',[
 
         var _This_ = Observer.call(this, $_View);
 
-        $.extend(this, _This_.destructor());
+        DataScope.call($.extend(this, _This_.destructor()),  iScope);
 
         _This_ = this.constructor.instanceOf(this.$_View, false);
 
@@ -364,12 +377,11 @@ define('View',[
             _This_  :
             $.extend(this, {
                 __name__:     this.$_View[0].name || this.$_View[0].dataset.name,
-                __data__:     new DataScope( iScope ),
                 __child__:    [ ]
             }).attach();
     }
 
-    return  $.inherit(Observer, View, {
+    $.inherit(Observer, View, {
         signSelector:    function () {
             var _This_ = this;
 
@@ -446,26 +458,6 @@ define('View',[
             return iDOM;
         }
     }, {
-        watch:         function (iKey) {
-            var _This_ = this;
-
-            if (! (iKey in this))
-                Object.defineProperty(this, iKey, {
-                    get:    function () {
-
-                        return  _This_.__data__[iKey];
-                    },
-                    set:    this.render.bind(this, iKey)
-                });
-        },
-        extend:        function (iData) {
-
-            iData = this.__data__.commit( iData );
-
-            for (var iKey in iData)  this.watch( iKey );
-
-            if (! $.isEmptyObject( iData ))  return iData;
-        },
         attrWatch:     function () {
             var _This_ = this;
 
@@ -565,7 +557,7 @@ define('View',[
 
                         return NodeFilter.FILTER_ACCEPT;
                     }
-                });
+                }, true);
 
             iParser.call(this, this.$_View[0]);
 
@@ -595,9 +587,6 @@ define('View',[
             for (var i = 0;  Sub_View[i];  i++)
                 iParser.call(this, Sub_View[i]);
         },
-        valueOf:       function () {
-            return  this.__data__.valueOf();
-        },
         childOf:       function (iSelector) {
 
             return  iSelector  ?
@@ -605,6 +594,10 @@ define('View',[
                 this.__child__;
         }
     }).signSelector();
+
+    $.extend(View.prototype, DataScope.prototype);
+
+    return View;
 });
 
 define('DOMkit',['jquery', 'Node_Template', 'jQuery+'],  function ($, Node_Template) {
@@ -716,7 +709,12 @@ define('HTMLView',[
 
             return $_Slot;
         },
-        fixStyle:       function (iDOM) {
+        fixStyle:      function (iDOM) {
+
+            var iTag = iDOM.tagName.toLowerCase();
+
+            if ((iTag == 'link')  &&  (! iDOM.sheet))
+                return  iDOM.onload = arguments.callee.bind(this, iDOM);
 
             var CSS_Rule = $.map(iDOM.sheet.cssRules,  function (iRule) {
 
@@ -730,23 +728,19 @@ define('HTMLView',[
                 CSS_Rule[i].selectorText = '#' + this.__id__ + ' ' +
                     CSS_Rule[i].selectorText;
 
-            iDOM.disabled = false;
-
-            return iDOM;
+            if (iTag == 'style')  iDOM.disabled = false;
         },
-        fixDOM:         function (iDOM, BaseURL) {
+        fixDOM:        function (iDOM, BaseURL) {
             var iKey = 'src';
 
             switch ( iDOM.tagName.toLowerCase() ) {
-                case 'style':     this.fixStyle( iDOM );    break;
                 case 'link':      {
                     if (('rel' in iDOM)  &&  (iDOM.rel != 'stylesheet'))
                         return iDOM;
 
                     iKey = 'href';
-
-                    iDOM.onload = this.fixStyle.bind(this, iDOM);    break;
                 }
+                case 'style':     this.fixStyle( iDOM );    break;
                 case 'script':    iDOM = DOMkit.fixScript( iDOM );    break;
                 case 'img':       ;
                 case 'iframe':    ;
@@ -874,7 +868,9 @@ define('HTMLView',[
                 iData = _Data_;
             }
 
-            iData = this.extend( iData );  _Data_ = this.__data__;
+            iData = this.commit( iData );  _Data_ = this.__data__;
+
+            for (var iKey in iData)  this.watch(iKey, arguments.callee);
 
             if ( iData )
                 $.each(this.getNode( iData ),  function () {
@@ -892,10 +888,6 @@ define('HTMLView',[
                 });
 
             return this;
-        },
-        clear:         function () {
-
-            return  this.render( this.__data__.clear() );
         }
     });
 });
@@ -1256,9 +1248,10 @@ define('WebApp',[
                 var iView = HTMLView.instanceOf( this );
 
                 if ( iView )
-                    iView[this.name || this.getAttribute('name')] =
-                        $(this).value('name');
-
+                    iView.render(
+                        this.name || this.getAttribute('name'),
+                        $(this).value('name')
+                    );
             })).on('click submit',  InnerLink.HTML_Link,  function (iEvent) {
                 if (
                     ((this.tagName == 'FORM')  &&  (iEvent.type != 'submit'))  ||
@@ -1320,7 +1313,7 @@ define('WebApp',[
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v4.0  (2017-04-11)  Beta
+//      [Version]    v4.0  (2017-04-20)  Beta
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //
@@ -1356,14 +1349,26 @@ define('EasyWebApp',['jquery', 'WebApp'].concat( EWA_Polyfill ),  function ($, W
         });
     };
 
-    WebApp.fn = WebApp.prototype;
+    $.extend(WebApp.fn = WebApp.prototype,  {
+        component:    function (iFactory) {
 
-    WebApp.fn.component = function (iFactory) {
+            if ( this.loading[_CID_] )  this.loading[_CID_].emit('load', iFactory);
 
-        if ( this.loading[_CID_] )  this.loading[_CID_].emit('load', iFactory);
+            return this;
+        },
+        back:         function () {
+            var _This_ = this;
 
-        return this;
-    };
+            return  (new Promise(function () {
+
+                $( self ).one('popstate', arguments[0])[0].history.back();
+
+            })).then(function () {
+
+                return  _This_.load( _This_[_This_.lastPage] );
+            });
+        }
+    });
 
 /* ---------- jQuery based Helper API ---------- */
 

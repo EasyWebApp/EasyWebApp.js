@@ -2,53 +2,66 @@ define(['jquery', 'jQuery+'],  function ($) {
 
     function DataScope(iSuper) {
 
-        return  (iSuper instanceof DataScope)  ?
-            Object.create( iSuper )  :  this;
+        this.__data__ = Object.create(iSuper || { });
+
+        this.__data__.splice = this.__data__.splice || Array.prototype.splice;
     }
 
     $.extend(DataScope.prototype, {
-        splice:      Array.prototype.splice,
         commit:      function (iData) {
             var _Data_ = { };
 
             if ($.likeArray( iData )) {
                 _Data_ = [ ];
 
-                this.splice(0, Infinity);
+                this.__data__.splice(0, Infinity);
             }
 
             for (var iKey in iData)
                 if (
                     iData.hasOwnProperty( iKey )  &&  (iData[iKey] != null)  &&  (
                         (typeof iData[iKey] == 'object')  ||
-                        (! this.hasOwnProperty( iKey ))  ||
-                        (iData[iKey] != this[iKey])
+                        (! this.__data__.hasOwnProperty( iKey ))  ||
+                        (iData[iKey] != this.__data__[iKey])
                     )
-                )  _Data_[iKey] = this[iKey] = iData[iKey];
+                )  _Data_[iKey] = this.__data__[iKey] = iData[iKey];
 
             return _Data_;
         },
+        watch:       function (iKey, iSetter) {
+
+            if (! (iKey in this))
+                Object.defineProperty(this, iKey, {
+                    get:    function () {
+
+                        return  this.__data__[iKey];
+                    },
+                    set:    iSetter.bind(this, iKey)
+                });
+        },
         valueOf:     function () {
 
-            var iValue = this.hasOwnProperty('length')  ?
-                    Array.apply(null, this)  :  { };
+            var iValue = this.__data__.hasOwnProperty('length')  ?
+                    Array.apply(null, this.__data__)  :  { };
 
-            for (var iKey in this)
-                if (this.hasOwnProperty( iKey )  &&  (! $.isNumeric(iKey)))
+            for (var iKey in this.__data__)
+                if (this.__data__.hasOwnProperty( iKey )  &&  (! $.isNumeric(iKey)))
                     iValue[iKey] = this[iKey];
 
             return iValue;
         },
         clear:       function () {
 
-            if (this.hasOwnProperty('length'))  this.splice(0, Infinity);
+            var iData = this.__data__;
 
-            for (var iKey in this)  if (this.hasOwnProperty( iKey )) {
+            if ( iData.hasOwnProperty('length') )  iData.splice(0, Infinity);
 
-                if ($.likeArray( this[iKey] ))
-                    this.splice.call(this[iKey], 0, Infinity);
+            for (var iKey in iData)  if (iData.hasOwnProperty( iKey )) {
+
+                if ($.likeArray( iData[iKey] ))
+                    iData.splice.call(iData[iKey], 0, Infinity);
                 else
-                    this[iKey] = '';
+                    iData[iKey] = '';
             }
 
             return this;

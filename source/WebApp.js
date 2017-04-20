@@ -185,9 +185,10 @@ define([
                 var iView = HTMLView.instanceOf( this );
 
                 if ( iView )
-                    iView[this.name || this.getAttribute('name')] =
-                        $(this).value('name');
-
+                    iView.render(
+                        this.name || this.getAttribute('name'),
+                        $(this).value('name')
+                    );
             })).on('click submit',  InnerLink.HTML_Link,  function (iEvent) {
                 if (
                     ((this.tagName == 'FORM')  &&  (iEvent.type != 'submit'))  ||

@@ -2,7 +2,7 @@
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v4.0  (2017-04-06)  Beta
+//      [Version]    v4.0  (2017-04-20)  Beta
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //
@@ -38,14 +38,26 @@ define(['jquery', 'WebApp'],  function ($, WebApp) {
         });
     };
 
-    WebApp.fn = WebApp.prototype;
+    $.extend(WebApp.fn = WebApp.prototype,  {
+        component:    function (iFactory) {
 
-    WebApp.fn.component = function (iFactory) {
+            if ( this.loading[_CID_] )  this.loading[_CID_].emit('load', iFactory);
 
-        if ( this.loading[_CID_] )  this.loading[_CID_].emit('load', iFactory);
+            return this;
+        },
+        back:         function () {
+            var _This_ = this;
 
-        return this;
-    };
+            return  (new Promise(function () {
+
+                $( self ).one('popstate', arguments[0])[0].history.back();
+
+            })).then(function () {
+
+                return  _This_.load( _This_[_This_.lastPage] );
+            });
+        }
+    });
 
 /* ---------- jQuery based Helper API ---------- */
 
@@ -59,5 +71,4 @@ define(['jquery', 'WebApp'],  function ($, WebApp) {
     };
 
     return  $.fn.iWebApp = WebApp;
-
 });

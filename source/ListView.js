@@ -28,9 +28,9 @@ define(['jquery', 'View', 'HTMLView'],  function ($, View, HTMLView) {
 
             Item.$_View.insertTo(this.$_View, Index);
 
-            iData._index_ = Index || 0;
+            iData.__index__ = Index || 0;
 
-            this.splice(iData._index_,  0,  Item.render( iData ));
+            this.splice(iData.__index__,  0,  Item.render( iData ));
 
             return Item;
         },

@@ -11,7 +11,7 @@ define([
 
         var _This_ = Observer.call(this, $_View);
 
-        $.extend(this, _This_.destructor());
+        DataScope.call($.extend(this, _This_.destructor()),  iScope);
 
         _This_ = this.constructor.instanceOf(this.$_View, false);
 
@@ -19,12 +19,11 @@ define([
             _This_  :
             $.extend(this, {
                 __name__:     this.$_View[0].name || this.$_View[0].dataset.name,
-                __data__:     new DataScope( iScope ),
                 __child__:    [ ]
             }).attach();
     }
 
-    return  $.inherit(Observer, View, {
+    $.inherit(Observer, View, {
         signSelector:    function () {
             var _This_ = this;
 
@@ -101,26 +100,6 @@ define([
             return iDOM;
         }
     }, {
-        watch:         function (iKey) {
-            var _This_ = this;
-
-            if (! (iKey in this))
-                Object.defineProperty(this, iKey, {
-                    get:    function () {
-
-                        return  _This_.__data__[iKey];
-                    },
-                    set:    this.render.bind(this, iKey)
-                });
-        },
-        extend:        function (iData) {
-
-            iData = this.__data__.commit( iData );
-
-            for (var iKey in iData)  this.watch( iKey );
-
-            if (! $.isEmptyObject( iData ))  return iData;
-        },
         attrWatch:     function () {
             var _This_ = this;
 
@@ -220,7 +199,7 @@ define([
 
                         return NodeFilter.FILTER_ACCEPT;
                     }
-                });
+                }, true);
 
             iParser.call(this, this.$_View[0]);
 
@@ -250,9 +229,6 @@ define([
             for (var i = 0;  Sub_View[i];  i++)
                 iParser.call(this, Sub_View[i]);
         },
-        valueOf:       function () {
-            return  this.__data__.valueOf();
-        },
         childOf:       function (iSelector) {
 
             return  iSelector  ?
@@ -260,4 +236,8 @@ define([
                 this.__child__;
         }
     }).signSelector();
+
+    $.extend(View.prototype, DataScope.prototype);
+
+    return View;
 });

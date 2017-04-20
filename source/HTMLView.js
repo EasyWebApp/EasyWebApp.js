@@ -38,7 +38,12 @@ define([
 
             return $_Slot;
         },
-        fixStyle:       function (iDOM) {
+        fixStyle:      function (iDOM) {
+
+            var iTag = iDOM.tagName.toLowerCase();
+
+            if ((iTag == 'link')  &&  (! iDOM.sheet))
+                return  iDOM.onload = arguments.callee.bind(this, iDOM);
 
             var CSS_Rule = $.map(iDOM.sheet.cssRules,  function (iRule) {
 
@@ -52,23 +57,19 @@ define([
                 CSS_Rule[i].selectorText = '#' + this.__id__ + ' ' +
                     CSS_Rule[i].selectorText;
 
-            iDOM.disabled = false;
-
-            return iDOM;
+            if (iTag == 'style')  iDOM.disabled = false;
         },
-        fixDOM:         function (iDOM, BaseURL) {
+        fixDOM:        function (iDOM, BaseURL) {
             var iKey = 'src';
 
             switch ( iDOM.tagName.toLowerCase() ) {
-                case 'style':     this.fixStyle( iDOM );    break;
                 case 'link':      {
                     if (('rel' in iDOM)  &&  (iDOM.rel != 'stylesheet'))
                         return iDOM;
 
                     iKey = 'href';
-
-                    iDOM.onload = this.fixStyle.bind(this, iDOM);    break;
                 }
+                case 'style':     this.fixStyle( iDOM );    break;
                 case 'script':    iDOM = DOMkit.fixScript( iDOM );    break;
                 case 'img':       ;
                 case 'iframe':    ;
@@ -196,7 +197,9 @@ define([
                 iData = _Data_;
             }
 
-            iData = this.extend( iData );  _Data_ = this.__data__;
+            iData = this.commit( iData );  _Data_ = this.__data__;
+
+            for (var iKey in iData)  this.watch(iKey, arguments.callee);
 
             if ( iData )
                 $.each(this.getNode( iData ),  function () {
@@ -214,10 +217,6 @@ define([
                 });
 
             return this;
-        },
-        clear:         function () {
-
-            return  this.render( this.__data__.clear() );
         }
     });
 });

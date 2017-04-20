@@ -6,7 +6,7 @@ define(['jquery', 'Observer', 'iQuery+'],  function ($, Observer) {
 
         if (_This_ != this)  this.__handle__ = _This_.__handle__;
 
-        this.target = Link_DOM.tagName.match(/^(a|form)$/i) ? 'page' : 'view';
+        this.target = Link_DOM.tagName.match(/^(a|area|form)$/i) ? 'page' : 'view';
 
         this.method = (
             Link_DOM.getAttribute('method') || Link_DOM.dataset.method || 'Get'
