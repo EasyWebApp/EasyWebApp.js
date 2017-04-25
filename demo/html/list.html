@@ -1,5 +1,4 @@
-<link target="_blank" src="${this._Data_Path_ || 'top'}/list?id=${this.id}" />
-<style>
+<style disabled>
     ol.CenterX {
         padding:    0;
     }
@@ -21,12 +20,13 @@
         overflow:    hidden;
     }
 </style>
-<ol class="CenterX" name="list">
-    <li class="Item-Box visible Content" title="${this.description}" target="_self"
-        href="html/content.html" src="${this._Data_Path_ || 'top'}/show?id=${this.id}">
+<ol class="CenterX" data-name="list">
+    <li class="Item-Box visible Content" title="${this.description}">
         <div class="Background-Image" style="background-image: url(${this.img})">
         </div>
-        <p>${this.title}</p>
+        <p><a href="html/content.html?data=${this._Data_Path_ || 'top'}/show?id=${this.id}&callback=?">
+            ${this.title}
+        </a></p>
         <small class="Grid-Row CenterX">
             <span title="${(new Date(this.time)).toLocaleString()}">
                 ${this.timePassed}

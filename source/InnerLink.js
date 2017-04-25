@@ -30,7 +30,7 @@ define(['jquery', 'Observer', 'iQuery+'],  function ($, Observer) {
             this.href = Link_DOM.dataset.href ||
                 Link_DOM.getAttribute(Link_DOM.href ? 'href' : 'action');
 
-            this.src = this.href.split(/(\?|&)data=/);
+            this.src = this.href.split(/\?data=|&data=/);
 
             this.href = this.src[0];
 

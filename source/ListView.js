@@ -14,15 +14,15 @@ define(['jquery', 'View', 'HTMLView'],  function ($, View, HTMLView) {
     return  View.extend(ListView, {
         is:    $.expr[':'].list
     }, {
-        splice:    Array.prototype.splice,
-        clear:     function () {
+        splice:     Array.prototype.splice,
+        clear:      function () {
             this.$_View.empty();
 
             this.splice(0, Infinity);
 
             return this;
         },
-        insert:    function (iData, Index) {
+        insert:     function (iData, Index) {
 
             var Item = (new HTMLView(this.__HTML__, this.__data__)).parse();
 
@@ -34,16 +34,23 @@ define(['jquery', 'View', 'HTMLView'],  function ($, View, HTMLView) {
 
             return Item;
         },
-        render:    function (iList) {
+        render:     function (iList) {
 
             if ($.likeArray( iList ))
                 $.map(iList,  this.insert.bind( this ));
 
             return this;
         },
-        remove:    function (Index) {
+        remove:     function (Index) {
 
             this.splice(Index, 1)[0].$_View.remove();
+        },
+        childOf:    function () {
+
+            return  $.map(this,  function () {
+
+                return  arguments[0].__child__;
+            });
         }
     });
 });

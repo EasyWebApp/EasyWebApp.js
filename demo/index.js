@@ -1,9 +1,4 @@
-define(['jquery', 'TimePassed', 'EasyWebApp'],  function ($, TimePassed) {
-
-    $.ajaxSetup({
-        dataType:    'jsonp',
-        cache:       true
-    });
+require(['jquery', 'TimePassed', 'EasyWebApp'],  function ($, TimePassed) {
 
     function Object_Filter(iValue) {
         iValue.title = iValue.title || iValue.name;
@@ -30,7 +25,15 @@ define(['jquery', 'TimePassed', 'EasyWebApp'],  function ($, TimePassed) {
 
         var iApp = $('body > .PC_Narrow').iWebApp('http://www.tngou.net/api/');
 
-        iApp.on('data',  function (iLink, iData) {
+        iApp.on({
+            type:    'request',
+            src:     /\.json$/
+        },  function (_, iAJAX) {
+
+            iAJAX.option.url = iAJAX.option.url.replace(iApp.apiRoot, '');
+
+        }).on('data',  function (iEvent, iData) {
+
             if (iData.status === false)
                 return  self.alert("【服务器报错】" + iData.msg);
 
@@ -38,7 +41,13 @@ define(['jquery', 'TimePassed', 'EasyWebApp'],  function ($, TimePassed) {
 
             iData = $.map(iData.tngou, Object_Filter);
 
-            return  iLink.href  ?  {list: iData}  :  iData;
+            return  iEvent.href  ?  {list: iData}  :  iData;
+        }).on({
+            type:    'ready',
+            src:     'index.json'
+        },  function () {
+
+            $('li > a', arguments[0].target)[0].click();
         });
     }).on('ajaxStart',  function () {
 

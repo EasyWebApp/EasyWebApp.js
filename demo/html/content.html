@@ -1,5 +1,4 @@
-<link target="_blank" src="${this._Data_Path_}/show?id=${this.id}" />
-<style>
+<style disabled>
     .Content {
         position:      relative;
         background:    white;
@@ -69,14 +68,15 @@
     </small>
     <pre class="CenterX">${this.description}</pre>
     <p>${this.message}</p>
-    <ul name="list">
+    <ul data-name="list">
         <li class="Item-Box visible">
             <img class="Logo" src="${this.img}" />
         </li>
     </ul>
     <div class="Panel">
         <div class="Head">网友评论</div>
-        <div class="Body" href="html/comment.html"
-             src="memo/comment?type=top&id=${this.id}"></div>
+        <div class="Body"
+             data-href="html/comment.html?data=memo/comment?type=top&id=${this.id}&callback=?">
+        </div>
     </div>
 </div>

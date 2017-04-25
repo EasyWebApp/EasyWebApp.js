@@ -40,6 +40,9 @@ body > .Head {
 -webkit-transition:    0.25s;
         transition:    0.25s;
 }
+.NavBar > .DropDown > a:link {
+    color:    white;
+}
 .NavBar > .DropDown:hover {
     width:    7.25em;
 }
@@ -48,7 +51,7 @@ body > .Head {
     overflow:      auto;
     min-width:     100%;
 }
-.NavBar > .DropDown > .Body > li {
+.NavBar > .DropDown > .Body > li > a {
     padding:    1em;
 }
 .Content > * {

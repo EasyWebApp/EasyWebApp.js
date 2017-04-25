@@ -135,7 +135,7 @@ define([
             }).then(function () {
 
                 return Promise.all($.map(
-                    iView.__child__,  _This_.load.bind(_This_)
+                    iView.childOf(),  _This_.load.bind(_This_)
                 ));
             }).then(function () {  return iView;  });
         },
@@ -232,7 +232,9 @@ define([
             var _This_ = this;
 
             return Promise.all($.map(
-                $('[data-href]').not( this.$_View.find('[data-href]') ),
+                $('[data-href]:not([data-href] *)').not(
+                    this.$_View.find('[data-href]')
+                ),
                 function () {
                     return  _This_.load( arguments[0] );
                 }

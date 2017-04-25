@@ -904,15 +904,15 @@ define('ListView',['jquery', 'View', 'HTMLView'],  function ($, View, HTMLView) 
     return  View.extend(ListView, {
         is:    $.expr[':'].list
     }, {
-        splice:    Array.prototype.splice,
-        clear:     function () {
+        splice:     Array.prototype.splice,
+        clear:      function () {
             this.$_View.empty();
 
             this.splice(0, Infinity);
 
             return this;
         },
-        insert:    function (iData, Index) {
+        insert:     function (iData, Index) {
 
             var Item = (new HTMLView(this.__HTML__, this.__data__)).parse();
 
@@ -924,16 +924,23 @@ define('ListView',['jquery', 'View', 'HTMLView'],  function ($, View, HTMLView) 
 
             return Item;
         },
-        render:    function (iList) {
+        render:     function (iList) {
 
             if ($.likeArray( iList ))
                 $.map(iList,  this.insert.bind( this ));
 
             return this;
         },
-        remove:    function (Index) {
+        remove:     function (Index) {
 
             this.splice(Index, 1)[0].$_View.remove();
+        },
+        childOf:    function () {
+
+            return  $.map(this,  function () {
+
+                return  arguments[0].__child__;
+            });
         }
     });
 });
@@ -969,7 +976,7 @@ define('InnerLink',['jquery', 'Observer', 'iQuery+'],  function ($, Observer) {
             this.href = Link_DOM.dataset.href ||
                 Link_DOM.getAttribute(Link_DOM.href ? 'href' : 'action');
 
-            this.src = this.href.split(/(\?|&)data=/);
+            this.src = this.href.split(/\?data=|&data=/);
 
             this.href = this.src[0];
 
@@ -1203,7 +1210,7 @@ define('WebApp',[
             }).then(function () {
 
                 return Promise.all($.map(
-                    iView.__child__,  _This_.load.bind(_This_)
+                    iView.childOf(),  _This_.load.bind(_This_)
                 ));
             }).then(function () {  return iView;  });
         },
@@ -1300,7 +1307,9 @@ define('WebApp',[
             var _This_ = this;
 
             return Promise.all($.map(
-                $('[data-href]').not( this.$_View.find('[data-href]') ),
+                $('[data-href]:not([data-href] *)').not(
+                    this.$_View.find('[data-href]')
+                ),
                 function () {
                     return  _This_.load( arguments[0] );
                 }
@@ -1320,7 +1329,7 @@ define('WebApp',[
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v4.0  (2017-04-25)  Beta
+//      [Version]    v4.0  (2017-04-26)  Beta
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //
