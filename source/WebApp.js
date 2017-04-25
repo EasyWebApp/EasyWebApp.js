@@ -229,20 +229,22 @@ define([
             return this;
         },
         boot:         function () {
+            var _This_ = this;
 
-            var $_Init = $('[data-href]').not( this.$_View.find('[data-href]') ),
-                _This_ = this;
+            return Promise.all($.map(
+                $('[data-href]').not( this.$_View.find('[data-href]') ),
+                function () {
+                    return  _This_.load( arguments[0] );
+                }
+            )).then(function () {
 
-            return  ($_Init[0]  ?  this.load( $_Init[0] )  :  Promise.resolve(''))
-                .then(function () {
+                var Init = _This_.getRoute();
 
-                    var Init = _This_.getRoute();
+                if ( Init )
+                    return  _This_.load( $('<a />',  {href: Init})[0] );
 
-                    if ( Init )
-                        return  _This_.load( $('<a />',  {href: Init})[0] );
-
-                    $('a[href][data-autofocus="true"]').eq(0).click();
-                });
+                $('a[href][data-autofocus="true"]').eq(0).click();
+            });
         }
     });
 });

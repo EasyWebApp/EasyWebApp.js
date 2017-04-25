@@ -1,6 +1,6 @@
 define([
-    'jquery', 'Observer', 'DataScope', 'Node_Template', 'jQuery+'
-],  function ($, Observer, DataScope, Node_Template) {
+    'jquery', 'Observer', 'DataScope', 'RenderNode', 'jQuery+'
+],  function ($, Observer, DataScope, RenderNode) {
 
     function View($_View, iScope) {
 
@@ -23,7 +23,9 @@ define([
             }).attach();
     }
 
-    $.inherit(Observer, View, {
+    $.extend(View.prototype, DataScope.prototype);
+
+    return  $.inherit(Observer, View, {
         signSelector:    function () {
             var _This_ = this;
 
@@ -113,7 +115,7 @@ define([
 
                     if (
                         (iNew != this.oldValue)  &&
-                        (! (this.oldValue || '').match( Node_Template.expression ))
+                        (! (this.oldValue || '').match( RenderNode.expression ))
                     )
                         iData[$.camelCase( this.attributeName.slice(5) )] = iNew;
                 });
@@ -236,8 +238,4 @@ define([
                 this.__child__;
         }
     }).signSelector();
-
-    $.extend(View.prototype, DataScope.prototype);
-
-    return View;
 });

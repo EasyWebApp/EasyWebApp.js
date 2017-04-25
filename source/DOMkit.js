@@ -1,4 +1,4 @@
-define(['jquery', 'Node_Template', 'jQuery+'],  function ($, Node_Template) {
+define(['jquery', 'RenderNode', 'jQuery+'],  function ($, RenderNode) {
 
     var Link_Name = $.makeSet('a', 'area', 'form');
 
@@ -37,25 +37,25 @@ define(['jquery', 'Node_Template', 'jQuery+'],  function ($, Node_Template) {
         },
         fixURL:         function (iDOM, iKey, iBase) {
 
-            var iURL = (iDOM.getAttribute( iKey )  ||  '').split('?')[0];
+            var iURL = (iDOM.getAttribute( iKey )  ||  '').split('?');
 
             if (
-                iBase  &&  iURL  &&
-                (! $.urlDomain(iURL))  &&  (iURL.indexOf( iBase )  <  0)
+                iBase  &&  iURL[0]  &&
+                (! $.urlDomain( iURL[0] ))  &&  (iURL[0].indexOf( iBase )  <  0)
             ) {
-                iURL = this.parsePath(iBase + iURL);
+                iURL[0] = this.parsePath(iBase + iURL[0]);
 
-                iDOM.setAttribute(iKey, iURL);
+                iDOM.setAttribute(iKey, iURL.join('?'));
             }
 
-            return iURL;
+            return iURL.join('?');
         },
         prefetch:       function (iDOM, iURL) {
             if (
                 (iDOM.tagName.toLowerCase() in Link_Name)  &&
                 ((iDOM.target || '_self')  ==  '_self')  &&
                 (! (
-                    iURL.match( Node_Template.expression )  ||
+                    iURL.match( RenderNode.expression )  ||
                     $('head link[href="' + iURL + '"]')[0]
                 ))
             )

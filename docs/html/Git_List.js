@@ -1,15 +1,19 @@
-define(['jquery'],  function ($) {
+require(['jquery'],  function ($) {
 
-    var iAuth;
+    var iWebApp = $().iWebApp();
 
-    return  function (iData) {
-        if (! iAuth)
-            $.ajaxPrefilter(function (iOption, _, iXHR) {
+    iWebApp.component(function (iData) {
 
-                if (iOption.url.indexOf( iData.Git_API )  >  -1)
-                    iXHR.setRequestHeader(
-                        'Authorization',  'token ' + iData.Git_Token
-                    );
-            });
-    };
+        var iEvent = {
+                type:    'request',
+                src:     iData.Git_API
+            };
+
+        iWebApp.off( iEvent ).on(iEvent,  function () {
+
+            arguments[1].transport.setRequestHeader(
+                'Authorization',  'token ' + iData.Git_Token
+            );
+        });
+    });
 });

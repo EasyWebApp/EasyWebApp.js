@@ -242,9 +242,9 @@ define('DataScope',['jquery', 'jQuery+'],  function ($) {
     return DataScope;
 });
 
-define('Node_Template',['jquery'],  function ($) {
+define('RenderNode',['jquery'],  function ($) {
 
-    function Node_Template(iNode) {
+    function RenderNode(iNode) {
 
         this.ownerNode = iNode;
 
@@ -268,14 +268,13 @@ define('Node_Template',['jquery'],  function ($) {
         }
     }
 
-    $.extend(Node_Template, {
+    $.extend(RenderNode, {
         safeEval:      function (iValue) {
 
             switch (typeof iValue) {
+                case 'function':    return  iValue.bind( this );
                 case 'string':
-                    if ((iValue[0] != '0')  ||  (! iValue[1]))  break;
-                case 'function':
-                    return  $.proxy(iValue, this);
+                    if ((iValue[0] !== '0')  &&  iValue[1])  return iValue;
             }
 
             return  (iValue  &&  Eval('', iValue))  ||  iValue;
@@ -284,11 +283,11 @@ define('Node_Template',['jquery'],  function ($) {
         reference:     /(this|vm)\.(\w+)/g
     });
 
-    $.extend(Node_Template.prototype, {
+    $.extend(RenderNode.prototype, {
         eval:        function (iContext, iScope) {
             var iRefer;
 
-            var iText = this.raw.replace(Node_Template.expression,  function () {
+            var iText = this.raw.replace(RenderNode.expression,  function () {
 
                     iRefer = Eval.call(iContext, iScope, arguments[1]);
 
@@ -303,9 +302,9 @@ define('Node_Template',['jquery'],  function ($) {
             var _This_ = this,  iRefer = { };
 
             this.ownerNode.nodeValue = this.raw.replace(
-                Node_Template.expression,  function () {
+                RenderNode.expression,  function () {
 
-                    arguments[1].replace(Node_Template.reference,  function () {
+                    arguments[1].replace(RenderNode.reference,  function () {
 
                         if (arguments[1] == 'vm')  _This_.hasScope = true;
 
@@ -334,7 +333,7 @@ define('Node_Template',['jquery'],  function ($) {
                 case 2:    if (
                     (this.name != 'style')  &&  (this.name in iParent)
                 ) {
-                    iParent[ this.name ] = Node_Template.safeEval.call(
+                    iParent[ this.name ] = RenderNode.safeEval.call(
                         iContext,  iValue
                     );
                     return;
@@ -353,12 +352,12 @@ define('Node_Template',['jquery'],  function ($) {
         }
     });
 
-    return Node_Template;
+    return RenderNode;
 });
 
 define('View',[
-    'jquery', 'Observer', 'DataScope', 'Node_Template', 'jQuery+'
-],  function ($, Observer, DataScope, Node_Template) {
+    'jquery', 'Observer', 'DataScope', 'RenderNode', 'jQuery+'
+],  function ($, Observer, DataScope, RenderNode) {
 
     function View($_View, iScope) {
 
@@ -381,7 +380,9 @@ define('View',[
             }).attach();
     }
 
-    $.inherit(Observer, View, {
+    $.extend(View.prototype, DataScope.prototype);
+
+    return  $.inherit(Observer, View, {
         signSelector:    function () {
             var _This_ = this;
 
@@ -471,7 +472,7 @@ define('View',[
 
                     if (
                         (iNew != this.oldValue)  &&
-                        (! (this.oldValue || '').match( Node_Template.expression ))
+                        (! (this.oldValue || '').match( RenderNode.expression ))
                     )
                         iData[$.camelCase( this.attributeName.slice(5) )] = iNew;
                 });
@@ -594,13 +595,9 @@ define('View',[
                 this.__child__;
         }
     }).signSelector();
-
-    $.extend(View.prototype, DataScope.prototype);
-
-    return View;
 });
 
-define('DOMkit',['jquery', 'Node_Template', 'jQuery+'],  function ($, Node_Template) {
+define('DOMkit',['jquery', 'RenderNode', 'jQuery+'],  function ($, RenderNode) {
 
     var Link_Name = $.makeSet('a', 'area', 'form');
 
@@ -639,25 +636,25 @@ define('DOMkit',['jquery', 'Node_Template', 'jQuery+'],  function ($, Node_Templ
         },
         fixURL:         function (iDOM, iKey, iBase) {
 
-            var iURL = (iDOM.getAttribute( iKey )  ||  '').split('?')[0];
+            var iURL = (iDOM.getAttribute( iKey )  ||  '').split('?');
 
             if (
-                iBase  &&  iURL  &&
-                (! $.urlDomain(iURL))  &&  (iURL.indexOf( iBase )  <  0)
+                iBase  &&  iURL[0]  &&
+                (! $.urlDomain( iURL[0] ))  &&  (iURL[0].indexOf( iBase )  <  0)
             ) {
-                iURL = this.parsePath(iBase + iURL);
+                iURL[0] = this.parsePath(iBase + iURL[0]);
 
-                iDOM.setAttribute(iKey, iURL);
+                iDOM.setAttribute(iKey, iURL.join('?'));
             }
 
-            return iURL;
+            return iURL.join('?');
         },
         prefetch:       function (iDOM, iURL) {
             if (
                 (iDOM.tagName.toLowerCase() in Link_Name)  &&
                 ((iDOM.target || '_self')  ==  '_self')  &&
                 (! (
-                    iURL.match( Node_Template.expression )  ||
+                    iURL.match( RenderNode.expression )  ||
                     $('head link[href="' + iURL + '"]')[0]
                 ))
             )
@@ -670,8 +667,8 @@ define('DOMkit',['jquery', 'Node_Template', 'jQuery+'],  function ($, Node_Templ
     };
 });
 define('HTMLView',[
-    'jquery', 'View', 'DOMkit', 'Node_Template', 'iQuery+'
-],  function ($, View, DOMkit, Node_Template) {
+    'jquery', 'View', 'DOMkit', 'RenderNode', 'iQuery+'
+],  function ($, View, DOMkit, RenderNode) {
 
     function HTMLView($_View, iScope) {
 
@@ -781,7 +778,7 @@ define('HTMLView',[
                     if ((this.nodeType != 2)  &&  (this.nodeType != 3))
                         return;
 
-                    var iTemplate = new Node_Template( this );
+                    var iTemplate = new RenderNode( this );
 
                     var iName = iTemplate.getRefer();
 
@@ -875,7 +872,7 @@ define('HTMLView',[
             if ( iData )
                 $.each(this.getNode( iData ),  function () {
 
-                    if (this instanceof Node_Template)
+                    if (this instanceof RenderNode)
                         this.render(_This_, _Data_);
                     else if (this instanceof View)
                         this.render(_Data_[this.__name__]);
@@ -972,7 +969,7 @@ define('InnerLink',['jquery', 'Observer', 'iQuery+'],  function ($, Observer) {
             this.href = Link_DOM.dataset.href ||
                 Link_DOM.getAttribute(Link_DOM.href ? 'href' : 'action');
 
-            this.src = this.href.split('?data=');
+            this.src = this.href.split(/(\?|&)data=/);
 
             this.href = this.src[0];
 
@@ -1010,6 +1007,7 @@ define('InnerLink',['jquery', 'Observer', 'iQuery+'],  function ($, Observer) {
                         URI += this.url;
                     }
                 };
+            iOption.cache = (iOption.dataType == 'jsonp');
 
             if ( this.$_View[0].tagName.match(/^(a|area)$/i) ) {
 
@@ -1019,8 +1017,15 @@ define('InnerLink',['jquery', 'Observer', 'iQuery+'],  function ($, Observer) {
 
                 iOption.data = $.paramJSON('?' + this.$_View.serialize());
             } else {
-                iOption.data = new BOM.FormData( this.$_View[0] );
+                iOption.data = new self.FormData( this.$_View[0] );
                 iOption.contentType = iOption.processData = false;
+            }
+
+            if ( this.contentType.match(/^application\/json/) ) {
+
+                iOption.data = JSON.stringify( iOption.data );
+
+                iOption.processData = false;
             }
 
             var iJSON = Promise.resolve( $.ajax(this.src, iOption) );
@@ -1292,20 +1297,22 @@ define('WebApp',[
             return this;
         },
         boot:         function () {
+            var _This_ = this;
 
-            var $_Init = $('[data-href]').not( this.$_View.find('[data-href]') ),
-                _This_ = this;
+            return Promise.all($.map(
+                $('[data-href]').not( this.$_View.find('[data-href]') ),
+                function () {
+                    return  _This_.load( arguments[0] );
+                }
+            )).then(function () {
 
-            return  ($_Init[0]  ?  this.load( $_Init[0] )  :  Promise.resolve(''))
-                .then(function () {
+                var Init = _This_.getRoute();
 
-                    var Init = _This_.getRoute();
+                if ( Init )
+                    return  _This_.load( $('<a />',  {href: Init})[0] );
 
-                    if ( Init )
-                        return  _This_.load( $('<a />',  {href: Init})[0] );
-
-                    $('a[href][data-autofocus="true"]').eq(0).click();
-                });
+                $('a[href][data-autofocus="true"]').eq(0).click();
+            });
         }
     });
 });
@@ -1313,7 +1320,7 @@ define('WebApp',[
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v4.0  (2017-04-20)  Beta
+//      [Version]    v4.0  (2017-04-25)  Beta
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //

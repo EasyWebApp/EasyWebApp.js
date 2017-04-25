@@ -30,7 +30,7 @@
         return this;
     }
 
-    $.extend(CommonView, {
+    return  $.CommonView = $.inherit($.Observer, CommonView, {
         getClass:      function () {
             return  this.prototype.toString.call({constructor: this});
         },
@@ -46,23 +46,20 @@
 
             } while ($_Instance[0]  &&  (Check_Parent !== false));
         }
-    });
-
-    CommonView.prototype = $.extend(new $.Observer(),  {
-        constructor:    CommonView,
-        toString:       function () {
+    }, {
+        toString:    function () {
             var iName = this.constructor.name;
 
             iName = (typeof iName == 'function')  ?  this.constructor.name()  :  iName;
 
             return  '[object ' + iName + ']';
         },
-        render:         function () {
+        render:      function () {
             this.trigger('render', arguments);
 
             return this;
         },
-        valueOf:        function () {
+        valueOf:     function () {
             return $.map(
                 this.$_View.find('*').addBack().filter('form'),
                 function () {
@@ -70,7 +67,7 @@
                 }
             );
         },
-        clear:          function () {
+        clear:       function () {
             var $_Data = this.$_View.find('*').addBack().filter('form')
                     .one('reset',  function () {
                         arguments[0].stopPropagation();
@@ -82,13 +79,10 @@
             return this;
         }
     });
-
-    $.CommonView = CommonView;
-
 })(self, self.document, self.jQuery);
 
 
-/* ---------- ListView Interface  v0.9 ---------- */
+/* ---------- ListView Interface  v0.8 ---------- */
 
 //  Thanks "EasyWebApp" Project --- http://git.oschina.net/Tech_Query/EasyWebApp
 
@@ -97,23 +91,19 @@
 
     var Click_Type = $.browser.mobile ? 'tap' : 'click';
 
-    function ListView($_View, $_Item, iDelay, onUpdate) {
+    function ListView($_View, $_Item, onUpdate) {
         var _Self_ = arguments.callee;
 
         if (!  (this instanceof _Self_))
-            return  new _Self_($_View, $_Item, iDelay, onUpdate);
+            return  new _Self_($_View, $_Item, onUpdate);
 
         var iArgs = $.makeArray(arguments).slice(1);
 
         $_Item = (iArgs[0] instanceof Array)  &&  iArgs.shift();
-        iDelay = (typeof iArgs[0] == 'boolean')  ?  iArgs.shift()  :  null;
-        onUpdate = (typeof iArgs[0] == 'function')  &&  iArgs[0];
 
-        var iView = $.CommonView.call(this, $_View);
+        var iView = $.CommonView.call(this, $_View).on('update', iArgs[0]);
 
-        if (typeof onUpdate == 'function')  iView.on('update', onUpdate);
-
-        if ((iView !== this)  ||  (! iView.$_View[0].children[0]))
+        if ((iView !== this)  ||  (! iView.$_View.children()[0]))
             return iView;
 
         this.selector = $_Item;
@@ -131,13 +121,17 @@
 
         this.$_Template = this[0].clone(true);
 
-        iDelay = (iDelay !== false)  ?
-            $('*', this[0][0]).add( this[0][0] ).filter(':media')[0]  :  iDelay;
-
-        this.cache = iDelay && [ ];
-
         this.$_View.on(Click_Type,  '.ListView_Item',  function (iEvent) {
+
             if (iView.$_View[0] !== this.parentNode)  return;
+
+            var $_Focus = $( iEvent.target );
+
+            if (! $_Focus.is(':data("TV_Focused")'))
+                $_Focus = $_Focus.parents(':data("TV_Focused")').eq(0);
+
+            if ( $_Focus.data('TV_Focused') )
+                return  $_Focus.data('TV_Focused', null);
 
             var $_This = $(this);
 
@@ -146,33 +140,34 @@
                 $_This.scrollParents().is(
                     'a[href], *[tabIndex], *[contentEditable]'
                 )
-            )
+            ) {
                 _Self_.instanceOf(this).focus(this);
+
+                $_This.data('TV_Focused', 1);
+            }
         });
+
+        return this;
     }
 
-    $.extend(ListView, {
-        getClass:      $.CommonView.getClass,
-        instanceOf:    $.CommonView.instanceOf,
-        findView:      function ($_View, Init_Instance) {
-            $_View = $($_View).find('*:list, *[multiple]')
-                .not('input[type="file"]');
+    var $_DOM = $(DOM);
+
+    return  $.ListView = $.inherit($.CommonView, ListView, {
+        findView:    function ($_View, Init_Instance) {
+            $_View = $( $_View ).find(':list, :data("' + this.getClass() + '")');
 
             if (Init_Instance === true) {
-                for (var i = 0;  i < $_View.length;  i++)
+
+                for (var i = 0;  $_View[i];  i++)
                     if (! this.instanceOf($_View[i], false))
                         this( $_View[i] );
+
             } else if (Init_Instance === false)
                 $_View.data(this.getClass(), null);
 
             return $_View;
         }
-    });
-
-    var $_DOM = $(DOM);
-
-    ListView.prototype = $.extend(new $.CommonView(),  {
-        constructor:    ListView,
+    }, {
         getSelector:    function () {
             return  this.selector ?
                 this.selector.join(', ') : [
@@ -236,7 +231,7 @@
             var iReturn = this.trigger('insert',  [$_Item, iValue, Index]);
 
             $_Item = iReturn.length  ?
-                $($.merge.call($, [ ], iReturn))  :  $_Item;
+                $([ ].concat.apply([ ], iReturn))  :  $_Item;
 
             if (_New_)
                 this.splice(Index, 0, $_Item);
@@ -249,31 +244,11 @@
                 .insertTo(this.$_View,  Index * $_Item.length);
         },
         render:         function (iData, iFrom) {
-            var iDelay = (this.cache instanceof Array),  $_Scroll;
-
-            if (iDelay)
-                iData = iData  ?  $.merge(this.cache, iData)  :  this.cache;
-
             iFrom = iFrom || 0;
 
-            for (var i = 0, $_Item;  i < iData.length;  i++) {
-                $_Item = this.insert(iData[i],  i + iFrom);
+            for (var i = 0;  i < iData.length;  i++)
+                this.insert(iData[i],  i + iFrom);
 
-                $_Scroll = $_Scroll  ||  $( $_Item.scrollParents()[0] );
-
-                if ((! $_Item.inViewport())  &&  iDelay) {
-
-                    this.cache = iData.slice(++i);
-
-                    if (! this.cache[0])  break;
-
-                    $_Scroll.one('scroll', $.proxy(
-                        this.render,  this,  null,  i + iFrom
-                    ));
-
-                    return this;
-                }
-            }
             if ( iData.length )  this.trigger('afterRender', [iData]);
 
             return this;
@@ -294,6 +269,8 @@
         },
         //  Delete
         remove:         function (Index) {
+            Index = $.isNumeric(Index) ? Index : this.indexOf(Index);
+
             var $_Item = this.indexOf(Index, true);
 
             if (
@@ -308,10 +285,7 @@
         },
         clear:          function () {
             this.splice(0, this.length);
-            this.$_View.empty();
-
-            if (this.cache instanceof Array)
-                this.cache.length = 0;
+            this.$_View.data('LV_Model', null).empty();
 
             return this;
         },
@@ -351,13 +325,17 @@
             return iLV;
         },
         fork:           function () {
-            var $_View = this.$_View.clone(true).empty().append(
-                    this.$_Template.clone(true)
-                );
-            $_View.data({'[object ListView]': '',  LV_Model: ''})[0].id = '';
-
             var iFork = ListView(
-                    $_View.appendTo( arguments[0] ),  false,  this.selector
+                    this.$_View.clone(true)
+                        .removeAttr('id style')
+                        .data({
+                            '[object ListView]':    '',
+                            LV_Model:               ''
+                        })
+                        .empty().append( this.$_Template.clone(true) )
+                        .appendTo( arguments[0] ),
+                    false,
+                    this.selector
                 );
             iFork.table = this.table;
             iFork.parentView = this;
@@ -365,9 +343,106 @@
             return iFork;
         }
     });
+})(self, self.document, self.jQuery);
 
-    $.ListView = ListView;
 
+/* ---------- GalleryView Interface  v0.1 ---------- */
+
+//  Sub-Class of ListView optimized for Multimedia
+
+
+(function (BOM, DOM, $) {
+
+    function GalleryView($_View, $_Item, onUpdate) {
+        var _Self_ = arguments.callee;
+
+        if (!  (this instanceof _Self_))
+            return  new _Self_($_View, $_Item, onUpdate);
+
+        var _This_ = $.ListView.apply(this, arguments);
+
+        if ((_This_ !== this)  ||  (! _This_.$_View.children()[0]))
+            return _This_;
+
+        _This_.on('insert',  function ($_Item, _, Index) {
+            var $_Prev = _This_[--Index];
+
+            if ((! $_Prev)  ||  $_Prev.inViewport()) {
+                _Self_.toggle($_Item, true);
+                return;
+            }
+
+            _Self_.toggle( $_Item ).filter('[data-src]')
+                .each( iFreeze ).one('load', iFreeze);
+
+        }).$_View.add( document ).scroll($.throttle(function () {
+
+            for (var i = 0;  _This_[i];  i++)
+                _Self_.toggle(_This_[i], _This_[i].inViewport());
+        }));
+
+        return _This_;
+    }
+
+    function iFreeze() {
+        if (
+            (typeof arguments[0] != 'object')  &&
+            (this.tagName.toLowerCase() == 'img')  &&
+            (! this.complete)
+        )
+            return;
+
+        var $_This = $(this);
+
+        $_This.width( $_This.css('width') );
+
+        $_This.height( $_This.css('height') );
+    }
+
+    function iShow() {
+        if ( this.dataset.src ) {
+            this.src = this.dataset.src;
+
+            this.removeAttribute('data-src');
+        }
+
+        if ( this.dataset.style ) {
+            this.style.backgroundImage = this.dataset.style;
+
+            this.removeAttribute('data-style');
+        }
+    }
+
+    function iHide() {
+        var iURL = this.getAttribute('src'),
+            BGI = this.style.backgroundImage;
+
+        if ( iURL ) {
+            this.removeAttribute('src');
+
+            this.setAttribute('data-src', iURL);
+        }
+
+        if (BGI.length > 7) {
+            this.style.backgroundImage = '';
+
+            this.setAttribute('data-style', BGI);
+        }
+    }
+
+    return  $.GalleryView = $.inherit($.ListView, GalleryView, {
+        instanceOf:    function () {
+            var iView = $.ListView.instanceOf.apply(this, arguments);
+
+            return  iView  ||  $.ListView.instanceOf.apply($.ListView, arguments);
+        },
+        toggle:        function ($_Item) {
+
+            return  $_Item.add( $_Item.find('*') ).filter(':media').each(
+                arguments[1]  ?  iShow  :  iHide
+            );
+        }
+    });
 })(self, self.document, self.jQuery);
 
 
@@ -389,7 +464,10 @@
             iArgs.shift()  :  Infinity;
 
         var _This_ = $.CommonView.call(this, iListView.$_View)
-                .on('branch',  (typeof iArgs[0] == 'function')  &&  iArgs[0]);
+                .on('branch', iArgs[0]);
+
+        if ((_This_ !== this)  ||  (! _This_.$_View.children()[0]))
+            return _This_;
 
         this.$_View = iListView.$_View;
 
@@ -432,14 +510,8 @@
         $.fn.on.apply(iListView.$_View.addClass('TreeNode'), this.listener);
     }
 
-    $.extend(TreeView, {
-        getClass:      $.CommonView.getClass,
-        instanceOf:    $.CommonView.instanceOf
-    });
-
-    TreeView.prototype = $.extend(new $.CommonView(),  {
-        constructor:    TreeView,
-        render:         function ($_Fork, iData) {
+    return  $.TreeView = $.inherit($.CommonView, TreeView, null, {
+        render:     function ($_Fork, iData) {
             if (iData  ||  (! ($_Fork instanceof Array)))
                 $_Fork = $($_Fork);
             else {
@@ -453,12 +525,12 @@
 
             return this;
         },
-        clear:          function () {
+        clear:      function () {
             this[0][0].clear();
 
             return this;
         },
-        branch:         function ($_Item, iData) {
+        branch:     function ($_Item, iData) {
             var iFork = ($_Item instanceof $.ListView)  ?  $_Item  :  (
                     $.ListView.instanceOf( $_Item ).fork( $_Item )
                 );
@@ -468,11 +540,12 @@
 
             this[iDepth].push( iFork.clear() );
 
-            if (this.initDepth < this.length) {
+            if (this.initDepth > iDepth)
+                this.render(iFork.$_View, iData);
+            else {
                 iFork.$_View.data('TV_Model', iData);
                 iData = null;
-            } else
-                this.render(iFork.$_View, iData);
+            }
 
             this.trigger('branch',  [iFork, this.length, iData]);
 
@@ -480,13 +553,10 @@
 
             return iFork;
         },
-        valueOf:        function () {
+        valueOf:    function () {
             return this[0][0].valueOf();
         }
     });
-
-    $.TreeView = TreeView;
-
 })(self, self.document, self.jQuery);
 
 
@@ -555,6 +625,108 @@
 
 (function (BOM, DOM, $) {
 
+/* ---------- Bit Operation for Big Number  v0.1 ---------- */
+
+    function Bit_Calculate(iType, iLeft, iRight) {
+        iLeft = parseInt(iLeft, 2);
+        iRight = parseInt(iRight, 2);
+
+        switch (iType) {
+            case '&':    return  iLeft & iRight;
+            case '|':    return  iLeft | iRight;
+            case '^':    return  iLeft ^ iRight;
+            case '~':    return  ~iLeft;
+        }
+    }
+
+    $.bitOperate = function (iType, iLeft, iRight) {
+
+        iLeft = (typeof iLeft == 'string')  ?  iLeft  :  iLeft.toString(2);
+        iRight = (typeof iRight == 'string')  ?  iRight  :  iRight.toString(2);
+
+        var iLength = Math.max(iLeft.length, iRight.length);
+
+        if (iLength < 32)
+            return  Bit_Calculate(iType, iLeft, iRight).toString(2);
+
+        iLeft = $.leftPad(iLeft, iLength, 0);
+        iRight = $.leftPad(iRight, iLength, 0);
+
+        var iResult = '';
+
+        for (var i = 0;  i < iLength;  i += 31)
+            iResult += $.leftPad(
+                Bit_Calculate(
+                    iType,  iLeft.slice(i, i + 31),  iRight.slice(i, i + 31)
+                ).toString(2),
+                Math.min(31,  iLength - i),
+                0
+            );
+
+        return iResult;
+    };
+
+/* ---------- Local Storage Wrapper  v0.1 ---------- */
+
+    var LS_Key = [ ];
+
+    $.storage = function (iName, iData) {
+
+        if (! (iData != null))  return  JSON.parse(BOM.localStorage[ iName ]);
+
+        var iLast = 0,  iLength = Math.min(LS_Key.length, BOM.localStorage.length);
+
+        do  try {
+            BOM.localStorage[ iName ] = JSON.stringify( iData );
+
+            if (LS_Key.indexOf( iName )  ==  -1)  LS_Key.push( iName );
+            break;
+        } catch (iError) {
+            if (LS_Key[ iLast ]) {
+                delete  BOM.localStorage[ LS_Key[iLast] ];
+
+                LS_Key.splice(iLast, 1);
+            } else
+                iLast++ ;
+        } while (iLast < iLength);
+
+        return iData;
+    };
+
+/* ---------- URL Parameter Signature  v0.1 ---------- */
+
+    function JSON_Sign(iData) {
+
+        return  '{'  +  $.map(Object.keys( iData ).sort(),  function (iKey) {
+
+            return  '"'  +  iKey  +  '":'  +  JSON.stringify( iData[iKey] );
+
+        }).join()  +  '}';
+    }
+
+    $.paramSign = function (iData) {
+
+        iData = (typeof iData == 'string')  ?  this.paramJSON( iData )  :  iData;
+
+        return  $.map(Object.keys( iData ).sort(),  function (iKey) {
+
+            var _Data_ = iData[iKey];
+
+            switch ( true ) {
+                case (_Data_ instanceof Function):
+                    return;
+                case $.likeArray(_Data_):
+                    _Data_ = '['  +  $.map(_Data_, JSON_Sign).join()  +  ']';
+                    break;
+                case (typeof _Data_ == 'object'):
+                    _Data_ = JSON_Sign(_Data_);
+            }
+
+            return  iKey + '=' + _Data_;
+
+        }).join(arguments[1] || '&');
+    };
+
 /* ---------- Base64 to Blob  v0.1 ---------- */
 
 //  Thanks "axes" --- http://www.cnblogs.com/axes/p/4603984.html
@@ -565,12 +737,12 @@
             iType = iString[1];
             iString = iString[2];
         }
-        iString = BOM.atob(iString);
+        iString = BOM.atob( iString );
 
-        var iBuffer = new ArrayBuffer(iString.length);
-        var uBuffer = new Uint8Array(iBuffer);
+        var iBuffer = new ArrayBuffer( iString.length );
+        var uBuffer = new Uint8Array( iBuffer );
 
-        for (var i = 0;  i < iString.length;  i++)
+        for (var i = 0;  iString[i];  i++)
             uBuffer[i] = iString.charCodeAt(i);
 
         var BlobBuilder = BOM.WebKitBlobBuilder || BOM.MozBlobBuilder;
@@ -579,62 +751,96 @@
             return  new BOM.Blob([iBuffer],  {type: iType});
 
         var iBuilder = new BlobBuilder();
-        iBuilder.append(iBuffer);
-        return iBuilder.getBlob(iType);
+        iBuilder.append( iBuffer );
+
+        return  iBuilder.getBlob( iType );
     };
+
+/* ---------- CRC-32  v0.1 ---------- */
+
+//  Thanks "Bakasen" for http://blog.csdn.net/bakasen/article/details/6043797
+
+    var CRC_32_Table = (function () {
+            var iTable = new Array(256);
+
+            for (var i = 0, iCell;  i < 256;  i++) {
+                iCell = i;
+
+                for (var j = 0;  j < 8;  j++)
+                    if (iCell & 1)
+                        iCell = ((iCell >> 1) & 0x7FFFFFFF)  ^  0xEDB88320;
+                    else
+                        iCell = (iCell >> 1)  &  0x7FFFFFFF;
+
+                iTable[i] = iCell;
+            }
+
+            return iTable;
+        })();
+
+    function CRC_32(iRAW) {
+        iRAW = '' + iRAW;
+
+        var iValue = 0xFFFFFFFF;
+
+        for (var i = 0;  iRAW[i];  i++)
+            iValue = ((iValue >> 8) & 0x00FFFFFF)  ^  CRC_32_Table[
+                (iValue & 0xFF)  ^  iRAW.charCodeAt(i)
+            ];
+
+        return  iValue ^ 0xFFFFFFFF;
+    }
 
 /* ---------- Hash Algorithm (Crypto API Wrapper)  v0.1 ---------- */
 
 //  Thanks "emu" --- http://blog.csdn.net/emu/article/details/39618297
 
     function BufferToString(iBuffer){
-        var iDataView = new DataView(iBuffer),
-            iResult = [ ];
+        var iDataView = new DataView(iBuffer),  iResult = '';
 
         for (var i = 0, iTemp;  i < iBuffer.byteLength;  i += 4) {
             iTemp = iDataView.getUint32(i).toString(16);
-            iResult.push(
-                ((iTemp.length == 8) ? '' : '0') + iTemp
-            );
+
+            iResult += ((iTemp.length == 8) ? '' : 0)  +  iTemp;
         }
-        return iResult.join('');
+
+        return iResult;
     }
 
-    $.dataHash = function (iAlgorithm, iData, iCallback, iFailback) {
-        var iCrypto = BOM.crypto || BOM.msCrypto;
-        var iSubtle = iCrypto.subtle || iCrypto.webkitSubtle;
+    $.dataHash = function (iAlgorithm, iData) {
+        if (arguments.length < 2) {
+            iData = iAlgorithm;
+            iAlgorithm = 'CRC-32';
+        }
 
-        iAlgorithm = iAlgorithm || 'SHA-512';
-        iFailback = iFailback || iCallback;
+        if (iAlgorithm == 'CRC-32')
+            return  Promise.resolve(CRC_32( iData ));
+
+        var iCrypto = BOM.crypto || BOM.msCrypto;
 
         try {
-            iData = iData.split('');
-            for (var i = 0;  i < iData.length;  i++)
-                iData[i] = iData[i].charCodeAt(0);
-
-            var iPromise = iSubtle.digest(
+            var iPromise = (iCrypto.subtle || iCrypto.webkitSubtle).digest(
                     {name:  iAlgorithm},
-                    new Uint8Array(iData)
-                );
+                    new Uint8Array(
+                        Array.prototype.map.call(String( iData ),  function () {
 
-            if(typeof iPromise.then == 'function')
-                iPromise.then(
-                    function () {
-                        iCallback.call(this, BufferToString(arguments[0]));
-                    },
-                    iFailback
+                            return arguments[0].charCodeAt(0);
+                        })
+                    )
                 );
-            else
-                iPromise.oncomplete = function () {
-                    iCallback.call(
-                        this,  BufferToString( arguments[0].target.result )
-                    );
-                };
+            return  ((typeof iPromise.then == 'function')  ?
+                iPromise  :  new Promise(function (iResolve) {
+
+                    iPromise.oncomplete = function () {
+                        iResolve( arguments[0].target.result );
+                    };
+                })
+            ).then( BufferToString );
+
         } catch (iError) {
-            iFailback(iError);
+            return  Promise.reject( iError );
         }
     };
-
 })(self, self.document, self.jQuery);
 
 
@@ -642,11 +848,11 @@
 //              >>>  iQuery+  <<<
 //
 //
-//    [Version]    v1.6  (2016-08-08)  Stable
+//    [Version]    v2.0  (2017-04-20)  Stable
 //
 //    [Require]    iQuery  ||  jQuery with jQuery+
 //
 //
-//        (C)2015-2016  shiy2008@gmail.com
+//        (C)2015-2017  shiy2008@gmail.com
 //
 });

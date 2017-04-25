@@ -23,21 +23,21 @@
     require.config({
         baseUrl:    'source/',
         paths:      {
-            jquery:             '//cdn.bootcss.com/jquery/1.12.4/jquery.min',
-            'jQuery+':          'http://tech_query.oschina.io/iquery/jQuery+',
-            'iQuery+':          'http://tech_query.oschina.io/iquery/iQuery+',
+            jquery:              '//cdn.bootcss.com/jquery/3.2.1/jquery.min',
+            'jQuery+':           '../demo/javascript/jQuery+',
+            'iQuery+':           '../demo/javascript/iQuery+',
             MutationObserver:
                 '//cdn.bootcss.com/MutationObserver.js/0.3.2/mutationobserver.min',
             'html5-history-api':
                 '//cdn.bootcss.com/html5-history-api/4.2.8/history.min.js',
-            EasyWebUI:          '//tech_query.oschina.io/css/EasyWebUI',
-            marked:             '//cdn.bootcss.com/marked/0.3.6/marked.min',
+            EasyWebUI:           '//tech_query.oschina.io/css/EasyWebUI',
+            marked:              '//cdn.bootcss.com/marked/0.3.6/marked.min',
             MediumEditor:
                 '//cdn.bootcss.com/medium-editor/5.22.1/js/medium-editor.min',
             QRcode:
                 '//cdn.bootcss.com/lrsjng.jquery-qrcode/0.14.0/jquery-qrcode.min',
-            Git_List:           '../docs/html/Git_List',
-            Data_Table:         '../component/Data_Table'
+            Git_List:            '../docs/html/Git_List',
+            Data_Table:          '../component/Data_Table'
         },
         shim:       {
             MutationObserver:    {exports:  'MutationObserver'},
@@ -50,9 +50,9 @@
     <div class="Head CenterX Black_O">
         <div class="Grid-Row CenterY">
             <div id="Main_Title">
-                <h1 target="_self" href="docs/html/Git_List.html">
+                <h1><a href="docs/html/Git_List.html?data=docs/html/Git_List.json">
                     ${vm.Title}
-                </h1>
+                </a></h1>
                 <p>${vm.Description}</p>
             </div>
         </div>
@@ -82,7 +82,7 @@
     </div>
     <div class="Foot Black_O Grid-Row CenterX">
         <span>
-            (C)2016  <a target="_blank" href="https://tech_query.oschina.io/">Tech_Query</a>
+            (C)2016-2017  <a target="_blank" href="https://tech_query.oschina.io/">Tech_Query</a>
         </span>
         <span>
             Powered by

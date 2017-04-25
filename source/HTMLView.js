@@ -1,6 +1,6 @@
 define([
-    'jquery', 'View', 'DOMkit', 'Node_Template', 'iQuery+'
-],  function ($, View, DOMkit, Node_Template) {
+    'jquery', 'View', 'DOMkit', 'RenderNode', 'iQuery+'
+],  function ($, View, DOMkit, RenderNode) {
 
     function HTMLView($_View, iScope) {
 
@@ -110,7 +110,7 @@ define([
                     if ((this.nodeType != 2)  &&  (this.nodeType != 3))
                         return;
 
-                    var iTemplate = new Node_Template( this );
+                    var iTemplate = new RenderNode( this );
 
                     var iName = iTemplate.getRefer();
 
@@ -204,7 +204,7 @@ define([
             if ( iData )
                 $.each(this.getNode( iData ),  function () {
 
-                    if (this instanceof Node_Template)
+                    if (this instanceof RenderNode)
                         this.render(_This_, _Data_);
                     else if (this instanceof View)
                         this.render(_Data_[this.__name__]);

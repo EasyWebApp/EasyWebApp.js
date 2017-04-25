@@ -1,17 +1,10 @@
-<link target="_blank" src="${this._File_Path_}/${this._File_Name_}.json" />
-<script>
-require(['jquery', 'Git_List'],  function ($) {
-
-    $().iWebApp().component( arguments[1] );
-});
-</script>
+<script src="Git_List.js"></script>
 
 <h2>文档列表</h2>
-<ul src="${this.Git_API}/repos/${this.Git_Account}/${this.Git_Repo}/contents/${this.Root_Path}?ref=${this.Git_Branch || 'gh-pages'}">
+<ul data-href="?data=${vm.Git_API}/repos/${vm.Git_Account}/${vm.Git_Repo}/contents/${vm.Root_Path}?ref=${vm.Git_Branch || 'gh-pages'}">
     <li>
-        <h3 target="_self"
-            href="https://${this.Git_Account}.github.io/${this.Git_Repo}/${this.path}${(this.type == 'dir')  ?  '/index.md'  :  ''}">
+        <h3><a href="https://${vm.Git_Account}.github.io/${vm.Git_Repo}/${this.path}${(this.type == 'dir')  ?  '/index.md'  :  ''}">
             ${this.name}
-        </h3>
+        </a></h3>
     </li>
 </ul>

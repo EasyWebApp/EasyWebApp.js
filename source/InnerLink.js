@@ -30,7 +30,7 @@ define(['jquery', 'Observer', 'iQuery+'],  function ($, Observer) {
             this.href = Link_DOM.dataset.href ||
                 Link_DOM.getAttribute(Link_DOM.href ? 'href' : 'action');
 
-            this.src = this.href.split('?data=');
+            this.src = this.href.split(/(\?|&)data=/);
 
             this.href = this.src[0];
 
@@ -68,6 +68,7 @@ define(['jquery', 'Observer', 'iQuery+'],  function ($, Observer) {
                         URI += this.url;
                     }
                 };
+            iOption.cache = (iOption.dataType == 'jsonp');
 
             if ( this.$_View[0].tagName.match(/^(a|area)$/i) ) {
 
@@ -77,8 +78,15 @@ define(['jquery', 'Observer', 'iQuery+'],  function ($, Observer) {
 
                 iOption.data = $.paramJSON('?' + this.$_View.serialize());
             } else {
-                iOption.data = new BOM.FormData( this.$_View[0] );
+                iOption.data = new self.FormData( this.$_View[0] );
                 iOption.contentType = iOption.processData = false;
+            }
+
+            if ( this.contentType.match(/^application\/json/) ) {
+
+                iOption.data = JSON.stringify( iOption.data );
+
+                iOption.processData = false;
             }
 
             var iJSON = Promise.resolve( $.ajax(this.src, iOption) );

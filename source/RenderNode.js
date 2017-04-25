@@ -1,6 +1,6 @@
 define(['jquery'],  function ($) {
 
-    function Node_Template(iNode) {
+    function RenderNode(iNode) {
 
         this.ownerNode = iNode;
 
@@ -24,14 +24,13 @@ define(['jquery'],  function ($) {
         }
     }
 
-    $.extend(Node_Template, {
+    $.extend(RenderNode, {
         safeEval:      function (iValue) {
 
             switch (typeof iValue) {
+                case 'function':    return  iValue.bind( this );
                 case 'string':
-                    if ((iValue[0] != '0')  ||  (! iValue[1]))  break;
-                case 'function':
-                    return  $.proxy(iValue, this);
+                    if ((iValue[0] !== '0')  &&  iValue[1])  return iValue;
             }
 
             return  (iValue  &&  Eval('', iValue))  ||  iValue;
@@ -40,11 +39,11 @@ define(['jquery'],  function ($) {
         reference:     /(this|vm)\.(\w+)/g
     });
 
-    $.extend(Node_Template.prototype, {
+    $.extend(RenderNode.prototype, {
         eval:        function (iContext, iScope) {
             var iRefer;
 
-            var iText = this.raw.replace(Node_Template.expression,  function () {
+            var iText = this.raw.replace(RenderNode.expression,  function () {
 
                     iRefer = Eval.call(iContext, iScope, arguments[1]);
 
@@ -59,9 +58,9 @@ define(['jquery'],  function ($) {
             var _This_ = this,  iRefer = { };
 
             this.ownerNode.nodeValue = this.raw.replace(
-                Node_Template.expression,  function () {
+                RenderNode.expression,  function () {
 
-                    arguments[1].replace(Node_Template.reference,  function () {
+                    arguments[1].replace(RenderNode.reference,  function () {
 
                         if (arguments[1] == 'vm')  _This_.hasScope = true;
 
@@ -90,7 +89,7 @@ define(['jquery'],  function ($) {
                 case 2:    if (
                     (this.name != 'style')  &&  (this.name in iParent)
                 ) {
-                    iParent[ this.name ] = Node_Template.safeEval.call(
+                    iParent[ this.name ] = RenderNode.safeEval.call(
                         iContext,  iValue
                     );
                     return;
@@ -109,5 +108,5 @@ define(['jquery'],  function ($) {
         }
     });
 
-    return Node_Template;
+    return RenderNode;
 });
