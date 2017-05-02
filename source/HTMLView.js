@@ -59,7 +59,7 @@ define([
 
             if (iTag == 'style')  iDOM.disabled = false;
         },
-        fixDOM:        function (iDOM, BaseURL) {
+        fixDOM:        function (iDOM) {
             var iKey = 'src';
 
             switch ( iDOM.tagName.toLowerCase() ) {
@@ -85,7 +85,7 @@ define([
                 default:          iKey = 'data-href';
             }
 
-            DOMkit.prefetch(iDOM,  DOMkit.fixURL(iDOM, iKey, BaseURL));
+            DOMkit.prefetch(iDOM,  DOMkit.fixURL(iDOM, iKey, this.__base__));
 
             return iDOM;
         },
@@ -127,6 +127,9 @@ define([
             );
         },
         parse:         function (BaseURL, iTemplate) {
+
+            this.__base__ = BaseURL;
+
             if ( iTemplate ) {
                 this.$_Content = this.$_View.children().detach();
 
@@ -146,7 +149,7 @@ define([
                         (iNode != this.$_View[0])  &&
                         (iNode.outerHTML != this.lastParsed)
                     ) {
-                        iNode = this.fixDOM(iNode, BaseURL);
+                        iNode = this.fixDOM( iNode );
 
                         this.lastParsed = iNode.outerHTML;
                     }

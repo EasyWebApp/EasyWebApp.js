@@ -2,7 +2,7 @@
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v4.0  (2017-04-20)  Beta
+//      [Version]    v4.0  (2017-05-02)  Beta
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //
@@ -45,12 +45,12 @@ define(['jquery', 'WebApp'],  function ($, WebApp) {
 
             return this;
         },
-        back:         function () {
+        loadPage:     function (iURI) {
             var _This_ = this;
 
-            return  (new Promise(function () {
+            return  (! iURI)  ?  Promise.resolve('')  :  (new Promise(function () {
 
-                $( self ).one('popstate', arguments[0])[0].history.back();
+                $( self ).one('popstate', arguments[0])[0].history.go( iURI );
 
             })).then(function () {
 

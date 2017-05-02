@@ -1,6 +1,6 @@
 # 声明式 MVVM 引擎 —— EasyWebApp v4
 
-基于 jQuery v3.2+ 构建 —— IE 9+、ECMAScript 5+、HTML 5+
+基于 AMD 规范加载器、jQuery v3.2+ 构建，兼容 IE 9+、ECMAScript 5+、HTML 5+
 
 [![Join the chat at https://gitter.im/EasyWebApp-js/Lobby](https://badges.gitter.im/EasyWebApp-js/Lobby.svg)](https://gitter.im/EasyWebApp-js/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
@@ -42,7 +42,7 @@ MVVM 引擎只需扫描 DOM 树，即可 **自动加载 HTML、JSON** 来构建 
 ### 内置视图对象
 
  - **抽象视图** `View($_Box, iScope)`（不可实例化）
-   - 继承父类：`Observer()`
+   - 继承父类：`Observer()`、`DataScope()`
    - 继承视图：`.extend(iConstructor, iStatic, iPrototype)`
    - 查找实例：`.instanceOf(iDOM, Check_Parent)` 
    - 遍历 DOM：`.prototype.scan( iParser )` 
@@ -139,7 +139,7 @@ path/to/template.html?key1=value1&keyN=valueN&data=/path/to/json
 <h3>列个表</h3>
 <div data-href="?data=/path/to/list?count=10&page=1">
     <ul data-name="list">
-        <li>内置索引号：${this._index_}</li>
+        <li>内置索引号：${this.__index__}</li>
     </ul>
     共 ${this.total} 项
 </div>
@@ -150,8 +150,6 @@ path/to/template.html?key1=value1&keyN=valueN&data=/path/to/json
 
 利用 HTML 5 History API 对“纯 Hash URL”的支持，EWA 引擎直接把 **SPA 页面 URL** 置于 `#!` （Hash Bang，Google 提出的纯前端路由规则）之后，即使无后端渲染支持，用户也可随意【F5】或【Ctrl + C/V】。
 
-但为防止某些 URL 解析库欠考虑，EWA 路由做了一次 Base64 编码，并可用 `WebApp.prototype.getRoute()` 获取原文。
-
 
 ### （〇）请求拦截
 
@@ -161,15 +159,11 @@ $().iWebApp().on({
     src:     'api.test.com'
 },  function (iEvent, iAJAX) {
 
-    //  基于两个 iQuery 扩展的实用方法，处理 jQuery AJAX 选项对象
+    //  基于 iQuery 扩展的实用方法，处理 jQuery AJAX 选项对象
 
     iAJAX.option.url = $.extendURL(iAJAX.option.url, {
         token:    self.sessionStorage.token
     });
-
-    iAJAX.option.contentType = 'application/json';
-
-    iAJAX.option.data = JSON.stringify($.paramJSON('?' + iAJAX.option.data));
 });
 ```
 
@@ -210,6 +204,16 @@ $().iWebApp().on({
     //  即除 img、iframe、audio、video 等多媒体资源的 UI 渲染完成
 });
 ```
+
+### （三）实用方法
+
+ - 获取 **页面路由原文**：`WebApp.prototype.getRoute()`
+   - 为防止某些 URL 解析库欠考虑，EWA 路由做了一次 Base64 编码
+ - **页面浏览历史** 导航：`WebApp.prototype.loadPage( iStep )`
+   - 不传参时刷新当前页
+   - 传参时，参数与 `window.history.go()` 的用法一致
+   - 页面切换后会重新加载，并解决本方法返回的 Promise 对象
+
 
 
 ## 【异步式组件】

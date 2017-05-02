@@ -101,7 +101,10 @@ define([
 
             if ( iView.parse )
                 iView.parse(
-                    iLink.href  &&  ($.filePath(iLink.href) + '/'),  iHTML
+                    iLink.href  ?
+                        ($.filePath(iLink.href) + '/')  :
+                        (iView.$_View.parents(':view').view() || '').__base__,
+                    iHTML
                 );
 
             if (! $_Target.find('script[src]:not(head > *)')[0])

@@ -8,9 +8,7 @@ require(['jquery', 'EasyWebApp'],  function ($) {
                 type:      'data',
                 target:    this.$_View.find('[data-href]')[0]
             },
-            $_tBody = this.$_View.find('tbody');
-
-        var VM = this.on('update',  function () {
+            VM = this.on('update',  function () {
 
                 this.$_View.find('[type="number"]').val(1).change();
             });

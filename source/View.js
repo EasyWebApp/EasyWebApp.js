@@ -172,36 +172,41 @@ define([
 
             return this;
         },
+        filter:        function (Sub_View, iDOM) {
+            var iView;
+
+            if ( iDOM.dataset.href ) {
+
+                this.__child__.push( iDOM );
+
+                return NodeFilter.FILTER_REJECT;
+
+            } else if (
+                iDOM.dataset.name  ||
+                (iView = View.instanceOf(iDOM, false))
+            ) {
+                Sub_View.push(iView  ||  View.getSub( iDOM ));
+
+                return NodeFilter.FILTER_REJECT;
+            } else if (
+                (iDOM.parentNode == document.head)  &&
+                (iDOM.tagName.toLowerCase() != 'title')
+            )
+                return NodeFilter.FILTER_REJECT;
+
+            return NodeFilter.FILTER_ACCEPT;
+        },
         scan:          function (iParser) {
+            var Sub_View = [ ];
 
-            var Sub_View = [ ],  _This_ = this;
+            var iFilter = {acceptNode:  this.filter.bind(this, Sub_View)};
 
-            var iSearcher = document.createTreeWalker(this.$_View[0], 1, {
-                    acceptNode:    function (iDOM) {
-                        var iView;
-
-                        if ( iDOM.dataset.href ) {
-
-                            _This_.__child__.push( iDOM );
-
-                            return NodeFilter.FILTER_REJECT;
-
-                        } else if (
-                            iDOM.dataset.name  ||
-                            (iView = View.instanceOf(iDOM, false))
-                        ) {
-                            Sub_View.push(iView  ||  View.getSub( iDOM ));
-
-                            return NodeFilter.FILTER_REJECT;
-                        } else if (
-                            (iDOM.parentNode == document.head)  &&
-                            (iDOM.tagName.toLowerCase() != 'title')
-                        )
-                            return NodeFilter.FILTER_REJECT;
-
-                        return NodeFilter.FILTER_ACCEPT;
-                    }
-                }, true);
+            var iSearcher = document.createTreeWalker(
+                    this.$_View[0],
+                    1,
+                    ($.browser.msie < 12)  ?  iFilter.acceptNode  :  iFilter,
+                    true
+                );
 
             iParser.call(this, this.$_View[0]);
 

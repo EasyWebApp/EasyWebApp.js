@@ -529,36 +529,41 @@ define('View',[
 
             return this;
         },
+        filter:        function (Sub_View, iDOM) {
+            var iView;
+
+            if ( iDOM.dataset.href ) {
+
+                this.__child__.push( iDOM );
+
+                return NodeFilter.FILTER_REJECT;
+
+            } else if (
+                iDOM.dataset.name  ||
+                (iView = View.instanceOf(iDOM, false))
+            ) {
+                Sub_View.push(iView  ||  View.getSub( iDOM ));
+
+                return NodeFilter.FILTER_REJECT;
+            } else if (
+                (iDOM.parentNode == document.head)  &&
+                (iDOM.tagName.toLowerCase() != 'title')
+            )
+                return NodeFilter.FILTER_REJECT;
+
+            return NodeFilter.FILTER_ACCEPT;
+        },
         scan:          function (iParser) {
+            var Sub_View = [ ];
 
-            var Sub_View = [ ],  _This_ = this;
+            var iFilter = {acceptNode:  this.filter.bind(this, Sub_View)};
 
-            var iSearcher = document.createTreeWalker(this.$_View[0], 1, {
-                    acceptNode:    function (iDOM) {
-                        var iView;
-
-                        if ( iDOM.dataset.href ) {
-
-                            _This_.__child__.push( iDOM );
-
-                            return NodeFilter.FILTER_REJECT;
-
-                        } else if (
-                            iDOM.dataset.name  ||
-                            (iView = View.instanceOf(iDOM, false))
-                        ) {
-                            Sub_View.push(iView  ||  View.getSub( iDOM ));
-
-                            return NodeFilter.FILTER_REJECT;
-                        } else if (
-                            (iDOM.parentNode == document.head)  &&
-                            (iDOM.tagName.toLowerCase() != 'title')
-                        )
-                            return NodeFilter.FILTER_REJECT;
-
-                        return NodeFilter.FILTER_ACCEPT;
-                    }
-                }, true);
+            var iSearcher = document.createTreeWalker(
+                    this.$_View[0],
+                    1,
+                    ($.browser.msie < 12)  ?  iFilter.acceptNode  :  iFilter,
+                    true
+                );
 
             iParser.call(this, this.$_View[0]);
 
@@ -727,7 +732,7 @@ define('HTMLView',[
 
             if (iTag == 'style')  iDOM.disabled = false;
         },
-        fixDOM:        function (iDOM, BaseURL) {
+        fixDOM:        function (iDOM) {
             var iKey = 'src';
 
             switch ( iDOM.tagName.toLowerCase() ) {
@@ -753,7 +758,7 @@ define('HTMLView',[
                 default:          iKey = 'data-href';
             }
 
-            DOMkit.prefetch(iDOM,  DOMkit.fixURL(iDOM, iKey, BaseURL));
+            DOMkit.prefetch(iDOM,  DOMkit.fixURL(iDOM, iKey, this.__base__));
 
             return iDOM;
         },
@@ -795,6 +800,9 @@ define('HTMLView',[
             );
         },
         parse:         function (BaseURL, iTemplate) {
+
+            this.__base__ = BaseURL;
+
             if ( iTemplate ) {
                 this.$_Content = this.$_View.children().detach();
 
@@ -814,7 +822,7 @@ define('HTMLView',[
                         (iNode != this.$_View[0])  &&
                         (iNode.outerHTML != this.lastParsed)
                     ) {
-                        iNode = this.fixDOM(iNode, BaseURL);
+                        iNode = this.fixDOM( iNode );
 
                         this.lastParsed = iNode.outerHTML;
                     }
@@ -1014,7 +1022,6 @@ define('InnerLink',['jquery', 'Observer', 'iQuery+'],  function ($, Observer) {
                         URI += this.url;
                     }
                 };
-            iOption.cache = (iOption.dataType == 'jsonp');
 
             if ( this.$_View[0].tagName.match(/^(a|area)$/i) ) {
 
@@ -1176,7 +1183,10 @@ define('WebApp',[
 
             if ( iView.parse )
                 iView.parse(
-                    iLink.href  &&  ($.filePath(iLink.href) + '/'),  iHTML
+                    iLink.href  ?
+                        ($.filePath(iLink.href) + '/')  :
+                        (iView.$_View.parents(':view').view() || '').__base__,
+                    iHTML
                 );
 
             if (! $_Target.find('script[src]:not(head > *)')[0])
@@ -1329,7 +1339,7 @@ define('WebApp',[
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v4.0  (2017-04-26)  Beta
+//      [Version]    v4.0  (2017-05-02)  Beta
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //
@@ -1372,12 +1382,12 @@ define('EasyWebApp',['jquery', 'WebApp'].concat( EWA_Polyfill ),  function ($, W
 
             return this;
         },
-        back:         function () {
+        loadPage:     function (iURI) {
             var _This_ = this;
 
-            return  (new Promise(function () {
+            return  (! iURI)  ?  Promise.resolve('')  :  (new Promise(function () {
 
-                $( self ).one('popstate', arguments[0])[0].history.back();
+                $( self ).one('popstate', arguments[0])[0].history.go( iURI );
 
             })).then(function () {
 

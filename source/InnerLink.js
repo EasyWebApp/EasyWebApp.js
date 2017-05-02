@@ -68,7 +68,6 @@ define(['jquery', 'Observer', 'iQuery+'],  function ($, Observer) {
                         URI += this.url;
                     }
                 };
-            iOption.cache = (iOption.dataType == 'jsonp');
 
             if ( this.$_View[0].tagName.match(/^(a|area)$/i) ) {
 

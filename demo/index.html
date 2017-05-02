@@ -32,13 +32,13 @@
         <h1>易资讯</h1>
         <ul class="NavBar No_Select" data-href="?data=index.json">
             <li class="DropDown Head">
-                <a href="html/list.html?data=${this.path}/list?callback=?">
+                <a href="html/list.html?path=${this.path}&data=${this.path}/list?callback=?">
                     ${this.title}
                 </a>
                 <ul class="DropDown Body"
                     data-href="?data=${this.path}/classify?callback=?">
                     <li title="${this.title}">
-                        <a href="html/list.html?data=${vm.path}/list?id=${this.id}&callback=?">
+                        <a href="html/list.html?path=${this.path}&data=${vm.path}/list?id=${this.id}&callback=?">
                             ${this.name}
                         </a>
                     </li>
