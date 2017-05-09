@@ -2,7 +2,7 @@
 //              >>>  jQuery+  <<<
 //
 //
-//    [Version]    v8.7  (2017-04-25)
+//    [Version]    v8.7  (2017-05-09)
 //
 //    [Require]    jQuery  v1.9+
 //
@@ -138,115 +138,147 @@
 
 (function (BOM, DOM) {
 
-    if (BOM.Promise)  return BOM.Promise;
+    if (BOM.Promise instanceof Function)  return BOM.Promise;
 
-    function Promise(iMain) {
-        var _Self_ = arguments.callee,
-            _This_ = {
-                _public_:    this,
-                state:       -1,
-                value:       undefined,
-                callback:    [ ]
-            };
+/* ---------- Promise/A+ Core ---------- */
 
-        this.then = function (onResolve, onReject) {
-            return  new _Self_(function (iResolve, iReject) {
-                var _CB_ = [onResolve, onReject, iResolve, iReject];
+    function Promise() {
 
-                if (_This_.state == -1)
-                    _This_.callback.push(_CB_);
-                else
-                    _Complete_.call(_This_, _CB_);
-            });
-        };
+        this.__value__ = undefined;
 
-        BOM.setTimeout(function () {
-            iMain(function () {
-                _Complete_All_.call(_This_, 0, arguments[0]);
-            },  function () {
-                _Complete_All_.call(_This_, 1, arguments[0]);
-            });
+        this.__state__ = -1;
+
+        this.__callback__ = [ ];
+
+        var _This_ = this;
+
+        arguments[0](function () {
+
+            _This_.resolve( arguments[0] );
+
+        },  function () {
+
+            _This_.reject( arguments[0] );
         });
     }
 
-    function _Complete_(_CB_) {
-        var _Value_;
+    var __Private__ = { };
 
-        try {
-            if (typeof _CB_[this.state] == 'function') {
-                _Value_ = _CB_[this.state]( this.value );
+    Promise.prototype.reject = function () {
 
-                if (_Value_ === this._public_)
-                    throw  TypeError("Can't return the same Promise object !");
+        __Private__.endBy.call(this, 1, arguments[0]);
+    };
 
-                if (typeof (_Value_ || '').then  ==  'function')
-                    return  _Value_.then(_CB_[2], _CB_[3]);
-            } else
-                _Value_ = this.value;
+    Promise.prototype.resolve = function (_Value_) {
 
-            _CB_[2](_Value_);
+        if (_Value_ == this)
+            throw  TypeError("Can't return the same Promise object !");
 
-        } catch (iError) {
-            _CB_[3]( iError );
-        }
-    }
+        if (typeof (_Value_ || '').then != 'function')
+            return  __Private__.endBy.call(this, 0, _Value_);
 
-    function _Complete_All_(iType) {
-        if (this.state > -1)  return;
+        var _This_ = this;
 
-        this.state = iType;  this.value = arguments[1];
+        _Value_.then(function () {
 
-        while ( this.callback[0] )
-            _Complete_.call(this, this.callback.shift());
-    }
+            _This_.resolve( arguments[0] );
+
+        },  function () {
+
+            _This_.reject( arguments[0] );
+        });
+    };
+
+    __Private__.endBy = function (iState, iValue) {
+
+        if (this.__state__ > -1)  return;
+
+        var _This_ = this;
+
+        setTimeout(function () {
+
+            _This_.__value__ = iValue;
+
+            _This_.__state__ = iState;
+
+            __Private__.exec.call(_This_);
+        });
+    };
+
+    __Private__.exec = function () {
+
+        var _CB_;
+
+        if (this.__state__ > -1)
+            while (_CB_ = this.__callback__.shift())
+                if (typeof _CB_[this.__state__]  ==  'function')  try {
+
+                    _CB_[2]( _CB_[this.__state__]( this.__value__ ) );
+
+                } catch (iError) {
+
+                    _CB_[3]( iError );
+                }
+    };
+
+    Promise.prototype.then = function (iResolve, iReject) {
+
+        var _This_ = this;
+
+        return  new Promise(function () {
+
+            _This_.__callback__.push([
+                iResolve,  iReject,  arguments[0],  arguments[1]
+            ]);
+
+            __Private__.exec.call(_This_);
+        });
+    };
+
+/* ---------- ES 6  Promise Helper ---------- */
 
     Promise.resolve = function (iValue) {
-        if (iValue instanceof this)  return iValue;
 
-        if (typeof (iValue || '').then  ==  'function')
-            return  new this(function () {
-                iValue.then.apply(iValue, arguments);
-            });
+        return  (iValue instanceof this)  ?  iValue  :  new this(function () {
 
-        return  new this(function (iResolve) {
-            BOM.setTimeout(function () {
-                iResolve(iValue);
-            });
+            arguments[0]( iValue );
         });
     };
 
-    Promise.reject = function (iValue) {
-        if (typeof (iValue || '').then  ==  'function')
-            return  new this(function () {
-                iValue.then.apply(iValue, arguments);
-            });
+    Promise.reject = function (iError) {
 
-        return  new this(function (_, iReject) {
-            BOM.setTimeout(function () {
-                iReject(iValue);
-            });
+        return  new this(function () {
+
+            arguments[1]( iError );
         });
     };
 
-    Promise.all = function (pList) {
-        var _Result_ = [ ];
+    Promise.all = function (iQueue) {
 
-        for (var i = 0;  i < pList.length;  i++)
-            if ((! pList[i])  ||  (typeof pList[i].then != 'function'))
-                pList[i] = this.resolve( pList[i] );
+        var iValue = [ ],  iSum = iQueue.length;
 
-        return  i  ?  new this(function (iResolved, iReject) {
+        return  iSum  ?  (new this(function (iResolve, iReject) {
 
-            ' '.repeat( pList.length ).replace(/ /g,  function (_, Index) {
+            ' '.repeat( iSum ).replace(/ /g,  function (_, Index) {
 
-                pList[Index].then(function () {
-                    _Result_[Index] = arguments[0];
+                Promise.resolve( iQueue[Index] ).then(function () {
 
-                    if (_Result_.length == pList.length)
-                        iResolved(_Result_);
+                    iValue[ Index ] = arguments[0];
+
+                    if (! --iSum)  iResolve( iValue );
+
                 },  iReject);
             });
-        })  :  this.resolve(pList);
+        }))  :  this.resolve( iQueue );
+    };
+
+    Promise.race = function (iQueue) {
+
+        return  new Promise(function () {
+
+            for (var i = 0;  iQueue[i];  i++)
+                Promise.resolve( iQueue[i] ).then(arguments[0], arguments[1]);
+        });
     };
 
     return  BOM.Promise = Promise;
@@ -1405,7 +1437,7 @@
             for (var iCore in Stack_Prefix)
                 if ( $.browser[iCore] ) {
                     iURL = iError.stack.match(RegExp(
-                        "\\s+" + Stack_Prefix[iCore] + "(http(s)?:\\/\\/\\S+.js)"
+                        "\\s+" + Stack_Prefix[iCore] + "(http(s)?:\\/\\/[^:]+)"
                     ));
 
                     return  iURL && iURL[1];
@@ -1551,11 +1583,12 @@
 /* ---------- DOM Class List ---------- */
 
     function DOMTokenList() {
-        var iClass = (arguments[0].getAttribute('class') || '').trim().split(/\s+/);
 
-        $.extend(this, iClass);
+        this.length = 0;
 
-        this.length = iClass.length;
+        $.merge(
+            this,  (arguments[0].getAttribute('class') || '').trim().split(/\s+/)
+        );
     }
 
     DOMTokenList.prototype.contains = function (iClass) {
@@ -1712,8 +1745,10 @@
     }
 
     function CSSRuleList() {
-        $.extend(this, arguments[0]);
-        this.length = arguments[0].length;
+
+        this.length = 0;
+
+        $.merge(this, arguments[0]);
     }
 
     if (typeof BOM.getMatchedCSSRules != 'function')
@@ -2689,6 +2724,7 @@
         };
     }
 
+    //  JSONP for iQuery
     $.ajaxTransport('+script', DHR_Transport);
 
 /* ---------- AJAX for IE 10- ---------- */

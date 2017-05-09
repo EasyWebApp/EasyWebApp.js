@@ -641,7 +641,12 @@ define('DOMkit',['jquery', 'RenderNode', 'jQuery+'],  function ($, RenderNode) {
         },
         fixURL:         function (iDOM, iKey, iBase) {
 
-            var iURL = (iDOM.getAttribute( iKey )  ||  '').split('?');
+            var iURL = iDOM.getAttribute( iKey )  ||  '';
+
+            if ((iURL.match( RenderNode.expression ) || [ ]).join('')  ==  iURL)
+                return iURL;
+
+            iURL = iURL.split('?');
 
             if (
                 iBase  &&  iURL[0]  &&
@@ -780,7 +785,9 @@ define('HTMLView',[
                     $.makeArray( iDOM.attributes ),  iDOM.childNodes
                 ),
                 function () {
-                    if ((this.nodeType != 2)  &&  (this.nodeType != 3))
+                    if ((! this.nodeValue)  ||  (
+                        (this.nodeType != 2)  &&  (this.nodeType != 3)
+                    ))
                         return;
 
                     var iTemplate = new RenderNode( this );
@@ -939,9 +946,24 @@ define('ListView',['jquery', 'View', 'HTMLView'],  function ($, View, HTMLView) 
 
             return this;
         },
+        indexOf:    function ($_Item) {
+
+            $_Item = ($_Item instanceof $)  ?  $_Item  :  $( $_Item );
+
+            return (
+                ($_Item[0].parentNode == this.$_View[0])  ?
+                    $_Item  :  $_Item.parentsUntil( this.$_View )
+            ).index();
+        },
         remove:     function (Index) {
 
-            this.splice(Index, 1)[0].$_View.remove();
+            var Item = this.splice(
+                    $.isNumeric( Index )  ?  Index  :  this.indexOf( Index ),  1
+                )[0];
+
+            Item.$_View.remove();
+
+            return Item;
         },
         childOf:    function () {
 
@@ -1026,6 +1048,9 @@ define('InnerLink',['jquery', 'Observer', 'iQuery+'],  function ($, Observer) {
             if ( this.$_View[0].tagName.match(/^(a|area)$/i) ) {
 
                 iOption.data = $.extend({ }, this.$_View[0].dataset);
+
+                delete iOption.data.method;
+                delete iOption.data.autofocus;
 
             } else if (! this.$_View.find('input[type="file"]')[0]) {
 
@@ -1339,7 +1364,7 @@ define('WebApp',[
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v4.0  (2017-05-02)  Beta
+//      [Version]    v4.0  (2017-05-09)  Beta
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //

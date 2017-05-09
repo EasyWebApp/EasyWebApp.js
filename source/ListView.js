@@ -41,9 +41,24 @@ define(['jquery', 'View', 'HTMLView'],  function ($, View, HTMLView) {
 
             return this;
         },
+        indexOf:    function ($_Item) {
+
+            $_Item = ($_Item instanceof $)  ?  $_Item  :  $( $_Item );
+
+            return (
+                ($_Item[0].parentNode == this.$_View[0])  ?
+                    $_Item  :  $_Item.parentsUntil( this.$_View )
+            ).index();
+        },
         remove:     function (Index) {
 
-            this.splice(Index, 1)[0].$_View.remove();
+            var Item = this.splice(
+                    $.isNumeric( Index )  ?  Index  :  this.indexOf( Index ),  1
+                )[0];
+
+            Item.$_View.remove();
+
+            return Item;
         },
         childOf:    function () {
 

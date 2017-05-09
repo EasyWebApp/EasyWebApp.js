@@ -37,7 +37,12 @@ define(['jquery', 'RenderNode', 'jQuery+'],  function ($, RenderNode) {
         },
         fixURL:         function (iDOM, iKey, iBase) {
 
-            var iURL = (iDOM.getAttribute( iKey )  ||  '').split('?');
+            var iURL = iDOM.getAttribute( iKey )  ||  '';
+
+            if ((iURL.match( RenderNode.expression ) || [ ]).join('')  ==  iURL)
+                return iURL;
+
+            iURL = iURL.split('?');
 
             if (
                 iBase  &&  iURL[0]  &&

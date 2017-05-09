@@ -73,6 +73,9 @@ define(['jquery', 'Observer', 'iQuery+'],  function ($, Observer) {
 
                 iOption.data = $.extend({ }, this.$_View[0].dataset);
 
+                delete iOption.data.method;
+                delete iOption.data.autofocus;
+
             } else if (! this.$_View.find('input[type="file"]')[0]) {
 
                 iOption.data = $.paramJSON('?' + this.$_View.serialize());

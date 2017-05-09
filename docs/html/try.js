@@ -3,7 +3,8 @@ require(['jquery'],  function ($) {
     var OpenAPI = {
             type:    'data',
             src:     'tngou.net'
-        };
+        },
+        IE = ($.browser.msie < 12);
 
     $().iWebApp().off( OpenAPI ).on(OpenAPI,  function (_, iData) {
 
@@ -15,8 +16,9 @@ require(['jquery'],  function ($) {
 
         iData.check = function () {
 
-            var iText = arguments[0].clipboardData.getData('text/plain');
-
+            var iText = (IE ? self : arguments[0]).clipboardData.getData(
+                    IE ? 'text' : 'text/plain'
+                );
             var iMore = this.Twitter.length + iText.length - 140;
 
             if (iMore > 0)  self.alert("超出的 " + iMore + "个字会被丢弃……");

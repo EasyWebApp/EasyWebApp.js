@@ -107,7 +107,9 @@ define([
                     $.makeArray( iDOM.attributes ),  iDOM.childNodes
                 ),
                 function () {
-                    if ((this.nodeType != 2)  &&  (this.nodeType != 3))
+                    if ((! this.nodeValue)  ||  (
+                        (this.nodeType != 2)  &&  (this.nodeType != 3)
+                    ))
                         return;
 
                     var iTemplate = new RenderNode( this );
