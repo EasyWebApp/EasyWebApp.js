@@ -60,11 +60,31 @@ define(['jquery', 'View', 'HTMLView'],  function ($, View, HTMLView) {
 
             return Item;
         },
+        sort:       function () {
+
+            Array.prototype.sort.call(this, arguments[0]);
+
+            this.$_View.append($.map(this,  function (Item) {
+
+                Item.__index__ = arguments[1];
+
+                return Item.$_View[0];
+            }));
+
+            return this;
+        },
         childOf:    function () {
 
             return  $.map(this,  function () {
 
                 return  arguments[0].__child__;
+            });
+        },
+        valueOf:    function () {
+
+            return  $.map(this,  function () {
+
+                return arguments[0].valueOf();
             });
         }
     });

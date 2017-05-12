@@ -75,6 +75,17 @@ define([
             return  arguments[0].replace(this.pageRoot, '')
                 .replace(/\.\w+(\?.*)?/i, '.html');
         },
+        _emit:        function (iType, iLink, iData) {
+
+            return this.emit(
+                $.extend(iLink.valueOf(), {
+                    type:      iType,
+                    target:
+                        (iLink.target == 'page')  ?  this.$_View[0]  :  undefined
+                }),
+                iData
+            );
+        },
         loadView:     function (iLink, iHTML) {
 
             var $_Target = iLink.$_View;
@@ -86,9 +97,7 @@ define([
                 $_Target = this.$_View;
             }
 
-            iHTML = this.emit(
-                $.extend(iLink.valueOf(),  {type: 'template'}),  iHTML
-            );
+            iHTML = this._emit('template', iLink, iHTML);
 
             var iView = View.getSub( $_Target[0] );
 
@@ -164,20 +173,14 @@ define([
 
                 var iHTML = arguments[0][0],  iData = arguments[0][1];
 
-                if (iData != null)
-                    iData = _This_.emit(
-                        $.extend(iLink.valueOf(), {type: 'data'}),  iData
-                    );
+                if (iData != null)  iData = _This_._emit('data', iLink, iData);
 
                 if (iLink.href  ||  (iLink.target == 'view'))
                     return  _This_.loadComponent(iLink, iHTML, iData);
 
             }).then(function (iView) {
 
-                if (iView instanceof View)
-                    _This_.emit(
-                        $.extend(iLink.valueOf(), {type: 'ready'}),  iView
-                    );
+                if (iView instanceof View)  _This_._emit('ready', iLink, iView);
             });
         },
         listenDOM:    function () {

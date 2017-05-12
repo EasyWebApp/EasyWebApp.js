@@ -20,9 +20,7 @@ require([
                 new MediumEditor( $_App[0] );
         });
 
-        var $_ReadNav = $('#Content_Nav').iReadNav( $_App ).scrollFixed(),
-            $_Toolkit = $('#Toolkit'),
-            $_QRcode = $('#QRcode > .Body');
+        var $_Toolkit = $('#Toolkit'),  $_QRcode = $('#QRcode > .Body');
 
         $_App.iWebApp().on({
             type:    'template',
@@ -48,8 +46,6 @@ require([
             type:    'ready',
             href:    /(content\.html|\.md)/
         },  function () {
-
-            $_ReadNav.trigger('Refresh');
 
             if (! $.browser.mobile)  $_Toolkit.show();
 

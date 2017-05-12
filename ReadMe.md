@@ -58,6 +58,8 @@ MVVM 引擎只需扫描 DOM 树，即可 **自动加载 HTML、JSON** 来构建 
    - 清空列表：`.prototype.clear()`
    - 插入一项：`.prototype.insert(iObject, Index)`
    - 渲染列表：`.prototype.render( iArray )` 
+   - 列表排序：`.prototype.sort( iCallback )`
+   - 查找一项：`.prototype.indexOf( $_Item )`
    - 删除一项：`.prototype.remove( Index )`
 
 以上视图的构造函数 均可从 `$.fn.iWebApp` 命名空间访问到，并可无需 `WebApp()` 实例初始化即可单独使用。
@@ -289,6 +291,9 @@ EWA 引擎会自动用它返回的数据对象来更新 VM。
 
  2. [分页数据表](component/Data_Table.html)
 
+ 3. [轮播图](component/carousel.html)
+
+ 4. [阅读导航栏](component/read-nav.html)
 
 
 ## 【沉浸式体验】

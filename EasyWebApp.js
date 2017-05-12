@@ -965,11 +965,31 @@ define('ListView',['jquery', 'View', 'HTMLView'],  function ($, View, HTMLView) 
 
             return Item;
         },
+        sort:       function () {
+
+            Array.prototype.sort.call(this, arguments[0]);
+
+            this.$_View.append($.map(this,  function (Item) {
+
+                Item.__index__ = arguments[1];
+
+                return Item.$_View[0];
+            }));
+
+            return this;
+        },
         childOf:    function () {
 
             return  $.map(this,  function () {
 
                 return  arguments[0].__child__;
+            });
+        },
+        valueOf:    function () {
+
+            return  $.map(this,  function () {
+
+                return arguments[0].valueOf();
             });
         }
     });
@@ -1182,6 +1202,17 @@ define('WebApp',[
             return  arguments[0].replace(this.pageRoot, '')
                 .replace(/\.\w+(\?.*)?/i, '.html');
         },
+        _emit:        function (iType, iLink, iData) {
+
+            return this.emit(
+                $.extend(iLink.valueOf(), {
+                    type:      iType,
+                    target:
+                        (iLink.target == 'page')  ?  this.$_View[0]  :  undefined
+                }),
+                iData
+            );
+        },
         loadView:     function (iLink, iHTML) {
 
             var $_Target = iLink.$_View;
@@ -1193,9 +1224,7 @@ define('WebApp',[
                 $_Target = this.$_View;
             }
 
-            iHTML = this.emit(
-                $.extend(iLink.valueOf(),  {type: 'template'}),  iHTML
-            );
+            iHTML = this._emit('template', iLink, iHTML);
 
             var iView = View.getSub( $_Target[0] );
 
@@ -1271,20 +1300,14 @@ define('WebApp',[
 
                 var iHTML = arguments[0][0],  iData = arguments[0][1];
 
-                if (iData != null)
-                    iData = _This_.emit(
-                        $.extend(iLink.valueOf(), {type: 'data'}),  iData
-                    );
+                if (iData != null)  iData = _This_._emit('data', iLink, iData);
 
                 if (iLink.href  ||  (iLink.target == 'view'))
                     return  _This_.loadComponent(iLink, iHTML, iData);
 
             }).then(function (iView) {
 
-                if (iView instanceof View)
-                    _This_.emit(
-                        $.extend(iLink.valueOf(), {type: 'ready'}),  iView
-                    );
+                if (iView instanceof View)  _This_._emit('ready', iLink, iView);
             });
         },
         listenDOM:    function () {
@@ -1364,7 +1387,7 @@ define('WebApp',[
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v4.0  (2017-05-09)  Beta
+//      [Version]    v4.0  (2017-05-12)  Beta
 //
 //      [Require]    iQuery  ||  jQuery with jQuery+,
 //

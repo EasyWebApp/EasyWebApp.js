@@ -1,0 +1,32 @@
+<style disabled>
+    ul {
+        margin:        0;
+        padding:       0;
+        list-style:    none;
+        overflow:      auto;
+        outline:       none;
+    }
+    ul ul {
+        padding-left:    1em;
+    }
+    ul li > a {
+        display:        block;
+        padding:        0.25em  0.5em;
+        border-left:    3px  solid  transparent;
+    }
+    ul li.active > a {
+        border-left-color:    blue;
+    }
+</style>
+<script src="read-nav.js"></script>
+
+<ul tabindex="-1" data-name="tree">
+    <li>
+        <a title="${this.title}" href="#${this.id}">${this.title}</a>
+        <ul data-name="children">
+            <li>
+                <a title="${this.title}" href="#${this.id}">${this.title}</a>
+            </li>
+        </ul>
+    </li>
+</ul>
