@@ -1,5 +1,5 @@
 define([
-    'jquery', 'View', 'DOMkit', 'RenderNode', 'iQuery+'
+    'jquery', 'View', 'DOMkit', 'RenderNode', 'jQueryKit'
 ],  function ($, View, DOMkit, RenderNode) {
 
     function HTMLView($_View, iScope) {

@@ -1,4 +1,4 @@
-require(['jquery', 'jQuery+'],  function ($) {
+require(['jquery', 'jQueryKit'],  function ($) {
 
     function iTimer(iCallback) {
 
@@ -15,14 +15,17 @@ require(['jquery', 'jQuery+'],  function ($) {
 
         this.times = Infinity;
 
-        iTimer($.throttle(2,  function () {
+        iTimer($.throttle(this.interval,  function () {
 
             if (++Index >= _This_.length)  Index = 0;
 
             if (! _This_.times)  return false;
 
-            if (_This_[ Index ])
+            if (_This_[ Index ]) {
                 _This_[ Index ].$_View[0].firstElementChild.click();
+
+                _This_.emit('switch', Index);
+            }
         }));
     }
 
@@ -35,6 +38,8 @@ require(['jquery', 'jQuery+'],  function ($) {
     //  幻灯播放
 
         iSlide.play = tabSwitch;
+
+        iSlide.interval = +arguments[0].interval || 3;
 
         iSlide.$_View.hover(function () {
 

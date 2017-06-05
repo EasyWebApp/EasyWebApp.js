@@ -1,4 +1,4 @@
-define(['jquery', 'Observer', 'iQuery+'],  function ($, Observer) {
+define(['jquery', 'Observer', 'jQueryKit'],  function ($, Observer) {
 
     function InnerLink(Link_DOM) {
 

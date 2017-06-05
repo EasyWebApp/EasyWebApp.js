@@ -1,5 +1,5 @@
 define([
-    'jquery', 'Observer', 'DataScope', 'RenderNode', 'jQuery+'
+    'jquery', 'Observer', 'DataScope', 'RenderNode', 'jQueryKit'
 ],  function ($, Observer, DataScope, RenderNode) {
 
     function View($_View, iScope) {

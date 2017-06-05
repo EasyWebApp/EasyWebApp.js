@@ -169,6 +169,9 @@ define([
                     option:       this,
                     transport:    arguments[0]
                 });
+
+                this.crossDomain = $.isCrossDomain( this.url );
+
             }).then(function () {
 
                 var iHTML = arguments[0][0],  iData = arguments[0][1];

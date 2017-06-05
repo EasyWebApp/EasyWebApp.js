@@ -11,7 +11,7 @@ var EWA_Polyfill = [
     }).filter(function () {  return arguments[0];  });
 
 
-define('Observer',['jquery', 'jQuery+'],  function ($) {
+define('Observer',['jquery', 'jQueryKit'],  function ($) {
 
     function Observer($_View) {
 
@@ -169,7 +169,7 @@ define('Observer',['jquery', 'jQuery+'],  function ($) {
     return Observer;
 });
 
-define('DataScope',['jquery', 'jQuery+'],  function ($) {
+define('DataScope',['jquery', 'jQueryKit'],  function ($) {
 
     function DataScope(iSuper) {
 
@@ -356,7 +356,7 @@ define('RenderNode',['jquery'],  function ($) {
 });
 
 define('View',[
-    'jquery', 'Observer', 'DataScope', 'RenderNode', 'jQuery+'
+    'jquery', 'Observer', 'DataScope', 'RenderNode', 'jQueryKit'
 ],  function ($, Observer, DataScope, RenderNode) {
 
     function View($_View, iScope) {
@@ -602,7 +602,7 @@ define('View',[
     }).signSelector();
 });
 
-define('DOMkit',['jquery', 'RenderNode', 'jQuery+'],  function ($, RenderNode) {
+define('DOMkit',['jquery', 'RenderNode', 'jQueryKit'],  function ($, RenderNode) {
 
     var Link_Name = $.makeSet('a', 'area', 'form');
 
@@ -677,7 +677,7 @@ define('DOMkit',['jquery', 'RenderNode', 'jQuery+'],  function ($, RenderNode) {
     };
 });
 define('HTMLView',[
-    'jquery', 'View', 'DOMkit', 'RenderNode', 'iQuery+'
+    'jquery', 'View', 'DOMkit', 'RenderNode', 'jQueryKit'
 ],  function ($, View, DOMkit, RenderNode) {
 
     function HTMLView($_View, iScope) {
@@ -994,7 +994,7 @@ define('ListView',['jquery', 'View', 'HTMLView'],  function ($, View, HTMLView) 
         }
     });
 });
-define('InnerLink',['jquery', 'Observer', 'iQuery+'],  function ($, Observer) {
+define('InnerLink',['jquery', 'Observer', 'jQueryKit'],  function ($, Observer) {
 
     function InnerLink(Link_DOM) {
 
@@ -1296,6 +1296,9 @@ define('WebApp',[
                     option:       this,
                     transport:    arguments[0]
                 });
+
+                this.crossDomain = $.isCrossDomain( this.url );
+
             }).then(function () {
 
                 var iHTML = arguments[0][0],  iData = arguments[0][1];
@@ -1387,11 +1390,9 @@ define('WebApp',[
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v4.0  (2017-05-12)  Beta
+//      [Version]    v4.0  (2017-06-06)  Beta
 //
-//      [Require]    iQuery  ||  jQuery with jQuery+,
-//
-//                   iQuery+
+//      [Require]    iQuery  ||  jQuery with jQueryKit
 //
 //      [Usage]      A Light-weight SPA Engine with
 //                   jQuery Compatible API.

@@ -1,4 +1,4 @@
-define(['jquery', 'jQuery+'],  function ($) {
+define(['jquery', 'jQueryKit'],  function ($) {
 
     function DataScope(iSuper) {
 

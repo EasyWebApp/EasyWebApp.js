@@ -3,8 +3,7 @@
     baseUrl:         '../source',
     paths:           {
         jquery:       '//cdn.bootcss.com/jquery/1.12.4/jquery',
-        'jQuery+':    '//tech_query.oschina.io/iquery/jQuery+',
-        'iQuery+':    '//tech_query.oschina.io/iquery/iQuery+'
+        jQueryKit:    '//tech_query.oschina.io/iquery/jQueryKit'
     },
     out:             '../EasyWebApp.js',
     onBuildWrite:    function () {

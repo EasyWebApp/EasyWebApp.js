@@ -1,4 +1,4 @@
-define(['jquery', 'jQuery+'],  function ($) {
+define(['jquery', 'jQueryKit'],  function ($) {
 
     function Observer($_View) {
 
@@ -154,5 +154,4 @@ define(['jquery', 'jQuery+'],  function ($) {
     });
 
     return Observer;
-
 });

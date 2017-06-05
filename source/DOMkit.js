@@ -1,4 +1,4 @@
-define(['jquery', 'RenderNode', 'jQuery+'],  function ($, RenderNode) {
+define(['jquery', 'RenderNode', 'jQueryKit'],  function ($, RenderNode) {
 
     var Link_Name = $.makeSet('a', 'area', 'form');
 

@@ -2,11 +2,9 @@
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v4.0  (2017-05-12)  Beta
+//      [Version]    v4.0  (2017-06-06)  Beta
 //
-//      [Require]    iQuery  ||  jQuery with jQuery+,
-//
-//                   iQuery+
+//      [Require]    iQuery  ||  jQuery with jQueryKit
 //
 //      [Usage]      A Light-weight SPA Engine with
 //                   jQuery Compatible API.
