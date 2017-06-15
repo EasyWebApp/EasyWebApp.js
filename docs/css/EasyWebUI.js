@@ -3,7 +3,7 @@
     if ((typeof this.define != 'function')  ||  (! this.define.amd))
         arguments[0]();
     else
-        this.define('EasyWebUI', ['iQuery+'], arguments[0]);
+        this.define('EasyWebUI', ['jQueryKit'], arguments[0]);
 
 })(function () {
 
@@ -439,49 +439,6 @@
 })(self,  self.document,  self.jQuery || self.Zepto);
 
 
-/* ---------- 数据表 控件  v0.1 ---------- */
-
-
-(function (BOM, DOM, $) {
-
-    var Sort_Class = {
-            '':            'SortDown',
-            'SortUp':      'SortDown',
-            'SortDown':    'SortUp'
-        };
-
-    $.fn.iTable = function () {
-        return  this.each(function () {
-
-            var iLV = $.ListView( $('tbody', this) );
-
-            $('thead tr', this).on('click',  'th',  function () {
-                var $_This = $(this);
-
-                var iClass = ($_This.attr('class') || '').match(
-                        /\s?(Sort(Up|Down))\s?/
-                    );
-                iClass = iClass ? iClass[1] : '';
-
-                $_This.removeClass(iClass).addClass( Sort_Class[iClass] );
-
-                var iNO = (Sort_Class[iClass] == 'SortUp')  ?  0.5  :  -0.5,
-                    Index = $_This.index();
-
-                iLV.sort(function () {
-                    var A = $( arguments[2.5 - iNO][0].children[Index] ).text(),
-                        B = $( arguments[2.5 + iNO][0].children[Index] ).text();
-
-                    return  isNaN(parseFloat( A ))  ?
-                        A.localeCompare( B )  :  (parseFloat(A) - parseFloat(B));
-                });
-            });
-        });
-    };
-
-})(self,  self.document,  self.jQuery || self.Zepto);
-
-
 
 (function (BOM, DOM, $) {
 
@@ -574,343 +531,6 @@
                 $_Panel.stop().animate({height:  $_Panel.data('height')});
                 $_Panel.removeClass('closed');
             }
-        });
-    };
-
-})(self,  self.document,  self.jQuery || self.Zepto);
-
-
-
-(function (BOM, DOM, $) {
-
-/* ---------- 标签页 控件  v0.5 ---------- */
-
-    var Tab_Type = ['Point', 'Button', 'Monitor'];
-
-    function Tab_Active() {
-        var $_Label = this.children('label').not(arguments[0]);
-        var $_Active = $_Label.filter('.active');
-
-        $_Active = $_Active.length ? $_Active : $_Label;
-
-        if ($_Active.length)  $_Active[0].click();
-    }
-
-    $.fn.iTab = function () {
-        if (! $.browser.modern)
-            this.on('click',  'input[type="radio"]',  function () {
-                $(this).attr('checked', true)
-                    .siblings('input[type="radio"]').removeAttr('checked');
-            });
-
-        return  this.on('click',  'label[for]',  function () {
-
-            var $_This = $(this);
-
-            if (! $_This.hasClass('active'))
-                $_This.addClass('active').siblings().removeClass('active');
-
-        }).on('change',  '[type="radio"][name^="iTab"]',  function () {
-
-            arguments[0].stopPropagation();
-
-        }).each(function () {
-
-            var $_Tab_Box = $(this),  iName = $.uuid('iTab'),  iType;
-
-            for (var i = 0;  i < Tab_Type.length;  i++)
-                if ($_Tab_Box.hasClass( Tab_Type[i] )) {
-                    iType = Tab_Type[i];
-                    $_Tab_Box.attr('data-tab-type', iType);
-                }
-        /* ----- 成员实例化核心 ----- */
-
-            var Label_At = (this.children[0].tagName.toLowerCase() == 'label'),
-                iSelector = ['input[type="radio"]',  'div, section, .Body'];
-            iSelector[Label_At ? 'unshift' : 'push']('label');
-
-            $.ListView(this, iSelector).on('insert',  function ($_Tab_Item) {
-                var _UUID_ = $.uuid();
-
-                var $_Label = $_Tab_Item.filter('label').attr('for', _UUID_),
-                    $_Radio = $([
-                        '<input type="radio" name=',  iName,  ' id=',  _UUID_,  ' />'
-                    ].join('"'));
-
-                if (! $.browser.modern)
-                    $_Radio.change(function () {
-                        if (this.checked)
-                            this.setAttribute('checked', true);
-                        else
-                            this.removeAttribute('checked');
-                    });
-
-                return  [$_Label[0], $_Radio[0], $_Tab_Item.not($_Label)[0]];
-
-            }).on('remove',  function () {
-
-                var $_Label = arguments[0].filter('label');
-
-                $('*[id="' + $_Label.attr('for') + '"]').remove();
-
-                Tab_Active.call(this.$_View, $_Label);
-
-            }).on('afterRender',  function () {
-
-                var $_Tab_Head = $($.map(
-                        this.$_View.children('input[type="radio"]'),
-                        function () {
-                            return  $('label[for="' + arguments[0].id + '"]')[0];
-                        }
-                    ))[Label_At ? 'prependTo' : 'appendTo']( this.$_View );
-
-                Tab_Active.call( this.$_View );
-
-                if (! this.$_View.hasClass('auto'))  return;
-
-        /* ----- 自动切换模式 ----- */
-
-                var Index = 0,  iPause;
-
-                $.every(2,  function () {
-                    if (iPause  ||  (! $_Tab_Box.hasClass('auto')))
-                        return;
-
-                    Index = (Index < $_Tab_Head.length)  ?  Index  :  0;
-
-                    $_Tab_Head[Index++].click();
-                });
-
-                this.$_View.hover(
-                    function () { iPause = true; },
-                    function () { iPause = false; }
-                );
-            }).render(
-                Array( $.ListView.instanceOf(this, false).length )
-            );
-        }).on('swipe',  function (iEvent) {
-            if (
-                (typeof iEvent.deltaX != 'number')  ||
-                (Math.abs(iEvent.deltaY)  >  Math.abs(iEvent.deltaX))
-            )
-                return;
-
-        /* ----- 滑动切换模式 ----- */
-
-            var $_This = $(this),  $_Target = $(iEvent.target);
-
-            var $_Path = $_Target.parentsUntil(this),
-                $_Tab_Body = $_This.children().not('label, input');
-
-            $_Target = $_Path.length ? $_Path.slice(-1) : $_Target;
-
-            $_Target = $_Tab_Body.eq(
-                (
-                    $_Tab_Body.index($_Target) + (
-                        (iEvent.deltaX < 0)  ?  1  :  -1
-                    )
-                ) % $_Tab_Body.length
-            );
-
-            $('label[for="' + $_Target[0].previousElementSibling.id + '"]')[0]
-                .click();
-        });
-    };
-
-})(self,  self.document,  self.jQuery || self.Zepto);
-
-
-
-(function (BOM, DOM, $) {
-
-/* ---------- 阅读导航栏  v0.3 ---------- */
-
-    function toTreeData() {
-        var iTree = [ ],  $_Tree = this;
-
-        var _This_ = iTree,  _Parent_;
-
-        this.each(function (Index) {
-            var _Level_ = Index && (
-                    this.tagName[1]  -  $_Tree[Index - 1].tagName[1]
-                );
-
-            if (_Level_ > 0) {
-                _Parent_ = _This_;
-                _This_ = _This_.slice(-1)[0].list = [ ];
-            } else if (_Level_ < 0)
-                _This_ = _Parent_;
-
-            if (! this.id.match(/\w/))  this.id = $.uuid('Header');
-
-            _This_.push({
-                id:      this.id,
-                text:    this.textContent
-            });
-        });
-
-        return iTree;
-    }
-
-    $.fn.iReadNav = function ($_Context) {
-        return  this.each(function () {
-            var iMainNav = $.TreeView(
-                    $.ListView(this,  function ($_Item, iValue) {
-
-                        $('a', $_Item[0]).text(iValue.text)[0].href =
-                            '#' + iValue.id;
-                        $_Item.attr('title', iValue.text);
-                    }),
-                    function () {
-                        arguments[0].$_View.attr('class', '');
-                    }
-                ).on('focus',  function (iEvent) {
-                    if (iEvent.target.tagName.toLowerCase() != 'a')  return;
-
-                    var $_Target = $(
-                            '*[id="' + iEvent.target.href.split('#')[1] + '"]'
-                        );
-                    $_Target.scrollParents().eq(0).scrollTo( $_Target );
-                }),
-                _DOM_ = $_Context[0].ownerDocument;
-
-            ($_Context.is(':scrollable') ?
-                $_Context  :  $_Context.scrollParents().eq(0)
-            ).scroll(function () {
-                if ($.contains($_Context[0], arguments[0].target))  return;
-
-                var iAnchor = $_Context.offset(),
-                    iFontSize = parseFloat($(_DOM_.body).css('font-size')) / 2;
-
-                var $_Anchor = $(_DOM_.elementFromPoint(
-                        iAnchor.left + iFontSize +
-                            parseFloat( $_Context.css('padding-left') ),
-                        iAnchor.top + iFontSize +
-                            parseFloat( $_Context.css('padding-top') )
-                    )).prevAll('h1, h2, h3');
-
-                if (! $.contains($_Context[0], $_Anchor[0]))  return;
-
-                $_Anchor = $(
-                    'a[href="#' + $_Anchor[0].id + '"]',  iMainNav.$_View[0]
-                );
-                $('.ListView_Item.active', iMainNav.$_View[0])
-                    .removeClass('active');
-
-                $.ListView.instanceOf( $_Anchor ).focus( $_Anchor[0].parentNode );
-            });
-
-            iMainNav.$_View.on('Refresh',  function () {
-
-                iMainNav.clear().render(
-                    toTreeData.call( $_Context.find('h1, h2, h3') )
-                );
-                return false;
-
-            }).on('Clear',  function () {
-                return  (! iMainNav.clear());
-            });
-        });
-    };
-
-})(self,  self.document,  self.jQuery || self.Zepto);
-
-
-
-(function (BOM, DOM, $) {
-
-/* ---------- 普通元素内容编辑  v0.1 ---------- */
-
-    function StopBubble() {
-        arguments[0].stopPropagation();
-    }
-
-    $.fn.contentEdit = function () {
-        return  this.one('blur',  function () {
-
-            var $_This = $(this);
-
-            this.removeAttribute('contentEditable');
-
-            $_This.off('click', StopBubble).off(
-                'input propertychange paste keyup'
-            );
-            this.value = $.trim( $_This.text() );
-
-            if (! this.value)
-                $_This.text(this.value = this.defaultValue);
-
-        }).input(function () {
-
-            var $_This = $(this);
-
-            return  ($.trim( $_This.text() ).length  <=  $_This.attr('maxlength'));
-
-        }).on('click', StopBubble).prop('defaultValue',  function () {
-
-            return  $.trim( $(this).text() );
-
-        }).prop('contentEditable', true).focus();
-    };
-
-})(self,  self.document,  self.jQuery || self.Zepto);
-
-
-
-(function (BOM, DOM, $) {
-
-/* ---------- 目录树  v0.2 ---------- */
-
-    function branchDelete() {
-        var iList = $.ListView.instanceOf( this );
-
-        iList.remove( this );
-
-        if (! iList.$_View[0].children[0])  iList.$_View.remove();
-
-        return false;
-    }
-
-    $.fn.iTree = function (Sub_Key, onInsert) {
-        return  this.each(function () {
-            var iOrgTree = $.TreeView(
-                    $.ListView(this, onInsert),
-                    Sub_Key,
-                    1,
-                    function (iFork, _, iData) {
-                        iFork.$_View.parent().addClass(iData ? 'opened' : 'closed');
-                    }
-                ).on('focus',  function (iEvent) {
-                    var $_This = $( iEvent.currentTarget );
-
-                    $_This.find(':input').focus();
-
-                    if (! iEvent.isPseudo())  return;
-
-                    if ( $_This.hasClass('opened') )
-                        $_This.removeClass('opened').addClass('closed');
-                    else
-                        $_This.removeClass('closed').addClass('opened');
-                });
-
-            iOrgTree.$_View.on('Insert',  '.ListView_Item',  function () {
-
-                var iSub = $.ListView.instanceOf(
-                        $(this).children('.TreeNode'), false
-                    );
-
-                if ( iSub )
-                    iSub.insert( arguments[1] );
-                else
-                    iOrgTree.branch(this, arguments[1]);
-
-                return false;
-
-            }).on('Edit',  '.ListView_Item',  function () {
-
-                return  (! $(arguments[0].target).contentEdit());
-
-            }).on('Delete',  '.ListView_Item', branchDelete);
         });
     };
 
@@ -1030,11 +650,9 @@
 //          >>>  EasyWebUI Component Library  <<<
 //
 //
-//      [Version]     v2.7  (2017-01-16)  Stable
+//      [Version]     v1.6  (2017-06-06)  Stable
 //
-//      [Based on]    iQuery v1  or  jQuery (with jQuery+),
-//
-//                    iQuery+
+//      [Based on]    iQuery v2  or  jQuery (with jQueryKit)
 //
 //      [Usage]       A jQuery Plugin Library which almost
 //                    isn't dependent on EasyWebUI.css
@@ -1058,21 +676,8 @@
 
         $('.Panel').iPanel();
 
-        $('.Tab').iTab();
-
         $('*:button,  a.Button,  .No_Select,  .Panel > .Head,  .Tab > label')
             .noSelect();
-
-        $.ListView.findView(this.body, true).each(function () {
-            var iView = $.ListView.instanceOf(this);
-
-            if ( $(this).children('.ListView_Item').length )  return;
-
-            iView.$_View.click(function (iEvent) {
-                if (iEvent.target.parentNode === this)
-                    iView.focus( iEvent.target );
-            });
-        });
     });
 
     if ($.browser.msie < 11)  return;
@@ -1094,7 +699,6 @@
             $_Under.trigger(iEvent);
         }
     );
-
 })(self,  self.document,  self.jQuery || self.Zepto);
 
 

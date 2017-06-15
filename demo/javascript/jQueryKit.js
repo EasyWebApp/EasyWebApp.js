@@ -2,7 +2,7 @@
 //              >>>  jQueryKit  <<<
 //
 //
-//    [Version]    v9.6  (2017-06-06)
+//    [Version]    v9.7  (2017-06-09)
 //
 //    [Require]    jQuery  v1.9+
 //
@@ -66,7 +66,7 @@
         return iObject;
     };
 
-    /* ----- Number Extension ----- */
+    /* ----- Number Patch ----- */
 
     Number.isInteger = Number.isInteger  ||  function (value) {
 
@@ -115,26 +115,39 @@
         return  (new Array(Times + 1)).join(this);
     };
 
-    /* ----- Array Extension ----- */
+    /* ----- Array Patch ----- */
+
+    function Array_push(value, mapCall, mapContext) {
+
+        return Array.prototype.push.call(
+            this,
+            (mapCall instanceof Function)  ?
+                mapCall.call(mapContext, value, this.length, this)  :  value
+        );
+    }
 
     Array.from = Array.from  ||  function (iterator) {
 
-        var array = [ ],  _This_;
+        var array, _This_;
+
+        try {
+            array = new this();
+        } catch (error) {
+            array = Object.create( this.prototype );
+        }
 
         if (Number.isInteger( iterator.length )) {
 
-            if (DOM.documentMode > 8)
-                return  Array.apply(null, iterator);
-            else {
-                for (var i = 0;  i < iterator.length;  i++)
-                    array[i] = iterator[i];
+            for (var i = 0;  i < iterator.length;  i++)
+                Array_push.call(array, iterator[i], arguments[1], arguments[2]);
 
-                return array;
-            }
-        } else if (iterator.next instanceof Function) {
+            return array;
+        }
+
+        if (iterator.next instanceof Function) {
 
             while ((_This_ = iterator.next()).done  ===  false)
-                array.push( _This_.value );
+                Array_push.call(array, _This_.value, arguments[1], arguments[2]);
 
             return array;
         }
@@ -164,7 +177,7 @@
             return value;
         };
 
-    /* ----- Function Extension ----- */
+    /* ----- Function Patch ----- */
 
     function FuncName() {
         return  (this.toString().trim().match(/^function\s+([^\(\s]*)/) || '')[1];
@@ -178,7 +191,7 @@
             Function.prototype.name = FuncName;
     }
 
-    /* ----- Date Extension ----- */
+    /* ----- Date Patch ----- */
 
     Date.now = Date.now  ||  function () { return  +(new Date()); };
 
@@ -665,6 +678,160 @@
 
 (function (BOM, DOM, $) {
 
+/* ---------- URL Search Parameter ---------- */
+
+    function URLSearchParams() {
+
+        this.length = 0;
+
+        if (arguments[0] instanceof Array) {
+
+            for (var i = 0;  arguments[i];  i++)
+                this.append.apply(this, arguments[i]);
+
+            return;
+        }
+
+        var _This_ = this;
+
+        arguments[0].replace(/([^\?&=]+)=([^&]+)/g,  function (_, key, value) {
+
+            _This_.append(key, value);
+        });
+    }
+
+    var ArrayProto = Array.prototype;
+
+    $.extend(URLSearchParams.prototype, {
+        append:      function (key, value) {
+
+            ArrayProto.push.call(this,  [key,  value + '']);
+        },
+        get:         function (key) {
+
+            for (var i = 0;  this[i];  i++)
+                if (this[i][0] === key)  return this[i][1];
+        },
+        getAll:      function (key) {
+
+            return  $.map(this,  function (_This_) {
+
+                if (_This_[0] === key)  return _This_[1];
+            });
+        },
+        delete:      function (key) {
+
+            for (var i = 0;  this[i];  i++)
+                if (this[i][0] === key)  ArrayProto.splice.call(this, i, 1);
+        },
+        set:         function (key, value) {
+
+            if (this.get( key )  != null)  this.delete( key );
+
+            this.append(key, value);
+        },
+        toString:    function () {
+
+            return  encodeURIComponent(Array.from(this,  function (_This_) {
+
+                return  _This_[0] + '=' + _This_[1];
+
+            }).join('&'));
+        },
+        entries:     function () {
+
+            return  $.makeIterator( this );
+        }
+    });
+
+    BOM.URLSearchParams = BOM.URLSearchParams || URLSearchParams;
+
+    BOM.URLSearchParams.prototype.sort =
+        BOM.URLSearchParams.prototype.sort  ||  function () {
+
+            ArrayProto.sort.call(this,  function (A, B) {
+
+                return  A[0].localeCompare( B[0] )  ||  A[1].localeCompare( B[1] );
+            });
+        };
+
+/* ---------- URL Constructor ---------- */
+
+    BOM.URL = BOM.URL || BOM.webkitURL;
+
+    if (typeof BOM.URL != 'function')  return;
+
+
+    function URL(path, base) {
+
+        var absolute = arguments.length - 1;
+
+        if (! arguments[ absolute ].match( /^\w+:\/\/.{2,}/ ))
+            throw  new TypeError(
+                "Failed to construct 'URL': Invalid " +
+                (absolute ? 'base' : '')  +  ' URL'
+            );
+
+        var link = this.__data__ = DOM.createElement('a');
+
+        link.href = base;
+
+        link.href = link.origin + (
+            (path[0] === '/')  ?  path  :  link.pathname.replace(/[^\/]+$/, path)
+        );
+
+        return  $.browser.modern ? this : link;
+    }
+
+    URL.prototype.toString = function () {  return this.href;  };
+
+    $.each([
+        BOM.location.constructor, BOM.HTMLAnchorElement, BOM.HTMLAreaElement
+    ],  function () {
+
+        Object.defineProperties(this.prototype, {
+            origin:          function () {
+
+                return  this.protocol + '//' + this.host;
+            },
+            searchParams:    function () {
+
+                return  new URLSearchParams( this.search );
+            }
+        });
+    });
+
+    if ( $.browser.modern )
+        $.each(BOM.location,  function (key) {
+
+            if (typeof this != 'function')
+                Object.defineProperty(URL.prototype, key, {
+                    get:    function () {
+
+                        return  this.__data__[key];
+                    },
+                    set:    function () {
+
+                        this.__data__[key] = arguments[0];
+                    }
+                });
+        });
+
+    if ( BOM.URL ) {
+
+        URL.createObjectURL = BOM.URL.createObjectURL;
+
+        URL.revokeObjectURL = BOM.URL.revokeObjectURL;
+    }
+
+    BOM.URL = URL;
+
+})(self, self.document, self.jQuery);
+
+
+
+(function (BOM, DOM, $) {
+
     $.extend({
         paramJSON:        function (search) {
             var _Args_ = { };
@@ -694,15 +861,23 @@
 
             return _Args_;
         },
-        extendURL:        function () {
-            var iArgs = $.makeArray( arguments );
-            var iURL = $.split(iArgs.shift(), '?', 2);
+        extendURL:        function (iURL) {
 
-            if (! iArgs[0])  return arguments[0];
+            if (! arguments[1])  return iURL;
 
-            iArgs.unshift( $.paramJSON('?' + iURL[1]) );
+            var iURL = $.split(iURL, '?', 2);
 
-            return  iURL[0]  +  '?'  +  $.param($.extend.apply($, iArgs));
+            var iPath = iURL[0];    arguments[0] = iURL[1];
+
+            return  iPath  +  '?'  +  $.param($.extend.apply($,  Array.from(
+                arguments,  function (_This_) {
+
+                    _This_ = _This_.valueOf();
+
+                    return  (typeof _This_ != 'string')  ?
+                        _This_  :  $.paramJSON('?' + _This_);
+                }
+            )));
         },
         fileName:         function () {
             return (
@@ -714,20 +889,15 @@
                 arguments[0] || BOM.location.href
             ).match(/([^\?\#]+)(\?|\#)?/)[1].split('/').slice(0, -1).join('/');
         },
-        urlDomain:        function () {
-            return ((
-                arguments[0] || BOM.location.href
-            ).match(/^(\w+:)?\/\/[^\/]+/) || '')[0];
+        urlDomain:        function (iURL) {
+
+            return  (! iURL)  ?  BOM.location.origin  :
+                (iURL.match( /^(\w+:)?\/\/[^\/]+/ )  ||  '')[0];
         },
         isCrossDomain:    function () {
-            var iDomain = this.urlDomain( arguments[0] );
-
-            return  iDomain && (
-                iDomain != [
-                    BOM.location.protocol, '//', DOM.domain, (
-                        BOM.location.port  ?  (':' + BOM.location.port)  :  ''
-                    )
-                ].join('')
+            return (
+                BOM.location.origin ===
+                (new BOM.URL(arguments[0],  this.filePath() + '/')).origin
             );
         }
     });
@@ -1384,22 +1554,22 @@
 /* ---------- Set Style ---------- */
 
     function toHexInt(iDec, iLength) {
-        var iHex = parseInt( Number(iDec).toFixed(0) ).toString(16);
 
-        if (iLength && (iLength > iHex.length))
-            iHex = '0'.repeat(iLength - iHex.length) + iHex;
-
-        return iHex;
+        return $.leftPad(
+            parseInt( Number(iDec).toFixed(0) ).toString(16),  iLength || 2
+        );
     }
 
     function RGB_Hex(iRed, iGreen, iBlue) {
-        var iArgs = $.makeArray(arguments);
 
-        if ((iArgs.length == 1) && (typeof iArgs[0] == 'string'))
-            iArgs = iArgs[0].replace(/rgb\(([^\)]+)\)/i, '$1').replace(/,\s*/g, ',').split(',');
+        var iArgs = $.makeArray( arguments );
 
-        for (var i = 0;  i < 3;  i++)
-            iArgs[i] = toHexInt(iArgs[i], 2);
+        if ((iArgs.length < 2)  &&  (typeof iArgs[0] == 'string'))
+            iArgs = iArgs[0].replace(/rgb\(([^\)]+)\)/i, '$1')
+                .replace(/,\s*/g, ',').split(',');
+
+        for (var i = 0;  i < 3;  i++)  iArgs[i] = toHexInt( iArgs[i] );
+
         return iArgs.join('');
     }
 
@@ -1427,7 +1597,7 @@
                 iWrapper = 'progid:' + DX_Filter +
                     'Gradient(startColorStr=#{n},endColorStr=#{n})';
                 iConvert = function (iAlpha, iRGB) {
-                    return  toHexInt(parseFloat(iAlpha) * 256, 2) + RGB_Hex(iRGB);
+                    return  toHexInt(parseFloat(iAlpha) * 256) + RGB_Hex(iRGB);
                 };
             }
             if (iWrapper)
@@ -1638,84 +1808,13 @@
 
 /* ---------- Scrolling Element ---------- */
 
-    var DocProto = DOM.constructor.prototype;
-
-    if (! Object.getOwnPropertyDescriptor(DocProto, 'scrollingElement'))
-        Object.defineProperty(DocProto, 'scrollingElement', {
+    if (! ('scrollingElement' in DOM))
+        Object.defineProperty(DOM, 'scrollingElement', {
             get:    function () {
                 return  ($.browser.webkit || (DOM.compatMode == 'BackCompat'))  ?
                     DOM.body  :  DOM.documentElement;
             }
         });
-
-/* ---------- URL Search Parameter ---------- */
-
-    function URLSearchParams() {
-
-        this.length = 0;
-
-        var _This_ = this;
-
-        arguments[0].replace(/([^&=]+)=([^&]+)/g,  function (_, key, value) {
-
-            _This_.append(key, value);
-        });
-    }
-
-    $.extend(URLSearchParams.prototype, {
-        push:        Array.prototype.push,
-        splice:      Array.prototype.splice,
-        append:      function (key, value) {
-
-            this.push([key,  value + '']);
-        },
-        get:         function (key) {
-
-            for (var i = 0;  this[i];  i++)
-                if (this[i][0] === key)  return this[i][1];
-        },
-        getAll:      function (key) {
-
-            return  $.map(this,  function (_This_) {
-
-                if (_This_[0] === key)  return _This_[1];
-            });
-        },
-        delete:      function (key) {
-
-            for (var i = 0;  this[i];  i++)
-                if (this[i][0] === key)  this.splice(i, 1);
-        },
-        set:         function (key, value) {
-
-            if (this.get( key )  != null)  this.delete( key );
-
-            this.append(key, value);
-        },
-        toString:    function () {
-
-            return  encodeURIComponent($.map(this,  function (_This_) {
-
-                return  _This_[0] + '=' + _This_[1];
-
-            }).join('&'));
-        },
-        entries:     function () {
-
-            return  $.makeIterator( this );
-        }
-    });
-
-    BOM.URLSearchParams = BOM.URLSearchParams || URLSearchParams;
-
-    BOM.URLSearchParams.prototype.sort =
-        BOM.URLSearchParams.prototype.sort  ||  function () {
-
-            Array.prototype.sort.call(this,  function (A, B) {
-
-                return  A[0].localeCompare( B[0] );
-            });
-        };
 
 /* ---------- Selected Options ---------- */
 
@@ -1724,6 +1823,7 @@
             get:    function () {
                 return  new HTMLCollection(
                     $.map(this.options,  function (iOption) {
+
                         return  iOption.selected ? iOption : null;
                     })
                 );
@@ -1743,17 +1843,117 @@
             ) > -1);
         };
 
+/* ---------- DOM Token List ---------- */
+
+    function DOMTokenList(iDOM, iName) {
+
+        this.length = 0;
+
+        this.__Node__ = iDOM.attributes.getNamedItem( iName );
+
+        this.value = (this.__Node__.nodeValue  ||  '').trim();
+
+        $.merge(this, this.value.split(/\s+/));
+    }
+
+    var ArrayProto = Array.prototype;
+
+    $.each({
+        contains:    function () {
+
+            return  ($.inArray(arguments[0], this)  >  -1);
+        },
+        add:         function (token) {
+
+            if (this.contains( token ))  return;
+
+            ArrayProto.push.call(this, token);
+
+            updateToken.call( this );
+        },
+        remove:      function (token) {
+
+            var index = $.inArray(token, this);
+
+            if (index > -1)  ArrayProto.splice.call(this, index, 1);
+        },
+        toggle:      function (token, force) {
+
+            var has = (typeof force === 'boolean')  ?
+                    (! force)  :  this.contains( token );
+
+            this[has ? 'remove' : 'add']( token );
+
+            return  (! has);
+        }
+    },  function (key, method) {
+
+        DOMTokenList.prototype[ key ]  =  function (token) {
+
+            if ( token.match(/\s+/) )
+                throw  (self.DOMException || Error)(
+                    [
+                        "Failed to execute '" + key + "' on 'DOMTokenList':",
+                        "The token provided ('" + token + "') contains",
+                        "HTML space characters, which are not valid in tokens."
+                    ].join(" "),
+                    'InvalidCharacterError'
+                );
+
+            token = method.call(this, token);
+
+            if ( method.length )
+                this.__Node__.nodeValue = this.value =
+                    ArrayProto.join.call(this, ' ');
+
+            return token;
+        };
+    });
+
+    DOMTokenList.prototype.values = function () {
+
+        return  $.makeIterator( this );
+    };
+
+    $.each(['', 'SVG', 'Link', 'Anchor', 'Area'],  function (key, proto) {
+
+        proto += 'Element';
+
+        if (key < 2)
+            key = 'class';
+        else {
+            key = 'rel';    proto = 'HTML' + proto;
+        }
+
+        proto = (BOM[ proto ]  ||  '').prototype;
+
+        if ((! proto)  ||  ((key + 'List')  in  proto))
+            return;
+
+        Object.defineProperty(proto,  key + 'List',  {
+            get:    function () {
+                return  new DOMTokenList(this, key);
+            }
+        });
+    });
+
+    if (BOM.DOMTokenList  &&  ($.browser.msie < 12))
+        BOM.DOMTokenList.prototype.toggle = DOMTokenList.prototype.toggle;
+
 
     if (! ($.browser.msie < 11))  return;
 
 /* ---------- Element Data Set ---------- */
 
-    function DOMStringMap(iElement) {
-        for (var i = 0, iAttr;  i < iElement.attributes.length;  i++) {
-            iAttr = iElement.attributes[i];
-            if (iAttr.nodeName.slice(0, 5) == 'data-')
-                this[$.camelCase( iAttr.nodeName.slice(5) )] = iAttr.nodeValue;
-        }
+    function DOMStringMap() {
+
+        var iMap = this;
+
+        $.each(arguments[0].attributes,  function () {
+
+            if (! this.nodeName.indexOf('data-'))
+                iMap[$.camelCase( this.nodeName.slice(5) )] = this.nodeValue;
+        });
     }
 
     Object.defineProperty(DOM_Proto, 'dataset', {
@@ -1761,19 +1961,6 @@
             return  new DOMStringMap(this);
         }
     });
-
-/* ---------- URL Origin ---------- */
-
-    var Origin_Define = {
-            get:    function () {
-                return  $.urlDomain( this.href )  ||  '';
-            }
-        };
-    Object.defineProperty(
-        BOM.location.constructor.prototype,  'origin',  Origin_Define
-    );
-    Object.defineProperty(HTMLAnchorElement.prototype, 'origin', Origin_Define);
-
 
     if (! ($.browser.msie < 10))  return;
 
@@ -1784,39 +1971,12 @@
     //      http://www.imkevinyang.com/2010/01/%E8%A7%A3%E6%9E%90ie%E4%B8%AD%E7%9A%84javascript-error%E5%AF%B9%E8%B1%A1.html
 
     Error.prototype.valueOf = function () {
+
         return  $.extend(this, {
             code:       this.number & 0x0FFFF,
             helpURL:    'https://msdn.microsoft.com/en-us/library/1dk3k160(VS.85).aspx'
         });
     };
-
-/* ---------- DOM Class List ---------- */
-
-    function DOMTokenList() {
-
-        this.length = 0;
-
-        $.merge(
-            this,  (arguments[0].getAttribute('class') || '').trim().split(/\s+/)
-        );
-    }
-
-    DOMTokenList.prototype.contains = function (iClass) {
-        if (iClass.match(/\s+/))
-            throw  new DOMException([
-                "Failed to execute 'contains' on 'DOMTokenList': The token provided (",
-                iClass,
-                ") contains HTML space characters, which are not valid in tokens."
-            ].join("'"));
-
-        return  (Array.prototype.indexOf.call(this, iClass) > -1);
-    };
-
-    Object.defineProperty(DOM_Proto, 'classList', {
-        get:    function () {
-            return  new DOMTokenList(this);
-        }
-    });
 
 /* ---------- DOM InnerHTML ---------- */
 
@@ -1824,7 +1984,8 @@
 
     Object.defineProperty(DOM_Proto, 'innerHTML', {
         set:    function (iHTML) {
-            if (! String(iHTML).match(
+
+            if (! (iHTML + '').match(
                 /^[^<]*<\s*(head|meta|title|link|style|script|noscript|(!--[^>]*--))[^>]*>/i
             ))
                 return  InnerHTML.set.call(this, iHTML);
@@ -1832,6 +1993,7 @@
             InnerHTML.set.call(this,  'IE_Scope' + iHTML);
 
             var iChild = this.childNodes;
+
             iChild[0].nodeValue = iChild[0].nodeValue.slice(8);
 
             if (! iChild[0].nodeValue[0])  this.removeChild( iChild[0] );
@@ -3229,6 +3391,34 @@
 
 //  Thanks "emu" --- http://blog.csdn.net/emu/article/details/39618297
 
+    if ( BOM.msCrypto ) {
+
+        BOM.crypto = BOM.msCrypto;
+
+        $.each(BOM.crypto.subtle,  function (key, _This_) {
+
+            if (! (_This_ instanceof Function))  return;
+
+            BOM.crypto.subtle[ key ] = function () {
+
+                var iObserver = _This_.apply(this, arguments);
+
+                return  new Promise(function (iResolve) {
+
+                    iObserver.oncomplete = function () {
+
+                        iResolve( arguments[0].target.result );
+                    };
+
+                    iObserver.onabort = iObserver.onerror = arguments[1];
+                });
+            };
+        });
+    }
+
+    BOM.crypto.subtle = BOM.crypto.subtle || BOM.crypto.webkitSubtle;
+
+
     function BufferToString(iBuffer){
         var iDataView = new DataView(iBuffer),  iResult = '';
 
@@ -3242,39 +3432,23 @@
     }
 
     $.dataHash = function (iAlgorithm, iData) {
+
         if (arguments.length < 2) {
-            iData = iAlgorithm;
-            iAlgorithm = 'CRC-32';
+
+            iData = iAlgorithm;  iAlgorithm = 'CRC-32';
         }
 
-        if (iAlgorithm == 'CRC-32')
-            return  Promise.resolve(CRC_32( iData ));
+        return  (iAlgorithm === 'CRC-32')  ?
+            Promise.resolve( CRC_32( iData ) )  :
+            BOM.crypto.subtle.digest(
+                {name:  iAlgorithm},
+                new Uint8Array(Array.from(iData,  function () {
 
-        var iCrypto = BOM.crypto || BOM.msCrypto;
-
-        try {
-            var iPromise = (iCrypto.subtle || iCrypto.webkitSubtle).digest(
-                    {name:  iAlgorithm},
-                    new Uint8Array(
-                        Array.prototype.map.call(String( iData ),  function () {
-
-                            return arguments[0].charCodeAt(0);
-                        })
-                    )
-                );
-            return  ((typeof iPromise.then == 'function')  ?
-                iPromise  :  new Promise(function (iResolve) {
-
-                    iPromise.oncomplete = function () {
-                        iResolve( arguments[0].target.result );
-                    };
-                })
+                    return arguments[0].charCodeAt(0);
+                }))
             ).then( BufferToString );
-
-        } catch (iError) {
-            return  Promise.reject( iError );
-        }
     };
+
 })(self, self.document, self.jQuery);
 
 

@@ -9,13 +9,9 @@
   "engines": {
     "node": "^5.0.0"
   },
-  "devDependencies": {
-    "requirejs": "^2.3.3",
-    "uglify-js": "^2.8.28"
-  },
   "scripts": {
     "bundle": "r_js -o build/source.js",
-    "compress": "uglifyjs EasyWebApp.js -c -m -o EasyWebApp.min.js --source-map=EasyWebApp.min.map",
+    "compress": "uglifyjs EasyWebApp.js -c -m --keep-fnames -o EasyWebApp.min.js --source-map",
     "build": "npm run bundle  &&  npm run compress",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -30,5 +26,9 @@
     "jquery"
   ],
   "author": "shiy007@qq.com",
-  "license": "GPL-2.0"
+  "license": "GPL-2.0",
+  "devDependencies": {
+    "requirejs": "^2.3.3",
+    "uglify-js": "^3.0.15"
+  }
 }

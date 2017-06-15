@@ -643,7 +643,10 @@ define('DOMkit',['jquery', 'RenderNode', 'jQueryKit'],  function ($, RenderNode)
 
             var iURL = iDOM.getAttribute( iKey )  ||  '';
 
-            if ((iURL.match( RenderNode.expression ) || [ ]).join('')  ==  iURL)
+            if (
+                (iURL[0] === '#')  ||
+                ((iURL.match( RenderNode.expression ) || [ ]).join('')  ==  iURL)
+            )
                 return iURL;
 
             iURL = iURL.split('?');
@@ -1390,7 +1393,7 @@ define('WebApp',[
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v4.0  (2017-06-06)  Beta
+//      [Version]    v4.0  (2017-06-09)  Beta
 //
 //      [Require]    iQuery  ||  jQuery with jQueryKit
 //

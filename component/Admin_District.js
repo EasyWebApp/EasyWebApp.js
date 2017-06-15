@@ -11,7 +11,7 @@ require(['jquery'],  function ($) {
 
         var iCount = iLevel.indexOf(_Level_) + 1;
 
-        return  this.adcode.toString().slice(0,  2 * iCount)  +
+        return  ((this.adcode || '') + '').slice(0,  2 * iCount)  +
             '00'.repeat(3 - iCount);
     }
 
@@ -72,7 +72,7 @@ require(['jquery'],  function ($) {
 
             if (! iList)  return;
 
-            iList.clear().render( iData );
+            iList.clear().render( [{name: '（请选择）'}].concat( iData ) );
 
             var $_Select = iList.$_View;
 

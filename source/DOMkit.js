@@ -39,7 +39,10 @@ define(['jquery', 'RenderNode', 'jQueryKit'],  function ($, RenderNode) {
 
             var iURL = iDOM.getAttribute( iKey )  ||  '';
 
-            if ((iURL.match( RenderNode.expression ) || [ ]).join('')  ==  iURL)
+            if (
+                (iURL[0] === '#')  ||
+                ((iURL.match( RenderNode.expression ) || [ ]).join('')  ==  iURL)
+            )
                 return iURL;
 
             iURL = iURL.split('?');

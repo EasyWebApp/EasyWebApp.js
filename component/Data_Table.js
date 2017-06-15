@@ -32,6 +32,8 @@ require(['jquery', 'EasyWebApp'],  function ($) {
 
                 var iValue = parseInt(iTarget.value || iTarget.textContent);
 
+                if (! iValue)  return;
+
                 this.render(
                     (iTarget.tagName == 'SELECT')  ?  'rows'  :  'page',  iValue
                 );
