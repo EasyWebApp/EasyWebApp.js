@@ -1,9 +1,11 @@
-define(['jquery', 'RenderNode', 'jQueryKit'],  function ($, RenderNode) {
+define([
+    'jquery', 'RenderNode', 'InnerLink', 'jQueryKit'
+],  function ($, RenderNode, InnerLink) {
 
     var Link_Name = $.makeSet('a', 'area', 'form');
 
     return {
-        fixScript:      function (iDOM) {
+        fixScript:    function (iDOM) {
             var iAttr = { };
 
             $.each(iDOM.attributes,  function () {
@@ -15,27 +17,14 @@ define(['jquery', 'RenderNode', 'jQueryKit'],  function ($, RenderNode) {
 
             return iDOM;
         },
-        fixLink:        function (iDOM) {
+        fixLink:      function (iDOM) {
             if (
                 ((iDOM.target || '_self')  ==  '_self')  &&
                 ($.urlDomain(iDOM.href || iDOM.action)  !=  $.urlDomain())
             )
                 iDOM.target = '_blank';
         },
-        parsePath:      function (iPath) {
-
-            var iNew;  iPath = iPath.replace(/^\.\//, '').replace(/\/\.\//g, '/');
-
-            do {
-                iPath = iNew || iPath;
-
-                iNew = iPath.replace(/[^\/]+\/\.\.\//g, '');
-
-            } while (iNew != iPath);
-
-            return iNew;
-        },
-        fixURL:         function (iDOM, iKey, iBase) {
+        fixURL:       function (iDOM, iKey, iBase) {
 
             var iURL = iDOM.getAttribute( iKey )  ||  '';
 
@@ -51,14 +40,14 @@ define(['jquery', 'RenderNode', 'jQueryKit'],  function ($, RenderNode) {
                 iBase  &&  iURL[0]  &&
                 (! $.urlDomain( iURL[0] ))  &&  (iURL[0].indexOf( iBase )  <  0)
             ) {
-                iURL[0] = this.parsePath(iBase + iURL[0]);
+                iURL[0] = InnerLink.parsePath(iBase + iURL[0]);
 
                 iDOM.setAttribute(iKey, iURL.join('?'));
             }
 
             return iURL.join('?');
         },
-        prefetch:       function (iDOM, iURL) {
+        prefetch:     function (iDOM, iURL) {
             if (
                 (iDOM.tagName.toLowerCase() in Link_Name)  &&
                 ((iDOM.target || '_self')  ==  '_self')  &&

@@ -22,11 +22,11 @@ define(['jquery', 'View', 'HTMLView'],  function ($, View, HTMLView) {
 
             return this;
         },
-        insert:     function (iData, Index) {
+        insert:     function (iData, Index, iDelay) {
 
             var Item = (new HTMLView(this.__HTML__, this.__data__)).parse();
 
-            Item.$_View.insertTo(this.$_View, Index);
+            if (! iDelay)  Item.$_View.insertTo(this.$_View, Index);
 
             iData.__index__ = Index || 0;
 
@@ -37,7 +37,11 @@ define(['jquery', 'View', 'HTMLView'],  function ($, View, HTMLView) {
         render:     function (iList) {
 
             if ($.likeArray( iList ))
-                $.map(iList,  this.insert.bind( this ));
+                $(Array.prototype.map.call(iList,  function () {
+
+                    this.insert.apply(this, arguments).$_View[0];
+
+                })).insertTo(this.$_View, this.length);
 
             return this;
         },
@@ -48,7 +52,7 @@ define(['jquery', 'View', 'HTMLView'],  function ($, View, HTMLView) {
             return (
                 ($_Item[0].parentNode == this.$_View[0])  ?
                     $_Item  :  $_Item.parentsUntil( this.$_View )
-            ).index();
+            ).slice( -1 ).index();
         },
         remove:     function (Index) {
 

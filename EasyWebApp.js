@@ -602,31 +602,31 @@ define('View',[
     }).signSelector();
 });
 
-define('DOMkit',['jquery', 'RenderNode', 'jQueryKit'],  function ($, RenderNode) {
+define('InnerLink',['jquery', 'Observer', 'jQueryKit'],  function ($, Observer) {
 
-    var Link_Name = $.makeSet('a', 'area', 'form');
+    function InnerLink(Link_DOM) {
 
-    return {
-        fixScript:      function (iDOM) {
-            var iAttr = { };
+        var _This_ = Observer.call(this, Link_DOM);
 
-            $.each(iDOM.attributes,  function () {
+        if (_This_ != this)  this.__handle__ = _This_.__handle__;
 
-                iAttr[ this.nodeName ] = this.nodeValue;
-            });
+        this.method = (
+            Link_DOM.getAttribute('method') || Link_DOM.dataset.method || 'Get'
+        ).toUpperCase();
 
-            iDOM = $('<script />', iAttr)[0];
+        this.contentType =
+            Link_DOM.getAttribute('type') || Link_DOM.getAttribute('enctype') ||
+            'application/x-www-form-urlencoded';
 
-            return iDOM;
-        },
-        fixLink:        function (iDOM) {
-            if (
-                ((iDOM.target || '_self')  ==  '_self')  &&
-                ($.urlDomain(iDOM.href || iDOM.action)  !=  $.urlDomain())
-            )
-                iDOM.target = '_blank';
-        },
-        parsePath:      function (iPath) {
+        this.setURI().title = Link_DOM.title || document.title;
+
+        this.target = (
+            this.href  &&  /^(a|area|form)$/i.test( Link_DOM.tagName )
+        ) ? 'page' : 'view';
+    }
+
+    return  $.inherit(Observer, InnerLink, {
+        parsePath:    function (iPath) {
 
             var iNew;  iPath = iPath.replace(/^\.\//, '').replace(/\/\.\//g, '/');
 
@@ -639,7 +639,145 @@ define('DOMkit',['jquery', 'RenderNode', 'jQueryKit'],  function ($, RenderNode)
 
             return iNew;
         },
-        fixURL:         function (iDOM, iKey, iBase) {
+        HTML_Link:    'a[href], area[href], form[action]',
+        Self_Link:    '[data-href]:not(a, form)'
+    }, {
+        setURI:      function () {
+
+            var Link_DOM = this.$_View[0];
+
+            this.href = Link_DOM.dataset.href ||
+                Link_DOM.getAttribute(Link_DOM.href ? 'href' : 'action');
+
+            this.src = this.href.split(/\?data=|&data=/);
+
+            this.href = this.src[0];
+
+            this.src = this.src[1];
+
+            this.data = $.paramJSON( this.href );
+
+            this.href = InnerLink.parsePath( this.href.split('?')[0] );
+
+            return this;
+        },
+        getURI:      function () {
+
+            var iData = [$.param( this.data )];
+
+            if (! iData[0])  iData.length = 0;
+
+            if ( this.src )  iData.push('data=' + this.src);
+
+            iData = iData.join('&');
+
+            return  (this.href || '')  +  (iData  &&  ('?' + iData));
+        },
+        loadData:    function () {
+
+            var URI = this.method + ' ';
+
+            var iOption = {
+                    type:           this.method,
+                    beforeSend:     arguments[0],
+                    contentType:    this.contentType,
+                    dataType:
+                        (this.src.match(/\?/g) || '')[1]  ?  'jsonp'  :  'json',
+                    complete:       function () {
+                        URI += this.url;
+                    }
+                };
+
+            if ( this.$_View[0].tagName.match(/^(a|area)$/i) ) {
+
+                iOption.data = $.extend({ }, this.$_View[0].dataset);
+
+                delete iOption.data.method;
+                delete iOption.data.autofocus;
+
+            } else if (! this.$_View.find('input[type="file"]')[0]) {
+
+                iOption.data = $.paramJSON('?' + this.$_View.serialize());
+
+            } else if (iOption.type != 'GET') {
+
+                iOption.data = new self.FormData( this.$_View[0] );
+
+                iOption.contentType = iOption.processData = false;
+            }
+
+            if ( this.contentType.match(/^application\/json/) ) {
+
+                iOption.data = JSON.stringify( iOption.data );
+
+                iOption.processData = false;
+            }
+
+            var iJSON = Promise.resolve( $.ajax(this.src, iOption) );
+
+            return  (this.method != 'GET')  ?  iJSON  :  iJSON.then(
+                function () {
+                    return  $.storage(URI, arguments[0]);
+                },
+                function () {
+                    return  $.storage( URI );
+                }
+            );
+        },
+        load:        function (onRequest) {
+
+            return Promise.all([
+                this.href  &&  $.ajax({
+                    type:          'GET',
+                    url:           this.href,
+                    beforeSend:    onRequest
+                }),
+                this.src  &&  this.loadData( onRequest )
+            ]);
+        },
+        valueOf:     function () {
+            var _This_ = { };
+
+            for (var iKey in this)
+                if (
+                    (typeof this[iKey] != 'object')  &&
+                    (typeof this[iKey] != 'function')
+                )
+                    _This_[iKey] = this[iKey];
+
+            _This_.target = this.$_View[0];
+
+            return _This_;
+        }
+    });
+});
+define('DOMkit',[
+    'jquery', 'RenderNode', 'InnerLink', 'jQueryKit'
+],  function ($, RenderNode, InnerLink) {
+
+    var Link_Name = $.makeSet('a', 'area', 'form');
+
+    return {
+        fixScript:    function (iDOM) {
+            var iAttr = { };
+
+            $.each(iDOM.attributes,  function () {
+
+                iAttr[ this.nodeName ] = this.nodeValue;
+            });
+
+            iDOM = $('<script />', iAttr)[0];
+
+            return iDOM;
+        },
+        fixLink:      function (iDOM) {
+            if (
+                ((iDOM.target || '_self')  ==  '_self')  &&
+                ($.urlDomain(iDOM.href || iDOM.action)  !=  $.urlDomain())
+            )
+                iDOM.target = '_blank';
+        },
+        fixURL:       function (iDOM, iKey, iBase) {
 
             var iURL = iDOM.getAttribute( iKey )  ||  '';
 
@@ -655,14 +793,14 @@ define('DOMkit',['jquery', 'RenderNode', 'jQueryKit'],  function ($, RenderNode)
                 iBase  &&  iURL[0]  &&
                 (! $.urlDomain( iURL[0] ))  &&  (iURL[0].indexOf( iBase )  <  0)
             ) {
-                iURL[0] = this.parsePath(iBase + iURL[0]);
+                iURL[0] = InnerLink.parsePath(iBase + iURL[0]);
 
                 iDOM.setAttribute(iKey, iURL.join('?'));
             }
 
             return iURL.join('?');
         },
-        prefetch:       function (iDOM, iURL) {
+        prefetch:     function (iDOM, iURL) {
             if (
                 (iDOM.tagName.toLowerCase() in Link_Name)  &&
                 ((iDOM.target || '_self')  ==  '_self')  &&
@@ -735,8 +873,9 @@ define('HTMLView',[
                 });
 
             for (var i = 0;  CSS_Rule[i];  i++)
-                CSS_Rule[i].selectorText = '#' + this.__id__ + ' ' +
-                    CSS_Rule[i].selectorText;
+                if (CSS_Rule[i].selectorText.indexOf('#') < 0)
+                    CSS_Rule[i].selectorText = '#' + this.__id__ + ' ' +
+                        CSS_Rule[i].selectorText;
 
             if (iTag == 'style')  iDOM.disabled = false;
         },
@@ -930,11 +1069,11 @@ define('ListView',['jquery', 'View', 'HTMLView'],  function ($, View, HTMLView) 
 
             return this;
         },
-        insert:     function (iData, Index) {
+        insert:     function (iData, Index, iDelay) {
 
             var Item = (new HTMLView(this.__HTML__, this.__data__)).parse();
 
-            Item.$_View.insertTo(this.$_View, Index);
+            if (! iDelay)  Item.$_View.insertTo(this.$_View, Index);
 
             iData.__index__ = Index || 0;
 
@@ -945,7 +1084,11 @@ define('ListView',['jquery', 'View', 'HTMLView'],  function ($, View, HTMLView) 
         render:     function (iList) {
 
             if ($.likeArray( iList ))
-                $.map(iList,  this.insert.bind( this ));
+                $(Array.prototype.map.call(iList,  function () {
+
+                    this.insert.apply(this, arguments).$_View[0];
+
+                })).insertTo(this.$_View, this.length);
 
             return this;
         },
@@ -956,7 +1099,7 @@ define('ListView',['jquery', 'View', 'HTMLView'],  function ($, View, HTMLView) 
             return (
                 ($_Item[0].parentNode == this.$_View[0])  ?
                     $_Item  :  $_Item.parentsUntil( this.$_View )
-            ).index();
+            ).slice( -1 ).index();
         },
         remove:     function (Index) {
 
@@ -994,137 +1137,6 @@ define('ListView',['jquery', 'View', 'HTMLView'],  function ($, View, HTMLView) 
 
                 return arguments[0].valueOf();
             });
-        }
-    });
-});
-define('InnerLink',['jquery', 'Observer', 'jQueryKit'],  function ($, Observer) {
-
-    function InnerLink(Link_DOM) {
-
-        var _This_ = Observer.call(this, Link_DOM);
-
-        if (_This_ != this)  this.__handle__ = _This_.__handle__;
-
-        this.target = Link_DOM.tagName.match(/^(a|area|form)$/i) ? 'page' : 'view';
-
-        this.method = (
-            Link_DOM.getAttribute('method') || Link_DOM.dataset.method || 'Get'
-        ).toUpperCase();
-
-        this.contentType =
-            Link_DOM.getAttribute('type') || Link_DOM.getAttribute('enctype') ||
-            'application/x-www-form-urlencoded';
-
-        this.setURI().title = Link_DOM.title || document.title;
-    }
-
-    return  $.inherit(Observer, InnerLink, {
-        HTML_Link:    'a[href], area[href], form[action]',
-        Self_Link:    '[data-href]:not(a, form)'
-    }, {
-        setURI:      function () {
-
-            var Link_DOM = this.$_View[0];
-
-            this.href = Link_DOM.dataset.href ||
-                Link_DOM.getAttribute(Link_DOM.href ? 'href' : 'action');
-
-            this.src = this.href.split(/\?data=|&data=/);
-
-            this.href = this.src[0];
-
-            this.src = this.src[1];
-
-            this.data = $.paramJSON( this.href );
-
-            this.href = this.href.split('?')[0];
-
-            return this;
-        },
-        getURI:      function () {
-
-            var iData = [$.param( this.data )];
-
-            if (! iData[0])  iData.length = 0;
-
-            if ( this.src )  iData.push('data=' + this.src);
-
-            iData = iData.join('&');
-
-            return  (this.href || '')  +  (iData  &&  ('?' + iData));
-        },
-        loadData:    function () {
-
-            var URI = this.method + ' ';
-
-            var iOption = {
-                    type:           this.method,
-                    beforeSend:     arguments[0],
-                    contentType:    this.contentType,
-                    dataType:
-                        (this.src.match(/\?/g) || '')[1]  ?  'jsonp'  :  'json',
-                    complete:       function () {
-                        URI += this.url;
-                    }
-                };
-
-            if ( this.$_View[0].tagName.match(/^(a|area)$/i) ) {
-
-                iOption.data = $.extend({ }, this.$_View[0].dataset);
-
-                delete iOption.data.method;
-                delete iOption.data.autofocus;
-
-            } else if (! this.$_View.find('input[type="file"]')[0]) {
-
-                iOption.data = $.paramJSON('?' + this.$_View.serialize());
-            } else {
-                iOption.data = new self.FormData( this.$_View[0] );
-                iOption.contentType = iOption.processData = false;
-            }
-
-            if ( this.contentType.match(/^application\/json/) ) {
-
-                iOption.data = JSON.stringify( iOption.data );
-
-                iOption.processData = false;
-            }
-
-            var iJSON = Promise.resolve( $.ajax(this.src, iOption) );
-
-            return  (this.method != 'GET')  ?  iJSON  :  iJSON.then(
-                function () {
-                    return  $.storage(URI, arguments[0]);
-                },
-                function () {
-                    return  $.storage( URI );
-                }
-            );
-        },
-        load:        function (onRequest) {
-
-            return Promise.all([
-                this.href  &&  $.ajax({
-                    type:          'GET',
-                    url:           this.href,
-                    beforeSend:    onRequest
-                }),
-                this.src  &&  this.loadData( onRequest )
-            ]);
-        },
-        valueOf:     function () {
-            var _This_ = { };
-
-            for (var iKey in this)
-                if (
-                    (typeof this[iKey] != 'object')  &&
-                    (typeof this[iKey] != 'function')
-                )
-                    _This_[iKey] = this[iKey];
-
-            _This_.target = this.$_View[0];
-
-            return _This_;
         }
     });
 });
@@ -1393,7 +1405,7 @@ define('WebApp',[
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v4.0  (2017-06-09)  Beta
+//      [Version]    v4.0  (2017-06-28)  Beta
 //
 //      [Require]    iQuery  ||  jQuery with jQueryKit
 //

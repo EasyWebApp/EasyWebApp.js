@@ -2,7 +2,7 @@
 //              >>>  jQueryKit  <<<
 //
 //
-//    [Version]    v9.7  (2017-06-09)
+//    [Version]    v9.7  (2017-06-23)
 //
 //    [Require]    jQuery  v1.9+
 //
@@ -749,10 +749,16 @@
     BOM.URLSearchParams.prototype.sort =
         BOM.URLSearchParams.prototype.sort  ||  function () {
 
-            ArrayProto.sort.call(this,  function (A, B) {
+            var entry = Array.from( this.entries() ).sort(function (A, B) {
 
-                return  A[0].localeCompare( B[0] )  ||  A[1].localeCompare( B[1] );
-            });
+                    return  A[0].localeCompare( B[0] )  ||
+                        A[1].localeCompare( B[1] );
+                });
+
+            for (var i = 0;  entry[i];  i++)  this.delete( entry[i][0] );
+
+            for (var i = 0;  entry[i];  i++)
+                this.append(entry[i][0], entry[i][1]);
         };
 
 /* ---------- URL Constructor ---------- */
@@ -764,21 +770,21 @@
 
     function URL(path, base) {
 
-        var absolute = arguments.length - 1;
-
-        if (! arguments[ absolute ].match( /^\w+:\/\/.{2,}/ ))
+        if (! (base || path).match( /^\w+:\/\/.{2,}/ ))
             throw  new TypeError(
                 "Failed to construct 'URL': Invalid " +
-                (absolute ? 'base' : '')  +  ' URL'
+                (base ? 'base' : '')  +  ' URL'
             );
 
         var link = this.__data__ = DOM.createElement('a');
 
-        link.href = base;
+        link.href = base || path;
 
-        link.href = link.origin + (
-            (path[0] === '/')  ?  path  :  link.pathname.replace(/[^\/]+$/, path)
-        );
+        if ( base )
+            link.href = link.origin + (
+                (path[0] === '/')  ?
+                    path  :  link.pathname.replace(/[^\/]+$/, path)
+            );
 
         return  $.browser.modern ? this : link;
     }

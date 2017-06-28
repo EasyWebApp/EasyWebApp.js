@@ -54,8 +54,9 @@ define([
                 });
 
             for (var i = 0;  CSS_Rule[i];  i++)
-                CSS_Rule[i].selectorText = '#' + this.__id__ + ' ' +
-                    CSS_Rule[i].selectorText;
+                if (CSS_Rule[i].selectorText.indexOf('#') < 0)
+                    CSS_Rule[i].selectorText = '#' + this.__id__ + ' ' +
+                        CSS_Rule[i].selectorText;
 
             if (iTag == 'style')  iDOM.disabled = false;
         },
