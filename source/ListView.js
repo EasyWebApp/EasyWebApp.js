@@ -39,9 +39,9 @@ define(['jquery', 'View', 'HTMLView'],  function ($, View, HTMLView) {
             if ($.likeArray( iList ))
                 $(Array.prototype.map.call(iList,  function () {
 
-                    this.insert.apply(this, arguments).$_View[0];
+                    return  this.insert.apply(this, arguments).$_View[0];
 
-                })).insertTo(this.$_View, this.length);
+                },  this)).insertTo(this.$_View, this.length);
 
             return this;
         },

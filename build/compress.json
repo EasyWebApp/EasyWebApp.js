@@ -1,0 +1,9 @@
+{
+    "mangle":       {
+        "keep_fnames":    true
+    },
+    "sourceMap":    {
+        "url":    "EasyWebApp.min.js.map"
+    },
+    "warnings":     "verbose"
+}

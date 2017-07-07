@@ -14,11 +14,19 @@ define(['jquery', 'Observer', 'jQueryKit'],  function ($, Observer) {
             Link_DOM.getAttribute('type') || Link_DOM.getAttribute('enctype') ||
             'application/x-www-form-urlencoded';
 
+        this.charset = (
+            Link_DOM.getAttribute('charset') || Link_DOM.acceptCharset ||
+            document.charset
+        ).split(/\s+/);
+
         this.setURI().title = Link_DOM.title || document.title;
 
-        this.target = (
-            this.href  &&  /^(a|area|form)$/i.test( Link_DOM.tagName )
-        ) ? 'page' : 'view';
+        if (! /^(a|area|form)$/i.test( Link_DOM.tagName ))
+            this.target = 'view';
+        else if ( this.href )
+            this.target = 'page';
+        else
+            this.target = 'data';
     }
 
     return  $.inherit(Observer, InnerLink, {
@@ -76,7 +84,8 @@ define(['jquery', 'Observer', 'jQueryKit'],  function ($, Observer) {
             var iOption = {
                     type:           this.method,
                     beforeSend:     arguments[0],
-                    contentType:    this.contentType,
+                    contentType:
+                        this.contentType  +  '; charset='  +  this.charset[0],
                     dataType:
                         (this.src.match(/\?/g) || '')[1]  ?  'jsonp'  :  'json',
                     complete:       function () {

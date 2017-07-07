@@ -12,16 +12,15 @@ define(['jquery'],  function ($) {
         this.hasScope = false;
     }
 
-    function Eval(vm) {
-        'use strict';
-
+    function Eval(vm, iValue) {  'use strict';
         try {
-            var iValue = eval( arguments[1] );
+            iValue = $.isNumeric( iValue )  ?
+                (Number.isSafeInteger( +iValue )  ?  +iValue  :  iValue)  :
+                eval( iValue );
 
             return  (iValue != null)  ?  iValue  :  '';
-        } catch (iError) {
-            return '';
-        }
+
+        } catch (iError) {  return '';  }
     }
 
     $.extend(RenderNode, {
@@ -109,4 +108,5 @@ define(['jquery'],  function ($) {
     });
 
     return RenderNode;
+
 });

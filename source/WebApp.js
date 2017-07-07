@@ -178,7 +178,7 @@ define([
 
                 if (iData != null)  iData = _This_._emit('data', iLink, iData);
 
-                if (iLink.href  ||  (iLink.target == 'view'))
+                if (iLink.target != 'data')
                     return  _This_.loadComponent(iLink, iHTML, iData);
 
             }).then(function (iView) {
@@ -196,7 +196,7 @@ define([
                 if ( iView )
                     iView.render(
                         this.name || this.getAttribute('name'),
-                        $(this).value('name')
+                        ('value' in this)  ?  this.value  :  this.innerHTML
                     );
             })).on('click submit',  InnerLink.HTML_Link,  function (iEvent) {
                 if (

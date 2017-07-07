@@ -10,8 +10,8 @@
     "node": "^5.0.0"
   },
   "scripts": {
-    "bundle": "r_js -o build/source.js",
-    "compress": "uglifyjs EasyWebApp.js -c -m --keep-fnames -o EasyWebApp.min.js --source-map",
+    "bundle": "cd source  &&  amd-bundle ../EasyWebApp.js",
+    "compress": "uglifyjs EasyWebApp.js -o build/EasyWebApp.min.js --config-file build/compress.json",
     "build": "npm run bundle  &&  npm run compress",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -28,7 +28,7 @@
   "author": "shiy007@qq.com",
   "license": "GPL-2.0",
   "devDependencies": {
-    "requirejs": "^2.3.3",
-    "uglify-js": "^3.0.15"
+    "amd-bundle": "^0.3.2",
+    "uglify-js": "^3.0.23"
   }
 }
