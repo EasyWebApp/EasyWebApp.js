@@ -24,13 +24,14 @@ require(['jquery'],  function ($) {
         ).prop('selected', true);
     }
 
-    function reload() {
+    function reload(adcode) {
 
-        this.dataset.href = '?data=' + $.extendURL(
-            this.dataset.href.replace(/^\?data=/, ''), {
-                keywords:    arguments[0]
-            }
-        );
+        if ( adcode )
+            this.dataset.href = '?data=' + $.extendURL(
+                this.dataset.href.replace(/^\?data=/, ''), {
+                    keywords:    adcode
+                }
+            );
     }
 
     function outerChange() {
@@ -44,6 +45,14 @@ require(['jquery'],  function ($) {
 
         reload.call(this.childOf()[0].$_View[0], '100000');
     }
+
+    function valueOf() {
+
+        var iOption = this[0].selectedOptions[0];
+
+        if ( iOption )  return iOption.dataset.adcode;
+    }
+
 
     iWebApp.component(function () {
 
@@ -76,10 +85,9 @@ require(['jquery'],  function ($) {
 
             var $_Select = iList.$_View;
 
-            if (! VM.codeMatch( iData[0].level )[0])
-                $_Select[0].selectedIndex = 0;
+            VM.codeMatch( iData[0].level );
 
-            if ( $_Select[0].value )
+            if (valueOf.call( $_Select ))
                 setTimeout($.proxy($.fn.change, $_Select));
         });
 
@@ -91,7 +99,7 @@ require(['jquery'],  function ($) {
                 var $_Select = $( iEvent.target ),
                     iLink = $_adCode.parents(':view')[0];
 
-                $_adCode[0].value = $_Select[0].selectedOptions[0].dataset.adcode;
+                $_adCode[0].value = valueOf.call( $_Select );
 
                 if ($_Select.nextAll('select').each(function () {
 

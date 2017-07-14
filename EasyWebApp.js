@@ -27,31 +27,24 @@ var RenderNode = (function ($) {
         this.hasScope = false;
     }
 
-    function Eval(vm, iValue) {  'use strict';
+    RenderNode.expression = /\$\{([\s\S]+?)\}/g;
+
+    RenderNode.reference = /(this|vm)\.(\w+)/g;
+
+
+    function Eval(vm) {  'use strict';
         try {
-            iValue = $.isNumeric( iValue )  ?
-                (Number.isSafeInteger( +iValue )  ?  +iValue  :  iValue)  :
-                eval( iValue );
+            var iValue = eval( arguments[1] );
 
             return  (iValue != null)  ?  iValue  :  '';
 
-        } catch (iError) {  return '';  }
+        } catch (iError) {
+
+            console.error( iError );
+
+            return '';
+        }
     }
-
-    $.extend(RenderNode, {
-        safeEval:      function (iValue) {
-
-            switch (typeof iValue) {
-                case 'function':    return  iValue.bind( this );
-                case 'string':
-                    if ((iValue[0] !== '0')  &&  iValue[1])  return iValue;
-            }
-
-            return  (iValue  &&  Eval('', iValue))  ||  iValue;
-        },
-        expression:    /\$\{([\s\S]+?)\}/g,
-        reference:     /(this|vm)\.(\w+)/g
-    });
 
     $.extend(RenderNode.prototype, {
         eval:        function (iContext, iScope) {
@@ -103,9 +96,9 @@ var RenderNode = (function ($) {
                 case 2:    if (
                     (this.name != 'style')  &&  (this.name in iParent)
                 ) {
-                    iParent[ this.name ] = RenderNode.safeEval.call(
-                        iContext,  iValue
-                    );
+                    iParent[ this.name ] = (iValue instanceof Function)  ?
+                        iValue.bind( iContext )  :  iValue;
+
                     return;
 
                 } else if (! iNode.ownerElement) {
@@ -117,8 +110,6 @@ var RenderNode = (function ($) {
             }
 
             iNode.nodeValue = iValue;
-
-            return this;
         }
     });
 
@@ -1422,7 +1413,7 @@ var WebApp = (function ($, Observer, View, HTMLView, ListView, InnerLink) {
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v4.0  (2017-07-07)  Beta
+//      [Version]    v4.0  (2017-07-14)  Beta
 //
 //      [Require]    iQuery  ||  jQuery with jQueryKit
 //
@@ -1440,7 +1431,7 @@ return  (function ($, WebApp) {
 
     var _require_ = self.require,  _CID_;
 
-    self.require = function () {
+    self.require = $.extend(function () {
 
         if (! document.currentScript)  return _require_.apply(this, arguments);
 
@@ -1454,7 +1445,8 @@ return  (function ($, WebApp) {
 
             return  iArgs[1].apply(this, arguments);
         });
-    };
+    },  _require_);
+
 
     $.extend(WebApp.fn = WebApp.prototype,  {
         component:    function (iFactory) {

@@ -2,7 +2,7 @@
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v4.0  (2017-07-07)  Beta
+//      [Version]    v4.0  (2017-07-14)  Beta
 //
 //      [Require]    iQuery  ||  jQuery with jQueryKit
 //
@@ -20,7 +20,7 @@ define(['jquery', 'WebApp'],  function ($, WebApp) {
 
     var _require_ = self.require,  _CID_;
 
-    self.require = function () {
+    self.require = $.extend(function () {
 
         if (! document.currentScript)  return _require_.apply(this, arguments);
 
@@ -34,7 +34,8 @@ define(['jquery', 'WebApp'],  function ($, WebApp) {
 
             return  iArgs[1].apply(this, arguments);
         });
-    };
+    },  _require_);
+
 
     $.extend(WebApp.fn = WebApp.prototype,  {
         component:    function (iFactory) {

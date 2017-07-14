@@ -28,7 +28,7 @@
   "author": "shiy007@qq.com",
   "license": "GPL-2.0",
   "devDependencies": {
-    "amd-bundle": "^0.3.2",
-    "uglify-js": "^3.0.23"
+    "amd-bundle": "^0.4.2",
+    "uglify-js": "^3.0.24"
   }
 }
