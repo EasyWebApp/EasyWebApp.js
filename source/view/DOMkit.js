@@ -1,5 +1,5 @@
 define([
-    'jquery', 'RenderNode', 'InnerLink', 'jQueryKit'
+    'jquery', './RenderNode', '../InnerLink', 'jQueryKit'
 ],  function ($, RenderNode, InnerLink) {
 
     var Link_Name = $.makeSet('a', 'area', 'form');

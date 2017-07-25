@@ -1,5 +1,5 @@
 define([
-    'jquery', 'Observer', 'DataScope', 'RenderNode', 'jQueryKit'
+    'jquery', '../base/Observer', '../base/DataScope', './RenderNode', 'jQueryKit'
 ],  function ($, Observer, DataScope, RenderNode) {
 
     function View($_View, iScope) {
@@ -243,4 +243,5 @@ define([
                 this.__child__;
         }
     }).signSelector();
+
 });

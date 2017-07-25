@@ -22,7 +22,7 @@ define(['jquery', 'jQueryKit'],  function ($) {
                     iData.hasOwnProperty( iKey )  &&  (iData[iKey] != null)  &&  (
                         (typeof iData[iKey] == 'object')  ||
                         (! this.__data__.hasOwnProperty( iKey ))  ||
-                        (iData[iKey] != this.__data__[iKey])
+                        (iData[iKey] !== this.__data__[iKey])
                     )
                 )  _Data_[iKey] = this.__data__[iKey] = iData[iKey];
 
@@ -69,4 +69,5 @@ define(['jquery', 'jQueryKit'],  function ($) {
     });
 
     return DataScope;
+
 });

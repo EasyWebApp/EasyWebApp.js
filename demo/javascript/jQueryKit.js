@@ -552,34 +552,38 @@ var utility_ext_string = (function ($) {
 
 /* ---------- DOM ShortCut ---------- */
 
-    var iGetter = {
-            firstElementChild:         function () {
-                return this.children[0];
-            },
-            lastElementChild:          function () {
+    var DOM_Proto = Element.prototype,
+        Text_Proto = Object.getPrototypeOf( DOM.createTextNode('') );
 
-                return  this.children[this.children.length - 1];
-            },
-            previousElementSibling:    function () {
-
-                return  $.trace(this,  'previousSibling',  1,  function () {
-
-                    return  (this.nodeType == 1);
-                })[0];
-            },
-            nextElementSibling:        function () {
-
-                return  $.trace(this,  'nextSibling',  function () {
-
-                    return  (this.nodeType == 1);
-                })[0];
-            }
+    $.each({
+        firstElementChild:         function () {
+            return this.children[0];
         },
-        DOM_Proto = Element.prototype;
+        lastElementChild:          function () {
 
-    for (var iName in iGetter)
-        Object.defineProperty(DOM_Proto,  iName,  {get: iGetter[iName]});
+            return  this.children[this.children.length - 1];
+        },
+        previousElementSibling:    function () {
 
+            return  $.trace(this,  'previousSibling',  1,  function () {
+
+                return  (this.nodeType == 1);
+            })[0];
+        },
+        nextElementSibling:        function () {
+
+            return  $.trace(this,  'nextSibling',  function () {
+
+                return  (this.nodeType == 1);
+            })[0];
+        }
+    },  function (key) {
+
+        Object.defineProperty(DOM_Proto,  key,  {get: this});
+
+        if (key.indexOf('Sibling') > 0)
+            Object.defineProperty(Text_Proto,  key,  {get: this});
+    });
 
 /* ---------- DOM Text Content ---------- */
 
@@ -893,6 +897,8 @@ var utility_ext_string = (function ($) {
         var _This_ = this;
 
         arguments[0].replace(/([^\?&=]+)=([^&]+)/g,  function (_, key, value) {
+
+            try {  value = decodeURIComponent( value );  } catch (error) { }
 
             _This_.append(key, value);
         });
@@ -1387,7 +1393,7 @@ var utility_ext_string = (function ($) {
         },
         data:    function (iDOM, Index, iMatch) {
 
-            return  Boolean($.data(iDOM, iMatch[3]));
+            return  Boolean($( iDOM ).data( iMatch[3] ));
         }
     });
 
@@ -1915,8 +1921,6 @@ var AJAX_ext_URL = (function ($) {
                 )).entries()
             ),
             function () {
-                this[1] = decodeURIComponent( this[1] );
-
                 if (
                     (! $.isNumeric(this[1]))  ||
                     Number.isSafeInteger( +this[1] )
@@ -2283,17 +2287,55 @@ var AJAX_ext_URL = (function ($) {
 
     function FormData() {
 
-        this.ownerNode = arguments[0];
+        this.ownerNode = arguments[0] ||
+            $('<form style="display: none" />').appendTo( document.body )[0];
+    }
+
+    function itemOf() {
+
+        return  $('[name="' + arguments[0] + '"]:field',  this.ownerNode);
     }
 
     $.extend(FormData.prototype, {
-        append:      function () {
+        append:      function (name, value) {
 
-            this[ arguments[0] ] = arguments[1];
+            $('<input />', {
+                type:     'hidden',
+                name:     name,
+                value:    value
+            }).appendTo( this.ownerNode );
+        },
+        delete:      function (name) {
+
+            itemOf.call(this, name).remove();
+        },
+        set:         function (name, value) {
+
+            this.delete( name );    this.append(name, value);
+        },
+        get:         function (name) {
+
+            return  itemOf.call(this, name).val();
+        },
+        getAll:      function (name) {
+
+            return  $.map(itemOf.call(this, name),  function () {
+
+                return arguments[0].value;
+            });
         },
         toString:    function () {
 
             return  $( this.ownerNode ).serialize();
+        },
+        entries:     function () {
+
+            return $.makeIterator(Array.from(
+                $( this.ownerNode ).serializeArray(),  function (_This_) {
+
+                    return  [_This_.name, _This_.value];
+                }
+            ));
         }
     });
 

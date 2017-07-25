@@ -10,7 +10,7 @@
     "node": "^5.0.0"
   },
   "scripts": {
-    "bundle": "cd source  &&  amd-bundle ../EasyWebApp.js",
+    "bundle": "cd source  &&  amd-bundle ../EasyWebApp.js -e jquery,jQueryKit",
     "compress": "uglifyjs EasyWebApp.js -o build/EasyWebApp.min.js --config-file build/compress.json",
     "build": "npm run bundle  &&  npm run compress",
     "test": "echo \"Error: no test specified\" && exit 1"

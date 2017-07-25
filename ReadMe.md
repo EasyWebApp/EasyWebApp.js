@@ -210,10 +210,21 @@ $().iWebApp().on({
 ### （三）实用方法
 
  - 获取 **页面路由原文**：`WebApp.prototype.getRoute()`
+
    - 为防止某些 URL 解析库欠考虑，EWA 路由做了一次 Base64 编码
+
+ - 修改 **路由初始数据**：`WebApp.prototype.setURLData(key, value)`
+
+   - 调用时可只传一个数据对象
+
+   - 每次调用都生成一条新浏览历史
+
  - **页面浏览历史** 导航：`WebApp.prototype.loadPage( iStep )`
+
    - 不传参时刷新当前页
+
    - 传参时，参数与 `window.history.go()` 的用法一致
+
    - 页面切换后会重新加载，并解决本方法返回的 Promise 对象
 
 

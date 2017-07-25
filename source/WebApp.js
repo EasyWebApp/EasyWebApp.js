@@ -1,5 +1,7 @@
 define([
-    'jquery', 'Observer', 'View', 'HTMLView', 'ListView', 'InnerLink'
+    'jquery', './base/Observer',
+    './view/View', './view/HTMLView', './view/ListView',
+    './InnerLink'
 ],  function ($, Observer, View, HTMLView, ListView, InnerLink) {
 
     function WebApp(Page_Box, API_Root) {
@@ -33,8 +35,8 @@ define([
         HTMLView:    HTMLView,
         ListView:    ListView
     }, {
-        splice:       Array.prototype.splice,
-        switchTo:     function (Index) {
+        splice:           Array.prototype.splice,
+        switchTo:         function (Index) {
 
             if (this.lastPage == Index)  return;
 
@@ -48,13 +50,13 @@ define([
 
             return  iPage && iPage.attach();
         },
-        setRoute:     function (iLink) {
+        setRoute:         function (iLink) {
 
             this.switchTo();
 
-            var iLast = this[ this.lastPage ],  iURI = iLink.getURI();
+            var iLast = this[ this.lastPage ],  iURI = iLink + '';
 
-            if (iLast  &&  (iLast.getURI()  ==  iURI))  return;
+            if (iLast  &&  (iLast == iURI))  return;
 
             if (++this.lastPage != this.length)
                 this.splice(this.lastPage, Infinity);
@@ -66,16 +68,43 @@ define([
             );
             this[ this.length++ ] = iLink;
         },
-        getRoute:     function () {
+        getRoute:         function () {
             return self.atob(
                 (self.location.hash.match(/^\#!(.+)/) || '')[1]  ||  ''
             );
         },
-        getCID:       function () {
+        getCID:           function () {
             return  arguments[0].replace(this.pageRoot, '')
                 .replace(/\.\w+(\?.*)?/i, '.html');
         },
-        _emit:        function (iType, iLink, iData) {
+        setURLData:       function (key, value) {
+
+            var URL = this.getRoute().split(/&?data=/);
+
+            if (typeof key === 'string') {
+
+                var name = key;  key = { };
+
+                key[ name ] = value;
+            }
+
+            if (!  $.isEqual(key,  $.intersect(key, $.paramJSON( URL[0] ))))
+                self.history.pushState(
+                    {
+                        index:    this.lastPage,
+                        data:     key
+                    },
+                    document.title,
+                    '#!' + self.btoa(
+                        $.extendURL(URL[0], key)  +  (
+                            URL[1]  ?  ('&data=' + URL[1])  :  ''
+                        )
+                    )
+                );
+
+            return this;
+        },
+        _emit:            function (iType, iLink, iData) {
 
             return this.emit(
                 $.extend(iLink.valueOf(), {
@@ -86,7 +115,7 @@ define([
                 iData
             );
         },
-        loadView:     function (iLink, iHTML) {
+        loadView:         function (iLink, iHTML) {
 
             var $_Target = iLink.$_View;
 
@@ -151,7 +180,7 @@ define([
                 ));
             }).then(function () {  return iView;  });
         },
-        load:         function (iLink) {
+        load:             function (iLink) {
 
             if (iLink instanceof Element)
                 iLink = new InnerLink( iLink );
@@ -186,7 +215,7 @@ define([
                 if (iView instanceof View)  _This_._emit('ready', iLink, iView);
             });
         },
-        listenDOM:    function () {
+        listenDOM:        function () {
             var _This_ = this;
 
             $('html').on('input change',  ':field',  $.throttle(function () {
@@ -198,7 +227,15 @@ define([
                         this.name || this.getAttribute('name'),
                         ('value' in this)  ?  this.value  :  this.innerHTML
                     );
-            })).on('click submit',  InnerLink.HTML_Link,  function (iEvent) {
+            })).on('reset',  'form',  function () {
+
+                var data = $.paramJSON('?'  +  $( this ).serialize());
+
+                for (var key in data)  data[ key ] = '';
+
+                View.instanceOf( this ).render( data );
+
+            }).on('click submit',  InnerLink.HTML_Link,  function (iEvent) {
                 if (
                     ((this.tagName == 'FORM')  &&  (iEvent.type != 'submit'))  ||
                     ((this.target || '_self')  !=  '_self')
@@ -217,27 +254,33 @@ define([
 
             return this;
         },
-        listenBOM:    function () {
+        listenBOM:        function () {
+
             var _This_ = this;
 
-            $(self).on('popstate',  function () {
+            $( self ).on('popstate',  function () {
 
-                var Index = (arguments[0].originalEvent.state || '').index;
+                var state = this.history.state || '';
 
-                if (_This_[Index]  &&  (_This_.lastPage != Index))
+                if (! _This_[ state.index ])  return;
+
+                if (_This_.lastPage !== state.index)
                     Promise.resolve(
-                        _This_.switchTo( Index )  ||  _This_.load( _This_[Index] )
+                        _This_.switchTo( state.index )  ||
+                        _This_.load( _This_[ state.index ] )
                     ).then(function () {
 
-                        _This_.lastPage = Index;
+                        _This_.lastPage = state.index;
 
-                        document.title = _This_[Index].title;
+                        document.title = _This_[ state.index ].title;
                     });
+                else if ( state.data )
+                    _This_.$_View.view().render( state.data );
             });
 
             return this;
         },
-        boot:         function () {
+        boot:             function () {
             var _This_ = this;
 
             return Promise.all($.map(

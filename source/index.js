@@ -2,7 +2,7 @@
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v4.0  (2017-07-14)  Beta
+//      [Version]    v4.0  (2017-07-25)  Beta
 //
 //      [Require]    iQuery  ||  jQuery with jQueryKit
 //
@@ -14,7 +14,7 @@
 //
 
 
-define(['jquery', 'WebApp'],  function ($, WebApp) {
+define(['jquery', './WebApp'],  function ($, WebApp) {
 
 /* ---------- AMD based Component API ---------- */
 
@@ -45,16 +45,16 @@ define(['jquery', 'WebApp'],  function ($, WebApp) {
             return this;
         },
         loadPage:     function (iURI) {
-            var _This_ = this;
+            return (
+                (! iURI)  ?  Promise.resolve('')  :  new Promise(function () {
 
-            return  (! iURI)  ?  Promise.resolve('')  :  (new Promise(function () {
+                    $( self ).one('popstate', arguments[0])[0].history.go( iURI );
+                })
+            ).then((function () {
 
-                $( self ).one('popstate', arguments[0])[0].history.go( iURI );
+                return  this.load( this[this.lastPage] );
 
-            })).then(function () {
-
-                return  _This_.load( _This_[_This_.lastPage] );
-            });
+            }).bind( this ));
         }
     });
 
@@ -70,4 +70,5 @@ define(['jquery', 'WebApp'],  function ($, WebApp) {
     };
 
     return  $.fn.iWebApp = WebApp;
+
 });

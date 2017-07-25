@@ -1,4 +1,4 @@
-define(['jquery', 'View', 'HTMLView'],  function ($, View, HTMLView) {
+define(['jquery', './View', './HTMLView'],  function ($, View, HTMLView) {
 
     function ListView() {
 

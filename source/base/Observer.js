@@ -154,4 +154,5 @@ define(['jquery', 'jQueryKit'],  function ($) {
     });
 
     return Observer;
+
 });

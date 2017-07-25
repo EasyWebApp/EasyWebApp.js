@@ -1,4 +1,4 @@
-define(['jquery', 'Observer', 'jQueryKit'],  function ($, Observer) {
+define(['jquery', './base/Observer', 'jQueryKit'],  function ($, Observer) {
 
     function InnerLink(Link_DOM) {
 
@@ -65,7 +65,7 @@ define(['jquery', 'Observer', 'jQueryKit'],  function ($, Observer) {
 
             return this;
         },
-        getURI:      function () {
+        toString:    function () {
 
             var iData = [$.param( this.data )];
 
