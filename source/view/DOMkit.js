@@ -5,6 +5,24 @@ define([
     var Link_Name = $.makeSet('a', 'area', 'form');
 
     return {
+        cssRule:      function cssRule(sheet) {
+
+            var rule = { };
+
+            $.each(sheet.cssRules,  function () {
+
+                var _rule_ = rule[ this.selectorText ] = { };
+
+                if ( this.cssRules )
+                    return  rule[ this.selectorText ]  =  cssRule( this );
+
+                for (var i = 0;  this.style[i];  i++)
+                    _rule_[ this.style[i] ] =
+                        this.style.getPropertyValue( this.style[i] );
+            });
+
+            return rule;
+        },
         fixScript:    function (iDOM) {
             var iAttr = { };
 

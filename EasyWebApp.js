@@ -525,63 +525,44 @@ var view_View = (function ($, Observer, DataScope, RenderNode) {
 
             return this;
         },
-        filter:        function (Sub_View, iDOM) {
-            var iView;
-
-            if ( iDOM.dataset.href ) {
-
-                this.__child__.push( iDOM );
-
-                return NodeFilter.FILTER_REJECT;
-
-            } else if (
-                iDOM.dataset.name  ||
-                (iView = View.instanceOf(iDOM, false))
-            ) {
-                Sub_View.push(iView  ||  View.getSub( iDOM ));
-
-                return NodeFilter.FILTER_REJECT;
-            } else if (
-                (iDOM.parentNode == document.head)  &&
-                (iDOM.tagName.toLowerCase() != 'title')
-            )
-                return NodeFilter.FILTER_REJECT;
-
-            return NodeFilter.FILTER_ACCEPT;
-        },
         scan:          function (iParser) {
-            var Sub_View = [ ];
 
-            var iFilter = {acceptNode:  this.filter.bind(this, Sub_View)};
+            var Sub_View = [ ],  iPointer;
 
-            var iSearcher = document.createTreeWalker(
-                    this.$_View[0],
-                    1,
-                    ($.browser.msie < 12)  ?  iFilter.acceptNode  :  iFilter,
-                    true
-                );
+            var iSearcher = this.$_View.treeWalker(1,  (function (iDOM) {
 
-            iParser.call(this, this.$_View[0]);
+                    var iView;
 
-            var iPointer,  iNew,  iOld;
+                    if (this.$_View[0] !== iDOM) {
 
-            while (iPointer = iPointer || iSearcher.nextNode()) {
+                        if ( iDOM.dataset.href ) {
 
-                iNew = iParser.call(this, iPointer);
+                            this.__child__.push( iDOM );
 
-                if (iNew == iPointer) {
-                    iPointer = null;
-                    continue;
-                }
+                            return null;
 
-                $( iNew ).insertTo(iPointer.parentNode,  $( iPointer ).index() + 1);
+                        } else if (
+                            iDOM.dataset.name  ||
+                            (iView = View.instanceOf(iDOM, false))
+                        ) {
+                            Sub_View.push(iView  ||  View.getSub( iDOM ));
 
-                iOld = iPointer;
+                            return null;
 
-                iPointer = iSearcher.nextNode();
+                        } else if (
+                            (iDOM.parentNode == document.head)  &&
+                            (iDOM.tagName.toLowerCase() != 'title')
+                        )
+                            return null;
+                    }
 
-                $( iOld ).remove();
-            }
+                    return  iParser.call(this, iDOM);
+
+                }).bind( this ));
+
+            while (iPointer = iSearcher.next().value)
+                if (iPointer.tagName.toLowerCase() === 'slot')
+                    iPointer.parentNode.removeChild( iPointer );
 
             for (var i = 0;  this.__child__[i];  i++)
                 iParser.call(this,  View.setEvent( this.__child__[i] ));
@@ -765,6 +746,24 @@ var view_DOMkit = (function ($, RenderNode, InnerLink) {
     var Link_Name = $.makeSet('a', 'area', 'form');
 
     return {
+        cssRule:      function cssRule(sheet) {
+
+            var rule = { };
+
+            $.each(sheet.cssRules,  function () {
+
+                var _rule_ = rule[ this.selectorText ] = { };
+
+                if ( this.cssRules )
+                    return  rule[ this.selectorText ]  =  cssRule( this );
+
+                for (var i = 0;  this.style[i];  i++)
+                    _rule_[ this.style[i] ] =
+                        this.style.getPropertyValue( this.style[i] );
+            });
+
+            return rule;
+        },
         fixScript:    function (iDOM) {
             var iAttr = { };
 
@@ -837,12 +836,6 @@ var view_HTMLView = (function ($, View, DOMkit, RenderNode) {
         $.extend(this, {
             length:     0,
             __map__:    { },
-        }).on('attach',  function () {
-
-            this.$_View.find('style, link[rel="stylesheet"]').each(function () {
-
-                View.instanceOf( this ).fixStyle( this );
-            });
         });
     }
 
@@ -866,28 +859,16 @@ var view_HTMLView = (function ($, View, DOMkit, RenderNode) {
         },
         fixStyle:      function (iDOM) {
 
-            var iTag = iDOM.tagName.toLowerCase();
+            this.$_View.cssRule(DOMkit.cssRule( iDOM.sheet ),  function () {
 
-            if ((iTag == 'link')  &&  (! iDOM.sheet))
-                return  iDOM.onload = arguments.callee.bind(this, iDOM);
+                iDOM = arguments[0].ownerNode;
+            });
 
-            var CSS_Rule = $.map(iDOM.sheet.cssRules,  function (iRule) {
-
-                    switch ( iRule.type ) {
-                        case 1:    return  iRule;
-                        case 4:    return  Array.apply(null, iRule.cssRules);
-                    }
-                });
-
-            for (var i = 0;  CSS_Rule[i];  i++)
-                if (CSS_Rule[i].selectorText.indexOf('#') < 0)
-                    CSS_Rule[i].selectorText = '#' + this.__id__ + ' ' +
-                        CSS_Rule[i].selectorText;
-
-            if (iTag == 'style')  iDOM.disabled = false;
+            return iDOM;
         },
         fixDOM:        function (iDOM) {
-            var iKey = 'src';
+
+            var iKey = 'src',  _This_ = this;
 
             switch ( iDOM.tagName.toLowerCase() ) {
                 case 'link':      {
@@ -895,8 +876,14 @@ var view_HTMLView = (function ($, View, DOMkit, RenderNode) {
                         return iDOM;
 
                     iKey = 'href';
+
+                    iDOM.onload = function () {
+
+                        $( this ).replaceWith( _This_.fixStyle( this ) );
+                    };
+                    break;
                 }
-                case 'style':     this.fixStyle( iDOM );    break;
+                case 'style':     iDOM = this.fixStyle( iDOM );    break;
                 case 'script':    iDOM = DOMkit.fixScript( iDOM );    break;
                 case 'img':       ;
                 case 'iframe':    ;
@@ -965,23 +952,16 @@ var view_HTMLView = (function ($, View, DOMkit, RenderNode) {
                 this.$_View[0].innerHTML = iTemplate;
             }
 
-            this.scan(function (iNode) {
+            this.scan(function iParser(iNode) {
 
                 if (iNode instanceof Element) {
 
                     if (iNode.tagName.toLowerCase() == 'slot')
                         return $.map(
-                            this.parseSlot( iNode ),  arguments.callee.bind( this )
+                            this.parseSlot( iNode ),  iParser.bind( this )
                         );
 
-                    if (
-                        (iNode != this.$_View[0])  &&
-                        (iNode.outerHTML != this.lastParsed)
-                    ) {
-                        iNode = this.fixDOM( iNode );
-
-                        this.lastParsed = iNode.outerHTML;
-                    }
+                    if (iNode != this.$_View[0])  iNode = this.fixDOM( iNode );
                 }
 
                 switch (true) {
@@ -1222,37 +1202,6 @@ var WebApp = (function ($, Observer, View, HTMLView, ListView, InnerLink) {
                 (self.location.hash.match(/^\#!(.+)/) || '')[1]  ||  ''
             );
         },
-        getCID:           function () {
-            return  arguments[0].replace(this.pageRoot, '')
-                .replace(/\.\w+(\?.*)?/i, '.html');
-        },
-        setURLData:       function (key, value) {
-
-            var URL = this.getRoute().split(/&?data=/);
-
-            if (typeof key === 'string') {
-
-                var name = key;  key = { };
-
-                key[ name ] = value;
-            }
-
-            if (!  $.isEqual(key,  $.intersect(key, $.paramJSON( URL[0] ))))
-                self.history.pushState(
-                    {
-                        index:    this.lastPage,
-                        data:     key
-                    },
-                    document.title,
-                    '#!' + self.btoa(
-                        $.extendURL(URL[0], key)  +  (
-                            URL[1]  ?  ('&data=' + URL[1])  :  ''
-                        )
-                    )
-                );
-
-            return this;
-        },
         _emit:            function (iType, iLink, iData) {
 
             return this.emit(
@@ -1457,7 +1406,7 @@ var WebApp = (function ($, Observer, View, HTMLView, ListView, InnerLink) {
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v4.0  (2017-07-25)  Beta
+//      [Version]    v4.0  (2017-07-27)  Beta
 //
 //      [Require]    iQuery  ||  jQuery with jQueryKit
 //
@@ -1493,13 +1442,18 @@ return  (function ($, WebApp) {
 
 
     $.extend(WebApp.fn = WebApp.prototype,  {
-        component:    function (iFactory) {
+        getCID:        function () {
+
+            return  arguments[0].replace(this.pageRoot, '')
+                .replace(/\.\w+(\?.*)?/i, '.html');
+        },
+        component:     function (iFactory) {
 
             if ( this.loading[_CID_] )  this.loading[_CID_].emit('load', iFactory);
 
             return this;
         },
-        loadPage:     function (iURI) {
+        loadPage:      function (iURI) {
             return (
                 (! iURI)  ?  Promise.resolve('')  :  new Promise(function () {
 
@@ -1510,6 +1464,33 @@ return  (function ($, WebApp) {
                 return  this.load( this[this.lastPage] );
 
             }).bind( this ));
+        },
+        setURLData:    function (key, value) {
+
+            var URL = this.getRoute().split(/&?data=/);
+
+            if (typeof key === 'string') {
+
+                var name = key;  key = { };
+
+                key[ name ] = value;
+            }
+
+            if (!  $.isEqual(key,  $.intersect(key, $.paramJSON( URL[0] ))))
+                self.history.pushState(
+                    {
+                        index:    this.lastPage,
+                        data:     key
+                    },
+                    document.title,
+                    '#!' + self.btoa(
+                        $.extendURL(URL[0], key)  +  (
+                            URL[1]  ?  ('&data=' + URL[1])  :  ''
+                        )
+                    )
+                );
+
+            return this;
         }
     });
 

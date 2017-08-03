@@ -73,37 +73,6 @@ define([
                 (self.location.hash.match(/^\#!(.+)/) || '')[1]  ||  ''
             );
         },
-        getCID:           function () {
-            return  arguments[0].replace(this.pageRoot, '')
-                .replace(/\.\w+(\?.*)?/i, '.html');
-        },
-        setURLData:       function (key, value) {
-
-            var URL = this.getRoute().split(/&?data=/);
-
-            if (typeof key === 'string') {
-
-                var name = key;  key = { };
-
-                key[ name ] = value;
-            }
-
-            if (!  $.isEqual(key,  $.intersect(key, $.paramJSON( URL[0] ))))
-                self.history.pushState(
-                    {
-                        index:    this.lastPage,
-                        data:     key
-                    },
-                    document.title,
-                    '#!' + self.btoa(
-                        $.extendURL(URL[0], key)  +  (
-                            URL[1]  ?  ('&data=' + URL[1])  :  ''
-                        )
-                    )
-                );
-
-            return this;
-        },
         _emit:            function (iType, iLink, iData) {
 
             return this.emit(

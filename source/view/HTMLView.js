@@ -11,12 +11,6 @@ define([
         $.extend(this, {
             length:     0,
             __map__:    { },
-        }).on('attach',  function () {
-
-            this.$_View.find('style, link[rel="stylesheet"]').each(function () {
-
-                View.instanceOf( this ).fixStyle( this );
-            });
         });
     }
 
@@ -40,28 +34,16 @@ define([
         },
         fixStyle:      function (iDOM) {
 
-            var iTag = iDOM.tagName.toLowerCase();
+            this.$_View.cssRule(DOMkit.cssRule( iDOM.sheet ),  function () {
 
-            if ((iTag == 'link')  &&  (! iDOM.sheet))
-                return  iDOM.onload = arguments.callee.bind(this, iDOM);
+                iDOM = arguments[0].ownerNode;
+            });
 
-            var CSS_Rule = $.map(iDOM.sheet.cssRules,  function (iRule) {
-
-                    switch ( iRule.type ) {
-                        case 1:    return  iRule;
-                        case 4:    return  Array.apply(null, iRule.cssRules);
-                    }
-                });
-
-            for (var i = 0;  CSS_Rule[i];  i++)
-                if (CSS_Rule[i].selectorText.indexOf('#') < 0)
-                    CSS_Rule[i].selectorText = '#' + this.__id__ + ' ' +
-                        CSS_Rule[i].selectorText;
-
-            if (iTag == 'style')  iDOM.disabled = false;
+            return iDOM;
         },
         fixDOM:        function (iDOM) {
-            var iKey = 'src';
+
+            var iKey = 'src',  _This_ = this;
 
             switch ( iDOM.tagName.toLowerCase() ) {
                 case 'link':      {
@@ -69,8 +51,14 @@ define([
                         return iDOM;
 
                     iKey = 'href';
+
+                    iDOM.onload = function () {
+
+                        $( this ).replaceWith( _This_.fixStyle( this ) );
+                    };
+                    break;
                 }
-                case 'style':     this.fixStyle( iDOM );    break;
+                case 'style':     iDOM = this.fixStyle( iDOM );    break;
                 case 'script':    iDOM = DOMkit.fixScript( iDOM );    break;
                 case 'img':       ;
                 case 'iframe':    ;
@@ -139,23 +127,16 @@ define([
                 this.$_View[0].innerHTML = iTemplate;
             }
 
-            this.scan(function (iNode) {
+            this.scan(function iParser(iNode) {
 
                 if (iNode instanceof Element) {
 
                     if (iNode.tagName.toLowerCase() == 'slot')
                         return $.map(
-                            this.parseSlot( iNode ),  arguments.callee.bind( this )
+                            this.parseSlot( iNode ),  iParser.bind( this )
                         );
 
-                    if (
-                        (iNode != this.$_View[0])  &&
-                        (iNode.outerHTML != this.lastParsed)
-                    ) {
-                        iNode = this.fixDOM( iNode );
-
-                        this.lastParsed = iNode.outerHTML;
-                    }
+                    if (iNode != this.$_View[0])  iNode = this.fixDOM( iNode );
                 }
 
                 switch (true) {

@@ -2,7 +2,7 @@
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v4.0  (2017-07-25)  Beta
+//      [Version]    v4.0  (2017-08-03)  Beta
 //
 //      [Require]    iQuery  ||  jQuery with jQueryKit
 //
@@ -38,13 +38,18 @@ define(['jquery', './WebApp'],  function ($, WebApp) {
 
 
     $.extend(WebApp.fn = WebApp.prototype,  {
-        component:    function (iFactory) {
+        getCID:        function () {
+
+            return  arguments[0].replace(this.pageRoot, '')
+                .replace(/\.\w+(\?.*)?/i, '.html');
+        },
+        component:     function (iFactory) {
 
             if ( this.loading[_CID_] )  this.loading[_CID_].emit('load', iFactory);
 
             return this;
         },
-        loadPage:     function (iURI) {
+        loadPage:      function (iURI) {
             return (
                 (! iURI)  ?  Promise.resolve('')  :  new Promise(function () {
 
@@ -55,6 +60,33 @@ define(['jquery', './WebApp'],  function ($, WebApp) {
                 return  this.load( this[this.lastPage] );
 
             }).bind( this ));
+        },
+        setURLData:    function (key, value) {
+
+            var URL = this.getRoute().split(/&?data=/);
+
+            if (typeof key === 'string') {
+
+                var name = key;  key = { };
+
+                key[ name ] = value;
+            }
+
+            if (!  $.isEqual(key,  $.intersect(key, $.paramJSON( URL[0] ))))
+                self.history.pushState(
+                    {
+                        index:    this.lastPage,
+                        data:     key
+                    },
+                    document.title,
+                    '#!' + self.btoa(
+                        $.extendURL(URL[0], key)  +  (
+                            URL[1]  ?  ('&data=' + URL[1])  :  ''
+                        )
+                    )
+                );
+
+            return this;
         }
     });
 

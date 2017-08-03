@@ -369,7 +369,7 @@ var object_ext_base = (function ($) {
 })(jquery);
 
 
-(function ($) {
+var utility_ext_timer = (function ($) {
 
     var _Timer_ = { };
 
@@ -432,6 +432,24 @@ var object_ext_base = (function ($) {
                 (Date.now() + Math.random()).toString(36)
                     .replace('.', '').toUpperCase();
         }
+    });
+})(jquery);
+
+
+var CSS_ext_var = (function ($) {
+
+    return  $.extend(true, {
+        fn:       {uniqueId:  function () {
+
+            return  $.each(this,  function () {
+
+                if (! this.id)  this.id = $.uuid('iQuery');
+            })
+        }},
+        cssPX:    $.makeSet(
+            'width', 'height', 'padding', 'border-radius', 'margin',
+            'top', 'right', 'bottom',  'left'
+        )
     });
 })(jquery);
 
@@ -1843,19 +1861,31 @@ var event_ext_base = (function ($, Observer) {
                     _This_ = (_This_.parentNode != _Root_)  &&  _This_.parentNode;
                 }
             },
+            replace:    function (iNew) {
+
+                iNew = $.buildFragment(
+                    (iNew instanceof Element)  ?
+                        [ iNew ]  :  $.makeArray( iNew )
+                );
+
+                if (! iNew.childNodes[0])  return;
+
+                _This_.parentNode.replaceChild(
+                    [iNew,  iNew = iNew.childNodes[0]][0],  _This_
+                );
+
+                _This_ = iNew;
+            },
             next:       function () {
 
                 if (! _This_)  return  {done: true};
 
                 var iNew = filter  &&  filter.call(_Root_, _This_);
 
-                if (iNew  &&  (iNew != _This_)  &&  _This_.parentNode) {
-
-                    _This_.parentNode.replaceChild(iNew, _This_);
-
-                    _This_ = iNew;
-
-                } else if (iNew === false)  this.forward();
+                if (iNew  &&  (iNew != _This_)  &&  _This_.parentNode)
+                    this.replace( iNew );
+                else if (iNew === false)
+                    this.forward();
 
                 if (! _This_)  return  {done: true};
 
@@ -2896,8 +2926,7 @@ var AJAX_ext_HTML_Request = (function ($) {
         return  $.map(arguments[1].split( /\s*,\s*/ ),  function (_This_) {
 
             return  /[\s>\+~]?#/.test(_This_)  ?
-                _This_ :
-                '#' + _ID_ +  (/^\w/.test(_This_) ? ' ' : '')  +  _This_;
+                _This_  :  ('#'  +  _ID_  +  ' '  +  _This_);
 
         }).join(',  ');
     }
@@ -2930,13 +2959,15 @@ var AJAX_ext_HTML_Request = (function ($) {
             var _Rule_ = { };
 
             for (var iSelector in iRule)
-                _Rule_[Scope_Selector( this.id )] = iRule[ iSelector ];
+                _Rule_[Scope_Selector(this.id, iSelector)] = iRule[ iSelector ];
 
-            _Rule_ = $(
-                'style, link[rel="stylesheet"]',
-                (this.nodeName.toLowerCase() in Global_Style)  ?
-                    document.head  :  this
-            ).after( $.cssRule(_Rule_) );
+            _Rule_ = $( $.cssRule(_Rule_) ).insertAfter(
+                $(
+                    'style, link[rel="stylesheet"]',
+                    (this.nodeName.toLowerCase() in Global_Style)  ?
+                        document.head  :  this
+                ).slice( -1 )
+            )[0];
 
             if (typeof iCallback === 'function')
                 iCallback.call(this,  _Rule_.sheet || _Rule_.styleSheet);

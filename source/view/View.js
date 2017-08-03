@@ -172,63 +172,44 @@ define([
 
             return this;
         },
-        filter:        function (Sub_View, iDOM) {
-            var iView;
-
-            if ( iDOM.dataset.href ) {
-
-                this.__child__.push( iDOM );
-
-                return NodeFilter.FILTER_REJECT;
-
-            } else if (
-                iDOM.dataset.name  ||
-                (iView = View.instanceOf(iDOM, false))
-            ) {
-                Sub_View.push(iView  ||  View.getSub( iDOM ));
-
-                return NodeFilter.FILTER_REJECT;
-            } else if (
-                (iDOM.parentNode == document.head)  &&
-                (iDOM.tagName.toLowerCase() != 'title')
-            )
-                return NodeFilter.FILTER_REJECT;
-
-            return NodeFilter.FILTER_ACCEPT;
-        },
         scan:          function (iParser) {
-            var Sub_View = [ ];
 
-            var iFilter = {acceptNode:  this.filter.bind(this, Sub_View)};
+            var Sub_View = [ ],  iPointer;
 
-            var iSearcher = document.createTreeWalker(
-                    this.$_View[0],
-                    1,
-                    ($.browser.msie < 12)  ?  iFilter.acceptNode  :  iFilter,
-                    true
-                );
+            var iSearcher = this.$_View.treeWalker(1,  (function (iDOM) {
 
-            iParser.call(this, this.$_View[0]);
+                    var iView;
 
-            var iPointer,  iNew,  iOld;
+                    if (this.$_View[0] !== iDOM) {
 
-            while (iPointer = iPointer || iSearcher.nextNode()) {
+                        if ( iDOM.dataset.href ) {
 
-                iNew = iParser.call(this, iPointer);
+                            this.__child__.push( iDOM );
 
-                if (iNew == iPointer) {
-                    iPointer = null;
-                    continue;
-                }
+                            return null;
 
-                $( iNew ).insertTo(iPointer.parentNode,  $( iPointer ).index() + 1);
+                        } else if (
+                            iDOM.dataset.name  ||
+                            (iView = View.instanceOf(iDOM, false))
+                        ) {
+                            Sub_View.push(iView  ||  View.getSub( iDOM ));
 
-                iOld = iPointer;
+                            return null;
 
-                iPointer = iSearcher.nextNode();
+                        } else if (
+                            (iDOM.parentNode == document.head)  &&
+                            (iDOM.tagName.toLowerCase() != 'title')
+                        )
+                            return null;
+                    }
 
-                $( iOld ).remove();
-            }
+                    return  iParser.call(this, iDOM);
+
+                }).bind( this ));
+
+            while (iPointer = iSearcher.next().value)
+                if (iPointer.tagName.toLowerCase() === 'slot')
+                    iPointer.parentNode.removeChild( iPointer );
 
             for (var i = 0;  this.__child__[i];  i++)
                 iParser.call(this,  View.setEvent( this.__child__[i] ));
