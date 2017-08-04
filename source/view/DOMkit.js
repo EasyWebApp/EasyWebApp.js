@@ -2,7 +2,14 @@ define([
     'jquery', './RenderNode', '../InnerLink', 'jQueryKit'
 ],  function ($, RenderNode, InnerLink) {
 
-    var Link_Name = $.makeSet('a', 'area', 'form');
+    var Invalid_Style = $.makeSet('inherit', 'initial'),
+        URL_DOM = $.extend(
+            $.makeSet(0,  ['script', 'img', 'iframe', 'audio', 'video']),
+            $.makeSet('href',  ['link', 'a', 'area']),
+            {form: 'action',  '[data-href]': 'data-href'}
+        ),
+        Link_Name = $.makeSet('a', 'area', 'form');
+
 
     return {
         cssRule:      function cssRule(sheet) {
@@ -16,9 +23,13 @@ define([
                 if ( this.cssRules )
                     return  rule[ this.selectorText ]  =  cssRule( this );
 
-                for (var i = 0;  this.style[i];  i++)
-                    _rule_[ this.style[i] ] =
-                        this.style.getPropertyValue( this.style[i] );
+                for (var i = 0, value;  this.style[i];  i++) {
+
+                    value = this.style.getPropertyValue( this.style[i] );
+
+                    if (! (value in Invalid_Style))
+                        _rule_[ this.style[i] ] = value;
+                }
             });
 
             return rule;
@@ -34,13 +45,6 @@ define([
             iDOM = $('<script />', iAttr)[0];
 
             return iDOM;
-        },
-        fixLink:      function (iDOM) {
-            if (
-                ((iDOM.target || '_self')  ==  '_self')  &&
-                ($.urlDomain(iDOM.href || iDOM.action)  !=  $.urlDomain())
-            )
-                iDOM.target = '_blank';
         },
         fixURL:       function (iDOM, iKey, iBase) {
 
@@ -66,19 +70,76 @@ define([
             return iURL.join('?');
         },
         prefetch:     function (iDOM, iURL) {
-            if (
-                (iDOM.tagName.toLowerCase() in Link_Name)  &&
-                ((iDOM.target || '_self')  ==  '_self')  &&
-                (! (
-                    iURL.match( RenderNode.expression )  ||
-                    $('head link[href="' + iURL + '"]')[0]
-                ))
-            )
+            if (! (
+                iURL.match( RenderNode.expression )  ||
+                $('head link[href="' + iURL + '"]')[0]
+            ))
                 $('<link />', {
                     rel:     (($.browser.msie < 11)  ||  $.browser.ios)  ?
                         'next'  :  'prefetch',
                     href:    iURL
                 }).appendTo( document.head );
+        },
+        parseSlot:    function (root, $_Root) {
+
+            $_Root.find('slot[name]').each(function () {
+
+                $('[slot="' + this.getAttribute('name') + '"]',  root)
+                    .replaceAll( this );
+            });
+
+            $_Root.find('slot').each(function () {
+
+                if (! arguments[0])
+                    this.parentNode.replaceChild(
+                        $.buildFragment( root.childNodes ),  this
+                    );
+                else
+                    this.parentNode.removeChild( this );
+            });
+        },
+        build:        function (root, base, HTML) {
+
+            var _This_ = this,  $_Root = $('<div />').prop('innerHTML', HTML);
+
+            if ( base.href )
+                base = base.href;
+            else if (base  =  $( root ).parents('[data-href]:view')[0])
+                base = base.dataset.href;
+
+            base = $.filePath( base )  +  '/';
+
+
+            $_Root.find( Object.keys( URL_DOM ) + '' ).each(function () {
+
+                var tag = this.tagName.toLowerCase();
+
+                var innerLink = (tag in Link_Name)  &&  (
+                        (this.target || '_self')  ===  '_self'
+                    );
+
+                if (innerLink  &&  (
+                    $.urlDomain(this.href || this.action)  !==  $.urlDomain()
+                ))
+                    this.target = '_blank';
+
+                var URL = _This_.fixURL(
+                        this,
+                        URL_DOM[ tag ]  ||  (
+                            ('src' in this)  ?  'src'  :  'data-href'
+                        ),
+                        base
+                    );
+
+                if ( innerLink )  _This_.prefetch(this, URL);
+            });
+
+
+            if ( root.childNodes[0] )  this.parseSlot(root, $_Root);
+
+            root.appendChild( $.buildFragment( $_Root.contents() ) );
+
+            return root;
         }
     };
 });

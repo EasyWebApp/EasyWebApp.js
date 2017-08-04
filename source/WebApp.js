@@ -1,8 +1,8 @@
 define([
     'jquery', './base/Observer',
-    './view/View', './view/HTMLView', './view/ListView',
+    './view/View', './view/HTMLView', './view/ListView', './view/DOMkit',
     './InnerLink'
-],  function ($, Observer, View, HTMLView, ListView, InnerLink) {
+],  function ($, Observer, View, HTMLView, ListView, DOMkit, InnerLink) {
 
     function WebApp(Page_Box, API_Root) {
 
@@ -84,6 +84,11 @@ define([
                 iData
             );
         },
+        getCID:           function () {
+
+            return  arguments[0].replace(this.pageRoot, '')
+                .replace(/\.\w+(\?.*)?$/, '.html');
+        },
         loadView:         function (iLink, iHTML) {
 
             var $_Target = iLink.$_View;
@@ -95,24 +100,13 @@ define([
                 $_Target = this.$_View;
             }
 
-            iHTML = this._emit('template', iLink, iHTML);
-
-            var iView = View.getSub( $_Target[0] );
-
-            if (! $_Target.children()[0]) {
-
-                $_Target[0].innerHTML = iHTML;
-
-                iHTML = '';
-            }
-
-            if ( iView.parse )
-                iView.parse(
-                    iLink.href  ?
-                        ($.filePath(iLink.href) + '/')  :
-                        (iView.$_View.parents(':view').view() || '').__base__,
-                    iHTML
+            var iView = View.getSub(
+                    DOMkit.build(
+                        $_Target[0],  iLink,  this._emit('template', iLink, iHTML)
+                    )
                 );
+
+            if ( iView.parse )  iView.parse();
 
             if (! $_Target.find('script[src]:not(head > *)')[0])
                 iLink.emit('load');
@@ -121,7 +115,10 @@ define([
         },
         loadComponent:    function (iLink, iHTML, iData) {
 
-            this.loading[ iLink.href ] = iLink;
+            var CID = this.getCID(
+                    InnerLink.parsePath(this.pageRoot + iLink.href)
+                );
+            this.loading[ CID ] = iLink;
 
             var JS_Load = iLink.one('load');
 
@@ -129,7 +126,7 @@ define([
 
             return  JS_Load.then(function (iFactory) {
 
-                delete _This_.loading[ iLink.href ];
+                delete _This_.loading[ CID ];
 
                 var _Data_ = (iData instanceof Array)  ?  [ ]  :  { };
 

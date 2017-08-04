@@ -2,7 +2,7 @@
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v4.0  (2017-08-03)  Beta
+//      [Version]    v4.0  (2017-08-04)  Beta
 //
 //      [Require]    iQuery  ||  jQuery with jQueryKit
 //
@@ -38,11 +38,6 @@ define(['jquery', './WebApp'],  function ($, WebApp) {
 
 
     $.extend(WebApp.fn = WebApp.prototype,  {
-        getCID:        function () {
-
-            return  arguments[0].replace(this.pageRoot, '')
-                .replace(/\.\w+(\?.*)?/i, '.html');
-        },
         component:     function (iFactory) {
 
             if ( this.loading[_CID_] )  this.loading[_CID_].emit('load', iFactory);

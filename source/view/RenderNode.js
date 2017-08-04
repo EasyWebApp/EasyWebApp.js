@@ -2,14 +2,13 @@ define(['jquery'],  function ($) {
 
     function RenderNode(iNode) {
 
-        this.ownerNode = iNode;
-
-        this.name = iNode.nodeName;
-        this.raw = iNode.nodeValue;
-
-        this.ownerElement = iNode.parentNode || iNode.ownerElement;
-
-        this.hasScope = false;
+        $.extend(this, {
+            ownerNode:       iNode,
+            name:            iNode.nodeName,
+            raw:             iNode.nodeValue,
+            ownerElement:    iNode.parentNode || iNode.ownerElement,
+            type:            0
+        }).scan();
     }
 
     RenderNode.expression = /\$\{([\s\S]+?)\}/g;
@@ -32,7 +31,40 @@ define(['jquery'],  function ($) {
     }
 
     $.extend(RenderNode.prototype, {
-        eval:        function (iContext, iScope) {
+        splice:     Array.prototype.splice,
+        indexOf:    Array.prototype.indexOf,
+        push:       Array.prototype.push,
+        scan:       function () {
+
+            var _This_ = this;
+
+            this.splice(0, Infinity);    this.type = 0;
+
+            this.ownerNode.nodeValue = this.raw.replace(
+                RenderNode.expression,  function (_, expression) {
+
+                    if (/\w+\s*\([\s\S]*?\)/.test( expression ))
+                        _This_.type = _This_.type | 2;
+
+                    expression.replace(
+                        RenderNode.reference,  function (_, scope, key) {
+
+                            _This_.type = _This_.type | (
+                                (scope === 'vm')  ?  4  :  1
+                            );
+
+                            if (_This_.indexOf( key )  <  0)
+                                _This_.push( key );
+                        }
+                    );
+
+                    return '';
+                }
+            );
+
+            return this;
+        },
+        eval:       function (iContext, iScope) {
             var iRefer;
 
             var iText = this.raw.replace(RenderNode.expression,  function () {
@@ -45,27 +77,7 @@ define(['jquery'],  function ($) {
 
             return  (this.raw == iText)  ?  iRefer  :  iText;
         },
-        getRefer:    function () {
-
-            var _This_ = this,  iRefer = { };
-
-            this.ownerNode.nodeValue = this.raw.replace(
-                RenderNode.expression,  function () {
-
-                    arguments[1].replace(RenderNode.reference,  function () {
-
-                        if (arguments[1] == 'vm')  _This_.hasScope = true;
-
-                        iRefer[ arguments[2] ] = 1;
-                    });
-
-                    return '';
-                }
-            );
-
-            return  Object.keys( iRefer );
-        },
-        render:      function (iContext, iScope) {
+        render:     function (iContext, iScope) {
 
             var iValue = this.eval(iContext, iScope),
                 iNode = this.ownerNode,

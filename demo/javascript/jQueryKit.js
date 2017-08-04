@@ -904,7 +904,9 @@ var utility_ext_string = (function ($) {
 
         this.length = 0;
 
-        if (arguments[0] instanceof Array) {
+        var search = arguments[0] || '';
+
+        if (search instanceof Array) {
 
             for (var i = 0;  arguments[i];  i++)
                 this.append.apply(this, arguments[i]);
@@ -914,7 +916,7 @@ var utility_ext_string = (function ($) {
 
         var _This_ = this;
 
-        arguments[0].replace(/([^\?&=]+)=([^&]+)/g,  function (_, key, value) {
+        search.replace(/([^\?&=]+)=([^&]+)/g,  function (_, key, value) {
 
             try {  value = decodeURIComponent( value );  } catch (error) { }
 
@@ -1805,6 +1807,8 @@ var event_ext_base = (function ($, Observer) {
 (function ($) {
 
     $.buildFragment = $.buildFragment  ||  function (iNode) {
+
+        iNode = $.makeArray( iNode );
 
         var iFragment = (arguments[1] || document).createDocumentFragment();
 

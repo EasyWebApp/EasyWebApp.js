@@ -43,14 +43,12 @@ define([
         },
         fixDOM:        function (iDOM) {
 
-            var iKey = 'src',  _This_ = this;
+            var _This_ = this;
 
             switch ( iDOM.tagName.toLowerCase() ) {
                 case 'link':      {
                     if (('rel' in iDOM)  &&  (iDOM.rel != 'stylesheet'))
                         return iDOM;
-
-                    iKey = 'href';
 
                     iDOM.onload = function () {
 
@@ -59,36 +57,27 @@ define([
                     break;
                 }
                 case 'style':     iDOM = this.fixStyle( iDOM );    break;
-                case 'script':    iDOM = DOMkit.fixScript( iDOM );    break;
-                case 'img':       ;
-                case 'iframe':    ;
-                case 'audio':     ;
-                case 'video':     break;
-                case 'a':         ;
-                case 'area':      ;
-                case 'form':      {
-                    iKey = ('href' in iDOM)  ?  'href'  :  'action';
-
-                    DOMkit.fixLink( iDOM );    break;
-                }
-                default:          iKey = 'data-href';
+                case 'script':    iDOM = DOMkit.fixScript( iDOM );
             }
-
-            DOMkit.prefetch(iDOM,  DOMkit.fixURL(iDOM, iKey, this.__base__));
 
             return iDOM;
         },
-        signIn:        function (iNode, iName) {
+        signIn:        function (iNode) {
 
             for (var i = 0;  this[i];  i++)  if (this[i] == iNode)  return;
 
             this[this.length++] = iNode;
+
+            var iName = (iNode instanceof RenderNode)  ?  iNode  :  [
+                    iNode.__name__  ||  iNode.name
+                ];
 
             for (var j = 0;  iName[j];  j++)
                 this.__map__[iName[j]] = (this.__map__[iName[j]] || 0)  +
                     Math.pow(2, i);
         },
         parsePlain:    function (iDOM) {
+
             var _This_ = this;
 
             $.each(
@@ -103,11 +92,9 @@ define([
 
                     var iTemplate = new RenderNode( this );
 
-                    var iName = iTemplate.getRefer();
+                    if (! iTemplate[0])  return;
 
-                    if (! iName[0])  return;
-
-                    _This_.signIn(iTemplate, iName);
+                    _This_.signIn( iTemplate );
 
                     if ((! this.nodeValue)  &&  (this.nodeType == 2)  &&  (
                         ($.propFix[this.nodeName] || this.nodeName)  in
@@ -117,36 +104,21 @@ define([
                 }
             );
         },
-        parse:         function (BaseURL, iTemplate) {
+        parse:         function () {
 
-            this.__base__ = BaseURL;
+            this.scan(function (iNode) {
 
-            if ( iTemplate ) {
-                this.$_Content = this.$_View.children().detach();
-
-                this.$_View[0].innerHTML = iTemplate;
-            }
-
-            this.scan(function iParser(iNode) {
-
-                if (iNode instanceof Element) {
-
-                    if (iNode.tagName.toLowerCase() == 'slot')
-                        return $.map(
-                            this.parseSlot( iNode ),  iParser.bind( this )
-                        );
-
-                    if (iNode != this.$_View[0])  iNode = this.fixDOM( iNode );
-                }
+                if ((iNode instanceof Element)  &&  (iNode !== this.$_View[0]))
+                    iNode = this.fixDOM( iNode );
 
                 switch (true) {
                     case (iNode instanceof View):
-                        this.signIn(iNode, [iNode.__name__]);    break;
+                        this.signIn( iNode );    break;
                     case (
                         $.expr[':'].field( iNode )  &&  (iNode.type != 'file')  &&
                         (! iNode.defaultValue)
                     ):
-                        this.signIn(iNode, [iNode.name]);
+                        this.signIn( iNode );
                     case !(
                         iNode.tagName.toLowerCase() in HTMLView.rawSelector
                     ):
@@ -155,8 +127,6 @@ define([
 
                 return iNode;
             });
-
-            delete this.$_Content;
 
             return this;
         },
@@ -170,7 +140,7 @@ define([
 
             return  $.map(iMask.split('').reverse(),  function (iBit, Index) {
 
-                if ((iBit > 0)  ||  (_This_[Index] || '').hasScope)
+                if ((iBit > 0)  ||  ((_This_[Index] || '').type > 1))
                     return _This_[Index];
             });
         },

@@ -174,7 +174,7 @@ define([
         },
         scan:          function (iParser) {
 
-            var Sub_View = [ ],  iPointer;
+            var Sub_View = [ ];
 
             var iSearcher = this.$_View.treeWalker(1,  (function (iDOM) {
 
@@ -207,9 +207,7 @@ define([
 
                 }).bind( this ));
 
-            while (iPointer = iSearcher.next().value)
-                if (iPointer.tagName.toLowerCase() === 'slot')
-                    iPointer.parentNode.removeChild( iPointer );
+            while (! iSearcher.next().done)  ;
 
             for (var i = 0;  this.__child__[i];  i++)
                 iParser.call(this,  View.setEvent( this.__child__[i] ));
