@@ -37,9 +37,9 @@ define(['jquery', './base/Observer', 'jQueryKit'],  function ($, Observer) {
             do {
                 iPath = iNew || iPath;
 
-                iNew = iPath.replace(/[^\/]+\/\.\.\//g, '');
+                iNew = iPath.replace(/[^\.\/]+\/\.\.\//g, '');
 
-            } while (iNew != iPath);
+            } while (iNew  &&  (iNew !== iPath));
 
             return iNew;
         },

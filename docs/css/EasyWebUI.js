@@ -505,7 +505,7 @@
                 opacity:    0,
                 left:       0,
                 top:        0
-            });
+            }).off('.Dialog');
 
         return  new Promise(function (iResolve) {
 
@@ -522,17 +522,17 @@
 
         return  new Promise(function (iResolve) {
 
-            show.call( $_This ).submit(function () {
+            show.call( $_This ).on('submit.Dialog',  function () {
 
                 close.call( $_This ).then(function () {
 
                     iResolve($.paramJSON('?' + $_This.serialize()));
                 });
-            }).on('reset',  function () {
+            }).on('reset.Dialog',  function () {
 
                 close.call( $_This ).then( iResolve );
 
-            }).on('keyup',  function (iEvent) {
+            }).on('keyup.Dialog',  function (iEvent) {
                 if (
                     (iEvent.type === 'keyup')  &&
                     (iEvent.which === 27)  &&
@@ -611,12 +611,14 @@
     $.extend(Scroll_Fixed.prototype, {
         getLimit:    function () {
 
-            var LM = this.constructor.limitMap,  iLimit = { };
+            var LM = this.constructor.limitMap,
+                iLimit = { },
+                offset = this.$_View.offset();
 
             for (var iKey in LM)
                 iLimit['max-' + iKey] = $_BOM[ iKey ]()
                     - (
-                        this.$_View.offset()[ LM[iKey][0] ]  -
+                        offset[ LM[iKey][0] ]  -
                         $_DOM['scroll' + LM[iKey][1]]()
                     )
                     - ($_DOM[ iKey ]()  -  (
@@ -642,8 +644,8 @@
 
             this.$_View.css({
                 position:        'static',
-                'max-width':     'auto',
-                'max-height':    'auto'
+                'max-width':     'inherit',
+                'max-height':    'inherit'
             });
 
             if ( this.onChange )  this.onChange.call(this.$_View[0], 'static');
@@ -656,11 +658,11 @@
 
             var iPosition = this.$_View.css('position');
 
-            if (Scroll_Top < this.offset.top) {
+            if (Scroll_Top > this.offset.top) {
 
-                if (iPosition != 'static')  this.destroy();
+                if (iPosition != 'fixed')  this.render();
 
-            } else if (iPosition != 'fixed')  this.render();
+            } else if (iPosition != 'static')  this.destroy();
 
             return this;
         }
@@ -693,7 +695,7 @@
 //          >>>  EasyWebUI Component Library  <<<
 //
 //
-//      [Version]     v1.6  (2017-07-10)  Stable
+//      [Version]     v1.6  (2017-08-08)  Stable
 //
 //      [Based on]    iQuery v3  or  jQuery (with jQueryKit)
 //

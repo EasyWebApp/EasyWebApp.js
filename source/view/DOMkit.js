@@ -18,14 +18,19 @@ define([
 
             $.each(sheet.cssRules,  function () {
 
+                if ( this.cssRules )
+                    return (
+                        rule[ this.cssText.split( /\s*\{/ )[0] ] = cssRule( this )
+                    );
+
                 var _rule_ = rule[ this.selectorText ] = { };
 
-                if ( this.cssRules )
-                    return  rule[ this.selectorText ]  =  cssRule( this );
-
-                for (var i = 0, value;  this.style[i];  i++) {
+                for (var i = 0, value, priority;  this.style[i];  i++) {
 
                     value = this.style.getPropertyValue( this.style[i] );
+
+                    if (priority = this.style.getPropertyPriority( this.style[i] ))
+                        value += ' !' + priority;
 
                     if (! (value in Invalid_Style))
                         _rule_[ this.style[i] ] = value;
@@ -58,10 +63,8 @@ define([
 
             iURL = iURL.split('?');
 
-            if (
-                iBase  &&  iURL[0]  &&
-                (! $.urlDomain( iURL[0] ))  &&  (iURL[0].indexOf( iBase )  <  0)
-            ) {
+            if (iBase  &&  iURL[0]  &&  (! $.urlDomain( iURL[0] ))) {
+
                 iURL[0] = InnerLink.parsePath(iBase + iURL[0]);
 
                 iDOM.setAttribute(iKey, iURL.join('?'));

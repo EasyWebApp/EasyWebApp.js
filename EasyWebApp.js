@@ -404,9 +404,9 @@ var InnerLink = (function ($, Observer) {
             do {
                 iPath = iNew || iPath;
 
-                iNew = iPath.replace(/[^\/]+\/\.\.\//g, '');
+                iNew = iPath.replace(/[^\.\/]+\/\.\.\//g, '');
 
-            } while (iNew != iPath);
+            } while (iNew  &&  (iNew !== iPath));
 
             return iNew;
         },
@@ -769,14 +769,19 @@ var view_DOMkit = (function ($, RenderNode, InnerLink) {
 
             $.each(sheet.cssRules,  function () {
 
+                if ( this.cssRules )
+                    return (
+                        rule[ this.cssText.split( /\s*\{/ )[0] ] = cssRule( this )
+                    );
+
                 var _rule_ = rule[ this.selectorText ] = { };
 
-                if ( this.cssRules )
-                    return  rule[ this.selectorText ]  =  cssRule( this );
-
-                for (var i = 0, value;  this.style[i];  i++) {
+                for (var i = 0, value, priority;  this.style[i];  i++) {
 
                     value = this.style.getPropertyValue( this.style[i] );
+
+                    if (priority = this.style.getPropertyPriority( this.style[i] ))
+                        value += ' !' + priority;
 
                     if (! (value in Invalid_Style))
                         _rule_[ this.style[i] ] = value;
@@ -809,10 +814,8 @@ var view_DOMkit = (function ($, RenderNode, InnerLink) {
 
             iURL = iURL.split('?');
 
-            if (
-                iBase  &&  iURL[0]  &&
-                (! $.urlDomain( iURL[0] ))  &&  (iURL[0].indexOf( iBase )  <  0)
-            ) {
+            if (iBase  &&  iURL[0]  &&  (! $.urlDomain( iURL[0] ))) {
+
                 iURL[0] = InnerLink.parsePath(iBase + iURL[0]);
 
                 iDOM.setAttribute(iKey, iURL.join('?'));
@@ -930,31 +933,26 @@ var view_HTMLView = (function ($, View, DOMkit, RenderNode) {
         },
         fixStyle:      function (iDOM) {
 
-            this.$_View.cssRule(DOMkit.cssRule( iDOM.sheet ),  function () {
+            if ( iDOM.classList.contains('iQuery_CSS-Rule') )  return iDOM;
 
-                iDOM = arguments[0].ownerNode;
-            });
+            var rule = DOMkit.cssRule( iDOM.sheet ),  media;    iDOM = [ ];
 
-            return iDOM;
-        },
-        fixDOM:        function (iDOM) {
+            for (var selector in rule)
+                if (media = selector.match( /^@media\s*([\s\S]+)/i )) {
 
-            var _This_ = this;
+                    this.$_View.cssRule(rule[ selector ],  function () {
 
-            switch ( iDOM.tagName.toLowerCase() ) {
-                case 'link':      {
-                    if (('rel' in iDOM)  &&  (iDOM.rel != 'stylesheet'))
-                        return iDOM;
+                        iDOM[iDOM.push( arguments[0].ownerNode ) - 1].media =
+                            media[1];
+                    });
 
-                    iDOM.onload = function () {
-
-                        $( this ).replaceWith( _This_.fixStyle( this ) );
-                    };
-                    break;
+                    delete  rule[ selector ];
                 }
-                case 'style':     iDOM = this.fixStyle( iDOM );    break;
-                case 'script':    iDOM = DOMkit.fixScript( iDOM );
-            }
+
+            this.$_View.cssRule(rule,  function () {
+
+                iDOM.unshift( arguments[0].ownerNode );
+            });
 
             return iDOM;
         },
@@ -1004,8 +1002,23 @@ var view_HTMLView = (function ($, View, DOMkit, RenderNode) {
 
             this.scan(function (iNode) {
 
+                var _This_ = this,  tag = (iNode.tagName || '').toLowerCase();
+
                 if ((iNode instanceof Element)  &&  (iNode !== this.$_View[0]))
-                    iNode = this.fixDOM( iNode );
+                    switch ( tag ) {
+                        case 'link':      {
+                            if (('rel' in iNode)  &&  (iNode.rel != 'stylesheet'))
+                                break;
+
+                            iNode.onload = function () {
+
+                                $( this ).replaceWith( _This_.fixStyle( this ) );
+                            };
+                            return;
+                        }
+                        case 'style':     return  this.fixStyle( iNode );
+                        case 'script':    return  DOMkit.fixScript( iNode );
+                    }
 
                 switch (true) {
                     case (iNode instanceof View):
@@ -1015,13 +1028,10 @@ var view_HTMLView = (function ($, View, DOMkit, RenderNode) {
                         (! iNode.defaultValue)
                     ):
                         this.signIn( iNode );
-                    case !(
-                        iNode.tagName.toLowerCase() in HTMLView.rawSelector
-                    ):
+
+                    case !(tag in HTMLView.rawSelector):
                         this.parsePlain( iNode );
                 }
-
-                return iNode;
             });
 
             return this;
@@ -1444,7 +1454,7 @@ var WebApp = (function ($, Observer, View, HTMLView, ListView, DOMkit, InnerLink
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v4.0  (2017-08-04)  Beta
+//      [Version]    v4.0  (2017-08-09)  Beta
 //
 //      [Require]    iQuery  ||  jQuery with jQueryKit
 //

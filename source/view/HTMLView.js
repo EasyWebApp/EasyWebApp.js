@@ -34,31 +34,26 @@ define([
         },
         fixStyle:      function (iDOM) {
 
-            this.$_View.cssRule(DOMkit.cssRule( iDOM.sheet ),  function () {
+            if ( iDOM.classList.contains('iQuery_CSS-Rule') )  return iDOM;
 
-                iDOM = arguments[0].ownerNode;
-            });
+            var rule = DOMkit.cssRule( iDOM.sheet ),  media;    iDOM = [ ];
 
-            return iDOM;
-        },
-        fixDOM:        function (iDOM) {
+            for (var selector in rule)
+                if (media = selector.match( /^@media\s*([\s\S]+)/i )) {
 
-            var _This_ = this;
+                    this.$_View.cssRule(rule[ selector ],  function () {
 
-            switch ( iDOM.tagName.toLowerCase() ) {
-                case 'link':      {
-                    if (('rel' in iDOM)  &&  (iDOM.rel != 'stylesheet'))
-                        return iDOM;
+                        iDOM[iDOM.push( arguments[0].ownerNode ) - 1].media =
+                            media[1];
+                    });
 
-                    iDOM.onload = function () {
-
-                        $( this ).replaceWith( _This_.fixStyle( this ) );
-                    };
-                    break;
+                    delete  rule[ selector ];
                 }
-                case 'style':     iDOM = this.fixStyle( iDOM );    break;
-                case 'script':    iDOM = DOMkit.fixScript( iDOM );
-            }
+
+            this.$_View.cssRule(rule,  function () {
+
+                iDOM.unshift( arguments[0].ownerNode );
+            });
 
             return iDOM;
         },
@@ -108,8 +103,23 @@ define([
 
             this.scan(function (iNode) {
 
+                var _This_ = this,  tag = (iNode.tagName || '').toLowerCase();
+
                 if ((iNode instanceof Element)  &&  (iNode !== this.$_View[0]))
-                    iNode = this.fixDOM( iNode );
+                    switch ( tag ) {
+                        case 'link':      {
+                            if (('rel' in iNode)  &&  (iNode.rel != 'stylesheet'))
+                                break;
+
+                            iNode.onload = function () {
+
+                                $( this ).replaceWith( _This_.fixStyle( this ) );
+                            };
+                            return;
+                        }
+                        case 'style':     return  this.fixStyle( iNode );
+                        case 'script':    return  DOMkit.fixScript( iNode );
+                    }
 
                 switch (true) {
                     case (iNode instanceof View):
@@ -119,13 +129,10 @@ define([
                         (! iNode.defaultValue)
                     ):
                         this.signIn( iNode );
-                    case !(
-                        iNode.tagName.toLowerCase() in HTMLView.rawSelector
-                    ):
+
+                    case !(tag in HTMLView.rawSelector):
                         this.parsePlain( iNode );
                 }
-
-                return iNode;
             });
 
             return this;
