@@ -2,9 +2,7 @@ define(['jquery', './base/Observer', 'jQueryKit'],  function ($, Observer) {
 
     function InnerLink(Link_DOM) {
 
-        var _This_ = Observer.call(this, Link_DOM);
-
-        if (_This_ != this)  this.__handle__ = _This_.__handle__;
+        Observer.call(this, Link_DOM);
 
         this.method = (
             Link_DOM.getAttribute('method') || Link_DOM.dataset.method || 'Get'
@@ -29,7 +27,7 @@ define(['jquery', './base/Observer', 'jQueryKit'],  function ($, Observer) {
             this.target = 'data';
     }
 
-    return  $.inherit(Observer, InnerLink, {
+    return  Observer.extend(InnerLink, {
         parsePath:    function (iPath) {
 
             var iNew;  iPath = iPath.replace(/^\.\//, '').replace(/\/\.\//g, '/');

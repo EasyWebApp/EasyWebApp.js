@@ -1,9 +1,9 @@
 <script src="Git_List.js"></script>
 
 <h2>文档列表</h2>
-<ul data-href="?data=${vm.Git_API}/repos/${vm.Git_Account}/${vm.Git_Repo}/contents/${vm.Root_Path}?ref=${vm.Git_Branch || 'gh-pages'}">
+<ul data-href="?data=${this.listURL()}">
     <li>
-        <h3><a href="https://${vm.Git_Account}.github.io/${vm.Git_Repo}/${this.path}${(this.type == 'dir')  ?  '/index.md'  :  ''}">
+        <h3><a href="${this.itemURL()}">
             ${this.name}
         </a></h3>
     </li>

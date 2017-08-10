@@ -4,7 +4,7 @@ define([
 
     function View($_View, iScope) {
 
-        if (this.constructor == arguments.callee)
+        if (this.constructor == View)
             throw TypeError(
                 "View() is an Abstract Base Class which can't be instantiated."
             );
@@ -25,18 +25,7 @@ define([
 
     $.extend(View.prototype, DataScope.prototype);
 
-    return  $.inherit(Observer, View, {
-        signSelector:    function () {
-            var _This_ = this;
-
-            $.expr[':'][ this.getClass().toLowerCase() ] = function () {
-                return (
-                    ($.data(arguments[0], '[object View]') || '') instanceof _This_
-                );
-            };
-
-            return this;
-        },
+    return  Observer.extend(View, {
         Sub_Class:       [ ],
         getSub:          function (iDOM) {
 
@@ -54,19 +43,6 @@ define([
             return $.inherit(
                 this, iConstructor, iStatic, iPrototype
             ).signSelector();
-        },
-        instanceOf:      function ($_Instance, Check_Parent) {
-
-            var _Instance_;  $_Instance = $( $_Instance );
-
-            do {
-                _Instance_ = $_Instance.data('[object View]');
-
-                if (_Instance_ instanceof this)  return _Instance_;
-
-                $_Instance = $_Instance.parent();
-
-            } while ($_Instance[0]  &&  (Check_Parent !== false));
         },
         getObserver:     function (iDOM) {
 
@@ -221,6 +197,5 @@ define([
                 View.instanceOf(this.$_View.find(iSelector + '[data-href]'))  :
                 this.__child__;
         }
-    }).signSelector();
-
+    });
 });

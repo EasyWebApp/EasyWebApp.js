@@ -7,7 +7,7 @@ define([
     function WebApp(Page_Box, API_Root) {
 
         if (this instanceof $)
-            return  new arguments.callee(this[0], Page_Box, API_Root);
+            return  new WebApp(this[0], Page_Box, API_Root);
 
         var _This_ = $('*:data("_EWA_")').data('_EWA_') || this;
 
@@ -30,7 +30,14 @@ define([
         self.setTimeout( this.listenDOM().listenBOM().boot.bind( this ) );
     }
 
-    return  $.inherit(Observer, WebApp, {
+    return  Observer.extend(WebApp, {
+        merge:       function (iData, _Data_) {
+            return (
+                (iData  &&  (typeof iData === 'object'))  ||
+                (_Data_  &&  (typeof _Data_ === 'object'))
+            ) ?
+                $.extend(iData,  _Data_ || { })  :  _Data_;
+        },
         View:        View,
         HTMLView:    HTMLView,
         ListView:    ListView
@@ -75,14 +82,20 @@ define([
         },
         _emit:            function (iType, iLink, iData) {
 
-            return this.emit(
-                $.extend(iLink.valueOf(), {
-                    type:      iType,
-                    target:
-                        (iLink.target == 'page')  ?  this.$_View[0]  :  undefined
-                }),
-                iData
-            );
+            var $_Target = ((iLink.target === 'page')  ?  this  :  iLink).$_View;
+
+            iLink = $.extend(iLink.valueOf(), {
+                type:      iType,
+                target:    $_Target[0]
+            });
+
+            iData = WebApp.merge(iData,  this.emit(iLink, iData));
+
+            var iView = View.instanceOf($_Target, false)  ||
+                    Observer.instanceOf($_Target, false);
+
+            return  iView  ?
+                WebApp.merge(iData,  iView.emit(iLink, iData))  :  iData;
         },
         getCID:           function () {
 
@@ -91,24 +104,23 @@ define([
         },
         loadView:         function (iLink, iHTML) {
 
-            var $_Target = iLink.$_View;
+            var iTarget = iLink.$_View[0];
 
             if (iLink.target == 'page') {
 
                 this.setRoute( iLink );
 
-                $_Target = this.$_View;
+                iTarget = this.$_View[0];
             }
 
-            var iView = View.getSub(
-                    DOMkit.build(
-                        $_Target[0],  iLink,  this._emit('template', iLink, iHTML)
-                    )
-                );
+            if (iHTML = this._emit('template', iLink, iHTML))
+                iTarget = DOMkit.build(iTarget, iLink, iHTML);
+
+            var iView = View.getSub( iTarget );
 
             if ( iView.parse )  iView.parse();
 
-            if (! $_Target.find('script[src]:not(head > *)')[0])
+            if (! $('script[src]:not(head > *)', iTarget)[0])
                 iLink.emit('load');
 
             return iView;
@@ -128,17 +140,14 @@ define([
 
                 delete _This_.loading[ CID ];
 
-                var _Data_ = (iData instanceof Array)  ?  [ ]  :  { };
-
                 iData = $.extend(
-                    _Data_,  iLink.data,  iLink.$_View[0].dataset,  iData
+                    iData,  iLink.data,  iLink.$_View[0].dataset,  iData
                 );
 
-                if ( iFactory )
-                    iData = $.extend(_Data_,  iData,  iFactory.call(iView, iData));
-
-                iView.render( iData );
-
+                iView.render(
+                    iFactory  ?
+                        WebApp.merge(iData,  iFactory.call(iView, iData))  :  iData
+                );
             }).then(function () {
 
                 return Promise.all($.map(
@@ -241,7 +250,7 @@ define([
                         document.title = _This_[ state.index ].title;
                     });
                 else if ( state.data )
-                    _This_.$_View.view().render( state.data );
+                    View.instanceOf(_This_.$_View, false).render( state.data );
             });
 
             return this;

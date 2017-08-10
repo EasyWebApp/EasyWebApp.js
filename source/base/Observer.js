@@ -4,19 +4,59 @@ define(['jquery', 'jQueryKit'],  function ($) {
 
         this.$_View = ($_View instanceof $)  ?  $_View  :  $( $_View );
 
+        this.__handle__ = { };
+
         var _This_ = this.$_View.data('[object Observer]');
 
         if ((_This_ != null)  &&  (_This_ != this))  return _This_;
 
         this.$_View.data('[object Observer]', this);
 
-        this.__handle__ = { };
-
         return this;
     }
 
+    function staticMethod(iClass) {
+
+        var iType = Observer.prototype.toString.call({constructor: iClass});
+
+        return  $.extend(iClass, {
+            signSelector:    function () {
+
+                var _This_ = this;
+
+                $.expr[':'][ this.name.toLowerCase() ] = function () {
+                    return (
+                        ($.data(arguments[0], iType) || '')  instanceof  _This_
+                    );
+                };
+
+                return this;
+            },
+            instanceOf:      function ($_Instance, Check_Parent) {
+
+                var _Instance_;  $_Instance = $( $_Instance );
+
+                do {
+                    _Instance_ = $_Instance.data( iType );
+
+                    if (_Instance_ instanceof this)  return _Instance_;
+
+                    $_Instance = $_Instance.parent();
+
+                } while ($_Instance[0]  &&  (Check_Parent !== false));
+            }
+        }).signSelector();
+    }
+
     $.extend(Observer, {
+        extend:      function (iConstructor, iStatic, iPrototype) {
+
+            return staticMethod($.inherit(
+                this,  iConstructor,  iStatic,  iPrototype
+            ));
+        },
         getEvent:    function (iEvent) {
+
             return $.extend(
                 { },
                 (typeof iEvent == 'string')  ?  {type: iEvent}  :  iEvent,
@@ -52,12 +92,6 @@ define(['jquery', 'jQueryKit'],  function ($) {
             }
 
             return iHandle;
-        },
-        getClass:        function () {
-
-            return this.prototype.toString.call(
-                {constructor: this}
-            ).split(' ')[1].slice(0, -1);
         }
     });
 
@@ -139,9 +173,9 @@ define(['jquery', 'jQueryKit'],  function ($) {
 
             var iPromise = new Promise(function (iResolve) {
 
-                    _This_.on.apply(_This_,  iArgs.concat(function () {
+                    _This_.on.apply(_This_,  iArgs.concat(function once() {
 
-                        _This_.off.apply(_This_,  iArgs.concat( arguments.callee ));
+                        _This_.off.apply(_This_,  iArgs.concat( once ));
 
                         if ( iCallback )  return  iCallback.apply(this, arguments);
 
@@ -153,6 +187,6 @@ define(['jquery', 'jQueryKit'],  function ($) {
         }
     });
 
-    return Observer;
+    return  staticMethod( Observer );
 
 });

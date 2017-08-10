@@ -41,10 +41,15 @@ MVVM 引擎只需扫描 DOM 树，即可 **自动加载 HTML、JSON** 来构建 
 
 ### 内置视图对象
 
+ - **事件接口** `Observer($_Box)`
+   - 查找实例：`.instanceOf(iDOM, Check_Parent)` 
+   - 注册回调：`.prototype.on(iEvent, iCallback)`
+   - 注销回调：`.prototype.off(iEvent, iCallback)`
+   - 一次监听：`.prototype.one(iEvent, iCallback)`
+   - 触发事件：`.prototype.emit(iEvent, iData)`
  - **抽象视图** `View($_Box, iScope)`（不可实例化）
    - 继承父类：`Observer()`、`DataScope()`
    - 继承视图：`.extend(iConstructor, iStatic, iPrototype)`
-   - 查找实例：`.instanceOf(iDOM, Check_Parent)` 
    - 遍历 DOM：`.prototype.scan( iParser )` 
    - 获取数据：`.prototype.valueOf()`
    - 查子组件：`.prototype.childOf( iSelector )`

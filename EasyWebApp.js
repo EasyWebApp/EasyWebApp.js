@@ -136,19 +136,59 @@ var base_Observer = (function ($) {
 
         this.$_View = ($_View instanceof $)  ?  $_View  :  $( $_View );
 
+        this.__handle__ = { };
+
         var _This_ = this.$_View.data('[object Observer]');
 
         if ((_This_ != null)  &&  (_This_ != this))  return _This_;
 
         this.$_View.data('[object Observer]', this);
 
-        this.__handle__ = { };
-
         return this;
     }
 
+    function staticMethod(iClass) {
+
+        var iType = Observer.prototype.toString.call({constructor: iClass});
+
+        return  $.extend(iClass, {
+            signSelector:    function () {
+
+                var _This_ = this;
+
+                $.expr[':'][ this.name.toLowerCase() ] = function () {
+                    return (
+                        ($.data(arguments[0], iType) || '')  instanceof  _This_
+                    );
+                };
+
+                return this;
+            },
+            instanceOf:      function ($_Instance, Check_Parent) {
+
+                var _Instance_;  $_Instance = $( $_Instance );
+
+                do {
+                    _Instance_ = $_Instance.data( iType );
+
+                    if (_Instance_ instanceof this)  return _Instance_;
+
+                    $_Instance = $_Instance.parent();
+
+                } while ($_Instance[0]  &&  (Check_Parent !== false));
+            }
+        }).signSelector();
+    }
+
     $.extend(Observer, {
+        extend:      function (iConstructor, iStatic, iPrototype) {
+
+            return staticMethod($.inherit(
+                this,  iConstructor,  iStatic,  iPrototype
+            ));
+        },
         getEvent:    function (iEvent) {
+
             return $.extend(
                 { },
                 (typeof iEvent == 'string')  ?  {type: iEvent}  :  iEvent,
@@ -184,12 +224,6 @@ var base_Observer = (function ($) {
             }
 
             return iHandle;
-        },
-        getClass:        function () {
-
-            return this.prototype.toString.call(
-                {constructor: this}
-            ).split(' ')[1].slice(0, -1);
         }
     });
 
@@ -271,9 +305,9 @@ var base_Observer = (function ($) {
 
             var iPromise = new Promise(function (iResolve) {
 
-                    _This_.on.apply(_This_,  iArgs.concat(function () {
+                    _This_.on.apply(_This_,  iArgs.concat(function once() {
 
-                        _This_.off.apply(_This_,  iArgs.concat( arguments.callee ));
+                        _This_.off.apply(_This_,  iArgs.concat( once ));
 
                         if ( iCallback )  return  iCallback.apply(this, arguments);
 
@@ -285,7 +319,7 @@ var base_Observer = (function ($) {
         }
     });
 
-    return Observer;
+    return  staticMethod( Observer );
 
 })(jquery);
 
@@ -369,9 +403,7 @@ var InnerLink = (function ($, Observer) {
 
     function InnerLink(Link_DOM) {
 
-        var _This_ = Observer.call(this, Link_DOM);
-
-        if (_This_ != this)  this.__handle__ = _This_.__handle__;
+        Observer.call(this, Link_DOM);
 
         this.method = (
             Link_DOM.getAttribute('method') || Link_DOM.dataset.method || 'Get'
@@ -396,7 +428,7 @@ var InnerLink = (function ($, Observer) {
             this.target = 'data';
     }
 
-    return  $.inherit(Observer, InnerLink, {
+    return  Observer.extend(InnerLink, {
         parsePath:    function (iPath) {
 
             var iNew;  iPath = iPath.replace(/^\.\//, '').replace(/\/\.\//g, '/');
@@ -529,7 +561,7 @@ var view_View = (function ($, Observer, DataScope, RenderNode) {
 
     function View($_View, iScope) {
 
-        if (this.constructor == arguments.callee)
+        if (this.constructor == View)
             throw TypeError(
                 "View() is an Abstract Base Class which can't be instantiated."
             );
@@ -550,18 +582,7 @@ var view_View = (function ($, Observer, DataScope, RenderNode) {
 
     $.extend(View.prototype, DataScope.prototype);
 
-    return  $.inherit(Observer, View, {
-        signSelector:    function () {
-            var _This_ = this;
-
-            $.expr[':'][ this.getClass().toLowerCase() ] = function () {
-                return (
-                    ($.data(arguments[0], '[object View]') || '') instanceof _This_
-                );
-            };
-
-            return this;
-        },
+    return  Observer.extend(View, {
         Sub_Class:       [ ],
         getSub:          function (iDOM) {
 
@@ -579,19 +600,6 @@ var view_View = (function ($, Observer, DataScope, RenderNode) {
             return $.inherit(
                 this, iConstructor, iStatic, iPrototype
             ).signSelector();
-        },
-        instanceOf:      function ($_Instance, Check_Parent) {
-
-            var _Instance_;  $_Instance = $( $_Instance );
-
-            do {
-                _Instance_ = $_Instance.data('[object View]');
-
-                if (_Instance_ instanceof this)  return _Instance_;
-
-                $_Instance = $_Instance.parent();
-
-            } while ($_Instance[0]  &&  (Check_Parent !== false));
         },
         getObserver:     function (iDOM) {
 
@@ -746,8 +754,7 @@ var view_View = (function ($, Observer, DataScope, RenderNode) {
                 View.instanceOf(this.$_View.find(iSelector + '[data-href]'))  :
                 this.__child__;
         }
-    }).signSelector();
-
+    });
 })(jquery, base_Observer, base_DataScope, view_RenderNode);
 
 
@@ -1050,7 +1057,7 @@ var view_HTMLView = (function ($, View, DOMkit, RenderNode) {
                     return _This_[Index];
             });
         },
-        render:        function (iData) {
+        render:        function render(iData) {
 
             var _This_ = this,  _Data_ = { };
 
@@ -1062,7 +1069,7 @@ var view_HTMLView = (function ($, View, DOMkit, RenderNode) {
 
             iData = this.commit( iData );  _Data_ = this.__data__;
 
-            for (var iKey in iData)  this.watch(iKey, arguments.callee);
+            for (var iKey in iData)  this.watch(iKey, render);
 
             if ( iData )
                 $.each(this.getNode( iData ),  function () {
@@ -1187,7 +1194,7 @@ var WebApp = (function ($, Observer, View, HTMLView, ListView, DOMkit, InnerLink
     function WebApp(Page_Box, API_Root) {
 
         if (this instanceof $)
-            return  new arguments.callee(this[0], Page_Box, API_Root);
+            return  new WebApp(this[0], Page_Box, API_Root);
 
         var _This_ = $('*:data("_EWA_")').data('_EWA_') || this;
 
@@ -1210,7 +1217,14 @@ var WebApp = (function ($, Observer, View, HTMLView, ListView, DOMkit, InnerLink
         self.setTimeout( this.listenDOM().listenBOM().boot.bind( this ) );
     }
 
-    return  $.inherit(Observer, WebApp, {
+    return  Observer.extend(WebApp, {
+        merge:       function (iData, _Data_) {
+            return (
+                (iData  &&  (typeof iData === 'object'))  ||
+                (_Data_  &&  (typeof _Data_ === 'object'))
+            ) ?
+                $.extend(iData,  _Data_ || { })  :  _Data_;
+        },
         View:        View,
         HTMLView:    HTMLView,
         ListView:    ListView
@@ -1255,14 +1269,20 @@ var WebApp = (function ($, Observer, View, HTMLView, ListView, DOMkit, InnerLink
         },
         _emit:            function (iType, iLink, iData) {
 
-            return this.emit(
-                $.extend(iLink.valueOf(), {
-                    type:      iType,
-                    target:
-                        (iLink.target == 'page')  ?  this.$_View[0]  :  undefined
-                }),
-                iData
-            );
+            var $_Target = ((iLink.target === 'page')  ?  this  :  iLink).$_View;
+
+            iLink = $.extend(iLink.valueOf(), {
+                type:      iType,
+                target:    $_Target[0]
+            });
+
+            iData = WebApp.merge(iData,  this.emit(iLink, iData));
+
+            var iView = View.instanceOf($_Target, false)  ||
+                    Observer.instanceOf($_Target, false);
+
+            return  iView  ?
+                WebApp.merge(iData,  iView.emit(iLink, iData))  :  iData;
         },
         getCID:           function () {
 
@@ -1271,24 +1291,23 @@ var WebApp = (function ($, Observer, View, HTMLView, ListView, DOMkit, InnerLink
         },
         loadView:         function (iLink, iHTML) {
 
-            var $_Target = iLink.$_View;
+            var iTarget = iLink.$_View[0];
 
             if (iLink.target == 'page') {
 
                 this.setRoute( iLink );
 
-                $_Target = this.$_View;
+                iTarget = this.$_View[0];
             }
 
-            var iView = View.getSub(
-                    DOMkit.build(
-                        $_Target[0],  iLink,  this._emit('template', iLink, iHTML)
-                    )
-                );
+            if (iHTML = this._emit('template', iLink, iHTML))
+                iTarget = DOMkit.build(iTarget, iLink, iHTML);
+
+            var iView = View.getSub( iTarget );
 
             if ( iView.parse )  iView.parse();
 
-            if (! $_Target.find('script[src]:not(head > *)')[0])
+            if (! $('script[src]:not(head > *)', iTarget)[0])
                 iLink.emit('load');
 
             return iView;
@@ -1308,17 +1327,14 @@ var WebApp = (function ($, Observer, View, HTMLView, ListView, DOMkit, InnerLink
 
                 delete _This_.loading[ CID ];
 
-                var _Data_ = (iData instanceof Array)  ?  [ ]  :  { };
-
                 iData = $.extend(
-                    _Data_,  iLink.data,  iLink.$_View[0].dataset,  iData
+                    iData,  iLink.data,  iLink.$_View[0].dataset,  iData
                 );
 
-                if ( iFactory )
-                    iData = $.extend(_Data_,  iData,  iFactory.call(iView, iData));
-
-                iView.render( iData );
-
+                iView.render(
+                    iFactory  ?
+                        WebApp.merge(iData,  iFactory.call(iView, iData))  :  iData
+                );
             }).then(function () {
 
                 return Promise.all($.map(
@@ -1421,7 +1437,7 @@ var WebApp = (function ($, Observer, View, HTMLView, ListView, DOMkit, InnerLink
                         document.title = _This_[ state.index ].title;
                     });
                 else if ( state.data )
-                    _This_.$_View.view().render( state.data );
+                    View.instanceOf(_This_.$_View, false).render( state.data );
             });
 
             return this;
@@ -1454,7 +1470,7 @@ var WebApp = (function ($, Observer, View, HTMLView, ListView, DOMkit, InnerLink
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v4.0  (2017-08-09)  Beta
+//      [Version]    v4.0  (2017-08-10)  Beta
 //
 //      [Require]    iQuery  ||  jQuery with jQueryKit
 //
