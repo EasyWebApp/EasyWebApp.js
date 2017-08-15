@@ -25,7 +25,7 @@ require(['jquery', 'EasyWebApp'],  function ($) {
             return iData.list;
         });
 
-        return {
+        $.extend(arguments[0], {
             pageChange:    function () {
 
                 var iTarget = arguments[0].target;
@@ -42,6 +42,6 @@ require(['jquery', 'EasyWebApp'],  function ($) {
 
                 iWebApp.load( iEvent.target );
             }
-        };
+        });
     });
 });

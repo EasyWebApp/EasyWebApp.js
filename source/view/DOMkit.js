@@ -8,11 +8,11 @@ define([
             $.makeSet('href',  ['link', 'a', 'area']),
             {form: 'action',  '[data-href]': 'data-href'}
         ),
-        Link_Name = $.makeSet('a', 'area', 'form');
+        URL_Prefix = $.makeSet('?', '#');
 
 
     return {
-        cssRule:      function cssRule(sheet) {
+        cssRule:          function cssRule(sheet) {
 
             var rule = { };
 
@@ -39,7 +39,7 @@ define([
 
             return rule;
         },
-        fixScript:    function (iDOM) {
+        fixScript:        function (iDOM) {
             var iAttr = { };
 
             $.each(iDOM.attributes,  function () {
@@ -51,13 +51,19 @@ define([
 
             return iDOM;
         },
-        fixURL:       function (iDOM, iKey, iBase) {
+        innerHTMLLink:    function (iDOM) {
+
+            return  $( iDOM ).is( InnerLink.HTML_Link )  &&  (
+                (iDOM.target || '_self')  ===  '_self'
+            );
+        },
+        fixURL:           function (iDOM, iKey, iBase) {
 
             var iURL = iDOM.getAttribute( iKey )  ||  '';
 
             if (
-                (iURL[0] === '#')  ||
-                ((iURL.match( RenderNode.expression ) || [ ]).join('')  ==  iURL)
+                (iURL[0] in URL_Prefix)  ||
+                (iURL  ===  (iURL.match( RenderNode.expression ) || [ ]).join(''))
             )
                 return iURL;
 
@@ -72,8 +78,9 @@ define([
 
             return iURL.join('?');
         },
-        prefetch:     function (iDOM, iURL) {
+        prefetch:         function (iDOM, iURL) {
             if (! (
+                (iURL[0] in URL_Prefix)  ||
                 iURL.match( RenderNode.expression )  ||
                 $('head link[href="' + iURL + '"]')[0]
             ))
@@ -83,7 +90,7 @@ define([
                     href:    iURL
                 }).appendTo( document.head );
         },
-        parseSlot:    function (root, $_Root) {
+        parseSlot:        function (root, $_Root) {
 
             $_Root.find('slot[name]').each(function () {
 
@@ -101,7 +108,7 @@ define([
                     this.parentNode.removeChild( this );
             });
         },
-        build:        function (root, base, HTML) {
+        build:            function (root, base, HTML) {
 
             var _This_ = this,  $_Root = $('<div />').prop('innerHTML', HTML);
 
@@ -115,26 +122,23 @@ define([
 
             $_Root.find( Object.keys( URL_DOM ) + '' ).each(function () {
 
-                var tag = this.tagName.toLowerCase();
-
-                var innerLink = (tag in Link_Name)  &&  (
-                        (this.target || '_self')  ===  '_self'
-                    );
-
-                if (innerLink  &&  (
+                if (_This_.innerHTMLLink( this )  &&  (
                     $.urlDomain(this.href || this.action)  !==  $.urlDomain()
                 ))
                     this.target = '_blank';
 
                 var URL = _This_.fixURL(
                         this,
-                        URL_DOM[ tag ]  ||  (
+                        URL_DOM[ this.tagName.toLowerCase() ]  ||  (
                             ('src' in this)  ?  'src'  :  'data-href'
                         ),
                         base
                     );
 
-                if ( innerLink )  _This_.prefetch(this, URL);
+                if ($( this ).is(InnerLink.HTML_Link + ', ' + InnerLink.Self_Link))
+                    new InnerLink( this );
+
+                if (_This_.innerHTMLLink( this ))  _This_.prefetch(this, URL);
             });
 
 

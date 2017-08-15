@@ -6,18 +6,29 @@ define(['jquery', 'jQueryKit'],  function ($) {
 
         this.__handle__ = { };
 
-        var _This_ = this.$_View.data('[object Observer]');
-
-        if ((_This_ != null)  &&  (_This_ != this))  return _This_;
-
-        this.$_View.data('[object Observer]', this);
-
-        return this;
+        return this.init();
     }
 
-    function staticMethod(iClass) {
+    function basicMethod(iClass) {
 
         var iType = Observer.prototype.toString.call({constructor: iClass});
+
+        $.extend(iClass.prototype, {
+            init:          function () {
+
+                var _This_ = this.$_View.data( iType );
+
+                return  ((_This_ != null)  &&  (_This_ != this))  ?
+                    _This_  :
+                    $.data(this.$_View[0], iType, this);
+            },
+            destructor:    function () {
+
+                this.$_View.removeData( iType );
+
+                return  this.valueOf.apply(this, arguments);
+            }
+        });
 
         return  $.extend(iClass, {
             signSelector:    function () {
@@ -51,7 +62,7 @@ define(['jquery', 'jQueryKit'],  function ($) {
     $.extend(Observer, {
         extend:      function (iConstructor, iStatic, iPrototype) {
 
-            return staticMethod($.inherit(
+            return basicMethod($.inherit(
                 this,  iConstructor,  iStatic,  iPrototype
             ));
         },
@@ -96,20 +107,11 @@ define(['jquery', 'jQueryKit'],  function ($) {
     });
 
     $.extend(Observer.prototype, {
-        toString:      function () {
+        toString:    function () {
 
             return  '[object ' + this.constructor.name + ']';
         },
-        destructor:    function () {
-
-            this.$_View.data('[object Observer]', null);
-
-            return {
-                $_View:        this.$_View,
-                __handle__:    this.__handle__
-            };
-        },
-        valueOf:       function (iEvent, iKey) {
+        valueOf:     function (iEvent, iKey) {
 
             if (! iEvent)  return  this.__handle__;
 
@@ -119,7 +121,7 @@ define(['jquery', 'jQueryKit'],  function ($) {
                     return  arguments[0][ iKey ];
                 });
         },
-        on:            function (iEvent, iCallback) {
+        on:          function (iEvent, iCallback) {
 
             iEvent = Observer.getEvent(iEvent,  {handler: iCallback});
 
@@ -133,7 +135,7 @@ define(['jquery', 'jQueryKit'],  function ($) {
 
             return this;
         },
-        emit:          function (iEvent, iData) {
+        emit:        function (iEvent, iData) {
 
             iEvent = Observer.getEvent( iEvent );
 
@@ -150,7 +152,7 @@ define(['jquery', 'jQueryKit'],  function ($) {
                 iData
             );
         },
-        off:           function (iEvent, iCallback) {
+        off:         function (iEvent, iCallback) {
 
             iEvent = Observer.getEvent(iEvent,  {handler: iCallback});
 
@@ -163,7 +165,7 @@ define(['jquery', 'jQueryKit'],  function ($) {
 
             return this;
         },
-        one:           function () {
+        one:         function () {
 
             var _This_ = this,  iArgs = $.makeArray( arguments );
 
@@ -187,6 +189,6 @@ define(['jquery', 'jQueryKit'],  function ($) {
         }
     });
 
-    return  staticMethod( Observer );
+    return  basicMethod( Observer );
 
 });

@@ -1,6 +1,7 @@
 define([
-    'jquery', '../base/Observer', '../base/DataScope', './RenderNode', 'jQueryKit'
-],  function ($, Observer, DataScope, RenderNode) {
+    'jquery', '../base/Observer', '../base/DataScope', '../InnerLink',
+    './RenderNode', 'jQueryKit'
+],  function ($, Observer, DataScope, InnerLink, RenderNode) {
 
     function View($_View, iScope) {
 
@@ -11,16 +12,19 @@ define([
 
         var _This_ = Observer.call(this, $_View);
 
-        DataScope.call($.extend(this, _This_.destructor()),  iScope);
+        if ((_This_ != null)  &&  (_This_ != this))  return _This_;
 
-        _This_ = this.constructor.instanceOf(this.$_View, false);
+        _This_ = InnerLink.instanceOf( this.$_View );
 
-        return  ((_This_ != null)  &&  (_This_ != this))  ?
-            _This_  :
-            $.extend(this, {
+        if (_This_)  $.extend(true,  this.__handle__,  _This_.__handle__ || { });
+
+        return $.extend(
+            DataScope.call(this, iScope),
+            {
                 __name__:     this.$_View[0].name || this.$_View[0].dataset.name,
                 __child__:    [ ]
-            }).attach();
+            }
+        ).attach();
     }
 
     $.extend(View.prototype, DataScope.prototype);
@@ -44,9 +48,11 @@ define([
                 this, iConstructor, iStatic, iPrototype
             ).signSelector();
         },
-        getObserver:     function (iDOM) {
+        getObserver:     function ($_DOM) {
 
-            return  this.instanceOf(iDOM, false)  ||  new Observer( iDOM );
+            return  this.instanceOf($_DOM, false)  ||
+                InnerLink.instanceOf($_DOM, false)  ||
+                new Observer( $_DOM );
         },
         setEvent:        function (iDOM) {
 

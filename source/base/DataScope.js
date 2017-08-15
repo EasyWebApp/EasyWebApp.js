@@ -5,6 +5,8 @@ define(['jquery', 'jQueryKit'],  function ($) {
         this.__data__ = Object.create(iSuper || { });
 
         this.__data__.splice = this.__data__.splice || Array.prototype.splice;
+
+        return this;
     }
 
     $.extend(DataScope.prototype, {

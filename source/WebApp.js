@@ -9,13 +9,11 @@ define([
         if (this instanceof $)
             return  new WebApp(this[0], Page_Box, API_Root);
 
-        var _This_ = $('*:data("_EWA_")').data('_EWA_') || this;
+        var _This_ = WebApp.instanceOf( $('*:webapp') )  ||  this;
 
         if ((_This_ != null)  &&  (_This_ != this))  return _This_;
 
-        Observer.call(this, Page_Box).destructor().$_View.data('_EWA_', this);
-
-        this.apiRoot = API_Root || '';
+        Observer.call(this, Page_Box).apiRoot = API_Root || '';
 
         var iPath = self.location.href.split('?')[0];
 
@@ -31,13 +29,6 @@ define([
     }
 
     return  Observer.extend(WebApp, {
-        merge:       function (iData, _Data_) {
-            return (
-                (iData  &&  (typeof iData === 'object'))  ||
-                (_Data_  &&  (typeof _Data_ === 'object'))
-            ) ?
-                $.extend(iData,  _Data_ || { })  :  _Data_;
-        },
         View:        View,
         HTMLView:    HTMLView,
         ListView:    ListView
@@ -89,13 +80,11 @@ define([
                 target:    $_Target[0]
             });
 
-            iData = WebApp.merge(iData,  this.emit(iLink, iData));
+            iData = this.emit(iLink, iData)  ||  iData;
 
-            var iView = View.instanceOf($_Target, false)  ||
-                    Observer.instanceOf($_Target, false);
+            var iView = View.getObserver( $_Target );
 
-            return  iView  ?
-                WebApp.merge(iData,  iView.emit(iLink, iData))  :  iData;
+            return  iView  ?  (iView.emit(iLink, iData)  ||  iData)  :  iData;
         },
         getCID:           function () {
 
@@ -145,8 +134,7 @@ define([
                 );
 
                 iView.render(
-                    iFactory  ?
-                        WebApp.merge(iData,  iFactory.call(iView, iData))  :  iData
+                    iFactory  ?  (iFactory.call(iView, iData)  ||  iData)  :  iData
                 );
             }).then(function () {
 
@@ -157,8 +145,7 @@ define([
         },
         load:             function (iLink) {
 
-            if (iLink instanceof Element)
-                iLink = new InnerLink( iLink );
+            if (! (iLink instanceof InnerLink))  iLink = new InnerLink( iLink );
 
             var _This_ = this;
 

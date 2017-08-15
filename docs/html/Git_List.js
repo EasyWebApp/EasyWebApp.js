@@ -16,7 +16,7 @@ require(['jquery'],  function ($) {
             );
         });
 
-        return {
+        $.extend(iData, {
             listURL:    function () {
                 return [
                     this.Git_API, 'repos', this.Git_Account, this.Git_Repo,
@@ -31,6 +31,6 @@ require(['jquery'],  function ($) {
                     (this.type === 'dir')  ?  'index.md'  :  ''
                 ].join('/');
             }
-        };
+        });
     });
 });

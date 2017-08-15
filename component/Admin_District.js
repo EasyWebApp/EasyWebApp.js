@@ -47,7 +47,7 @@ require(['jquery'],  function ($) {
 
         var $_adCode = this.$_View.find('[type="hidden"]');
 
-        return {
+        $.extend(arguments[0], {
             codeOf:       function (_Level_) {
 
                 var iCount = iLevel.indexOf(_Level_) + 1;
@@ -103,6 +103,6 @@ require(['jquery'],  function ($) {
 
                 iWebApp.load( arguments[0].target );
             }
-        };
+        });
     });
 });
