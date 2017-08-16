@@ -20,43 +20,6 @@ define([
         },
         rawSelector:    $.makeSet('code', 'xmp', 'template')
     }, {
-        parseSlot:     function (iNode) {
-
-            iNode = iNode.getAttribute('name');
-
-            var $_Slot = this.$_Content.filter(
-                    iNode  ?
-                        ('[slot="' + iNode + '"]')  :  '[slot=""], :not([slot])'
-                );
-            this.$_Content = this.$_Content.not( $_Slot );
-
-            return $_Slot;
-        },
-        fixStyle:      function (iDOM) {
-
-            if ( iDOM.classList.contains('iQuery_CSS-Rule') )  return iDOM;
-
-            var rule = DOMkit.cssRule( iDOM.sheet ),  media;    iDOM = [ ];
-
-            for (var selector in rule)
-                if (media = selector.match( /^@media\s*([\s\S]+)/i )) {
-
-                    this.$_View.cssRule(rule[ selector ],  function () {
-
-                        iDOM[iDOM.push( arguments[0].ownerNode ) - 1].media =
-                            media[1];
-                    });
-
-                    delete  rule[ selector ];
-                }
-
-            this.$_View.cssRule(rule,  function () {
-
-                iDOM.unshift( arguments[0].ownerNode );
-            });
-
-            return iDOM;
-        },
         signIn:        function (iNode) {
 
             for (var i = 0;  this[i];  i++)  if (this[i] == iNode)  return;
@@ -101,11 +64,12 @@ define([
         },
         parse:         function () {
 
-            this.scan(function (iNode) {
+            return  this.scan(function (iNode) {
 
-                var _This_ = this,  tag = (iNode.tagName || '').toLowerCase();
+                var $_View = this.$_View,
+                    tag = (iNode.tagName || '').toLowerCase();
 
-                if ((iNode instanceof Element)  &&  (iNode !== this.$_View[0]))
+                if ((iNode instanceof Element)  &&  (iNode !== $_View[0]))
                     switch ( tag ) {
                         case 'link':      {
                             if (('rel' in iNode)  &&  (iNode.rel != 'stylesheet'))
@@ -113,11 +77,13 @@ define([
 
                             iNode.onload = function () {
 
-                                $( this ).replaceWith( _This_.fixStyle( this ) );
+                                $( this ).replaceWith(
+                                    DOMkit.fixStyle($_View, this)
+                                );
                             };
                             return;
                         }
-                        case 'style':     return  this.fixStyle( iNode );
+                        case 'style':     return  DOMkit.fixStyle($_View, iNode);
                         case 'script':    return  DOMkit.fixScript( iNode );
                     }
 
@@ -134,8 +100,6 @@ define([
                         this.parsePlain( iNode );
                 }
             });
-
-            return this;
         },
         getNode:       function () {
 
@@ -145,13 +109,16 @@ define([
                 if (this.__map__.hasOwnProperty( iName ))
                     iMask = $.bitOperate('|',  iMask,  this.__map__[ iName ]);
 
-            return  $.map(iMask.split('').reverse(),  function (iBit, Index) {
+            return $.map(
+                $.leftPad(iMask, this.length).split('').reverse(),
+                function (iBit, Index) {
 
-                if ((iBit > 0)  ||  ((_This_[Index] || '').type > 1))
-                    return _This_[Index];
-            });
+                    if ((iBit > 0)  ||  ((_This_[Index] || '').type > 1))
+                        return _This_[Index];
+                }
+            );
         },
-        render:        function (iData) {
+        render:        function render(iData) {
 
             var _This_ = this,  _Data_ = { };
 
@@ -163,7 +130,7 @@ define([
 
             iData = this.commit( iData );  _Data_ = this.__data__;
 
-            for (var iKey in iData)  this.watch(iKey, arguments.callee);
+            for (var iKey in iData)  this.watch(iKey, render);
 
             if ( iData )
                 $.each(this.getNode( iData ),  function () {

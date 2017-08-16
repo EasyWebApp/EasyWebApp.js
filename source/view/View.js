@@ -29,20 +29,21 @@ define([
 
     $.extend(View.prototype, DataScope.prototype);
 
+    var Sub_Class = [ ];
+
     return  Observer.extend(View, {
-        Sub_Class:       [ ],
         getSub:          function (iDOM) {
 
-            for (var i = this.Sub_Class.length - 1;  this.Sub_Class[i];  i--)
-                if (this.Sub_Class[i].is( iDOM ))
-                    return  new this.Sub_Class[i](
+            for (var i = Sub_Class.length - 1;  Sub_Class[i];  i--)
+                if (Sub_Class[i].is( iDOM ))
+                    return  new Sub_Class[i](
                         iDOM,
                         (this.instanceOf( iDOM.parentNode )  ||  '').__data__
                     );
         },
         extend:          function (iConstructor, iStatic, iPrototype) {
 
-            this.Sub_Class.push( iConstructor );
+            Sub_Class.push( iConstructor );
 
             return $.inherit(
                 this, iConstructor, iStatic, iPrototype
@@ -196,6 +197,8 @@ define([
 
             for (var i = 0;  Sub_View[i];  i++)
                 iParser.call(this, Sub_View[i]);
+
+            return this;
         },
         childOf:       function (iSelector) {
 

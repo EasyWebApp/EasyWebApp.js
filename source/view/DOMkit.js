@@ -23,7 +23,7 @@ define([
                         rule[ this.cssText.split( /\s*\{/ )[0] ] = cssRule( this )
                     );
 
-                var _rule_ = rule[ this.selectorText ] = { };
+                var _rule_ = rule[this.selectorText || this.keyText] = { };
 
                 for (var i = 0, value, priority;  this.style[i];  i++) {
 
@@ -38,6 +38,47 @@ define([
             });
 
             return rule;
+        },
+        fixStyle:      function ($_Root, iDOM) {
+
+            if ( iDOM.classList.contains('iQuery_CSS-Rule') )  return iDOM;
+
+            var rule = this.cssRule( iDOM.sheet );    iDOM = [ ];
+
+            $.each(rule,  function (selector) {
+
+                var At_Rule = selector.match( /^@\S*?(\w+)\s*([\s\S]+)/ );
+
+                if (! At_Rule)  return;
+
+                switch ( At_Rule[1] ) {
+                    case 'media':
+                        $_Root.cssRule(this,  function () {
+
+                            iDOM[iDOM.push( arguments[0].ownerNode ) - 1].media =
+                                At_Rule[2];
+                        });
+                        break;
+                    case 'keyframes':
+                        iDOM.push( $.cssRule(selector,  this) );
+                        break;
+                    case 'supports':
+                        if (
+                            (CSS.supports instanceof Function)  &&
+                            CSS.supports( At_Rule[2] )
+                        )
+                            $.extend(true,  rule,  this);
+                }
+
+                delete  rule[ selector ];
+            });
+
+            $_Root.cssRule(rule,  function () {
+
+                iDOM.unshift( arguments[0].ownerNode );
+            });
+
+            return iDOM;
         },
         fixScript:        function (iDOM) {
             var iAttr = { };

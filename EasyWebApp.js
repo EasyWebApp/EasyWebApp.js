@@ -589,20 +589,21 @@ var view_View = (function ($, Observer, DataScope, InnerLink, RenderNode) {
 
     $.extend(View.prototype, DataScope.prototype);
 
+    var Sub_Class = [ ];
+
     return  Observer.extend(View, {
-        Sub_Class:       [ ],
         getSub:          function (iDOM) {
 
-            for (var i = this.Sub_Class.length - 1;  this.Sub_Class[i];  i--)
-                if (this.Sub_Class[i].is( iDOM ))
-                    return  new this.Sub_Class[i](
+            for (var i = Sub_Class.length - 1;  Sub_Class[i];  i--)
+                if (Sub_Class[i].is( iDOM ))
+                    return  new Sub_Class[i](
                         iDOM,
                         (this.instanceOf( iDOM.parentNode )  ||  '').__data__
                     );
         },
         extend:          function (iConstructor, iStatic, iPrototype) {
 
-            this.Sub_Class.push( iConstructor );
+            Sub_Class.push( iConstructor );
 
             return $.inherit(
                 this, iConstructor, iStatic, iPrototype
@@ -756,6 +757,8 @@ var view_View = (function ($, Observer, DataScope, InnerLink, RenderNode) {
 
             for (var i = 0;  Sub_View[i];  i++)
                 iParser.call(this, Sub_View[i]);
+
+            return this;
         },
         childOf:       function (iSelector) {
 
@@ -790,7 +793,7 @@ var view_DOMkit = (function ($, RenderNode, InnerLink) {
                         rule[ this.cssText.split( /\s*\{/ )[0] ] = cssRule( this )
                     );
 
-                var _rule_ = rule[ this.selectorText ] = { };
+                var _rule_ = rule[this.selectorText || this.keyText] = { };
 
                 for (var i = 0, value, priority;  this.style[i];  i++) {
 
@@ -805,6 +808,47 @@ var view_DOMkit = (function ($, RenderNode, InnerLink) {
             });
 
             return rule;
+        },
+        fixStyle:      function ($_Root, iDOM) {
+
+            if ( iDOM.classList.contains('iQuery_CSS-Rule') )  return iDOM;
+
+            var rule = this.cssRule( iDOM.sheet );    iDOM = [ ];
+
+            $.each(rule,  function (selector) {
+
+                var At_Rule = selector.match( /^@\S*?(\w+)\s*([\s\S]+)/ );
+
+                if (! At_Rule)  return;
+
+                switch ( At_Rule[1] ) {
+                    case 'media':
+                        $_Root.cssRule(this,  function () {
+
+                            iDOM[iDOM.push( arguments[0].ownerNode ) - 1].media =
+                                At_Rule[2];
+                        });
+                        break;
+                    case 'keyframes':
+                        iDOM.push( $.cssRule(selector,  this) );
+                        break;
+                    case 'supports':
+                        if (
+                            (CSS.supports instanceof Function)  &&
+                            CSS.supports( At_Rule[2] )
+                        )
+                            $.extend(true,  rule,  this);
+                }
+
+                delete  rule[ selector ];
+            });
+
+            $_Root.cssRule(rule,  function () {
+
+                iDOM.unshift( arguments[0].ownerNode );
+            });
+
+            return iDOM;
         },
         fixScript:        function (iDOM) {
             var iAttr = { };
@@ -939,43 +983,6 @@ var view_HTMLView = (function ($, View, DOMkit, RenderNode) {
         },
         rawSelector:    $.makeSet('code', 'xmp', 'template')
     }, {
-        parseSlot:     function (iNode) {
-
-            iNode = iNode.getAttribute('name');
-
-            var $_Slot = this.$_Content.filter(
-                    iNode  ?
-                        ('[slot="' + iNode + '"]')  :  '[slot=""], :not([slot])'
-                );
-            this.$_Content = this.$_Content.not( $_Slot );
-
-            return $_Slot;
-        },
-        fixStyle:      function (iDOM) {
-
-            if ( iDOM.classList.contains('iQuery_CSS-Rule') )  return iDOM;
-
-            var rule = DOMkit.cssRule( iDOM.sheet ),  media;    iDOM = [ ];
-
-            for (var selector in rule)
-                if (media = selector.match( /^@media\s*([\s\S]+)/i )) {
-
-                    this.$_View.cssRule(rule[ selector ],  function () {
-
-                        iDOM[iDOM.push( arguments[0].ownerNode ) - 1].media =
-                            media[1];
-                    });
-
-                    delete  rule[ selector ];
-                }
-
-            this.$_View.cssRule(rule,  function () {
-
-                iDOM.unshift( arguments[0].ownerNode );
-            });
-
-            return iDOM;
-        },
         signIn:        function (iNode) {
 
             for (var i = 0;  this[i];  i++)  if (this[i] == iNode)  return;
@@ -1020,11 +1027,12 @@ var view_HTMLView = (function ($, View, DOMkit, RenderNode) {
         },
         parse:         function () {
 
-            this.scan(function (iNode) {
+            return  this.scan(function (iNode) {
 
-                var _This_ = this,  tag = (iNode.tagName || '').toLowerCase();
+                var $_View = this.$_View,
+                    tag = (iNode.tagName || '').toLowerCase();
 
-                if ((iNode instanceof Element)  &&  (iNode !== this.$_View[0]))
+                if ((iNode instanceof Element)  &&  (iNode !== $_View[0]))
                     switch ( tag ) {
                         case 'link':      {
                             if (('rel' in iNode)  &&  (iNode.rel != 'stylesheet'))
@@ -1032,11 +1040,13 @@ var view_HTMLView = (function ($, View, DOMkit, RenderNode) {
 
                             iNode.onload = function () {
 
-                                $( this ).replaceWith( _This_.fixStyle( this ) );
+                                $( this ).replaceWith(
+                                    DOMkit.fixStyle($_View, this)
+                                );
                             };
                             return;
                         }
-                        case 'style':     return  this.fixStyle( iNode );
+                        case 'style':     return  DOMkit.fixStyle($_View, iNode);
                         case 'script':    return  DOMkit.fixScript( iNode );
                     }
 
@@ -1053,8 +1063,6 @@ var view_HTMLView = (function ($, View, DOMkit, RenderNode) {
                         this.parsePlain( iNode );
                 }
             });
-
-            return this;
         },
         getNode:       function () {
 
@@ -1064,11 +1072,14 @@ var view_HTMLView = (function ($, View, DOMkit, RenderNode) {
                 if (this.__map__.hasOwnProperty( iName ))
                     iMask = $.bitOperate('|',  iMask,  this.__map__[ iName ]);
 
-            return  $.map(iMask.split('').reverse(),  function (iBit, Index) {
+            return $.map(
+                $.leftPad(iMask, this.length).split('').reverse(),
+                function (iBit, Index) {
 
-                if ((iBit > 0)  ||  ((_This_[Index] || '').type > 1))
-                    return _This_[Index];
-            });
+                    if ((iBit > 0)  ||  ((_This_[Index] || '').type > 1))
+                        return _This_[Index];
+                }
+            );
         },
         render:        function render(iData) {
 
