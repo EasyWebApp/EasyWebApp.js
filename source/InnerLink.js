@@ -1,30 +1,10 @@
 define(['jquery', './base/Observer', 'jQueryKit'],  function ($, Observer) {
 
-    function InnerLink(Link_DOM) {
+    function InnerLink($_View) {
 
-        Observer.call(this, Link_DOM);
+        var _This_ = Observer.call(this, $_View);
 
-        this.method = (
-            Link_DOM.getAttribute('method') || Link_DOM.dataset.method || 'Get'
-        ).toUpperCase();
-
-        this.contentType =
-            Link_DOM.getAttribute('type') || Link_DOM.getAttribute('enctype') ||
-            'application/x-www-form-urlencoded';
-
-        this.charset = (
-            Link_DOM.getAttribute('charset') || Link_DOM.acceptCharset ||
-            document.charset
-        ).split(/\s+/);
-
-        this.setURI().title = Link_DOM.title || document.title;
-
-        if (! /^(a|area|form)$/i.test( Link_DOM.tagName ))
-            this.target = 'view';
-        else if ( this.href )
-            this.target = 'page';
-        else
-            this.target = 'data';
+        return  ((_This_ !== this)  ?  _This_  :  this).setProp();
     }
 
     return  Observer.extend(InnerLink, {
@@ -44,12 +24,40 @@ define(['jquery', './base/Observer', 'jQueryKit'],  function ($, Observer) {
         HTML_Link:    'a[href], area[href], form[action]',
         Self_Link:    '[data-href]:not(a, form)'
     }, {
+        setProp:     function () {
+
+            var link = this.$_View[0];
+
+            this.method = (
+                link.getAttribute('method') || link.dataset.method || 'Get'
+            ).toUpperCase();
+
+            this.contentType =
+                link.getAttribute('type') || link.getAttribute('enctype') ||
+                'application/x-www-form-urlencoded';
+
+            this.charset = (
+                link.getAttribute('charset') || link.acceptCharset ||
+                document.charset
+            ).split(/\s+/);
+
+            this.setURI().title = link.title || document.title;
+
+            if (! /^(a|area|form)$/i.test( link.tagName ))
+                this.target = 'view';
+            else if ( this.href )
+                this.target = 'page';
+            else
+                this.target = 'data';
+
+            return this;
+        },
         setURI:      function () {
 
-            var Link_DOM = this.$_View[0];
+            var link = this.$_View[0];
 
-            this.href = Link_DOM.dataset.href ||
-                Link_DOM.getAttribute(Link_DOM.href ? 'href' : 'action');
+            this.href = link.dataset.href ||
+                link.getAttribute(link.href ? 'href' : 'action');
 
             this.src = this.href.split(/\?data=|&data=/);
 
@@ -152,5 +160,6 @@ define(['jquery', './base/Observer', 'jQueryKit'],  function ($, Observer) {
 
             return _This_;
         }
-    });
+    }).registerEvent('data');
+
 });

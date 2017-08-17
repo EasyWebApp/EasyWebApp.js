@@ -1,12 +1,14 @@
 define(['jquery', './View', './HTMLView'],  function ($, View, HTMLView) {
 
-    function ListView() {
+    function ListView($_View, iScope) {
 
-        var _This_ = View.apply(this, arguments);
+        var _This_ = View.call(this, $_View, iScope);
 
-        if (this != _This_)  return _This_;
+        if (_This_ !== this)  return _This_;
 
         this.__HTML__ = this.$_View.html();
+
+        this.__parse__ = $.now();
 
         this.clear();
     }

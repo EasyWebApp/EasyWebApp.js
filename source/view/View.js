@@ -1,7 +1,6 @@
 define([
-    'jquery', '../base/Observer', '../base/DataScope', '../InnerLink',
-    './RenderNode', 'jQueryKit'
-],  function ($, Observer, DataScope, InnerLink, RenderNode) {
+    'jquery', '../base/Observer', '../base/DataScope', './RenderNode', 'jQueryKit'
+],  function ($, Observer, DataScope, RenderNode) {
 
     function View($_View, iScope) {
 
@@ -12,16 +11,13 @@ define([
 
         var _This_ = Observer.call(this, $_View);
 
-        if ((_This_ != null)  &&  (_This_ != this))  return _This_;
-
-        _This_ = InnerLink.instanceOf( this.$_View );
-
-        if (_This_)  $.extend(true,  this.__handle__,  _This_.__handle__ || { });
+        if (_This_ !== this)  return _This_;
 
         return $.extend(
             DataScope.call(this, iScope),
             {
                 __name__:     this.$_View[0].name || this.$_View[0].dataset.name,
+                __parse__:    0,
                 __child__:    [ ]
             }
         ).attach();
@@ -32,7 +28,7 @@ define([
     var Sub_Class = [ ];
 
     return  Observer.extend(View, {
-        getSub:          function (iDOM) {
+        getSub:    function (iDOM) {
 
             for (var i = Sub_Class.length - 1;  Sub_Class[i];  i--)
                 if (Sub_Class[i].is( iDOM ))
@@ -41,48 +37,13 @@ define([
                         (this.instanceOf( iDOM.parentNode )  ||  '').__data__
                     );
         },
-        extend:          function (iConstructor, iStatic, iPrototype) {
+        extend:    function (iConstructor, iStatic, iPrototype) {
 
             Sub_Class.push( iConstructor );
 
             return $.inherit(
                 this, iConstructor, iStatic, iPrototype
             ).signSelector();
-        },
-        getObserver:     function ($_DOM) {
-
-            return  this.instanceOf($_DOM, false)  ||
-                InnerLink.instanceOf($_DOM, false)  ||
-                new Observer( $_DOM );
-        },
-        setEvent:        function (iDOM) {
-
-            $.each(iDOM.attributes,  function () {
-
-                var iName = (this.nodeName.match(/^on(\w+)/i) || '')[1];
-
-                if ((! iName)  ||  (this.nodeName in iDOM))  return;
-
-                Object.defineProperty(iDOM,  'on' + iName,  {
-                    set:    function (iHandler) {
-
-                        var iView = View.getObserver( iDOM );
-
-                        iView.off( iName );
-
-                        if (typeof iHandler == 'function')
-                            iView.on(iName, iHandler);
-                    },
-                    get:    function () {
-
-                        return Observer.prototype.valueOf.call(
-                            View.getObserver( iDOM ),  iName,  'handler'
-                        )[0];
-                    }
-                });
-            });
-
-            return iDOM;
         }
     }, {
         attrWatch:     function () {
@@ -103,7 +64,7 @@ define([
                         iData[$.camelCase( this.attributeName.slice(5) )] = iNew;
                 });
 
-                if (! $.isEmptyObject( iData ))
+                if (_This_.__parse__  &&  (! $.isEmptyObject( iData )))
                     _This_.render( iData ).emit({
                         type:      'update',
                         target:    _This_.$_View[0]
@@ -167,7 +128,7 @@ define([
 
                         if ( iDOM.dataset.href ) {
 
-                            this.__child__.push( iDOM );
+                            this.__child__.push( View.getSub( iDOM ) );
 
                             return null;
 
@@ -193,10 +154,12 @@ define([
             while (! iSearcher.next().done)  ;
 
             for (var i = 0;  this.__child__[i];  i++)
-                iParser.call(this,  View.setEvent( this.__child__[i] ));
+                iParser.call(this,  this.__child__[i].$_View[0]);
 
             for (var i = 0;  Sub_View[i];  i++)
                 iParser.call(this, Sub_View[i]);
+
+            this.__parse__ = $.now();
 
             return this;
         },
@@ -206,5 +169,6 @@ define([
                 View.instanceOf(this.$_View.find(iSelector + '[data-href]'))  :
                 this.__child__;
         }
-    });
+    }).registerEvent('ready', 'update');
+
 });

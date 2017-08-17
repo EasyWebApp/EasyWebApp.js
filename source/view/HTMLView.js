@@ -6,7 +6,7 @@ define([
 
         var _This_ = View.call(this, $_View, iScope);
 
-        if (this != _This_)  return _This_;
+        if (_This_ !== this)  return _This_;
 
         $.extend(this, {
             length:     0,
@@ -149,5 +149,6 @@ define([
 
             return this;
         }
-    });
+    }).registerEvent('template');
+
 });

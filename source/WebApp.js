@@ -11,7 +11,7 @@ define([
 
         var _This_ = WebApp.instanceOf( $('*:webapp') )  ||  this;
 
-        if ((_This_ != null)  &&  (_This_ != this))  return _This_;
+        if (_This_ !== this)  return _This_;
 
         Observer.call(this, Page_Box).apiRoot = API_Root || '';
 
@@ -65,6 +65,8 @@ define([
                 '#!'  +  self.btoa( iURI )
             );
             this[ this.length++ ] = iLink;
+
+            return this;
         },
         getRoute:         function () {
             return self.atob(
@@ -75,6 +77,9 @@ define([
 
             var $_Target = ((iLink.target === 'page')  ?  this  :  iLink).$_View;
 
+            var observer = (iType in iLink.__handle__)  ?
+                    iLink  :  View.instanceOf($_Target, false);
+
             iLink = $.extend(iLink.valueOf(), {
                 type:      iType,
                 target:    $_Target[0]
@@ -82,9 +87,7 @@ define([
 
             iData = this.emit(iLink, iData)  ||  iData;
 
-            var iView = View.getObserver( $_Target );
-
-            return  iView  ?  (iView.emit(iLink, iData)  ||  iData)  :  iData;
+            return  observer  ?  (observer.emit(iLink, iData)  ||  iData)  :  iData;
         },
         getCID:           function () {
 
@@ -93,17 +96,12 @@ define([
         },
         loadView:         function (iLink, iHTML) {
 
-            var iTarget = iLink.$_View[0];
-
-            if (iLink.target == 'page') {
-
-                this.setRoute( iLink );
-
-                iTarget = this.$_View[0];
-            }
+            var iTarget = (
+                    (iLink.target === 'page')  ?  this.setRoute( iLink )  :  iLink
+                ).$_View[0];
 
             if (iHTML = this._emit('template', iLink, iHTML))
-                iTarget = DOMkit.build(iTarget, iLink, iHTML);
+                DOMkit.build(iTarget, iLink, iHTML);
 
             var iView = View.getSub( iTarget );
 
@@ -145,7 +143,10 @@ define([
         },
         load:             function (iLink) {
 
-            if (! (iLink instanceof InnerLink))  iLink = new InnerLink( iLink );
+            if (! (iLink instanceof InnerLink))
+                iLink = new InnerLink(
+                    (iLink instanceof Observer)  ?  iLink.$_View[0]  :  iLink
+                );
 
             var _This_ = this;
 
@@ -165,12 +166,12 @@ define([
 
             }).then(function () {
 
-                var iHTML = arguments[0][0],  iData = arguments[0][1];
+                var iData = arguments[0][1];
 
                 if (iData != null)  iData = _This_._emit('data', iLink, iData);
 
-                if (iLink.target != 'data')
-                    return  _This_.loadComponent(iLink, iHTML, iData);
+                if (iLink.target !== 'data')
+                    return  _This_.loadComponent(iLink, arguments[0][0], iData);
 
             }).then(function (iView) {
 

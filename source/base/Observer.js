@@ -18,9 +18,43 @@ define(['jquery', 'jQueryKit'],  function ($) {
 
                 var _This_ = this.$_View.data( iType );
 
-                return  ((_This_ != null)  &&  (_This_ != this))  ?
+                return  ((_This_ != null)  &&  (_This_ !== this))  ?
                     _This_  :
-                    $.data(this.$_View[0], iType, this);
+                    $.data(this.$_View[0], iType, this.setHandle());
+            },
+            setHandle:     function () {
+
+                var _This_ = this;
+
+                $.each(this.$_View[0].attributes,  function () {
+
+                    var iName = (this.nodeName.match(/^on(\w+)/i) || '')[1];
+
+                    if (
+                        (! iName)  ||
+                        !(iName in iClass.Bind_Event)  ||
+                        (this.nodeName in this.ownerElement)
+                    )
+                        return;
+
+                    Object.defineProperty(this.ownerElement,  'on' + iName,  {
+                        set:    function (iHandler) {
+
+                            _This_.off( iName );
+
+                            if (typeof iHandler === 'function')
+                                _This_.on(iName, iHandler);
+                        },
+                        get:    function () {
+
+                            return Observer.prototype.valueOf.call(
+                                _This_,  iName,  'handler'
+                            )[0];
+                        }
+                    });
+                });
+
+                return this;
             },
             destructor:    function () {
 
@@ -31,7 +65,14 @@ define(['jquery', 'jQueryKit'],  function ($) {
         });
 
         return  $.extend(iClass, {
-            signSelector:    function () {
+            Bind_Event:       { },
+            registerEvent:    function () {
+
+                $.extend(iClass.Bind_Event,  $.makeSet.apply($, arguments));
+
+                return this;
+            },
+            signSelector:     function () {
 
                 var _This_ = this;
 
@@ -43,7 +84,7 @@ define(['jquery', 'jQueryKit'],  function ($) {
 
                 return this;
             },
-            instanceOf:      function ($_Instance, Check_Parent) {
+            instanceOf:       function ($_Instance, Check_Parent) {
 
                 var _Instance_;  $_Instance = $( $_Instance );
 
