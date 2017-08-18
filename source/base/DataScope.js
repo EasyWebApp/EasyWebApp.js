@@ -2,14 +2,14 @@ define(['jquery', 'jQueryKit'],  function ($) {
 
     function DataScope(iSuper) {
 
-        this.__data__ = Object.create(iSuper || { });
+        this.setPrivate('data',  Object.create(iSuper || { }));
 
         this.__data__.splice = this.__data__.splice || Array.prototype.splice;
 
         return this;
     }
 
-    $.extend(DataScope.prototype, {
+    $.Class.extend(DataScope, null, {
         commit:      function (iData) {
             var _Data_ = { };
 
@@ -33,7 +33,7 @@ define(['jquery', 'jQueryKit'],  function ($) {
         watch:       function (iKey, iSetter) {
 
             if (! (iKey in this))
-                Object.defineProperty(this, iKey, {
+                this.setPublic(iKey, null, {
                     get:    function () {
 
                         return  this.__data__[iKey];

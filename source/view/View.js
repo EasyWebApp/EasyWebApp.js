@@ -1,26 +1,20 @@
 define([
-    'jquery', '../base/Observer', '../base/DataScope', './RenderNode', 'jQueryKit'
+    'jquery', '../base/Observer', '../base/DataScope', './RenderNode'
 ],  function ($, Observer, DataScope, RenderNode) {
 
     function View($_View, iScope) {
 
-        if (this.constructor == View)
-            throw TypeError(
-                "View() is an Abstract Base Class which can't be instantiated."
-            );
+        var _This_ = Observer.call($.Class.call(this, View),  $_View);
 
-        var _This_ = Observer.call(this, $_View);
-
-        if (_This_ !== this)  return _This_;
-
-        return $.extend(
-            DataScope.call(this, iScope),
-            {
-                __name__:     this.$_View[0].name || this.$_View[0].dataset.name,
-                __parse__:    0,
-                __child__:    [ ]
-            }
-        ).attach();
+        return  (_This_ !== this)  ?
+            _This_ :
+            DataScope.call(this, iScope).setPrivate({
+                id:          '',
+                name:        this.$_View[0].name || this.$_View[0].dataset.name,
+                parse:       0,
+                child:       [ ],
+                observer:    null
+            }).attach();
     }
 
     $.extend(View.prototype, DataScope.prototype);
@@ -41,8 +35,8 @@ define([
 
             Sub_Class.push( iConstructor );
 
-            return $.inherit(
-                this, iConstructor, iStatic, iPrototype
+            return $.Class.extend.call(
+                this,  iConstructor,  iStatic,  iPrototype
             ).signSelector();
         }
     }, {

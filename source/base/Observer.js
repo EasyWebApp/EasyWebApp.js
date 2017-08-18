@@ -4,7 +4,7 @@ define(['jquery', 'jQueryKit'],  function ($) {
 
         this.$_View = ($_View instanceof $)  ?  $_View  :  $( $_View );
 
-        this.__handle__ = { };
+        this.setPrivate('handle',  { });
 
         return this.init();
     }
@@ -100,10 +100,10 @@ define(['jquery', 'jQueryKit'],  function ($) {
         }).signSelector();
     }
 
-    $.extend(Observer, {
+    return  basicMethod($.Class.extend(Observer, {
         extend:      function (iConstructor, iStatic, iPrototype) {
 
-            return basicMethod($.inherit(
+            return basicMethod($.Class.extend.call(
                 this,  iConstructor,  iStatic,  iPrototype
             ));
         },
@@ -145,9 +145,7 @@ define(['jquery', 'jQueryKit'],  function ($) {
 
             return iHandle;
         }
-    });
-
-    $.extend(Observer.prototype, {
+    }, {
         toString:    function () {
 
             return  '[object ' + this.constructor.name + ']';
@@ -228,8 +226,5 @@ define(['jquery', 'jQueryKit'],  function ($) {
 
             return  iCallback ? this : iPromise;
         }
-    });
-
-    return  basicMethod( Observer );
-
+    }));
 });

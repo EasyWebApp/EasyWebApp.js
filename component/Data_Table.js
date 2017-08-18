@@ -13,8 +13,6 @@ require(['jquery', 'EasyWebApp'],  function ($) {
                 this.$_View.find('[type="number"]').val(1).change();
             });
 
-        var iList = $( iEvent.target ).view('ListView');
-
         iWebApp.off( iEvent ).on(iEvent,  function (iEvent, iData) {
 
             VM.render({
@@ -38,7 +36,7 @@ require(['jquery', 'EasyWebApp'],  function ($) {
                     (iTarget.tagName == 'SELECT')  ?  'rows'  :  'page',  iValue
                 );
 
-                iList.clear();
+                $( iEvent.target ).view().clear();
 
                 iWebApp.load( iEvent.target );
             }

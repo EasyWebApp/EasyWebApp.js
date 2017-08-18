@@ -13,7 +13,9 @@ define([
 
         if (_This_ !== this)  return _This_;
 
-        Observer.call(this, Page_Box).apiRoot = API_Root || '';
+        Observer.call(this, Page_Box).apiRoot = new URL(
+            API_Root || '',  self.location.href
+        );
 
         var iPath = self.location.href.split('?')[0];
 
@@ -114,9 +116,8 @@ define([
         },
         loadComponent:    function (iLink, iHTML, iData) {
 
-            var CID = this.getCID(
-                    InnerLink.parsePath(this.pageRoot + iLink.href)
-                );
+            var CID = this.getCID(new URL(iLink.href, this.pageRoot)  +  '');
+
             this.loading[ CID ] = iLink;
 
             var JS_Load = iLink.one('load');
@@ -151,11 +152,9 @@ define([
             var _This_ = this;
 
             return  iLink.load(function () {
-                if (
-                    ((this.dataType || '').slice(0, 4) == 'json')  &&
-                    (! $.urlDomain( this.url ))
-                )
-                    this.url = _This_.apiRoot + this.url;
+
+                if ((this.dataType || '').slice(0, 4)  ===  'json')
+                    this.url = (new URL(this.url, _This_.apiRoot))  +  '';
 
                 _This_.emit($.extend(iLink.valueOf(), {type: 'request'}),  {
                     option:       this,

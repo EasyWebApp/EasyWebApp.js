@@ -1,4 +1,6 @@
-define(['jquery', './View', './HTMLView'],  function ($, View, HTMLView) {
+define([
+    'jquery', './View', './HTMLView', '../InnerLink'
+],  function ($, View, HTMLView, InnerLink) {
 
     function ListView($_View, iScope) {
 
@@ -6,18 +8,18 @@ define(['jquery', './View', './HTMLView'],  function ($, View, HTMLView) {
 
         if (_This_ !== this)  return _This_;
 
-        this.__HTML__ = this.$_View.html();
-
-        this.__parse__ = $.now();
-
-        this.clear();
+        this.setPrivate({
+            HTML:     this.$_View.html(),
+            parse:    $.now()
+        }).clear();
     }
 
-    return  View.extend(ListView, {
+    View.extend(ListView, {
         is:    $.expr[':'].list
     }, {
         splice:     Array.prototype.splice,
         clear:      function () {
+
             this.$_View.empty();
 
             this.splice(0, Infinity);
@@ -27,6 +29,12 @@ define(['jquery', './View', './HTMLView'],  function ($, View, HTMLView) {
         insert:     function (iData, Index, iDelay) {
 
             var Item = (new HTMLView(this.__HTML__, this.__data__)).parse();
+
+            Item.$_View.find( InnerLink.HTML_Link ).addBack( InnerLink.HTML_Link )
+                .each(function () {
+
+                    new InnerLink( this );
+                });
 
             if (! iDelay)  Item.$_View.insertTo(this.$_View, Index);
 
@@ -94,4 +102,7 @@ define(['jquery', './View', './HTMLView'],  function ($, View, HTMLView) {
             });
         }
     });
+
+    return ListView;
+
 });

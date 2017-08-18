@@ -6,12 +6,9 @@ define([
 
         var _This_ = View.call(this, $_View, iScope);
 
-        if (_This_ !== this)  return _This_;
-
-        $.extend(this, {
-            length:     0,
-            __map__:    { },
-        });
+        return  (_This_ !== this)  ?
+            _This_ :
+            this.setPrivate( {length: 0,  map: { }} );
     }
 
     return  View.extend(HTMLView, {

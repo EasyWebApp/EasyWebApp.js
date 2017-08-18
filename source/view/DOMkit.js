@@ -12,7 +12,7 @@ define([
 
 
     return {
-        cssRule:          function cssRule(sheet) {
+        cssRule:      function cssRule(sheet) {
 
             var rule = { };
 
@@ -39,7 +39,7 @@ define([
 
             return rule;
         },
-        fixStyle:      function ($_Root, iDOM) {
+        fixStyle:     function ($_Root, iDOM) {
 
             if ( iDOM.classList.contains('iQuery_CSS-Rule') )  return iDOM;
 
@@ -80,7 +80,7 @@ define([
 
             return iDOM;
         },
-        fixScript:        function (iDOM) {
+        fixScript:    function (iDOM) {
             var iAttr = { };
 
             $.each(iDOM.attributes,  function () {
@@ -92,13 +92,7 @@ define([
 
             return iDOM;
         },
-        innerHTMLLink:    function (iDOM) {
-
-            return  $( iDOM ).is( InnerLink.HTML_Link )  &&  (
-                (iDOM.target || '_self')  ===  '_self'
-            );
-        },
-        fixURL:           function (iDOM, iKey, iBase) {
+        fixURL:       function (iDOM, iKey, iBase) {
 
             var iURL = iDOM.getAttribute( iKey )  ||  '';
 
@@ -119,7 +113,7 @@ define([
 
             return iURL.join('?');
         },
-        prefetch:         function (iDOM, iURL) {
+        prefetch:     function (iDOM, iURL) {
             if (! (
                 (iURL[0] in URL_Prefix)  ||
                 iURL.match( RenderNode.expression )  ||
@@ -131,7 +125,7 @@ define([
                     href:    iURL
                 }).appendTo( document.head );
         },
-        parseSlot:        function (root, $_Root) {
+        parseSlot:    function (root, $_Root) {
 
             $_Root.find('slot[name]').each(function () {
 
@@ -149,7 +143,7 @@ define([
                     this.parentNode.removeChild( this );
             });
         },
-        build:            function (root, base, HTML) {
+        build:        function (root, base, HTML) {
 
             var _This_ = this,  $_Root = $('<div />').prop('innerHTML', HTML);
 
@@ -163,11 +157,6 @@ define([
 
             $_Root.find( Object.keys( URL_DOM ) + '' ).each(function () {
 
-                if (_This_.innerHTMLLink( this )  &&  (
-                    $.urlDomain(this.href || this.action)  !==  $.urlDomain()
-                ))
-                    this.target = '_blank';
-
                 var URL = _This_.fixURL(
                         this,
                         URL_DOM[ this.tagName.toLowerCase() ]  ||  (
@@ -176,18 +165,24 @@ define([
                         base
                     );
 
+                if (
+                    $( this ).is( InnerLink.HTML_Link )  &&
+                    ((this.target || '_self')  ===  '_self')
+                ) {
+                    _This_.prefetch(this, URL);
+
+                    if ($.urlDomain(this.href || this.action)  !==  $.urlDomain())
+                        this.target = '_blank';
+                }
+
                 if ($( this ).is(InnerLink.HTML_Link + ', ' + InnerLink.Self_Link))
                     new InnerLink( this );
-
-                if (_This_.innerHTMLLink( this ))  _This_.prefetch(this, URL);
             });
 
 
             if ( root.childNodes[0] )  this.parseSlot(root, $_Root);
 
             root.appendChild( $.buildFragment( $_Root.contents() ) );
-
-            return root;
         }
     };
 });

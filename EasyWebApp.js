@@ -13,6 +13,238 @@
 })(function (jquery, jQueryKit) {
 
 
+var base_Observer = (function ($) {
+
+    function Observer($_View) {
+
+        this.$_View = ($_View instanceof $)  ?  $_View  :  $( $_View );
+
+        this.setPrivate('handle',  { });
+
+        return this.init();
+    }
+
+    function basicMethod(iClass) {
+
+        var iType = Observer.prototype.toString.call({constructor: iClass});
+
+        $.extend(iClass.prototype, {
+            init:          function () {
+
+                var _This_ = this.$_View.data( iType );
+
+                return  ((_This_ != null)  &&  (_This_ !== this))  ?
+                    _This_  :
+                    $.data(this.$_View[0], iType, this.setHandle());
+            },
+            setHandle:     function () {
+
+                var _This_ = this;
+
+                $.each(this.$_View[0].attributes,  function () {
+
+                    var iName = (this.nodeName.match(/^on(\w+)/i) || '')[1];
+
+                    if (
+                        (! iName)  ||
+                        !(iName in iClass.Bind_Event)  ||
+                        (this.nodeName in this.ownerElement)
+                    )
+                        return;
+
+                    Object.defineProperty(this.ownerElement,  'on' + iName,  {
+                        set:    function (iHandler) {
+
+                            _This_.off( iName );
+
+                            if (typeof iHandler === 'function')
+                                _This_.on(iName, iHandler);
+                        },
+                        get:    function () {
+
+                            return Observer.prototype.valueOf.call(
+                                _This_,  iName,  'handler'
+                            )[0];
+                        }
+                    });
+                });
+
+                return this;
+            },
+            destructor:    function () {
+
+                this.$_View.removeData( iType );
+
+                return  this.valueOf.apply(this, arguments);
+            }
+        });
+
+        return  $.extend(iClass, {
+            Bind_Event:       { },
+            registerEvent:    function () {
+
+                $.extend(iClass.Bind_Event,  $.makeSet.apply($, arguments));
+
+                return this;
+            },
+            signSelector:     function () {
+
+                var _This_ = this;
+
+                $.expr[':'][ this.name.toLowerCase() ] = function () {
+                    return (
+                        ($.data(arguments[0], iType) || '')  instanceof  _This_
+                    );
+                };
+
+                return this;
+            },
+            instanceOf:       function ($_Instance, Check_Parent) {
+
+                var _Instance_;  $_Instance = $( $_Instance );
+
+                do {
+                    _Instance_ = $_Instance.data( iType );
+
+                    if (_Instance_ instanceof this)  return _Instance_;
+
+                    $_Instance = $_Instance.parent();
+
+                } while ($_Instance[0]  &&  (Check_Parent !== false));
+            }
+        }).signSelector();
+    }
+
+    return  basicMethod($.Class.extend(Observer, {
+        extend:      function (iConstructor, iStatic, iPrototype) {
+
+            return basicMethod($.Class.extend.call(
+                this,  iConstructor,  iStatic,  iPrototype
+            ));
+        },
+        getEvent:    function (iEvent) {
+
+            return $.extend(
+                { },
+                (typeof iEvent == 'string')  ?  {type: iEvent}  :  iEvent,
+                arguments[1]
+            );
+        },
+        match:       function (iEvent, iHandle) {
+            var iRegExp;
+
+            for (var iKey in iHandle) {
+
+                iRegExp = iEvent[iKey] instanceof RegExp;
+
+                switch ($.Type( iHandle[iKey] )) {
+                    case 'RegExp':
+                        if ( iRegExp ) {
+                            if (iEvent[iKey].toString() != iHandle[iKey].toString())
+                                return;
+                            break;
+                        }
+                    case 'String':    {
+                        if (! (iEvent[iKey] || '')[iRegExp ? 'test' : 'match'](
+                            iHandle[iKey]
+                        ))
+                            return;
+                        break;
+                    }
+                    case 'Function':
+                        if (typeof iEvent[iKey] != 'function')  break;
+                    default:
+                        if (iEvent[iKey] !== iHandle[iKey])  return;
+                }
+            }
+
+            return iHandle;
+        }
+    }, {
+        toString:    function () {
+
+            return  '[object ' + this.constructor.name + ']';
+        },
+        valueOf:     function (iEvent, iKey) {
+
+            if (! iEvent)  return  this.__handle__;
+
+            return  (! iKey)  ?  this.__handle__[iEvent]  :
+                $.map(this.__handle__[iEvent],  function () {
+
+                    return  arguments[0][ iKey ];
+                });
+        },
+        on:          function (iEvent, iCallback) {
+
+            iEvent = Observer.getEvent(iEvent,  {handler: iCallback});
+
+            var iHandle = this.__handle__[iEvent.type] =
+                    this.__handle__[iEvent.type]  ||  [ ];
+
+            for (var i = 0;  iHandle[i];  i++)
+                if ($.isEqual(iHandle[i], iEvent))  return this;
+
+            iHandle.push( iEvent );
+
+            return this;
+        },
+        emit:        function (iEvent, iData) {
+
+            iEvent = Observer.getEvent( iEvent );
+
+            return  (this.__handle__[iEvent.type] || [ ]).reduce(
+                (function (_Data_, iHandle) {
+
+                    if (! Observer.match(iEvent, iHandle))  return _Data_;
+
+                    var iResult = iHandle.handler.call(this, iEvent, _Data_);
+
+                    return  (iResult != null)  ?  iResult  :  _Data_;
+
+                }).bind( this ),
+                iData
+            );
+        },
+        off:         function (iEvent, iCallback) {
+
+            iEvent = Observer.getEvent(iEvent,  {handler: iCallback});
+
+            this.__handle__[iEvent.type] = $.map(
+                this.__handle__[iEvent.type],  function (iHandle) {
+
+                    return  Observer.match(iEvent, iHandle)  ?  null  :  iHandle;
+                }
+            );
+
+            return this;
+        },
+        one:         function () {
+
+            var _This_ = this,  iArgs = $.makeArray( arguments );
+
+            var iCallback = iArgs.slice(-1)[0];
+
+            iCallback = (typeof iCallback == 'function')  &&  iArgs.pop();
+
+            var iPromise = new Promise(function (iResolve) {
+
+                    _This_.on.apply(_This_,  iArgs.concat(function once() {
+
+                        _This_.off.apply(_This_,  iArgs.concat( once ));
+
+                        if ( iCallback )  return  iCallback.apply(this, arguments);
+
+                        iResolve( arguments[1] );
+                    }));
+                });
+
+            return  iCallback ? this : iPromise;
+        }
+    }));
+})(jquery);
+
+
 var view_RenderNode = (function ($) {
 
     function RenderNode(iNode) {
@@ -126,320 +358,6 @@ var view_RenderNode = (function ($) {
     });
 
     return RenderNode;
-
-})(jquery);
-
-
-var base_Observer = (function ($) {
-
-    function Observer($_View) {
-
-        this.$_View = ($_View instanceof $)  ?  $_View  :  $( $_View );
-
-        this.__handle__ = { };
-
-        return this.init();
-    }
-
-    function basicMethod(iClass) {
-
-        var iType = Observer.prototype.toString.call({constructor: iClass});
-
-        $.extend(iClass.prototype, {
-            init:          function () {
-
-                var _This_ = this.$_View.data( iType );
-
-                return  ((_This_ != null)  &&  (_This_ !== this))  ?
-                    _This_  :
-                    $.data(this.$_View[0], iType, this.setHandle());
-            },
-            setHandle:     function () {
-
-                var _This_ = this;
-
-                $.each(this.$_View[0].attributes,  function () {
-
-                    var iName = (this.nodeName.match(/^on(\w+)/i) || '')[1];
-
-                    if (
-                        (! iName)  ||
-                        !(iName in iClass.Bind_Event)  ||
-                        (this.nodeName in this.ownerElement)
-                    )
-                        return;
-
-                    Object.defineProperty(this.ownerElement,  'on' + iName,  {
-                        set:    function (iHandler) {
-
-                            _This_.off( iName );
-
-                            if (typeof iHandler === 'function')
-                                _This_.on(iName, iHandler);
-                        },
-                        get:    function () {
-
-                            return Observer.prototype.valueOf.call(
-                                _This_,  iName,  'handler'
-                            )[0];
-                        }
-                    });
-                });
-
-                return this;
-            },
-            destructor:    function () {
-
-                this.$_View.removeData( iType );
-
-                return  this.valueOf.apply(this, arguments);
-            }
-        });
-
-        return  $.extend(iClass, {
-            Bind_Event:       { },
-            registerEvent:    function () {
-
-                $.extend(iClass.Bind_Event,  $.makeSet.apply($, arguments));
-
-                return this;
-            },
-            signSelector:     function () {
-
-                var _This_ = this;
-
-                $.expr[':'][ this.name.toLowerCase() ] = function () {
-                    return (
-                        ($.data(arguments[0], iType) || '')  instanceof  _This_
-                    );
-                };
-
-                return this;
-            },
-            instanceOf:       function ($_Instance, Check_Parent) {
-
-                var _Instance_;  $_Instance = $( $_Instance );
-
-                do {
-                    _Instance_ = $_Instance.data( iType );
-
-                    if (_Instance_ instanceof this)  return _Instance_;
-
-                    $_Instance = $_Instance.parent();
-
-                } while ($_Instance[0]  &&  (Check_Parent !== false));
-            }
-        }).signSelector();
-    }
-
-    $.extend(Observer, {
-        extend:      function (iConstructor, iStatic, iPrototype) {
-
-            return basicMethod($.inherit(
-                this,  iConstructor,  iStatic,  iPrototype
-            ));
-        },
-        getEvent:    function (iEvent) {
-
-            return $.extend(
-                { },
-                (typeof iEvent == 'string')  ?  {type: iEvent}  :  iEvent,
-                arguments[1]
-            );
-        },
-        match:       function (iEvent, iHandle) {
-            var iRegExp;
-
-            for (var iKey in iHandle) {
-
-                iRegExp = iEvent[iKey] instanceof RegExp;
-
-                switch ($.Type( iHandle[iKey] )) {
-                    case 'RegExp':
-                        if ( iRegExp ) {
-                            if (iEvent[iKey].toString() != iHandle[iKey].toString())
-                                return;
-                            break;
-                        }
-                    case 'String':    {
-                        if (! (iEvent[iKey] || '')[iRegExp ? 'test' : 'match'](
-                            iHandle[iKey]
-                        ))
-                            return;
-                        break;
-                    }
-                    case 'Function':
-                        if (typeof iEvent[iKey] != 'function')  break;
-                    default:
-                        if (iEvent[iKey] !== iHandle[iKey])  return;
-                }
-            }
-
-            return iHandle;
-        }
-    });
-
-    $.extend(Observer.prototype, {
-        toString:    function () {
-
-            return  '[object ' + this.constructor.name + ']';
-        },
-        valueOf:     function (iEvent, iKey) {
-
-            if (! iEvent)  return  this.__handle__;
-
-            return  (! iKey)  ?  this.__handle__[iEvent]  :
-                $.map(this.__handle__[iEvent],  function () {
-
-                    return  arguments[0][ iKey ];
-                });
-        },
-        on:          function (iEvent, iCallback) {
-
-            iEvent = Observer.getEvent(iEvent,  {handler: iCallback});
-
-            var iHandle = this.__handle__[iEvent.type] =
-                    this.__handle__[iEvent.type]  ||  [ ];
-
-            for (var i = 0;  iHandle[i];  i++)
-                if ($.isEqual(iHandle[i], iEvent))  return this;
-
-            iHandle.push( iEvent );
-
-            return this;
-        },
-        emit:        function (iEvent, iData) {
-
-            iEvent = Observer.getEvent( iEvent );
-
-            return  (this.__handle__[iEvent.type] || [ ]).reduce(
-                (function (_Data_, iHandle) {
-
-                    if (! Observer.match(iEvent, iHandle))  return _Data_;
-
-                    var iResult = iHandle.handler.call(this, iEvent, _Data_);
-
-                    return  (iResult != null)  ?  iResult  :  _Data_;
-
-                }).bind( this ),
-                iData
-            );
-        },
-        off:         function (iEvent, iCallback) {
-
-            iEvent = Observer.getEvent(iEvent,  {handler: iCallback});
-
-            this.__handle__[iEvent.type] = $.map(
-                this.__handle__[iEvent.type],  function (iHandle) {
-
-                    return  Observer.match(iEvent, iHandle)  ?  null  :  iHandle;
-                }
-            );
-
-            return this;
-        },
-        one:         function () {
-
-            var _This_ = this,  iArgs = $.makeArray( arguments );
-
-            var iCallback = iArgs.slice(-1)[0];
-
-            iCallback = (typeof iCallback == 'function')  &&  iArgs.pop();
-
-            var iPromise = new Promise(function (iResolve) {
-
-                    _This_.on.apply(_This_,  iArgs.concat(function once() {
-
-                        _This_.off.apply(_This_,  iArgs.concat( once ));
-
-                        if ( iCallback )  return  iCallback.apply(this, arguments);
-
-                        iResolve( arguments[1] );
-                    }));
-                });
-
-            return  iCallback ? this : iPromise;
-        }
-    });
-
-    return  basicMethod( Observer );
-
-})(jquery);
-
-
-var base_DataScope = (function ($) {
-
-    function DataScope(iSuper) {
-
-        this.__data__ = Object.create(iSuper || { });
-
-        this.__data__.splice = this.__data__.splice || Array.prototype.splice;
-
-        return this;
-    }
-
-    $.extend(DataScope.prototype, {
-        commit:      function (iData) {
-            var _Data_ = { };
-
-            if ($.likeArray( iData )) {
-                _Data_ = [ ];
-
-                this.__data__.splice(0, Infinity);
-            }
-
-            for (var iKey in iData)
-                if (
-                    iData.hasOwnProperty( iKey )  &&  (iData[iKey] != null)  &&  (
-                        (typeof iData[iKey] == 'object')  ||
-                        (! this.__data__.hasOwnProperty( iKey ))  ||
-                        (iData[iKey] !== this.__data__[iKey])
-                    )
-                )  _Data_[iKey] = this.__data__[iKey] = iData[iKey];
-
-            return _Data_;
-        },
-        watch:       function (iKey, iSetter) {
-
-            if (! (iKey in this))
-                Object.defineProperty(this, iKey, {
-                    get:    function () {
-
-                        return  this.__data__[iKey];
-                    },
-                    set:    iSetter.bind(this, iKey)
-                });
-        },
-        valueOf:     function () {
-
-            var iValue = this.__data__.hasOwnProperty('length')  ?
-                    Array.apply(null, this.__data__)  :  { };
-
-            for (var iKey in this.__data__)
-                if (this.__data__.hasOwnProperty( iKey )  &&  (! $.isNumeric(iKey)))
-                    iValue[iKey] = this[iKey];
-
-            return iValue;
-        },
-        clear:       function () {
-
-            var iData = this.__data__;
-
-            if ( iData.hasOwnProperty('length') )  iData.splice(0, Infinity);
-
-            for (var iKey in iData)  if (iData.hasOwnProperty( iKey )) {
-
-                if ($.likeArray( iData[iKey] ))
-                    iData.splice.call(iData[iKey], 0, Infinity);
-                else
-                    iData[iKey] = '';
-            }
-
-            return this;
-        }
-    });
-
-    return DataScope;
 
 })(jquery);
 
@@ -611,27 +529,98 @@ var InnerLink = (function ($, Observer) {
 })(jquery, base_Observer);
 
 
+var base_DataScope = (function ($) {
+
+    function DataScope(iSuper) {
+
+        this.setPrivate('data',  Object.create(iSuper || { }));
+
+        this.__data__.splice = this.__data__.splice || Array.prototype.splice;
+
+        return this;
+    }
+
+    $.Class.extend(DataScope, null, {
+        commit:      function (iData) {
+            var _Data_ = { };
+
+            if ($.likeArray( iData )) {
+                _Data_ = [ ];
+
+                this.__data__.splice(0, Infinity);
+            }
+
+            for (var iKey in iData)
+                if (
+                    iData.hasOwnProperty( iKey )  &&  (iData[iKey] != null)  &&  (
+                        (typeof iData[iKey] == 'object')  ||
+                        (! this.__data__.hasOwnProperty( iKey ))  ||
+                        (iData[iKey] !== this.__data__[iKey])
+                    )
+                )  _Data_[iKey] = this.__data__[iKey] = iData[iKey];
+
+            return _Data_;
+        },
+        watch:       function (iKey, iSetter) {
+
+            if (! (iKey in this))
+                this.setPublic(iKey, null, {
+                    get:    function () {
+
+                        return  this.__data__[iKey];
+                    },
+                    set:    iSetter.bind(this, iKey)
+                });
+        },
+        valueOf:     function () {
+
+            var iValue = this.__data__.hasOwnProperty('length')  ?
+                    Array.apply(null, this.__data__)  :  { };
+
+            for (var iKey in this.__data__)
+                if (this.__data__.hasOwnProperty( iKey )  &&  (! $.isNumeric(iKey)))
+                    iValue[iKey] = this[iKey];
+
+            return iValue;
+        },
+        clear:       function () {
+
+            var iData = this.__data__;
+
+            if ( iData.hasOwnProperty('length') )  iData.splice(0, Infinity);
+
+            for (var iKey in iData)  if (iData.hasOwnProperty( iKey )) {
+
+                if ($.likeArray( iData[iKey] ))
+                    iData.splice.call(iData[iKey], 0, Infinity);
+                else
+                    iData[iKey] = '';
+            }
+
+            return this;
+        }
+    });
+
+    return DataScope;
+
+})(jquery);
+
+
 var view_View = (function ($, Observer, DataScope, RenderNode) {
 
     function View($_View, iScope) {
 
-        if (this.constructor == View)
-            throw TypeError(
-                "View() is an Abstract Base Class which can't be instantiated."
-            );
+        var _This_ = Observer.call($.Class.call(this, View),  $_View);
 
-        var _This_ = Observer.call(this, $_View);
-
-        if (_This_ !== this)  return _This_;
-
-        return $.extend(
-            DataScope.call(this, iScope),
-            {
-                __name__:     this.$_View[0].name || this.$_View[0].dataset.name,
-                __parse__:    0,
-                __child__:    [ ]
-            }
-        ).attach();
+        return  (_This_ !== this)  ?
+            _This_ :
+            DataScope.call(this, iScope).setPrivate({
+                id:          '',
+                name:        this.$_View[0].name || this.$_View[0].dataset.name,
+                parse:       0,
+                child:       [ ],
+                observer:    null
+            }).attach();
     }
 
     $.extend(View.prototype, DataScope.prototype);
@@ -652,8 +641,8 @@ var view_View = (function ($, Observer, DataScope, RenderNode) {
 
             Sub_Class.push( iConstructor );
 
-            return $.inherit(
-                this, iConstructor, iStatic, iPrototype
+            return $.Class.extend.call(
+                this,  iConstructor,  iStatic,  iPrototype
             ).signSelector();
         }
     }, {
@@ -797,7 +786,7 @@ var view_DOMkit = (function ($, RenderNode, InnerLink) {
 
 
     return {
-        cssRule:          function cssRule(sheet) {
+        cssRule:      function cssRule(sheet) {
 
             var rule = { };
 
@@ -824,7 +813,7 @@ var view_DOMkit = (function ($, RenderNode, InnerLink) {
 
             return rule;
         },
-        fixStyle:      function ($_Root, iDOM) {
+        fixStyle:     function ($_Root, iDOM) {
 
             if ( iDOM.classList.contains('iQuery_CSS-Rule') )  return iDOM;
 
@@ -865,7 +854,7 @@ var view_DOMkit = (function ($, RenderNode, InnerLink) {
 
             return iDOM;
         },
-        fixScript:        function (iDOM) {
+        fixScript:    function (iDOM) {
             var iAttr = { };
 
             $.each(iDOM.attributes,  function () {
@@ -877,13 +866,7 @@ var view_DOMkit = (function ($, RenderNode, InnerLink) {
 
             return iDOM;
         },
-        innerHTMLLink:    function (iDOM) {
-
-            return  $( iDOM ).is( InnerLink.HTML_Link )  &&  (
-                (iDOM.target || '_self')  ===  '_self'
-            );
-        },
-        fixURL:           function (iDOM, iKey, iBase) {
+        fixURL:       function (iDOM, iKey, iBase) {
 
             var iURL = iDOM.getAttribute( iKey )  ||  '';
 
@@ -904,7 +887,7 @@ var view_DOMkit = (function ($, RenderNode, InnerLink) {
 
             return iURL.join('?');
         },
-        prefetch:         function (iDOM, iURL) {
+        prefetch:     function (iDOM, iURL) {
             if (! (
                 (iURL[0] in URL_Prefix)  ||
                 iURL.match( RenderNode.expression )  ||
@@ -916,7 +899,7 @@ var view_DOMkit = (function ($, RenderNode, InnerLink) {
                     href:    iURL
                 }).appendTo( document.head );
         },
-        parseSlot:        function (root, $_Root) {
+        parseSlot:    function (root, $_Root) {
 
             $_Root.find('slot[name]').each(function () {
 
@@ -934,7 +917,7 @@ var view_DOMkit = (function ($, RenderNode, InnerLink) {
                     this.parentNode.removeChild( this );
             });
         },
-        build:            function (root, base, HTML) {
+        build:        function (root, base, HTML) {
 
             var _This_ = this,  $_Root = $('<div />').prop('innerHTML', HTML);
 
@@ -948,11 +931,6 @@ var view_DOMkit = (function ($, RenderNode, InnerLink) {
 
             $_Root.find( Object.keys( URL_DOM ) + '' ).each(function () {
 
-                if (_This_.innerHTMLLink( this )  &&  (
-                    $.urlDomain(this.href || this.action)  !==  $.urlDomain()
-                ))
-                    this.target = '_blank';
-
                 var URL = _This_.fixURL(
                         this,
                         URL_DOM[ this.tagName.toLowerCase() ]  ||  (
@@ -961,10 +939,18 @@ var view_DOMkit = (function ($, RenderNode, InnerLink) {
                         base
                     );
 
+                if (
+                    $( this ).is( InnerLink.HTML_Link )  &&
+                    ((this.target || '_self')  ===  '_self')
+                ) {
+                    _This_.prefetch(this, URL);
+
+                    if ($.urlDomain(this.href || this.action)  !==  $.urlDomain())
+                        this.target = '_blank';
+                }
+
                 if ($( this ).is(InnerLink.HTML_Link + ', ' + InnerLink.Self_Link))
                     new InnerLink( this );
-
-                if (_This_.innerHTMLLink( this ))  _This_.prefetch(this, URL);
             });
 
 
@@ -982,12 +968,9 @@ var view_HTMLView = (function ($, View, DOMkit, RenderNode) {
 
         var _This_ = View.call(this, $_View, iScope);
 
-        if (_This_ !== this)  return _This_;
-
-        $.extend(this, {
-            length:     0,
-            __map__:    { },
-        });
+        return  (_This_ !== this)  ?
+            _This_ :
+            this.setPrivate( {length: 0,  map: { }} );
     }
 
     return  View.extend(HTMLView, {
@@ -1130,7 +1113,7 @@ var view_HTMLView = (function ($, View, DOMkit, RenderNode) {
 })(jquery, view_View, view_DOMkit, view_RenderNode);
 
 
-var view_ListView = (function ($, View, HTMLView) {
+var view_ListView = (function ($, View, HTMLView, InnerLink) {
 
     function ListView($_View, iScope) {
 
@@ -1138,18 +1121,18 @@ var view_ListView = (function ($, View, HTMLView) {
 
         if (_This_ !== this)  return _This_;
 
-        this.__HTML__ = this.$_View.html();
-
-        this.__parse__ = $.now();
-
-        this.clear();
+        this.setPrivate({
+            HTML:     this.$_View.html(),
+            parse:    $.now()
+        }).clear();
     }
 
-    return  View.extend(ListView, {
+    View.extend(ListView, {
         is:    $.expr[':'].list
     }, {
         splice:     Array.prototype.splice,
         clear:      function () {
+
             this.$_View.empty();
 
             this.splice(0, Infinity);
@@ -1159,6 +1142,12 @@ var view_ListView = (function ($, View, HTMLView) {
         insert:     function (iData, Index, iDelay) {
 
             var Item = (new HTMLView(this.__HTML__, this.__data__)).parse();
+
+            Item.$_View.find( InnerLink.HTML_Link ).addBack( InnerLink.HTML_Link )
+                .each(function () {
+
+                    new InnerLink( this );
+                });
 
             if (! iDelay)  Item.$_View.insertTo(this.$_View, Index);
 
@@ -1226,7 +1215,10 @@ var view_ListView = (function ($, View, HTMLView) {
             });
         }
     });
-})(jquery, view_View, view_HTMLView);
+
+    return ListView;
+
+})(jquery, view_View, view_HTMLView, InnerLink);
 
 
 var WebApp = (function ($, Observer, View, HTMLView, ListView, DOMkit, InnerLink) {
@@ -1240,7 +1232,9 @@ var WebApp = (function ($, Observer, View, HTMLView, ListView, DOMkit, InnerLink
 
         if (_This_ !== this)  return _This_;
 
-        Observer.call(this, Page_Box).apiRoot = API_Root || '';
+        Observer.call(this, Page_Box).apiRoot = new URL(
+            API_Root || '',  self.location.href
+        );
 
         var iPath = self.location.href.split('?')[0];
 
@@ -1341,9 +1335,8 @@ var WebApp = (function ($, Observer, View, HTMLView, ListView, DOMkit, InnerLink
         },
         loadComponent:    function (iLink, iHTML, iData) {
 
-            var CID = this.getCID(
-                    InnerLink.parsePath(this.pageRoot + iLink.href)
-                );
+            var CID = this.getCID(new URL(iLink.href, this.pageRoot)  +  '');
+
             this.loading[ CID ] = iLink;
 
             var JS_Load = iLink.one('load');
@@ -1378,11 +1371,9 @@ var WebApp = (function ($, Observer, View, HTMLView, ListView, DOMkit, InnerLink
             var _This_ = this;
 
             return  iLink.load(function () {
-                if (
-                    ((this.dataType || '').slice(0, 4) == 'json')  &&
-                    (! $.urlDomain( this.url ))
-                )
-                    this.url = _This_.apiRoot + this.url;
+
+                if ((this.dataType || '').slice(0, 4)  ===  'json')
+                    this.url = (new URL(this.url, _This_.apiRoot))  +  '';
 
                 _This_.emit($.extend(iLink.valueOf(), {type: 'request'}),  {
                     option:       this,
