@@ -96,22 +96,22 @@ define([
 
             var iURL = iDOM.getAttribute( iKey )  ||  '';
 
+            var expression = iURL.match( RenderNode.expression );
+
             if (
-                (iURL[0] in URL_Prefix)  ||
-                (iURL  ===  (iURL.match( RenderNode.expression ) || [ ]).join(''))
-            )
-                return iURL;
+                !(iURL[0] in URL_Prefix)  &&
+                (iURL  !==  (expression || [ ]).join(''))
+            ) {
+                iURL = (
+                    new URL(iURL,  new URL(iBase, 'http://ewa/'))  +  ''
+                ).replace(/^http:\/\/ewa\//, '');
 
-            iURL = iURL.split('?');
-
-            if (iBase  &&  iURL[0]  &&  (! $.urlDomain( iURL[0] ))) {
-
-                iURL[0] = InnerLink.parsePath(iBase + iURL[0]);
-
-                iDOM.setAttribute(iKey, iURL.join('?'));
+                iDOM.setAttribute(
+                    iKey,  iURL = expression ? decodeURI( iURL ) : iURL
+                );
             }
 
-            return iURL.join('?');
+            return iURL;
         },
         prefetch:     function (iDOM, iURL) {
             if (! (

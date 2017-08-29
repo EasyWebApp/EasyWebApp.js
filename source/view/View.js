@@ -24,8 +24,14 @@ define([
     return  Observer.extend(View, {
         getSub:    function (iDOM) {
 
+            var is_View = iDOM.getAttribute('is');
+
             for (var i = Sub_Class.length - 1;  Sub_Class[i];  i--)
-                if (Sub_Class[i].is( iDOM ))
+                if (
+                    is_View ?
+                        (is_View === Sub_Class[i].name)  :
+                        Sub_Class[i].is( iDOM )
+                )
                     return  new Sub_Class[i](
                         iDOM,
                         (this.instanceOf( iDOM.parentNode )  ||  '').__data__

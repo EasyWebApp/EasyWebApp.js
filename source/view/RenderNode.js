@@ -7,7 +7,8 @@ define(['jquery'],  function ($) {
             name:            iNode.nodeName,
             raw:             iNode.nodeValue,
             ownerElement:    iNode.parentNode || iNode.ownerElement,
-            type:            0
+            type:            0,
+            value:           null
         }).scan();
     }
 
@@ -31,10 +32,10 @@ define(['jquery'],  function ($) {
     }
 
     $.extend(RenderNode.prototype, {
-        splice:     Array.prototype.splice,
-        indexOf:    Array.prototype.indexOf,
-        push:       Array.prototype.push,
-        scan:       function () {
+        splice:      Array.prototype.splice,
+        indexOf:     Array.prototype.indexOf,
+        push:        Array.prototype.push,
+        scan:        function () {
 
             var _This_ = this;
 
@@ -64,7 +65,7 @@ define(['jquery'],  function ($) {
 
             return this;
         },
-        eval:       function (iContext, iScope) {
+        eval:        function (iContext, iScope) {
             var iRefer;
 
             var iText = this.raw.replace(RenderNode.expression,  function () {
@@ -77,11 +78,15 @@ define(['jquery'],  function ($) {
 
             return  (this.raw == iText)  ?  iRefer  :  iText;
         },
-        render:     function (iContext, iScope) {
+        render:      function (iContext, iScope) {
 
             var iValue = this.eval(iContext, iScope),
                 iNode = this.ownerNode,
                 iParent = this.ownerElement;
+
+            if (iValue === this.value)  return;
+
+            this.value = iValue;
 
             switch ( iNode.nodeType ) {
                 case 3:    {
@@ -107,6 +112,10 @@ define(['jquery'],  function ($) {
             }
 
             iNode.nodeValue = iValue;
+        },
+        toString:    function () {
+
+            return  this.value + '';
         }
     });
 

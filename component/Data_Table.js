@@ -6,7 +6,7 @@ require(['jquery', 'EasyWebApp'],  function ($) {
 
         var iEvent = {
                 type:      'data',
-                target:    this.$_View.find('[data-href]')[0]
+                target:    this.$_View.find('tbody')[0]
             },
             VM = this.on('update',  function () {
 

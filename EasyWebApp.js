@@ -254,7 +254,8 @@ var view_RenderNode = (function ($) {
             name:            iNode.nodeName,
             raw:             iNode.nodeValue,
             ownerElement:    iNode.parentNode || iNode.ownerElement,
-            type:            0
+            type:            0,
+            value:           null
         }).scan();
     }
 
@@ -278,10 +279,10 @@ var view_RenderNode = (function ($) {
     }
 
     $.extend(RenderNode.prototype, {
-        splice:     Array.prototype.splice,
-        indexOf:    Array.prototype.indexOf,
-        push:       Array.prototype.push,
-        scan:       function () {
+        splice:      Array.prototype.splice,
+        indexOf:     Array.prototype.indexOf,
+        push:        Array.prototype.push,
+        scan:        function () {
 
             var _This_ = this;
 
@@ -311,7 +312,7 @@ var view_RenderNode = (function ($) {
 
             return this;
         },
-        eval:       function (iContext, iScope) {
+        eval:        function (iContext, iScope) {
             var iRefer;
 
             var iText = this.raw.replace(RenderNode.expression,  function () {
@@ -324,11 +325,15 @@ var view_RenderNode = (function ($) {
 
             return  (this.raw == iText)  ?  iRefer  :  iText;
         },
-        render:     function (iContext, iScope) {
+        render:      function (iContext, iScope) {
 
             var iValue = this.eval(iContext, iScope),
                 iNode = this.ownerNode,
                 iParent = this.ownerElement;
+
+            if (iValue === this.value)  return;
+
+            this.value = iValue;
 
             switch ( iNode.nodeType ) {
                 case 3:    {
@@ -354,6 +359,10 @@ var view_RenderNode = (function ($) {
             }
 
             iNode.nodeValue = iValue;
+        },
+        toString:    function () {
+
+            return  this.value + '';
         }
     });
 
@@ -630,8 +639,14 @@ var view_View = (function ($, Observer, DataScope, RenderNode) {
     return  Observer.extend(View, {
         getSub:    function (iDOM) {
 
+            var is_View = iDOM.getAttribute('is');
+
             for (var i = Sub_Class.length - 1;  Sub_Class[i];  i--)
-                if (Sub_Class[i].is( iDOM ))
+                if (
+                    is_View ?
+                        (is_View === Sub_Class[i].name)  :
+                        Sub_Class[i].is( iDOM )
+                )
                     return  new Sub_Class[i](
                         iDOM,
                         (this.instanceOf( iDOM.parentNode )  ||  '').__data__
@@ -870,22 +885,22 @@ var view_DOMkit = (function ($, RenderNode, InnerLink) {
 
             var iURL = iDOM.getAttribute( iKey )  ||  '';
 
+            var expression = iURL.match( RenderNode.expression );
+
             if (
-                (iURL[0] in URL_Prefix)  ||
-                (iURL  ===  (iURL.match( RenderNode.expression ) || [ ]).join(''))
-            )
-                return iURL;
+                !(iURL[0] in URL_Prefix)  &&
+                (iURL  !==  (expression || [ ]).join(''))
+            ) {
+                iURL = (
+                    new URL(iURL,  new URL(iBase, 'http://ewa/'))  +  ''
+                ).replace(/^http:\/\/ewa\//, '');
 
-            iURL = iURL.split('?');
-
-            if (iBase  &&  iURL[0]  &&  (! $.urlDomain( iURL[0] ))) {
-
-                iURL[0] = InnerLink.parsePath(iBase + iURL[0]);
-
-                iDOM.setAttribute(iKey, iURL.join('?'));
+                iDOM.setAttribute(
+                    iKey,  iURL = expression ? decodeURI( iURL ) : iURL
+                );
             }
 
-            return iURL.join('?');
+            return iURL;
         },
         prefetch:     function (iDOM, iURL) {
             if (! (
@@ -975,7 +990,8 @@ var view_HTMLView = (function ($, View, DOMkit, RenderNode) {
 
     return  View.extend(HTMLView, {
         is:             function () {
-            return true;
+
+            return  (! $.expr[':'].list( arguments[0] ));
         },
         rawSelector:    $.makeSet('code', 'xmp', 'template')
     }, {
@@ -1060,31 +1076,43 @@ var view_HTMLView = (function ($, View, DOMkit, RenderNode) {
                 }
             });
         },
-        getNode:       function () {
+        getNode:       function (data, exclude) {
 
             var iMask = '0',  _This_ = this;
 
-            for (var iName in arguments[0])
+            for (var iName in data)
                 if (this.__map__.hasOwnProperty( iName ))
                     iMask = $.bitOperate('|',  iMask,  this.__map__[ iName ]);
 
             return $.map(
                 $.leftPad(iMask, this.length).split('').reverse(),
-                function (iBit, Index) {
+                function (bit, node) {
 
-                    if ((iBit > 0)  ||  ((_This_[Index] || '').type > 1))
-                        return _This_[Index];
+                    node = _This_[ node ];
+
+                    if ((node !== exclude)  &&  (
+                        (bit > 0)  ||  ((node || '').type > 1)
+                    ))
+                        return node;
                 }
             );
         },
-        render:        function render(iData) {
+        render:        function render(iData, value) {
 
-            var _This_ = this,  _Data_ = { };
+            var _This_ = this,  _Data_ = { },  exclude;
 
-            if (typeof iData.valueOf() == 'string') {
+            if (iData instanceof Element) {
 
-                _Data_[iData] = arguments[1];
-                iData = _Data_;
+                exclude = iData;
+
+                iData = exclude.name || exclude.getAttribute('name');
+
+                value = $( exclude )[('value' in exclude)  ?  'val'  :  'html']();
+            }
+
+            if (typeof iData.valueOf() === 'string') {
+
+                _Data_[iData] = value;    iData = _Data_;
             }
 
             iData = this.commit( iData );  _Data_ = this.__data__;
@@ -1092,7 +1120,7 @@ var view_HTMLView = (function ($, View, DOMkit, RenderNode) {
             for (var iKey in iData)  this.watch(iKey, render);
 
             if ( iData )
-                $.each(this.getNode( iData ),  function () {
+                $.each(this.getNode(iData, exclude),  function () {
 
                     if (this instanceof RenderNode)
                         this.render(_This_, _Data_);
@@ -1236,11 +1264,11 @@ var WebApp = (function ($, Observer, View, HTMLView, ListView, DOMkit, InnerLink
             API_Root || '',  self.location.href
         );
 
-        var iPath = self.location.href.split('?')[0];
+        var path = self.location.href.split('?')[0];
 
-        this.pageRoot = $.filePath(
-            iPath  +  (iPath.match(/\/([^\.]+\.html?)?/i) ? '' : '/')
-        ) + '/';
+        this.pageRoot = new URL(
+            path  +  (path.match( /\/([^\/]+?\.html?)?$/i )  ?  ''  :  '/')
+        );
 
         this.length = 0;
         this.lastPage = -1;
@@ -1273,19 +1301,18 @@ var WebApp = (function ($, Observer, View, HTMLView, ListView, DOMkit, InnerLink
 
             this.switchTo();
 
-            var iLast = this[ this.lastPage ],  iURI = iLink + '';
+            if (this[ this.lastPage ]  !=  (iLink + '')) {
 
-            if (iLast  &&  (iLast == iURI))  return;
+                if (++this.lastPage != this.length)
+                    this.splice(this.lastPage, Infinity);
 
-            if (++this.lastPage != this.length)
-                this.splice(this.lastPage, Infinity);
-
-            self.history.pushState(
-                {index: this.length},
-                document.title = iLink.title,
-                '#!'  +  self.btoa( iURI )
-            );
-            this[ this.length++ ] = iLink;
+                self.history.pushState(
+                    {index: this.length},
+                    document.title = iLink.title,
+                    '#!'  +  self.btoa( iLink )
+                );
+                this[ this.length++ ] = iLink;
+            }
 
             return this;
         },
@@ -1313,7 +1340,7 @@ var WebApp = (function ($, Observer, View, HTMLView, ListView, DOMkit, InnerLink
         getCID:           function () {
 
             return  arguments[0].replace(this.pageRoot, '')
-                .replace(/\.\w+(\?.*)?$/, '.html');
+                .replace(/\.\w+(\?.*)?$/, '.html').split('#')[0];
         },
         loadView:         function (iLink, iHTML) {
 
@@ -1403,30 +1430,22 @@ var WebApp = (function ($, Observer, View, HTMLView, ListView, DOMkit, InnerLink
 
                 var iView = HTMLView.instanceOf( this );
 
-                if ( iView )
-                    iView.render(
-                        this.name || this.getAttribute('name'),
-                        ('value' in this)  ?  this.value  :  this.innerHTML
-                    );
+                if ( iView )  iView.render( this );
+
             })).on('reset',  'form',  function () {
 
                 var data = $.paramJSON('?'  +  $( this ).serialize());
 
                 for (var key in data)  data[ key ] = '';
 
-                View.instanceOf( this ).render( data );
+                HTMLView.instanceOf( this ).render( data );
 
             }).on('click submit',  InnerLink.HTML_Link,  function (iEvent) {
                 if (
-                    ((this.tagName == 'FORM')  &&  (iEvent.type != 'submit'))  ||
-                    ((this.target || '_self')  !=  '_self')
-                )
-                    return;
-
-                var CID = (this.href || this.action).match(_This_.pageRoot);
-
-                if ((CID || '').index === 0) {
-
+                    ((this.tagName !== 'FORM')  ||  (iEvent.type === 'submit'))  &&
+                    ((this.target || '_self')  ===  '_self')  &&
+                    _This_.getCID(this.href || this.action)
+                ) {
                     iEvent.preventDefault();
 
                     _This_.load( this );
@@ -1489,7 +1508,7 @@ var WebApp = (function ($, Observer, View, HTMLView, ListView, DOMkit, InnerLink
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v4.0  (2017-08-17)  Beta
+//      [Version]    v4.0  (2017-08-28)  Beta
 //
 //      [Require]    iQuery  ||  jQuery with jQueryKit
 //

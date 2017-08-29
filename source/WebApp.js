@@ -17,11 +17,11 @@ define([
             API_Root || '',  self.location.href
         );
 
-        var iPath = self.location.href.split('?')[0];
+        var path = self.location.href.split('?')[0];
 
-        this.pageRoot = $.filePath(
-            iPath  +  (iPath.match(/\/([^\.]+\.html?)?/i) ? '' : '/')
-        ) + '/';
+        this.pageRoot = new URL(
+            path  +  (path.match( /\/([^\/]+?\.html?)?$/i )  ?  ''  :  '/')
+        );
 
         this.length = 0;
         this.lastPage = -1;
@@ -54,19 +54,18 @@ define([
 
             this.switchTo();
 
-            var iLast = this[ this.lastPage ],  iURI = iLink + '';
+            if (this[ this.lastPage ]  !=  (iLink + '')) {
 
-            if (iLast  &&  (iLast == iURI))  return;
+                if (++this.lastPage != this.length)
+                    this.splice(this.lastPage, Infinity);
 
-            if (++this.lastPage != this.length)
-                this.splice(this.lastPage, Infinity);
-
-            self.history.pushState(
-                {index: this.length},
-                document.title = iLink.title,
-                '#!'  +  self.btoa( iURI )
-            );
-            this[ this.length++ ] = iLink;
+                self.history.pushState(
+                    {index: this.length},
+                    document.title = iLink.title,
+                    '#!'  +  self.btoa( iLink )
+                );
+                this[ this.length++ ] = iLink;
+            }
 
             return this;
         },
@@ -94,7 +93,7 @@ define([
         getCID:           function () {
 
             return  arguments[0].replace(this.pageRoot, '')
-                .replace(/\.\w+(\?.*)?$/, '.html');
+                .replace(/\.\w+(\?.*)?$/, '.html').split('#')[0];
         },
         loadView:         function (iLink, iHTML) {
 
@@ -184,30 +183,22 @@ define([
 
                 var iView = HTMLView.instanceOf( this );
 
-                if ( iView )
-                    iView.render(
-                        this.name || this.getAttribute('name'),
-                        ('value' in this)  ?  this.value  :  this.innerHTML
-                    );
+                if ( iView )  iView.render( this );
+
             })).on('reset',  'form',  function () {
 
                 var data = $.paramJSON('?'  +  $( this ).serialize());
 
                 for (var key in data)  data[ key ] = '';
 
-                View.instanceOf( this ).render( data );
+                HTMLView.instanceOf( this ).render( data );
 
             }).on('click submit',  InnerLink.HTML_Link,  function (iEvent) {
                 if (
-                    ((this.tagName == 'FORM')  &&  (iEvent.type != 'submit'))  ||
-                    ((this.target || '_self')  !=  '_self')
-                )
-                    return;
-
-                var CID = (this.href || this.action).match(_This_.pageRoot);
-
-                if ((CID || '').index === 0) {
-
+                    ((this.tagName !== 'FORM')  ||  (iEvent.type === 'submit'))  &&
+                    ((this.target || '_self')  ===  '_self')  &&
+                    _This_.getCID(this.href || this.action)
+                ) {
                     iEvent.preventDefault();
 
                     _This_.load( this );

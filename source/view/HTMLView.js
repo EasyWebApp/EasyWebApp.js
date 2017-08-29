@@ -13,7 +13,8 @@ define([
 
     return  View.extend(HTMLView, {
         is:             function () {
-            return true;
+
+            return  (! $.expr[':'].list( arguments[0] ));
         },
         rawSelector:    $.makeSet('code', 'xmp', 'template')
     }, {
@@ -98,31 +99,43 @@ define([
                 }
             });
         },
-        getNode:       function () {
+        getNode:       function (data, exclude) {
 
             var iMask = '0',  _This_ = this;
 
-            for (var iName in arguments[0])
+            for (var iName in data)
                 if (this.__map__.hasOwnProperty( iName ))
                     iMask = $.bitOperate('|',  iMask,  this.__map__[ iName ]);
 
             return $.map(
                 $.leftPad(iMask, this.length).split('').reverse(),
-                function (iBit, Index) {
+                function (bit, node) {
 
-                    if ((iBit > 0)  ||  ((_This_[Index] || '').type > 1))
-                        return _This_[Index];
+                    node = _This_[ node ];
+
+                    if ((node !== exclude)  &&  (
+                        (bit > 0)  ||  ((node || '').type > 1)
+                    ))
+                        return node;
                 }
             );
         },
-        render:        function render(iData) {
+        render:        function render(iData, value) {
 
-            var _This_ = this,  _Data_ = { };
+            var _This_ = this,  _Data_ = { },  exclude;
 
-            if (typeof iData.valueOf() == 'string') {
+            if (iData instanceof Element) {
 
-                _Data_[iData] = arguments[1];
-                iData = _Data_;
+                exclude = iData;
+
+                iData = exclude.name || exclude.getAttribute('name');
+
+                value = $( exclude )[('value' in exclude)  ?  'val'  :  'html']();
+            }
+
+            if (typeof iData.valueOf() === 'string') {
+
+                _Data_[iData] = value;    iData = _Data_;
             }
 
             iData = this.commit( iData );  _Data_ = this.__data__;
@@ -130,7 +143,7 @@ define([
             for (var iKey in iData)  this.watch(iKey, render);
 
             if ( iData )
-                $.each(this.getNode( iData ),  function () {
+                $.each(this.getNode(iData, exclude),  function () {
 
                     if (this instanceof RenderNode)
                         this.render(_This_, _Data_);
