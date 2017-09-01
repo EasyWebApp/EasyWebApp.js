@@ -113,7 +113,7 @@ define([
 
             return iURL;
         },
-        prefetch:     function (iDOM, iURL) {
+        prefetch:     function (iURL) {
             if (! (
                 (iURL[0] in URL_Prefix)  ||
                 iURL.match( RenderNode.expression )  ||
@@ -145,11 +145,15 @@ define([
         },
         build:        function (root, base, HTML) {
 
-            var _This_ = this,  $_Root = $('<div />').prop('innerHTML', HTML);
+            var $_Root = HTML  ?
+                    $('<div />').prop('innerHTML', HTML)  :  $( root ),
+                _This_ = this;
 
             if ( base.href )
                 base = base.href;
-            else if (base  =  $( root ).parents('[data-href]:view')[0])
+            else if (base  =  $( root ).parents(
+                '[data-href]:view:not([data-href^="?"])'
+            )[0])
                 base = base.dataset.href;
 
             base = $.filePath( base )  +  '/';
@@ -169,10 +173,11 @@ define([
                     $( this ).is( InnerLink.HTML_Link )  &&
                     ((this.target || '_self')  ===  '_self')
                 ) {
-                    _This_.prefetch(this, URL);
-
                     if ($.urlDomain(this.href || this.action)  !==  $.urlDomain())
                         this.target = '_blank';
+
+                    if ((this.target || '_self')  ===  '_self')
+                        _This_.prefetch( URL );
                 }
 
                 if ($( this ).is(InnerLink.HTML_Link + ', ' + InnerLink.Self_Link))
@@ -180,9 +185,11 @@ define([
             });
 
 
-            if ( root.childNodes[0] )  this.parseSlot(root, $_Root);
+            if ( HTML ) {
+                if ( root.childNodes[0] )  this.parseSlot(root, $_Root);
 
-            root.appendChild( $.buildFragment( $_Root.contents() ) );
+                root.appendChild( $.buildFragment( $_Root.contents() ) );
+            }
         }
     };
 });

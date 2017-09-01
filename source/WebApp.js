@@ -50,6 +50,13 @@ define([
 
             return  iPage && iPage.attach();
         },
+        getRoute:         function () {
+            try {
+                return self.atob(
+                    (self.location.hash.match(/^\#!(.+)/) || '')[1]  ||  ''
+                );
+            } catch (error) { }
+        },
         setRoute:         function (iLink) {
 
             this.switchTo();
@@ -59,20 +66,18 @@ define([
                 if (++this.lastPage != this.length)
                     this.splice(this.lastPage, Infinity);
 
-                self.history.pushState(
+                self.history[
+                    ((this.getRoute() == iLink) ? 'replace' : 'push')  +  'State'
+                ](
                     {index: this.length},
                     document.title = iLink.title,
                     '#!'  +  self.btoa( iLink )
                 );
+
                 this[ this.length++ ] = iLink;
             }
 
             return this;
-        },
-        getRoute:         function () {
-            return self.atob(
-                (self.location.hash.match(/^\#!(.+)/) || '')[1]  ||  ''
-            );
         },
         _emit:            function (iType, iLink, iData) {
 
@@ -207,25 +212,47 @@ define([
 
             return this;
         },
+        loadPage:         function (iURI) {
+
+            return  isNaN(iURI || 0)  ?
+                this.load(
+                    $('<a href="' + iURI + '" />')[0]
+                )  :
+                (new Promise(function () {
+
+                    $( self ).one('popstate', arguments[0])[0].history.go( iURI );
+
+                })).then((function () {
+
+                    return  this.load( this[this.lastPage] );
+
+                }).bind( this ));
+        },
         listenBOM:        function () {
 
             var _This_ = this;
 
             $( self ).on('popstate',  function () {
 
-                var state = this.history.state || '';
+                var state = this.history.state || '',  route = _This_.getRoute();
 
-                if (! _This_[ state.index ])  return;
+                var link = _This_[ state.index ];
+
+            //  To reload history pages after the Web App reloading
+
+                if ((! link)  ||  (
+                    route  &&  (! state.data)  &&  (route != link)
+                ))
+                    return  route  &&  _This_.loadPage( route );
 
                 if (_This_.lastPage !== state.index)
                     Promise.resolve(
-                        _This_.switchTo( state.index )  ||
-                        _This_.load( _This_[ state.index ] )
+                        _This_.switchTo( state.index )  ||  _This_.load( link )
                     ).then(function () {
 
                         _This_.lastPage = state.index;
 
-                        document.title = _This_[ state.index ].title;
+                        document.title = link.title;
                     });
                 else if ( state.data )
                     View.instanceOf(_This_.$_View, false).render( state.data );
@@ -234,21 +261,23 @@ define([
             return this;
         },
         boot:             function () {
-            var _This_ = this;
 
-            return Promise.all($.map(
-                $('[data-href]:not([data-href] *)').not(
+            var $_View = $('[data-href]:not([data-href] *)').not(
                     this.$_View.find('[data-href]')
                 ),
-                function () {
-                    return  _This_.load( arguments[0] );
-                }
-            )).then(function () {
+                _This_ = this;
+
+            DOMkit.build($_View.sameParents()[0], '');
+
+            return  Promise.all($.map($_View,  function () {
+
+                return  _This_.load( arguments[0] );
+
+            })).then(function () {
 
                 var Init = _This_.getRoute();
 
-                if ( Init )
-                    return  _This_.load( $('<a />',  {href: Init})[0] );
+                if ( Init )  return  _This_.loadPage( Init );
 
                 $('a[href][data-autofocus="true"]').eq(0).click();
             });

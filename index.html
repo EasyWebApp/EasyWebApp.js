@@ -17,26 +17,26 @@
           href="//cdn.bootcss.com/medium-editor/5.22.1/css/medium-editor.min.css" />
     <link rel="stylesheet"
           href="//cdn.bootcss.com/medium-editor/5.22.1/css/themes/default.min.css" />
-
-    <script src="https://cdn.polyfill.io/v2/polyfill.min.js"></script>
+<!--[if lte IE 9]>
+    <script src="//cdn.bootcss.com/html5-history-api/4.2.8/history.min.js"></script>
+<![endif]-->
+    <script src="//cdn.bootcss.com/MutationObserver.js/0.3.2/mutationobserver.min.js"></script>
     <script src="//cdn.bootcss.com/require.js/2.3.3/require.min.js"></script>
     <script>
     require.config({
         baseUrl:    'source/',
         paths:      {
-            'html5-history-api':
-                '//cdn.bootcss.com/html5-history-api/4.2.8/history.min',
-            jquery:              '//cdn.bootcss.com/jquery/3.2.1/jquery.min',
-            jQueryKit:           '../demo/javascript/jQueryKit',
-            EasyWebApp:          '../EasyWebApp',
-            EasyWebUI:           '../docs/css/EasyWebUI',
-            marked:              '//cdn.bootcss.com/marked/0.3.6/marked.min',
+            jquery:          '//cdn.bootcss.com/jquery/3.2.1/jquery.min',
+            jQueryKit:       '../demo/javascript/jQueryKit',
+            EasyWebApp:      '../EasyWebApp',
+            EasyWebUI:       '../docs/css/EasyWebUI',
+            marked:          '//cdn.bootcss.com/marked/0.3.6/marked.min',
             MediumEditor:
                 '//cdn.bootcss.com/medium-editor/5.22.1/js/medium-editor.min',
             QRcode:
                 '//cdn.bootcss.com/lrsjng.jquery-qrcode/0.14.0/jquery-qrcode.min',
-            Git_List:            '../docs/html/Git_List',
-            Data_Table:          '../component/Data_Table'
+            Git_List:        '../docs/html/Git_List',
+            Data_Table:      '../component/Data_Table'
         },
         shim:       {QRcode:  ['jquery']}
     });

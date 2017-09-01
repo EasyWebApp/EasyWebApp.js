@@ -902,7 +902,7 @@ var view_DOMkit = (function ($, RenderNode, InnerLink) {
 
             return iURL;
         },
-        prefetch:     function (iDOM, iURL) {
+        prefetch:     function (iURL) {
             if (! (
                 (iURL[0] in URL_Prefix)  ||
                 iURL.match( RenderNode.expression )  ||
@@ -934,11 +934,15 @@ var view_DOMkit = (function ($, RenderNode, InnerLink) {
         },
         build:        function (root, base, HTML) {
 
-            var _This_ = this,  $_Root = $('<div />').prop('innerHTML', HTML);
+            var $_Root = HTML  ?
+                    $('<div />').prop('innerHTML', HTML)  :  $( root ),
+                _This_ = this;
 
             if ( base.href )
                 base = base.href;
-            else if (base  =  $( root ).parents('[data-href]:view')[0])
+            else if (base  =  $( root ).parents(
+                '[data-href]:view:not([data-href^="?"])'
+            )[0])
                 base = base.dataset.href;
 
             base = $.filePath( base )  +  '/';
@@ -958,10 +962,11 @@ var view_DOMkit = (function ($, RenderNode, InnerLink) {
                     $( this ).is( InnerLink.HTML_Link )  &&
                     ((this.target || '_self')  ===  '_self')
                 ) {
-                    _This_.prefetch(this, URL);
-
                     if ($.urlDomain(this.href || this.action)  !==  $.urlDomain())
                         this.target = '_blank';
+
+                    if ((this.target || '_self')  ===  '_self')
+                        _This_.prefetch( URL );
                 }
 
                 if ($( this ).is(InnerLink.HTML_Link + ', ' + InnerLink.Self_Link))
@@ -969,9 +974,11 @@ var view_DOMkit = (function ($, RenderNode, InnerLink) {
             });
 
 
-            if ( root.childNodes[0] )  this.parseSlot(root, $_Root);
+            if ( HTML ) {
+                if ( root.childNodes[0] )  this.parseSlot(root, $_Root);
 
-            root.appendChild( $.buildFragment( $_Root.contents() ) );
+                root.appendChild( $.buildFragment( $_Root.contents() ) );
+            }
         }
     };
 })(jquery, view_RenderNode, InnerLink);
@@ -1297,6 +1304,13 @@ var WebApp = (function ($, Observer, View, HTMLView, ListView, DOMkit, InnerLink
 
             return  iPage && iPage.attach();
         },
+        getRoute:         function () {
+            try {
+                return self.atob(
+                    (self.location.hash.match(/^\#!(.+)/) || '')[1]  ||  ''
+                );
+            } catch (error) { }
+        },
         setRoute:         function (iLink) {
 
             this.switchTo();
@@ -1306,20 +1320,18 @@ var WebApp = (function ($, Observer, View, HTMLView, ListView, DOMkit, InnerLink
                 if (++this.lastPage != this.length)
                     this.splice(this.lastPage, Infinity);
 
-                self.history.pushState(
+                self.history[
+                    ((this.getRoute() == iLink) ? 'replace' : 'push')  +  'State'
+                ](
                     {index: this.length},
                     document.title = iLink.title,
                     '#!'  +  self.btoa( iLink )
                 );
+
                 this[ this.length++ ] = iLink;
             }
 
             return this;
-        },
-        getRoute:         function () {
-            return self.atob(
-                (self.location.hash.match(/^\#!(.+)/) || '')[1]  ||  ''
-            );
         },
         _emit:            function (iType, iLink, iData) {
 
@@ -1454,25 +1466,47 @@ var WebApp = (function ($, Observer, View, HTMLView, ListView, DOMkit, InnerLink
 
             return this;
         },
+        loadPage:         function (iURI) {
+
+            return  isNaN(iURI || 0)  ?
+                this.load(
+                    $('<a href="' + iURI + '" />')[0]
+                )  :
+                (new Promise(function () {
+
+                    $( self ).one('popstate', arguments[0])[0].history.go( iURI );
+
+                })).then((function () {
+
+                    return  this.load( this[this.lastPage] );
+
+                }).bind( this ));
+        },
         listenBOM:        function () {
 
             var _This_ = this;
 
             $( self ).on('popstate',  function () {
 
-                var state = this.history.state || '';
+                var state = this.history.state || '',  route = _This_.getRoute();
 
-                if (! _This_[ state.index ])  return;
+                var link = _This_[ state.index ];
+
+            //  To reload history pages after the Web App reloading
+
+                if ((! link)  ||  (
+                    route  &&  (! state.data)  &&  (route != link)
+                ))
+                    return  route  &&  _This_.loadPage( route );
 
                 if (_This_.lastPage !== state.index)
                     Promise.resolve(
-                        _This_.switchTo( state.index )  ||
-                        _This_.load( _This_[ state.index ] )
+                        _This_.switchTo( state.index )  ||  _This_.load( link )
                     ).then(function () {
 
                         _This_.lastPage = state.index;
 
-                        document.title = _This_[ state.index ].title;
+                        document.title = link.title;
                     });
                 else if ( state.data )
                     View.instanceOf(_This_.$_View, false).render( state.data );
@@ -1481,21 +1515,23 @@ var WebApp = (function ($, Observer, View, HTMLView, ListView, DOMkit, InnerLink
             return this;
         },
         boot:             function () {
-            var _This_ = this;
 
-            return Promise.all($.map(
-                $('[data-href]:not([data-href] *)').not(
+            var $_View = $('[data-href]:not([data-href] *)').not(
                     this.$_View.find('[data-href]')
                 ),
-                function () {
-                    return  _This_.load( arguments[0] );
-                }
-            )).then(function () {
+                _This_ = this;
+
+            DOMkit.build($_View.sameParents()[0], '');
+
+            return  Promise.all($.map($_View,  function () {
+
+                return  _This_.load( arguments[0] );
+
+            })).then(function () {
 
                 var Init = _This_.getRoute();
 
-                if ( Init )
-                    return  _This_.load( $('<a />',  {href: Init})[0] );
+                if ( Init )  return  _This_.loadPage( Init );
 
                 $('a[href][data-autofocus="true"]').eq(0).click();
             });
@@ -1508,7 +1544,7 @@ var WebApp = (function ($, Observer, View, HTMLView, ListView, DOMkit, InnerLink
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v4.0  (2017-08-28)  Beta
+//      [Version]    v4.0  (2017-09-01)  Beta
 //
 //      [Require]    iQuery  ||  jQuery with jQueryKit
 //
@@ -1549,18 +1585,6 @@ return  (function ($, WebApp) {
             if ( this.loading[_CID_] )  this.loading[_CID_].emit('load', iFactory);
 
             return this;
-        },
-        loadPage:      function (iURI) {
-            return (
-                (! iURI)  ?  Promise.resolve('')  :  new Promise(function () {
-
-                    $( self ).one('popstate', arguments[0])[0].history.go( iURI );
-                })
-            ).then((function () {
-
-                return  this.load( this[this.lastPage] );
-
-            }).bind( this ));
         },
         setURLData:    function (key, value) {
 
