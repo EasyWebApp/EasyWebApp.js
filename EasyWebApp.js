@@ -99,18 +99,18 @@ var base_Observer = (function ($) {
 
                 return this;
             },
-            instanceOf:       function ($_Instance, Check_Parent) {
+            instanceOf:       function ($_DOM, Check_Parent) {
 
-                var _Instance_;  $_Instance = $( $_Instance );
+                var _Instance_,  element = $( $_DOM )[0];
 
-                do {
-                    _Instance_ = $_Instance.data( iType );
+                while ( element ) {
+
+                    _Instance_ = $.data(element, iType);
 
                     if (_Instance_ instanceof this)  return _Instance_;
 
-                    $_Instance = $_Instance.parent();
-
-                } while ($_Instance[0]  &&  (Check_Parent !== false));
+                    element = (Check_Parent !== false)  &&  element.parentNode;
+                }
             }
         }).signSelector();
     }
@@ -778,11 +778,16 @@ var view_View = (function ($, Observer, DataScope, RenderNode) {
 
             return this;
         },
-        childOf:       function (iSelector) {
+        childOf:       function ($_Filter) {
 
-            return  iSelector  ?
-                View.instanceOf(this.$_View.find(iSelector + '[data-href]'))  :
-                this.__child__;
+            var children = this.__child__ || this;
+
+            return  $_Filter ?
+                $.map(children,  function (VM) {
+
+                    return  VM.$_View.is( $_Filter )  ?  VM  :  null;
+                }) :
+                Array.from( children );
         }
     }).registerEvent('ready', 'update');
 
@@ -891,9 +896,11 @@ var view_DOMkit = (function ($, RenderNode, InnerLink) {
                 !(iURL[0] in URL_Prefix)  &&
                 (iURL  !==  (expression || [ ]).join(''))
             ) {
+                var root = self.location.href.split('?')[0];
+
                 iURL = (
-                    new URL(iURL,  new URL(iBase, 'http://ewa/'))  +  ''
-                ).replace(/^http:\/\/ewa\//, '');
+                    new URL(iURL,  new URL(iBase || '', root))  +  ''
+                ).replace(root, '');
 
                 iDOM.setAttribute(
                     iKey,  iURL = expression ? decodeURI( iURL ) : iURL
@@ -944,8 +951,6 @@ var view_DOMkit = (function ($, RenderNode, InnerLink) {
                 '[data-href]:view:not([data-href^="?"])'
             )[0])
                 base = base.dataset.href;
-
-            base = $.filePath( base )  +  '/';
 
 
             $_Root.find( Object.keys( URL_DOM ) + '' ).each(function () {
@@ -1235,13 +1240,6 @@ var view_ListView = (function ($, View, HTMLView, InnerLink) {
 
             return this;
         },
-        childOf:    function () {
-
-            return  $.map(this,  function () {
-
-                return  arguments[0].__child__;
-            });
-        },
         valueOf:    function () {
 
             return  $.map(this,  function () {
@@ -1279,7 +1277,6 @@ var WebApp = (function ($, Observer, View, HTMLView, ListView, DOMkit, InnerLink
 
         this.length = 0;
         this.lastPage = -1;
-        this.loading = { };
 
         self.setTimeout( this.listenDOM().listenBOM().boot.bind( this ) );
     }
@@ -1351,8 +1348,7 @@ var WebApp = (function ($, Observer, View, HTMLView, ListView, DOMkit, InnerLink
         },
         getCID:           function () {
 
-            return  arguments[0].replace(this.pageRoot, '')
-                .replace(/\.\w+(\?.*)?$/, '.html').split('#')[0];
+            return  arguments[0].replace(this.pageRoot, '').split('#')[0];
         },
         loadView:         function (iLink, iHTML) {
 
@@ -1374,17 +1370,11 @@ var WebApp = (function ($, Observer, View, HTMLView, ListView, DOMkit, InnerLink
         },
         loadComponent:    function (iLink, iHTML, iData) {
 
-            var CID = this.getCID(new URL(iLink.href, this.pageRoot)  +  '');
-
-            this.loading[ CID ] = iLink;
-
             var JS_Load = iLink.one('load');
 
             var iView = this.loadView(iLink, iHTML),  _This_ = this;
 
             return  JS_Load.then(function (iFactory) {
-
-                delete _This_.loading[ CID ];
 
                 iData = $.extend(
                     iData,  iLink.data,  iLink.$_View[0].dataset,  iData
@@ -1396,7 +1386,7 @@ var WebApp = (function ($, Observer, View, HTMLView, ListView, DOMkit, InnerLink
             }).then(function () {
 
                 return Promise.all($.map(
-                    iView.childOf(),  _This_.load.bind(_This_)
+                    iView.childOf(':visible'),  _This_.load.bind(_This_)
                 ));
             }).then(function () {  return iView;  });
         },
@@ -1468,19 +1458,18 @@ var WebApp = (function ($, Observer, View, HTMLView, ListView, DOMkit, InnerLink
         },
         loadPage:         function (iURI) {
 
-            return  isNaN(iURI || 0)  ?
-                this.load(
-                    $('<a href="' + iURI + '" />')[0]
-                )  :
-                (new Promise(function () {
+            iURI = iURI || 0;
 
-                    $( self ).one('popstate', arguments[0])[0].history.go( iURI );
+            if (isNaN( iURI ))
+                return  this.load( $('<a href="' + iURI + '" />')[0] );
 
-                })).then((function () {
+            var link = this[this.lastPage + iURI];
 
-                    return  this.load( this[this.lastPage] );
+            if ( link )  delete link.view;
 
-                }).bind( this ));
+            self.history.go( iURI );
+
+            return  this.one({type: 'ready',  target: this.$_View[0]});
         },
         listenBOM:        function () {
 
@@ -1544,7 +1533,7 @@ var WebApp = (function ($, Observer, View, HTMLView, ListView, DOMkit, InnerLink
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v4.0  (2017-09-01)  Beta
+//      [Version]    v4.0  (2017-09-11)  Beta
 //
 //      [Require]    iQuery  ||  jQuery with jQueryKit
 //
@@ -1556,11 +1545,11 @@ var WebApp = (function ($, Observer, View, HTMLView, ListView, DOMkit, InnerLink
 //
 
 
-return  (function ($, WebApp) {
+return  (function ($, WebApp, InnerLink) {
 
 /* ---------- AMD based Component API ---------- */
 
-    var _require_ = self.require,  _CID_;
+    var _require_ = self.require,  _link_;
 
     self.require = $.extend(function () {
 
@@ -1568,24 +1557,29 @@ return  (function ($, WebApp) {
 
         var iArgs = arguments,  iWebApp = new WebApp();
 
-        var CID = iWebApp.getCID( document.currentScript.src );
+        var view = WebApp.View.instanceOf( document.currentScript );
+
+        var link = (view.$_View[0] === iWebApp.$_View[0])  ?
+                iWebApp[ iWebApp.lastPage ]  :
+                InnerLink.instanceOf( view.$_View );
 
         _require_.call(this,  iArgs[0],  function () {
 
-            _CID_ = CID;
+            _link_ = link;
 
             return  iArgs[1].apply(this, arguments);
         });
     },  _require_);
 
 
-    $.extend(WebApp.fn = WebApp.prototype,  {
-        component:     function (iFactory) {
+    WebApp.component = function (iFactory) {
 
-            if ( this.loading[_CID_] )  this.loading[_CID_].emit('load', iFactory);
+        if (_link_)  _link_.emit('load', iFactory);
 
-            return this;
-        },
+        return this;
+    };
+
+    $.extend(WebApp.prototype, {
         setURLData:    function (key, value) {
 
             var URL = this.getRoute().split(/&?data=/);
@@ -1628,5 +1622,5 @@ return  (function ($, WebApp) {
 
     return  $.fn.iWebApp = WebApp;
 
-})(jquery, WebApp);
+})(jquery, WebApp, InnerLink);
 });

@@ -9,7 +9,7 @@
 
     <meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
 
-    <title>${vm.Title} 官方网站 - EWAwiki</title>
+    <title>${this.Title} 官方网站 - EWAwiki</title>
 
     <link rel="stylesheet" href="docs/css/EasyWebUI.css" />
     <link rel="stylesheet" href="docs/css/index.css" />
@@ -47,16 +47,16 @@
         <div class="Grid-Row CenterY">
             <div id="Main_Title">
                 <h1><a href="docs/html/Git_List.html?data=docs/html/Git_List.json">
-                    ${vm.Title}
+                    ${this.Title}
                 </a></h1>
-                <p>${vm.Description}</p>
+                <p>${this.Description}</p>
             </div>
         </div>
         <div class="DropDown Head">
             <ul class="NavBar Black_O" id="Main_Nav" data-name="Main_Nav">
-                <li><a target="${vm.target || '_self'}" href="${vm.href}"
-                       data-autofocus="${vm.autofocus}">
-                    ${vm.title}
+                <li><a target="${this.target || '_self'}" href="${this.href}"
+                       data-autofocus="${this.autofocus}">
+                    ${this.title}
                 </a></li>
             </ul>
         </div>

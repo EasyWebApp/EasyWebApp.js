@@ -1,27 +1,29 @@
-require(['jquery'],  function ($) {
+require(['jquery', 'EasyWebApp'],  function ($, EWA) {
 
-    var OpenAPI = {
-            type:    'data',
-            src:     'tngou.net'
-        },
-        IE = ($.browser.msie < 12);
+    var IE = ($.browser.msie < 12);
 
-    $().iWebApp().off( OpenAPI ).on(OpenAPI,  function (_, iData) {
 
-        if (iData.total != null) {
-            iData.list = iData.tngou;
-            delete iData.tngou;
-        }
-    }).component(function (iData) {
+    EWA.component(function (data) {
 
-        iData.check = function () {
+        $.extend(data, {
+            check:      function () {
 
-            var iText = (IE ? self : arguments[0]).clipboardData.getData(
-                    IE ? 'text' : 'text/plain'
-                );
-            var iMore = this.Twitter.length + iText.length - 140;
+                var iText = (IE ? self : arguments[0]).clipboardData.getData(
+                        IE ? 'text' : 'text/plain'
+                    );
+                var iMore = this.Twitter.length + iText.length - 140;
 
-            if (iMore > 0)  self.alert("超出的 " + iMore + "个字会被丢弃……");
-        };
+                if (iMore > 0)  self.alert("超出的 " + iMore + "个字会被丢弃……");
+            },
+            fixData:    function (_, data) {
+
+                if (data.total != null) {
+
+                    data.list = data.tngou;
+
+                    delete data.tngou;
+                }
+            }
+        });
     });
 });

@@ -87,13 +87,6 @@ define([
 
             return this;
         },
-        childOf:    function () {
-
-            return  $.map(this,  function () {
-
-                return  arguments[0].__child__;
-            });
-        },
         valueOf:    function () {
 
             return  $.map(this,  function () {

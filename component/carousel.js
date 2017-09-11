@@ -1,4 +1,4 @@
-require(['jquery', 'jQueryKit'],  function ($) {
+require(['jquery', 'EasyWebApp'],  function ($, EWA) {
 
     function iTimer(iCallback) {
 
@@ -29,17 +29,17 @@ require(['jquery', 'jQueryKit'],  function ($) {
         }));
     }
 
-    $().iWebApp().component(function () {
+    EWA.component(function (data) {
 
         var iSlide = this.$_View.find('ul').view();
 
-        arguments[0].name = iSlide.__id__;
+        data.name = iSlide.__id__;
 
     //  幻灯播放
 
         iSlide.play = tabSwitch;
 
-        iSlide.interval = +arguments[0].interval || 3;
+        iSlide.interval = +data.interval || 3;
 
         iSlide.$_View.hover(function () {
 

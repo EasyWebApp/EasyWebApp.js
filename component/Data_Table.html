@@ -34,34 +34,34 @@
 </div>
 <slot name="table"></slot>
 <div class="Grid-Row CenterY Foot">
-    <span>共 ${vm.total} 行</span>
+    <span>共 ${this.total} 行</span>
     <label>
         跳转到
         <input type="number" name="page"
-               min="1" max="${vm.pageSum}" onchange="${this.pageChange}" />
+               min="1" max="${this.pageSum}" onchange="${this.pageChange}" />
         页
     </label>
     <ul class="NavBar Border-Column" onclick="${this.pageChange}">
-        <li style="display: ${(vm.page < 3) ? 'none' : ''}">
+        <li style="display: ${(this.page < 3) ? 'none' : ''}">
             1
         </li>
         <li style="display: ${(vm.pageSum < 7) || (vm.page < 4) ? 'none' : ''}">
             …
         </li>
-        <li style="display: ${(vm.page < 2) ? 'none' : ''}">
-            ${vm.page - 1}
+        <li style="display: ${(this.page < 2) ? 'none' : ''}">
+            ${this.page - 1}
         </li>
         <li class="active">
-            ${vm.page}
+            ${this.page}
         </li>
         <li style="display: ${(+vm.page + 1 > vm.pageSum) ? 'none' : ''}">
-            ${+vm.page + 1}
+            ${+this.page + 1}
         </li>
         <li style="display: ${(vm.pageSum < 6) || (+vm.page + 3 > vm.pageSum) ? 'none' : ''}">
             …
         </li>
         <li style="display: ${(+vm.page + 2 > vm.pageSum) ? 'none' : ''}">
-            ${vm.pageSum}
+            ${this.pageSum}
         </li>
     </ul>
 </div>

@@ -117,7 +117,7 @@ path/to/template.html?key1=value1&keyN=valueN&data=/path/to/json
 <form method="put" enctype="application/json" action="?data=/path/to/submit">
     <input type="hidden" name="extraParam" />
 
-    <input type="text" name="key1" required /> 已填 ${vm.key1.length} 字
+    <input type="text" name="key1" required /> 已填 ${this.key1.length} 字
 
     <input type="submit" />
 </form>
@@ -130,7 +130,7 @@ path/to/template.html?key1=value1&keyN=valueN&data=/path/to/json
 ### （二）引用组件
 
 ```HTML
-<div data-href="path/to/template.html" data-key1="${vm.Key1}" data-keyN="${vm.KeyN}">
+<div data-href="path/to/template.html" data-key1="${this.Key1}" data-keyN="${this.KeyN}">
     <span slot="Slot_1"></span>
     <span slot="Slot_2"></span>
 </div>
@@ -161,7 +161,7 @@ path/to/template.html?key1=value1&keyN=valueN&data=/path/to/json
 ### （〇）请求拦截
 
 ```JavaScript
-$().iWebApp().on({
+(new EWA()).on({
     type:    'request',
     src:     'api.test.com'
 },  function (iEvent, iAJAX) {
@@ -177,7 +177,7 @@ $().iWebApp().on({
 ### （一）响应处理
 
 ```JavaScript
-$().iWebApp().on({
+(new EWA()).on({
     type:    'template',
     href:    /\.md$/i
 },  function (iEvent, iData) {
@@ -201,7 +201,7 @@ $().iWebApp().on({
 ### （二）加载收尾
 
 ```JavaScript
-$().iWebApp().on({
+(new EWA()).on({
     type:    'ready',
     href:    'path/to/template.html'
 },  function (iEvent) {
@@ -248,7 +248,7 @@ $().iWebApp().on({
      */
 </style>
 <!--
-    组件的 JS 代码必须全写在其 HTML 文件同目录的同名 .js 文件中
+    一个组件只有一份 JS 代码，推荐写在其 HTML 文件同目录的同名 .js 文件中
 -->
 <script src="component.js"></script>
 <!--
@@ -267,13 +267,13 @@ $().iWebApp().on({
 ```JavaScript
 require([
     'jquery', 'Module_1', 'Module_N', 'EasyWebApp'
-],  function ($, Module_1, Module_N) {
+],  function ($, Module_1, Module_N, EWA) {
 
     //  获取已初始化的 WebApp 单例
 
-    var iWebApp = $().iWebApp();
+    var iWebApp = new EWA();
 
-    iWebApp.component(function (iData) {
+    EWA.component(function (iData) {
 
         //  iData 是与组件 HTML 并行加载的 JSON
 

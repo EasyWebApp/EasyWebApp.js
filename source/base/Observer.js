@@ -84,18 +84,18 @@ define(['jquery', 'jQueryKit'],  function ($) {
 
                 return this;
             },
-            instanceOf:       function ($_Instance, Check_Parent) {
+            instanceOf:       function ($_DOM, Check_Parent) {
 
-                var _Instance_;  $_Instance = $( $_Instance );
+                var _Instance_,  element = $( $_DOM )[0];
 
-                do {
-                    _Instance_ = $_Instance.data( iType );
+                while ( element ) {
+
+                    _Instance_ = $.data(element, iType);
 
                     if (_Instance_ instanceof this)  return _Instance_;
 
-                    $_Instance = $_Instance.parent();
-
-                } while ($_Instance[0]  &&  (Check_Parent !== false));
+                    element = (Check_Parent !== false)  &&  element.parentNode;
+                }
             }
         }).signSelector();
     }

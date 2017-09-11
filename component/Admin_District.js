@@ -3,7 +3,7 @@
 // 【文档】http://lbs.amap.com/api/webservice/guide/api/district/
 
 
-require(['jquery'],  function ($) {
+require(['jquery', 'EasyWebApp'],  function ($, EWA) {
 
     function reload(adcode) {
 
@@ -23,10 +23,10 @@ require(['jquery'],  function ($) {
     }
 
 
-    var iWebApp = $().iWebApp(),  iLevel = ['province', 'city', 'district'];
+    var iWebApp = new EWA(),  iLevel = ['province', 'city', 'district'];
 
 
-    iWebApp.component(function () {
+    EWA.component(function () {
 
         this.$_View.find('select').each(function () {
 

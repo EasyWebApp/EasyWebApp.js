@@ -102,9 +102,11 @@ define([
                 !(iURL[0] in URL_Prefix)  &&
                 (iURL  !==  (expression || [ ]).join(''))
             ) {
+                var root = self.location.href.split('?')[0];
+
                 iURL = (
-                    new URL(iURL,  new URL(iBase, 'http://ewa/'))  +  ''
-                ).replace(/^http:\/\/ewa\//, '');
+                    new URL(iURL,  new URL(iBase || '', root))  +  ''
+                ).replace(root, '');
 
                 iDOM.setAttribute(
                     iKey,  iURL = expression ? decodeURI( iURL ) : iURL
@@ -155,8 +157,6 @@ define([
                 '[data-href]:view:not([data-href^="?"])'
             )[0])
                 base = base.dataset.href;
-
-            base = $.filePath( base )  +  '/';
 
 
             $_Root.find( Object.keys( URL_DOM ) + '' ).each(function () {

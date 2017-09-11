@@ -25,7 +25,6 @@ define([
 
         this.length = 0;
         this.lastPage = -1;
-        this.loading = { };
 
         self.setTimeout( this.listenDOM().listenBOM().boot.bind( this ) );
     }
@@ -97,8 +96,7 @@ define([
         },
         getCID:           function () {
 
-            return  arguments[0].replace(this.pageRoot, '')
-                .replace(/\.\w+(\?.*)?$/, '.html').split('#')[0];
+            return  arguments[0].replace(this.pageRoot, '').split('#')[0];
         },
         loadView:         function (iLink, iHTML) {
 
@@ -120,17 +118,11 @@ define([
         },
         loadComponent:    function (iLink, iHTML, iData) {
 
-            var CID = this.getCID(new URL(iLink.href, this.pageRoot)  +  '');
-
-            this.loading[ CID ] = iLink;
-
             var JS_Load = iLink.one('load');
 
             var iView = this.loadView(iLink, iHTML),  _This_ = this;
 
             return  JS_Load.then(function (iFactory) {
-
-                delete _This_.loading[ CID ];
 
                 iData = $.extend(
                     iData,  iLink.data,  iLink.$_View[0].dataset,  iData
@@ -142,7 +134,7 @@ define([
             }).then(function () {
 
                 return Promise.all($.map(
-                    iView.childOf(),  _This_.load.bind(_This_)
+                    iView.childOf(':visible'),  _This_.load.bind(_This_)
                 ));
             }).then(function () {  return iView;  });
         },
@@ -214,19 +206,18 @@ define([
         },
         loadPage:         function (iURI) {
 
-            return  isNaN(iURI || 0)  ?
-                this.load(
-                    $('<a href="' + iURI + '" />')[0]
-                )  :
-                (new Promise(function () {
+            iURI = iURI || 0;
 
-                    $( self ).one('popstate', arguments[0])[0].history.go( iURI );
+            if (isNaN( iURI ))
+                return  this.load( $('<a href="' + iURI + '" />')[0] );
 
-                })).then((function () {
+            var link = this[this.lastPage + iURI];
 
-                    return  this.load( this[this.lastPage] );
+            if ( link )  delete link.view;
 
-                }).bind( this ));
+            self.history.go( iURI );
+
+            return  this.one({type: 'ready',  target: this.$_View[0]});
         },
         listenBOM:        function () {
 

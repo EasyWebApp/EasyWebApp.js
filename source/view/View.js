@@ -163,11 +163,16 @@ define([
 
             return this;
         },
-        childOf:       function (iSelector) {
+        childOf:       function ($_Filter) {
 
-            return  iSelector  ?
-                View.instanceOf(this.$_View.find(iSelector + '[data-href]'))  :
-                this.__child__;
+            var children = this.__child__ || this;
+
+            return  $_Filter ?
+                $.map(children,  function (VM) {
+
+                    return  VM.$_View.is( $_Filter )  ?  VM  :  null;
+                }) :
+                Array.from( children );
         }
     }).registerEvent('ready', 'update');
 

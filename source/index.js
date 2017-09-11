@@ -2,7 +2,7 @@
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v4.0  (2017-09-01)  Beta
+//      [Version]    v4.0  (2017-09-11)  Beta
 //
 //      [Require]    iQuery  ||  jQuery with jQueryKit
 //
@@ -14,11 +14,11 @@
 //
 
 
-define(['jquery', './WebApp'],  function ($, WebApp) {
+define(['jquery', './WebApp', './InnerLink'],  function ($, WebApp, InnerLink) {
 
 /* ---------- AMD based Component API ---------- */
 
-    var _require_ = self.require,  _CID_;
+    var _require_ = self.require,  _link_;
 
     self.require = $.extend(function () {
 
@@ -26,24 +26,29 @@ define(['jquery', './WebApp'],  function ($, WebApp) {
 
         var iArgs = arguments,  iWebApp = new WebApp();
 
-        var CID = iWebApp.getCID( document.currentScript.src );
+        var view = WebApp.View.instanceOf( document.currentScript );
+
+        var link = (view.$_View[0] === iWebApp.$_View[0])  ?
+                iWebApp[ iWebApp.lastPage ]  :
+                InnerLink.instanceOf( view.$_View );
 
         _require_.call(this,  iArgs[0],  function () {
 
-            _CID_ = CID;
+            _link_ = link;
 
             return  iArgs[1].apply(this, arguments);
         });
     },  _require_);
 
 
-    $.extend(WebApp.fn = WebApp.prototype,  {
-        component:     function (iFactory) {
+    WebApp.component = function (iFactory) {
 
-            if ( this.loading[_CID_] )  this.loading[_CID_].emit('load', iFactory);
+        if (_link_)  _link_.emit('load', iFactory);
 
-            return this;
-        },
+        return this;
+    };
+
+    $.extend(WebApp.prototype, {
         setURLData:    function (key, value) {
 
             var URL = this.getRoute().split(/&?data=/);

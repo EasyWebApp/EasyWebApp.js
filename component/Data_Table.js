@@ -1,8 +1,9 @@
-require(['jquery', 'EasyWebApp'],  function ($) {
+require(['jquery', 'EasyWebApp'],  function ($, EWA) {
 
-    var iWebApp = $().iWebApp();
+    var iWebApp = new EWA();
 
-    iWebApp.component(function () {
+
+    EWA.component(function () {
 
         var iEvent = {
                 type:      'data',

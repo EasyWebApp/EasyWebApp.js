@@ -1,4 +1,4 @@
-require(['jquery'],  function ($) {
+require(['jquery', 'EasyWebApp'],  function ($, EWA) {
 
 //  树型转换：平铺 变 立体
 
@@ -54,9 +54,10 @@ require(['jquery'],  function ($) {
 
 //  SPA 内页联动
 
-    var iWebApp = $().iWebApp();
+    var iWebApp = new EWA();
 
-    iWebApp.component(function () {
+
+    EWA.component(function () {
 
         var iTree = this.$_View.find('[tabindex]:list').view();
 
