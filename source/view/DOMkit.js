@@ -88,7 +88,7 @@ define([
                 iAttr[ this.nodeName ] = this.nodeValue;
             });
 
-            iDOM = $('<script />', iAttr)[0];
+            iDOM = $('<script />', iAttr).prop('text', iDOM.text)[0];
 
             return iDOM;
         },

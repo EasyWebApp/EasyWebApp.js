@@ -23,7 +23,7 @@
 <div class="Grid-Row Head">
     <label>
         显示
-        <select name="rows" onchange="${this.pageChange}">
+        <select name="rows" value="${this.rows}" onchange="${this.pageChange}">
             <option>10</option>
             <option>20</option>
             <option>30</option>
@@ -33,11 +33,12 @@
     <slot name="toolbar"></slot>
 </div>
 <slot name="table"></slot>
+
 <div class="Grid-Row CenterY Foot">
     <span>共 ${this.total} 行</span>
     <label>
         跳转到
-        <input type="number" name="page"
+        <input type="number" name="page" value="${this.page}"
                min="1" max="${this.pageSum}" onchange="${this.pageChange}" />
         页
     </label>

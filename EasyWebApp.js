@@ -573,7 +573,7 @@ var base_DataScope = (function ($) {
         watch:       function (iKey, iSetter) {
 
             if (! (iKey in this))
-                this.setPublic(iKey, null, {
+                this.setPublic(iKey, {
                     get:    function () {
 
                         return  this.__data__[iKey];
@@ -882,7 +882,7 @@ var view_DOMkit = (function ($, RenderNode, InnerLink) {
                 iAttr[ this.nodeName ] = this.nodeValue;
             });
 
-            iDOM = $('<script />', iAttr)[0];
+            iDOM = $('<script />', iAttr).prop('text', iDOM.text)[0];
 
             return iDOM;
         },
@@ -1017,9 +1017,13 @@ var view_HTMLView = (function ($, View, DOMkit, RenderNode) {
                     iNode.__name__  ||  iNode.name
                 ];
 
-            for (var j = 0;  iName[j];  j++)
+            for (var j = 0;  iName[j];  j++) {
+
+                this.watch(iName[j], this.render);
+
                 this.__map__[iName[j]] = (this.__map__[iName[j]] || 0)  +
                     Math.pow(2, i);
+            }
         },
         parsePlain:    function (iDOM) {
 
@@ -1074,18 +1078,10 @@ var view_HTMLView = (function ($, View, DOMkit, RenderNode) {
                         case 'script':    return  DOMkit.fixScript( iNode );
                     }
 
-                switch (true) {
-                    case (iNode instanceof View):
-                        this.signIn( iNode );    break;
-                    case (
-                        $.expr[':'].field( iNode )  &&  (iNode.type != 'file')  &&
-                        (! iNode.defaultValue)
-                    ):
-                        this.signIn( iNode );
-
-                    case !(tag in HTMLView.rawSelector):
-                        this.parsePlain( iNode );
-                }
+                if (iNode instanceof View)
+                    this.signIn( iNode );
+                else if ( !(tag in HTMLView.rawSelector))
+                    this.parsePlain( iNode );
             });
         },
         getNode:       function (data, exclude) {
@@ -1097,7 +1093,7 @@ var view_HTMLView = (function ($, View, DOMkit, RenderNode) {
                     iMask = $.bitOperate('|',  iMask,  this.__map__[ iName ]);
 
             return $.map(
-                $.leftPad(iMask, this.length).split('').reverse(),
+                iMask.padStart(this.length, 0).split('').reverse(),
                 function (bit, node) {
 
                     node = _This_[ node ];
@@ -1111,15 +1107,17 @@ var view_HTMLView = (function ($, View, DOMkit, RenderNode) {
         },
         render:        function render(iData, value) {
 
-            var _This_ = this,  _Data_ = { },  exclude;
+            var _This_ = this,  _Data_ = { },  $_Exclude;
 
             if (iData instanceof Element) {
 
-                exclude = iData;
+                $_Exclude = $( iData );
 
-                iData = exclude.name || exclude.getAttribute('name');
+                iData = $_Exclude.attr('name');
 
-                value = $( exclude )[('value' in exclude)  ?  'val'  :  'html']();
+                value = $_Exclude.is('input[type="checkbox"]:not(:checked)')  ?
+                    ''  :
+                    $_Exclude[('value' in $_Exclude[0])  ?  'val'  :  'html']();
             }
 
             if (typeof iData.valueOf() === 'string') {
@@ -1129,21 +1127,18 @@ var view_HTMLView = (function ($, View, DOMkit, RenderNode) {
 
             iData = this.commit( iData );  _Data_ = this.__data__;
 
-            for (var iKey in iData)  this.watch(iKey, render);
-
             if ( iData )
-                $.each(this.getNode(iData, exclude),  function () {
+                $.each(this.getNode(iData,  ($_Exclude || '')[0]),  function () {
 
                     if (this instanceof RenderNode)
                         this.render(_This_, _Data_);
-                    else if (this instanceof View)
+                    else if (this instanceof View) {
+
                         this.render(_Data_[this.__name__]);
-                    else
-                        $( this )[
-                            ('value' in this)  ?  'val'  :  'html'
-                        ](
-                            _Data_[this.name || this.getAttribute('name')]
-                        );
+
+                        _Data_[this.__name__] = this.__data__;
+                    } else
+                        this.innerHTML = _Data_[ this.getAttribute('name') ];
                 });
 
             return this;
@@ -1204,9 +1199,16 @@ var view_ListView = (function ($, View, HTMLView, InnerLink) {
 
                     return  this.insert.apply(this, arguments).$_View[0];
 
-                },  this)).insertTo(this.$_View, this.length);
+                },  this)).insertTo( this.$_View );
 
             return this;
+        },
+        push:       function () {
+
+            for (var i = 0;  arguments[i];  i++)
+                this.insert(arguments[i], this.length);
+
+            return this.length;
         },
         indexOf:    function ($_Item) {
 
@@ -1269,7 +1271,7 @@ var WebApp = (function ($, Observer, View, HTMLView, ListView, DOMkit, InnerLink
             API_Root || '',  self.location.href
         );
 
-        var path = self.location.href.split('?')[0];
+        var path = self.location.href.split( /\?|#/ )[0];
 
         this.pageRoot = new URL(
             path  +  (path.match( /\/([^\/]+?\.html?)?$/i )  ?  ''  :  '/')
@@ -1363,7 +1365,7 @@ var WebApp = (function ($, Observer, View, HTMLView, ListView, DOMkit, InnerLink
 
             if ( iView.parse )  iView.parse();
 
-            if (! $('script[src]:not(head > *)', iTarget)[0])
+            if (! $('script:not(head > *)', iTarget)[0])
                 iLink.emit('load');
 
             return iView;
@@ -1409,7 +1411,7 @@ var WebApp = (function ($, Observer, View, HTMLView, ListView, DOMkit, InnerLink
                     transport:    arguments[0]
                 });
 
-                this.crossDomain = $.isCrossDomain( this.url );
+                this.crossDomain = $.isXDomain( this.url );
 
             }).then(function () {
 
@@ -1533,7 +1535,7 @@ var WebApp = (function ($, Observer, View, HTMLView, ListView, DOMkit, InnerLink
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v4.0  (2017-09-11)  Beta
+//      [Version]    v4.0  (2017-09-14)  Beta
 //
 //      [Require]    iQuery  ||  jQuery with jQueryKit
 //

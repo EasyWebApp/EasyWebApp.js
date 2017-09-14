@@ -121,6 +121,23 @@ var polyfill_ES_API = (function () {
         return  (new Array(Times + 1)).join(this);
     };
 
+    'padStart:0,padEnd:1'.replace(/(\w+):(\d)/g,  function (_, key, index) {
+
+        String.prototype[ key ] =
+            String.prototype[ key ]  ||  function (length, pad) {
+
+                length = length >> 0;    pad = pad  ?  (pad + '')  :  ' ';
+
+                if (this.length >= length)  return this + '';
+
+                pad = pad.repeat(
+                    Math.ceil((length -= this.length)  /  pad.length)
+                ).slice( length );
+
+                return  +index  ?  (this + pad)  :  (pad + this);
+            };
+    });
+
     /* ----- Array Patch ----- */
 
     var ArrayProto = Array.prototype;
@@ -541,23 +558,6 @@ var utility_ext_string = (function ($) {
                 /[^\u0021-\u007e\uff61-\uffef]/g,  'xx'
             ).length;
         },
-        leftPad:       function (iRaw, iLength, iPad) {
-            iPad += '';
-
-            if (! iPad) {
-                if ($.isNumeric( iRaw ))
-                    iPad = '0';
-                else if (typeof iRaw == 'string')
-                    iPad = ' ';
-            }
-            iRaw += '',  iLength *= 1;
-
-            if (iRaw.length >= iLength)  return iRaw;
-
-            return iPad.repeat(
-                Math.ceil((iLength -= iRaw.length)  /  iPad.length)
-            ).slice(-iLength) + iRaw;
-        },
         isSelector:    function () {
             try {
                 return  (!! $( arguments[0] ));
@@ -744,8 +744,8 @@ var utility_ext_string = (function ($) {
 
     function toHexInt(iDec, iLength) {
 
-        return $.leftPad(
-            parseInt( Number(iDec).toFixed(0) ).toString(16),  iLength || 2
+        return  parseInt( Number(iDec).toFixed(0) ).toString(16).padStart(
+            iLength || 2,  0
         );
     }
 
@@ -959,7 +959,7 @@ var utility_ext_string = (function ($) {
         ));
     }
 
-    function wrap(method) {
+    function wrap(method, failback) {
 
         var _method_ = function (key, value) {
                 try {
@@ -972,7 +972,7 @@ var utility_ext_string = (function ($) {
                     )
                         throw error;
 
-                    this[ key ] = value;
+                    if (failback !== false)  this[ key ] = value;
                 }
 
                 return value;
@@ -994,20 +994,17 @@ var utility_ext_string = (function ($) {
     setPrivate.call(Class.prototype,  'setPrivate',  wrap( setPrivate ));
 
     setPrivate.call(
-        Class.prototype,  'setPublic',  wrap(function (key, value, config) {
+        Class.prototype,  'setPublic',  wrap(function (key, Get_Set, config) {
 
             Object.defineProperty(this, key, $.extend(
-                (value != null)  &&  {
-                    value:       value,
-                    writable:    true,
-                },
                 {
                     enumerable:      true,
                     configurable:    true
                 },
-                config
+                config,
+                Get_Set
             ));
-        })
+        },  false)
     );
 
     return  $.Class = Class;
@@ -1546,7 +1543,7 @@ var utility_ext_string = (function ($) {
 
     /* ----- :list, :data ----- */
 
-    var pList = $.makeSet('ul', 'ol', 'dl', 'tbody', 'datalist');
+    var pList = $.makeSet('ul', 'ol', 'dl', 'tbody', 'select', 'datalist');
 
     $.extend($.expr[':'], {
         list:    function () {
@@ -2157,7 +2154,7 @@ var AJAX_ext_URL = (function ($) {
     };
 
     return $.extend({
-        extendURL:        function (iURL) {
+        extendURL:    function (iURL) {
 
             if (! arguments[1])  return iURL;
 
@@ -2175,24 +2172,24 @@ var AJAX_ext_URL = (function ($) {
                 }
             )));
         },
-        fileName:         function () {
+        fileName:     function () {
             return (
                 arguments[0] || BOM.location.pathname
             ).match(/([^\?\#]+)(\?|\#)?/)[1].split('/').slice(-1)[0];
         },
-        filePath:         function () {
+        filePath:     function () {
             return (
                 arguments[0] || BOM.location.href
             ).match(/([^\?\#]+)(\?|\#)?/)[1].split('/').slice(0, -1).join('/');
         },
-        urlDomain:        function (iURL) {
+        urlDomain:    function (iURL) {
 
             return  (! iURL)  ?  BOM.location.origin  :
                 (iURL.match( /^(\w+:)?\/\/[^\/]+/ )  ||  '')[0];
         },
-        isCrossDomain:    function () {
+        isXDomain:    function () {
             return (
-                BOM.location.origin ===
+                BOM.location.origin !==
                 (new BOM.URL(arguments[0],  this.filePath() + '/')).origin
             );
         }
@@ -2201,97 +2198,6 @@ var AJAX_ext_URL = (function ($) {
 
 
 (function ($) {
-
-    if (! (($.browser.msie < 10)  ||  $.browser.ios))  return;
-
-/* ---------- Placeholder ---------- */
-
-    var _Value_ = {
-            input:       Object.getOwnPropertyDescriptor(
-                HTMLInputElement.prototype, 'value'
-            ),
-            textarea:    Object.getOwnPropertyDescriptor(
-                HTMLTextAreaElement.prototype, 'value'
-            )
-        };
-    function getValue() {
-
-        return  _Value_[ this.tagName.toLowerCase() ].get.call( this );
-    }
-
-    function PH_Blur() {
-
-        if (getValue.call( this ))  return;
-
-        this.value = this.placeholder;
-
-        this.style.color = 'gray';
-    }
-
-    function PH_Focus() {
-
-        if (this.placeholder  ==  getValue.call( this ))
-            this.value = this.style.color = '';
-    }
-
-    var iPlaceHolder = {
-            get:           function () {
-
-                return this.getAttribute('placeholder');
-            },
-            set:           function () {
-
-                if ($.browser.modern)
-                    this.setAttribute('placeholder', arguments[0]);
-
-                PH_Blur.call(this);
-
-                $(this).off('focus', PH_Focus).off('blur', PH_Blur)
-                    .focus( PH_Focus ).blur( PH_Blur );
-            },
-            enumerable:    true
-        };
-
-    Object.defineProperty(
-        HTMLInputElement.prototype, 'placeholder', iPlaceHolder
-    );
-
-    Object.defineProperty(
-        HTMLTextAreaElement.prototype, 'placeholder', iPlaceHolder
-    );
-
-    $( document ).ready(function () {
-
-        $('input[placeholder], textarea[placeholder]')
-            .prop('placeholder',  function () {
-
-                return this.placeholder;
-            });
-    });
-
-/* ---------- Field Value ---------- */
-
-    var Value_Patch = {
-            get:           function () {
-
-                var iValue = getValue.call( this );
-
-                return (
-                    (iValue == this.placeholder)  &&  (this.style.color === 'gray')
-                ) ?
-                    '' : iValue;
-            },
-            enumerable:    true/*,
-            set:    function () {
-                _Value_.set.call(this, arguments[0]);
-
-                if (this.style.color == 'gray')  this.style.color = '';
-            }*/
-        };
-    Object.defineProperty(HTMLInputElement.prototype, 'value', Value_Patch);
-
-    Object.defineProperty(HTMLTextAreaElement.prototype, 'value', Value_Patch);
-
 
 /* ---------- Form Data Object ---------- */
 
@@ -2423,25 +2329,6 @@ var AJAX_ext_URL = (function ($) {
             return Array_Reverse.call(this.pushStack($.merge(
                 this.eq(0).parents(':scrollable'),  [ document ]
             )));
-        },
-        inViewport:       function () {
-
-            for (var i = 0, _OS_, $_BOM, BOM_W, BOM_H;  this[i];  i++) {
-
-                _OS_ = this[i].getBoundingClientRect();
-
-                $_BOM = $( this[i].ownerDocument.defaultView );
-
-                BOM_W = $_BOM.width(),  BOM_H = $_BOM.height();
-
-                if (
-                    (_OS_.left < 0)  ||  (_OS_.left > BOM_W)  ||
-                    (_OS_.top < 0)  ||  (_OS_.top > BOM_H)
-                )
-                    return false;
-            }
-
-            return true;
         },
         scrollTo:         function () {
 
@@ -3099,13 +2986,19 @@ var AJAX_ext_HTML_Request = (function ($) {
             for (var iSelector in iRule)
                 _Rule_[Scope_Selector(this.id, iSelector)] = iRule[ iSelector ];
 
-            _Rule_ = $( $.cssRule(_Rule_) ).insertAfter(
-                $(
+            var $_Insert = $(
                     'style, link[rel="stylesheet"]',
                     (this.nodeName.toLowerCase() in Global_Style)  ?
                         document.head  :  this
-                ).slice( -1 )
-            )[0];
+                ),
+                end = 'After';
+
+            if ( $_Insert[0] )
+                $_Insert = $_Insert.slice( -1 );
+            else
+                $_Insert = $( this ),  end = 'Before';
+
+            _Rule_ = $( $.cssRule(_Rule_) )['insert' + end]( $_Insert )[0];
 
             if (typeof iCallback === 'function')
                 iCallback.call(this,  _Rule_.sheet || _Rule_.styleSheet);
@@ -3695,28 +3588,26 @@ var AJAX_ext_HTML_Request = (function ($) {
 
     $.bitOperate = function (iType, iLeft, iRight) {
 
-        iLeft = (typeof iLeft == 'string')  ?  iLeft  :  iLeft.toString(2);
+        iLeft = (typeof iLeft === 'string')  ?  iLeft  :  iLeft.toString(2);
 
-        iRight = (typeof iRight == 'string')  ?  iRight  :  iRight.toString(2);
+        iRight = (typeof iRight === 'string')  ?  iRight  :  iRight.toString(2);
 
         var iLength = Math.max(iLeft.length, iRight.length);
 
         if (iLength < 32)
             return  Bit_Calculate(iType, iLeft, iRight).toString(2);
 
-        iLeft = $.leftPad(iLeft, iLength, 0);
+        iLeft = iLeft.padStart(iLength, 0);
 
-        iRight = $.leftPad(iRight, iLength, 0);
+        iRight = iRight.padStart(iLength, 0);
 
         var iResult = '';
 
         for (var i = 0;  i < iLength;  i += 31)
-            iResult += $.leftPad(
-                Bit_Calculate(
-                    iType,  iLeft.slice(i, i + 31),  iRight.slice(i, i + 31)
-                ).toString(2),
-                Math.min(31,  iLength - i),
-                0
+            iResult += Bit_Calculate(
+                iType,  iLeft.slice(i, i + 31),  iRight.slice(i, i + 31)
+            ).toString(2).padStart(
+                Math.min(31,  iLength - i),  0
             );
 
         return iResult;

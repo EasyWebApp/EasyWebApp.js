@@ -5,104 +5,77 @@
 
 require(['jquery', 'EasyWebApp'],  function ($, EWA) {
 
-    function reload(adcode) {
+    var API_Root = 'https://restapi.amap.com/v3/',
+        Request_Event = {
+            type: 'request',  method: 'GET',  src: 'config/district'
+        },
+        AD_Level = {province: 2,  city: 4,  district: 6};
 
-        if ( adcode )
-            this.dataset.href = '?data=' + $.extendURL(
-                this.dataset.href.replace(/^\?data=/, ''), {
-                    keywords:    adcode
+
+    EWA.component(function (data) {
+
+        var iWebApp = new EWA();
+
+    //  API URL 补全
+
+        iWebApp.off( Request_Event ).on(Request_Event,  function (_, AJAX) {
+
+            AJAX.option.url = $.extendURL(
+                AJAX.option.url.replace(iWebApp.pageRoot, API_Root),
+                {
+                    key:            data.key,
+                    extensions:     'base',
+                    subdistrict:    1
                 }
             );
-    }
-
-    function valueOf() {
-
-        var iOption = this[0].selectedOptions[0];
-
-        if ( iOption )  return iOption.dataset.adcode;
-    }
-
-
-    var iWebApp = new EWA(),  iLevel = ['province', 'city', 'district'];
-
-
-    EWA.component(function () {
-
-        this.$_View.find('select').each(function () {
-
-            $( this ).view('ListView');
         });
 
-        this.on('update', function () {
+        $.extend(data, {
+            fixData:      function (_, data) {
 
-            for (var i = iLevel.length - 1, $_Match;  iLevel[i];  i--) {
+                data = data.districts[0].districts;
 
-                $_Match = this.codeMatch( iLevel[i] );
+                return  [{adcode: '',  name: '（请选择）'}].concat( data );
+            },
+            checkCode:    function (event) {    //  自动定位传入的行政区编码
 
-                if ( $_Match[0] )  return $_Match.parent().change();
+                if (! this.adcode)  return;
+
+                var select = event.target;
+
+                var ADcode = this.adcode.slice(0,  AD_Level[ select.name ])
+                        .padEnd(6, 0);
+
+                $.each($( select ).view(),  function () {
+
+                    if (ADcode == this.valueOf().adcode)
+                        return  !(this.$_View[0].selected = true);
+                });
+
+                if (! select.value)  return;
+
+                this[ select.name ] = ADcode;
+
+                this.loadSub( event );
+            },
+            loadSub:      function () {
+
+                var $_Sub = $( arguments[0].target ).next('select');
+
+                if (! $_Sub[0])  return;
+
+                iWebApp.load( $_Sub.show()[0] );
+
+                $_Sub.view().clear().$_View.next('select').hide();
             }
-
-            reload.call(this.childOf()[0].$_View[0], '100000');
         });
 
-        var $_adCode = this.$_View.find('[type="hidden"]');
+    //  传入参数变更响应
 
-        $.extend(arguments[0], {
-            codeOf:       function (_Level_) {
+        this.on('update',  function () {
 
-                var iCount = iLevel.indexOf(_Level_) + 1;
-
-                return  ((this.adcode || '') + '').slice(0,  2 * iCount)  +
-                    '00'.repeat(3 - iCount);
-            },
-            codeMatch:    function (_Level_) {
-
-                var $_Select = this.$_View.find('select[name="' + _Level_ + '"]');
-
-                return $_Select.children(
-                    '[data-adcode="'  +  this.codeOf(_Level_)  +  '"]'
-                ).prop('selected', true);
-            },
-            onData:       function (iEvent, iData) {
-
-                iData = iData.districts[0].districts;
-
-                if (! iData[0])  return;
-
-                var iList = $(
-                        'select[name="' + iData[0].level + '"]',  iEvent.target
-                    ).view('ListView');
-
-                if (! iList)  return;
-
-                iList.clear().render( [{name: '（请选择）'}].concat( iData ) );
-
-                var $_Select = iList.$_View;
-
-                this.codeMatch( iData[0].level );
-
-                if (valueOf.call( $_Select ))
-                    setTimeout($.proxy($.fn.change, $_Select));
-            },
-            getSub:       function (iEvent) {
-
-                var $_Select = $( iEvent.target ),
-                    iLink = $_adCode.parents(':view')[0];
-
-                $_adCode[0].value = valueOf.call( $_Select );
-
-                if ($_Select.nextAll('select').each(function () {
-
-                    $( this ).view('ListView').clear();
-                })[0])
-                    reload.call(iLink, $_adCode[0].value);
-                else
-                    this.emit('loaded');
-            },
-            onUpdate:     function () {
-
-                iWebApp.load( arguments[0].target );
-            }
+            if ('adcode' in arguments[1])
+                this.checkCode( {target: this.$_View.find('select')[0]} );
         });
     });
 });

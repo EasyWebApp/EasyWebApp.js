@@ -33,7 +33,7 @@ define(['jquery', 'jQueryKit'],  function ($) {
         watch:       function (iKey, iSetter) {
 
             if (! (iKey in this))
-                this.setPublic(iKey, null, {
+                this.setPublic(iKey, {
                     get:    function () {
 
                         return  this.__data__[iKey];

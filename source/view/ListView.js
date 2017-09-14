@@ -51,9 +51,16 @@ define([
 
                     return  this.insert.apply(this, arguments).$_View[0];
 
-                },  this)).insertTo(this.$_View, this.length);
+                },  this)).insertTo( this.$_View );
 
             return this;
+        },
+        push:       function () {
+
+            for (var i = 0;  arguments[i];  i++)
+                this.insert(arguments[i], this.length);
+
+            return this.length;
         },
         indexOf:    function ($_Item) {
 

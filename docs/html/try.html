@@ -10,14 +10,17 @@
 <form target="_blank" onsubmit="return false">
     <fieldset>
         <legend>单一对象</legend>
-        <input type="text" name="Nick_Name" />
+
+        <input type="text" name="Nick_Name" value="${this.Nick_Name}" />
+
         <span title="Hi, ${this.Nick_Name} !">Hello, ${this.Nick_Name} !</span>
     </fieldset>
     <fieldset>
         <legend>对象数组</legend>
         <ul data-name="People">
             <li>
-                <input type="text" name="Nick_Name" />
+                <input type="text" name="Nick_Name" value="${this.Nick_Name}" />
+
                 <span title="Hi, ${this.Nick_Name} !">
                     Hello, ${this.Nick_Name} !
                 </span>
@@ -26,8 +29,10 @@
     </fieldset>
     <fieldset>
         <legend>表达式求值、事件回调</legend>
+
         <textarea name="Twitter" maxlength="140" onpaste="${this.check}"
                   placeholder="一条微博"></textarea>
+
         还可写 ${140 - this.Twitter.length} 字
     </fieldset>
     <fieldset>
@@ -72,7 +77,7 @@
         <legend>组件外传参</legend>
         <label>
             分页数
-            <select name="pageSize">
+            <select name="pageSize" value="${this.pageSize}">
                 <option>10</option>
                 <option>20</option>
                 <option>30</option>
@@ -80,7 +85,8 @@
         </label>
         <label>
             页序号
-            <input type="number" name="pageIndex" min="1" max="100" />
+            <input type="number"
+                   name="pageIndex" value="${this.pageIndex}" min="1" max="100" />
         </label>
     </fieldset>
 </form>

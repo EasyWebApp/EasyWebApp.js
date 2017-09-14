@@ -17,7 +17,7 @@ define([
             API_Root || '',  self.location.href
         );
 
-        var path = self.location.href.split('?')[0];
+        var path = self.location.href.split( /\?|#/ )[0];
 
         this.pageRoot = new URL(
             path  +  (path.match( /\/([^\/]+?\.html?)?$/i )  ?  ''  :  '/')
@@ -111,7 +111,7 @@ define([
 
             if ( iView.parse )  iView.parse();
 
-            if (! $('script[src]:not(head > *)', iTarget)[0])
+            if (! $('script:not(head > *)', iTarget)[0])
                 iLink.emit('load');
 
             return iView;
@@ -157,7 +157,7 @@ define([
                     transport:    arguments[0]
                 });
 
-                this.crossDomain = $.isCrossDomain( this.url );
+                this.crossDomain = $.isXDomain( this.url );
 
             }).then(function () {
 

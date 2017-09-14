@@ -28,9 +28,13 @@ define([
                     iNode.__name__  ||  iNode.name
                 ];
 
-            for (var j = 0;  iName[j];  j++)
+            for (var j = 0;  iName[j];  j++) {
+
+                this.watch(iName[j], this.render);
+
                 this.__map__[iName[j]] = (this.__map__[iName[j]] || 0)  +
                     Math.pow(2, i);
+            }
         },
         parsePlain:    function (iDOM) {
 
@@ -85,18 +89,10 @@ define([
                         case 'script':    return  DOMkit.fixScript( iNode );
                     }
 
-                switch (true) {
-                    case (iNode instanceof View):
-                        this.signIn( iNode );    break;
-                    case (
-                        $.expr[':'].field( iNode )  &&  (iNode.type != 'file')  &&
-                        (! iNode.defaultValue)
-                    ):
-                        this.signIn( iNode );
-
-                    case !(tag in HTMLView.rawSelector):
-                        this.parsePlain( iNode );
-                }
+                if (iNode instanceof View)
+                    this.signIn( iNode );
+                else if ( !(tag in HTMLView.rawSelector))
+                    this.parsePlain( iNode );
             });
         },
         getNode:       function (data, exclude) {
@@ -108,7 +104,7 @@ define([
                     iMask = $.bitOperate('|',  iMask,  this.__map__[ iName ]);
 
             return $.map(
-                $.leftPad(iMask, this.length).split('').reverse(),
+                iMask.padStart(this.length, 0).split('').reverse(),
                 function (bit, node) {
 
                     node = _This_[ node ];
@@ -122,15 +118,17 @@ define([
         },
         render:        function render(iData, value) {
 
-            var _This_ = this,  _Data_ = { },  exclude;
+            var _This_ = this,  _Data_ = { },  $_Exclude;
 
             if (iData instanceof Element) {
 
-                exclude = iData;
+                $_Exclude = $( iData );
 
-                iData = exclude.name || exclude.getAttribute('name');
+                iData = $_Exclude.attr('name');
 
-                value = $( exclude )[('value' in exclude)  ?  'val'  :  'html']();
+                value = $_Exclude.is('input[type="checkbox"]:not(:checked)')  ?
+                    ''  :
+                    $_Exclude[('value' in $_Exclude[0])  ?  'val'  :  'html']();
             }
 
             if (typeof iData.valueOf() === 'string') {
@@ -140,21 +138,18 @@ define([
 
             iData = this.commit( iData );  _Data_ = this.__data__;
 
-            for (var iKey in iData)  this.watch(iKey, render);
-
             if ( iData )
-                $.each(this.getNode(iData, exclude),  function () {
+                $.each(this.getNode(iData,  ($_Exclude || '')[0]),  function () {
 
                     if (this instanceof RenderNode)
                         this.render(_This_, _Data_);
-                    else if (this instanceof View)
+                    else if (this instanceof View) {
+
                         this.render(_Data_[this.__name__]);
-                    else
-                        $( this )[
-                            ('value' in this)  ?  'val'  :  'html'
-                        ](
-                            _Data_[this.name || this.getAttribute('name')]
-                        );
+
+                        _Data_[this.__name__] = this.__data__;
+                    } else
+                        this.innerHTML = _Data_[ this.getAttribute('name') ];
                 });
 
             return this;

@@ -1,15 +1,44 @@
+<style>
+    select {
+        vertical-align:    middle;
+        display:           none;
+    }
+    select:first-of-type {
+        display:    inline-block;
+    }
+</style>
 <script src="Admin_District.js"></script>
 
-<span data-href="?data=https://restapi.amap.com/v3/config/district?key=${vm.key}&extensions=base&keywords=100000&subdistrict=1"
-      ondata="${this.onData}" onchange="${this.getSub}" onupdate="${this.onUpdate}">
-    <select name="province">
-        <option data-adcode="${this.adcode}">${this.name}</option>
-    </select>
-    <select name="city">
-        <option data-adcode="${this.adcode}">${this.name}</option>
-    </select>
-    <select name="district">
-        <option data-adcode="${this.adcode}">${this.name}</option>
-    </select>
-    <input type="hidden" name="adcode" />
-</span>
+<select name="province"
+        data-href="?data=config/district?keywords=100000"
+        ondata="${this.fixData}"
+        onready="${this.checkCode}"
+        onchange="${this.loadSub}">
+
+    <option value="${this.adcode ? this.name : ''}">
+        ${this.name}
+    </option>
+</select>
+
+<select name="city"
+        data-href="?data=config/district?keywords=${this.province}"
+        ondata="${this.fixData}"
+        onready="${this.checkCode}"
+        onchange="${this.loadSub}">
+
+    <option value="${this.adcode ? this.name : ''}">
+        ${this.name}
+    </option>
+</select>
+
+<select name="district"
+        data-href="?data=config/district?keywords=${this.city}"
+        ondata="${this.fixData}"
+        onready="${this.checkCode}">
+
+    <option value="${this.adcode ? this.name : ''}">
+        ${this.name}
+    </option>
+</select>
+
+<input type="hidden" name="adcode" value="${this.adcode}" />
