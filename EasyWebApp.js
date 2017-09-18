@@ -623,12 +623,16 @@ var view_View = (function ($, Observer, DataScope, RenderNode) {
                         (this.instanceOf( iDOM.parentNode )  ||  '').__data__
                     );
         },
-        extend:    function (iConstructor, iStatic, iPrototype) {
+        extend:    function (constructor, static, prototype) {
 
-            Sub_Class.push( iConstructor );
+            Sub_Class.push( constructor );
+
+            static = static  ||  { };
+
+            static.is = static.is || $.noop;
 
             return $.Class.extend.call(
-                this,  iConstructor,  iStatic,  iPrototype
+                this,  constructor,  static,  prototype
             ).signSelector();
         }
     }, {
@@ -1270,7 +1274,54 @@ var view_ListView = (function ($, View, HTMLView, InnerLink) {
 })(jquery, view_View, view_HTMLView, InnerLink);
 
 
-var WebApp = (function ($, Observer, View, HTMLView, ListView, DOMkit, InnerLink) {
+var view_TreeView = (function ($, ListView) {
+
+    function TreeView($_View, scope) {
+
+        $_View = $( $_View );
+
+        this.setPrivate('self',  $_View[0].cloneNode( true ));
+
+        this.__self__.removeAttribute('id');
+
+        $_View.children().append(this.__self__ = this.__self__.outerHTML);
+
+        var _This_ = ListView.call(this, $_View, scope);
+
+        if (_This_ !== this)  return _This_;
+    }
+
+//  Tree Data Convert (Flat to 3D)
+
+    TreeView.fromFlat = function (list, child_key) {
+
+        child_key = child_key || 'list';
+
+        var TempMap = { };
+
+        $.each($.extend(true, [ ], list),  function () {
+
+            var _This_ = TempMap[ this.id ];
+
+            _This_ = TempMap[ this.id ] = _This_ ?
+                $.extend(this, _This_)  :  this;
+
+            this.pid = this.pid || 0;
+
+            var parent = TempMap[ this.pid ] = TempMap[ this.pid ]  ||  { };
+
+            (parent[ child_key ] = parent[ child_key ]  ||  [ ]).push(_This_);
+        });
+
+        return  TempMap[0][ child_key ];
+    };
+
+    return  ListView.extend( TreeView );
+
+})(jquery, view_ListView);
+
+
+var WebApp = (function ($, Observer, View, HTMLView, ListView, TreeView, DOMkit, InnerLink) {
 
     function WebApp(Page_Box, API_Root) {
 
@@ -1300,7 +1351,8 @@ var WebApp = (function ($, Observer, View, HTMLView, ListView, DOMkit, InnerLink
     return  Observer.extend(WebApp, {
         View:        View,
         HTMLView:    HTMLView,
-        ListView:    ListView
+        ListView:    ListView,
+        TreeView:    TreeView
     }, {
         splice:           Array.prototype.splice,
         switchTo:         function (Index) {
@@ -1523,7 +1575,7 @@ var WebApp = (function ($, Observer, View, HTMLView, ListView, DOMkit, InnerLink
             });
         }
     });
-})(jquery, base_Observer, view_View, view_HTMLView, view_ListView, view_DOMkit, InnerLink);
+})(jquery, base_Observer, view_View, view_HTMLView, view_ListView, view_TreeView, view_DOMkit, InnerLink);
 
 
 //

@@ -38,12 +38,16 @@ define([
                         (this.instanceOf( iDOM.parentNode )  ||  '').__data__
                     );
         },
-        extend:    function (iConstructor, iStatic, iPrototype) {
+        extend:    function (constructor, static, prototype) {
 
-            Sub_Class.push( iConstructor );
+            Sub_Class.push( constructor );
+
+            static = static  ||  { };
+
+            static.is = static.is || $.noop;
 
             return $.Class.extend.call(
-                this,  iConstructor,  iStatic,  iPrototype
+                this,  constructor,  static,  prototype
             ).signSelector();
         }
     }, {

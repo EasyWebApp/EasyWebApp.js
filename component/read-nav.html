@@ -6,6 +6,9 @@
         overflow:      auto;
         outline:       none;
     }
+    ul:empty {
+        display:    none;
+    }
     ul ul {
         padding-left:    1em;
     }
@@ -20,13 +23,10 @@
 </style>
 <script src="read-nav.js"></script>
 
-<ul tabindex="-1" data-name="tree">
+<ul data-name="list" is="TreeView" tabindex="-1">
     <li>
-        <a title="${view.title}" href="#${view.id}">${view.title}</a>
-        <ul data-name="children">
-            <li>
-                <a title="${view.title}" href="#${view.id}">${view.title}</a>
-            </li>
-        </ul>
+        <a title="${view.title}" href="#${view.ID}" onclick="${scope.scrollTo}">
+            ${view.title}
+        </a>
     </li>
 </ul>

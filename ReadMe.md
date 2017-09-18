@@ -67,6 +67,8 @@ MVVM 引擎只需扫描 DOM 树，即可 **自动加载 HTML、JSON** 来构建 
    - 列表排序：`.prototype.sort( iCallback )`
    - 查找一项：`.prototype.indexOf( $_Item )`
    - 删除一项：`.prototype.remove( Index )`
+ - **树形视图** `TreeView($_Box, scope)`（对应 JSON 数组 + 对象）
+   - 数据转换：`.fromFlat(list, child_key)
 
 以上视图的构造函数 均可从 `$.fn.iWebApp` 命名空间访问到，并可无需 `WebApp()` 实例初始化即可单独使用。
 

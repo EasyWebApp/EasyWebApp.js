@@ -1,8 +1,8 @@
 define([
     'jquery', './base/Observer',
-    './view/View', './view/HTMLView', './view/ListView', './view/DOMkit',
-    './InnerLink'
-],  function ($, Observer, View, HTMLView, ListView, DOMkit, InnerLink) {
+    './view/View', './view/HTMLView', './view/ListView', './view/TreeView',
+    './view/DOMkit', './InnerLink'
+],  function ($, Observer, View, HTMLView, ListView, TreeView, DOMkit, InnerLink) {
 
     function WebApp(Page_Box, API_Root) {
 
@@ -32,7 +32,8 @@ define([
     return  Observer.extend(WebApp, {
         View:        View,
         HTMLView:    HTMLView,
-        ListView:    ListView
+        ListView:    ListView,
+        TreeView:    TreeView
     }, {
         splice:           Array.prototype.splice,
         switchTo:         function (Index) {

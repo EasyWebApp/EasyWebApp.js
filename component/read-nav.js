@@ -1,40 +1,18 @@
 require(['jquery', 'EasyWebApp'],  function ($, EWA) {
 
-//  树型转换：平铺 变 立体
-
-    function Array2Tree() {
-
-        var TempMap = { };
-
-        $.each($.extend(true, [ ], arguments[0]),  function () {
-
-            var _This_ = TempMap[ this.id ];
-
-            _This_ = TempMap[ this.id ] = _This_ ?
-                $.extend(this, _This_)  :  this;
-
-            this.pid = this.pid || 0;
-
-            var _Parent_ = TempMap[ this.pid ] = TempMap[ this.pid ]  ||  { };
-
-            (_Parent_.children = _Parent_.children || [ ]).push(_This_);
-        });
-
-        return TempMap[0].children;
-    }
-
 //  标题层级抽取
 
     function Header2Tree() {
 
         var $_Header = this.find(':header');
 
-        $_Header = $.map($_Header,  function (_This_) {
+        $_Header = $.map($_Header,  function (_This_, index) {
             return {
                 level:    _This_.nodeName[1],
                 title:    _This_.textContent.trim(),
-                id:
-                    _This_.id = _This_.id.trim('-') || $.uuid('Read-Nav')
+                ID:
+                    _This_.id = _This_.id.trim('-') || $.uuid('Read-Nav'),
+                id:       index + 1
             };
         });
 
@@ -49,7 +27,7 @@ require(['jquery', 'EasyWebApp'],  function ($, EWA) {
                 }
         });
 
-        return  Array2Tree( $_Header );
+        return  EWA.TreeView.fromFlat( $_Header );
     }
 
 //  SPA 内页联动
@@ -59,28 +37,32 @@ require(['jquery', 'EasyWebApp'],  function ($, EWA) {
 
     EWA.component(function () {
 
-        var iTree = this.$_View.find('[tabindex]:list').view();
+        var iTree = this.$_View.children(':list').view();
 
         function Updater() {
 
-            iTree.clear().render( Header2Tree.call( iWebApp.$_View ) );
+            iTree.render( Header2Tree.call( iWebApp.$_View ) );
         }
 
         iWebApp.on({
             type:      'ready',
             target:    iWebApp.$_View[0]
-        },  function () {
+        },  function (_, view) {
 
             Updater();
 
-            arguments[1].on('attach', Updater);
+            view.on('attach', Updater);
         });
 
-        this.$_View.on('click',  'a',  function () {
+        return {
+            scrollTo:    function (event) {
 
-            $( document.scrollingElement ).scrollTo( this.getAttribute('href') );
+                $( document.scrollingElement ).scrollTo(
+                    event.target.getAttribute('href')
+                );
 
-            return false;
-        });
+                event.stopPropagation();    event.preventDefault();
+            }
+        };
     });
 });
