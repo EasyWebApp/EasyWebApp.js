@@ -12,7 +12,7 @@
 
  - **UI 结构**：HTML 5+ 标准标签、`data-*` 自定义属性
 
- - **数据绑定**：HTML 标签文本、属性中书写 **ECMAScript 6 模板字符串**（形如 `${vm.propX}`）
+ - **数据绑定**：HTML 标签文本、属性中书写 **ECMAScript 6 模板字符串**（形如 `${view.propX}`）
 
  - **事件回调**：像绑定数据一样去绑定函数
 
@@ -47,22 +47,23 @@ MVVM 引擎只需扫描 DOM 树，即可 **自动加载 HTML、JSON** 来构建 
    - 注销回调：`.prototype.off(iEvent, iCallback)`
    - 一次监听：`.prototype.one(iEvent, iCallback)`
    - 触发事件：`.prototype.emit(iEvent, iData)`
- - **抽象视图** `View($_Box, iScope)`（不可实例化）
-   - 继承父类：`Observer()`、`DataScope()`
+ - **抽象视图** `View($_Box, scope)`（不可实例化）
+   - 继承父类：`Observer()`
    - 继承视图：`.extend(iConstructor, iStatic, iPrototype)`
    - 遍历 DOM：`.prototype.scan( iParser )` 
+   - 双向绑定：`.prototype.watch(key, get_set)` 
    - 获取数据：`.prototype.valueOf()`
    - 查子组件：`.prototype.childOf( iSelector )`
- - **普通视图** `HTMLView($_Box, iScope)`（对应 JSON 对象）
+ - **普通视图** `HTMLView($_Box, scope)`（对应 JSON 对象）
    - 继承父类：`View()`
    - 解析 DOM：`.prototype.parse(BaseURL, Template_with_Slot)`
    - 渲染数据：`.prototype.render( iObject )`
- - **迭代视图** `ListView($_Box, iScope)`（对应 JSON 数组）
+ - **迭代视图** `ListView($_Box, scope)`（对应 JSON 数组）
    - 继承父类：`View()`
-   - 默认匹配：设置了 `data-name` 属性的 `ul, ol, tbody, datalist` 元素
+   - 默认匹配：设置了 `data-name` 属性的 `ul, ol, tbody, select, datalist` 元素
    - 清空列表：`.prototype.clear()`
    - 插入一项：`.prototype.insert(iObject, Index)`
-   - 渲染列表：`.prototype.render( iArray )` 
+   - 渲染列表：`.prototype.render(list, index)` 
    - 列表排序：`.prototype.sort( iCallback )`
    - 查找一项：`.prototype.indexOf( $_Item )`
    - 删除一项：`.prototype.remove( Index )`
@@ -117,7 +118,7 @@ path/to/template.html?key1=value1&keyN=valueN&data=/path/to/json
 <form method="put" enctype="application/json" action="?data=/path/to/submit">
     <input type="hidden" name="extraParam" />
 
-    <input type="text" name="key1" required /> 已填 ${this.key1.length} 字
+    <input type="text" name="key1" required /> 已填 ${view.key1.length} 字
 
     <input type="submit" />
 </form>
@@ -130,7 +131,7 @@ path/to/template.html?key1=value1&keyN=valueN&data=/path/to/json
 ### （二）引用组件
 
 ```HTML
-<div data-href="path/to/template.html" data-key1="${this.Key1}" data-keyN="${this.KeyN}">
+<div data-href="path/to/template.html" data-key1="${view.Key1}" data-keyN="${view.KeyN}">
     <span slot="Slot_1"></span>
     <span slot="Slot_2"></span>
 </div>
@@ -146,9 +147,9 @@ path/to/template.html?key1=value1&keyN=valueN&data=/path/to/json
 <h3>列个表</h3>
 <div data-href="?data=/path/to/list?count=10&page=1">
     <ul data-name="list">
-        <li>内置索引号：${this.__index__}</li>
+        <li>内置索引号：${view.__index__}</li>
     </ul>
-    共 ${this.total} 项
+    共 ${view.total} 项
 </div>
 ```
 
@@ -303,13 +304,15 @@ EWA 引擎会自动用它返回的数据对象来更新 VM。
 
 ### （二）官方组件
 
- 1. [行政区多级联动选择](component/Admin_District.html)（基于高德地图 HTTP API）
+ 1. [全局 AJAX 加载遮罩](component/loading/)
 
- 2. [分页数据表](component/Data_Table.html)
+ 2. [行政区多级联动选择](component/Admin_District.html)（基于高德地图 HTTP API）
 
- 3. [轮播图](component/carousel.html)
+ 3. [分页数据表](component/Data_Table.html)
 
- 4. [阅读导航栏](component/read-nav.html)
+ 4. [轮播图](component/carousel.html)
+
+ 5. [阅读导航栏](component/read-nav.html)
 
 
 ## 【沉浸式体验】

@@ -36,31 +36,30 @@ define([
                     new InnerLink( this );
                 });
 
+            iData.__index__ = Index = Index || 0;
+
+            this.splice(Index,  0,  Item.render( iData ));
+
+            this.__data__.splice(Index,  0,  Item.__data__);
+
             if (! iDelay)  Item.$_View.insertTo(this.$_View, Index);
-
-            iData.__index__ = Index || 0;
-
-            this.splice(iData.__index__,  0,  Item.render( iData ));
 
             return Item;
         },
-        render:     function (iList) {
+        render:     function (list, index) {
 
-            if ($.likeArray( iList ))
-                $(Array.prototype.map.call(iList,  function () {
+            if (! (index != null))  this.clear();
 
-                    return  this.insert.apply(this, arguments).$_View[0];
+            index = index || 0;
 
-                },  this)).insertTo( this.$_View );
+            if ($.likeArray( list ))
+                $(Array.from(list,  function (data, i) {
+
+                    return  this.insert(data, index + i, true).$_View[0];
+
+                },  this)).insertTo(this.$_View, index);
 
             return this;
-        },
-        push:       function () {
-
-            for (var i = 0;  arguments[i];  i++)
-                this.insert(arguments[i], this.length);
-
-            return this.length;
         },
         indexOf:    function ($_Item) {
 

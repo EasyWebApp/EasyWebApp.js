@@ -21,18 +21,18 @@
     }
 </style>
 <ol class="CenterX" data-name="list">
-    <li class="Item-Box visible Content" title="${this.description}">
-        <div class="Background-Image" style="background-image: url(${this.img})">
+    <li class="Item-Box visible Content" title="${view.description}">
+        <div class="Background-Image" style="background-image: url(${view.img})">
         </div>
-        <p><a href="html/content.html?data=${vm.path || 'top'}/show?id=${this.id}&callback=?">
-            ${this.title}
+        <p><a href="html/content.html?data=${scope.path || 'top'}/show?id=${view.id}&callback=?">
+            ${view.title}
         </a></p>
         <small class="Grid-Row CenterX">
-            <span title="${(new Date(this.time)).toLocaleString()}">
-                ${this.timePassed}
+            <span title="${(new Date(view.time)).toLocaleString()}">
+                ${view.timePassed}
             </span>
-            <a target="_blank" href="${this.fromurl}">
-                ${this.fromname}
+            <a target="_blank" href="${view.fromurl}">
+                ${view.fromname}
             </a>
         </small>
     </li>

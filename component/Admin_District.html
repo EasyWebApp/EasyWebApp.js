@@ -11,34 +11,37 @@
 
 <select name="province"
         data-href="?data=config/district?keywords=100000"
-        ondata="${this.fixData}"
-        onready="${this.checkCode}"
-        onchange="${this.loadSub}">
+        ondata="${view.fixData}"
+        onready="${view.checkCode}"
+        onchange="${view.loadSub}">
 
-    <option value="${this.adcode ? this.name : ''}">
-        ${this.name}
+    <option value="${view.adcode ? view.name : ''}">
+        ${view.name}
     </option>
 </select>
 
 <select name="city"
-        data-href="?data=config/district?keywords=${this.province}"
-        ondata="${this.fixData}"
-        onready="${this.checkCode}"
-        onchange="${this.loadSub}">
+        data-href="?data=config/district?keywords=${view.province}"
+        ondata="${view.fixData}"
+        onready="${view.checkCode}"
+        onchange="${view.loadSub}"
+        style="display: ${view.province && 'inline-block'}">
 
-    <option value="${this.adcode ? this.name : ''}">
-        ${this.name}
+    <option value="${view.adcode ? view.name : ''}">
+        ${view.name}
     </option>
 </select>
 
 <select name="district"
-        data-href="?data=config/district?keywords=${this.city}"
-        ondata="${this.fixData}"
-        onready="${this.checkCode}">
+        data-href="?data=config/district?keywords=${view.city}"
+        ondata="${view.fixData}"
+        onready="${view.checkCode}"
+        onchange="${view.loadSub}"
+        style="display: ${view.city && 'inline-block'}">
 
-    <option value="${this.adcode ? this.name : ''}">
-        ${this.name}
+    <option value="${view.adcode ? view.name : ''}">
+        ${view.name}
     </option>
 </select>
 
-<input type="hidden" name="adcode" value="${this.adcode}" />
+<input type="hidden" name="adcode" value="${view.adcode}" />

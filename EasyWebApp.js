@@ -261,12 +261,12 @@ var view_RenderNode = (function ($) {
 
     RenderNode.expression = /\$\{([\s\S]+?)\}/g;
 
-    RenderNode.reference = /(this|vm)\.(\w+)/g;
+    RenderNode.reference = /(view|scope)\.(\w+)/g;
 
 
-    function Eval(vm) {  'use strict';
+    function Eval(view, scope, expression) {  'use strict';
         try {
-            var iValue = eval( arguments[1] );
+            var iValue = eval( expression );
 
             return  (iValue != null)  ?  iValue  :  '';
 
@@ -298,7 +298,7 @@ var view_RenderNode = (function ($) {
                         RenderNode.reference,  function (_, scope, key) {
 
                             _This_.type = _This_.type | (
-                                (scope === 'vm')  ?  4  :  1
+                                (scope === 'view')  ?  1  :  4
                             );
 
                             if (_This_.indexOf( key )  <  0)
@@ -312,18 +312,21 @@ var view_RenderNode = (function ($) {
 
             return this;
         },
-        eval:        function (iContext, iScope) {
-            var iRefer;
+        eval:        function (context, scope) {
 
-            var iText = this.raw.replace(RenderNode.expression,  function () {
+            var refer,  _This_ = this.ownerElement;
 
-                    iRefer = Eval.call(iContext, iScope, arguments[1]);
+            var text = this.raw.replace(
+                    RenderNode.expression,
+                    function (template, expression, _, raw) {
 
-                    return  (arguments[0] == arguments[3])  ?
-                        arguments[3]  :  iRefer;
-                });
+                        refer = Eval.call(_This_, context, scope, expression);
 
-            return  (this.raw == iText)  ?  iRefer  :  iText;
+                        return  (template == raw)  ?  raw  :  refer;
+                    }
+                );
+
+            return  (this.raw == text)  ?  refer  :  text;
         },
         render:      function (iContext, iScope) {
 
@@ -540,73 +543,40 @@ var InnerLink = (function ($, Observer) {
 
 var base_DataScope = (function ($) {
 
-    function DataScope(iSuper) {
+    function DataScope(parent) {
 
-        this.setPrivate('data',  Object.create(iSuper || { }));
-
-        this.__data__.splice = this.__data__.splice || Array.prototype.splice;
-
-        return this;
+        return  (parent instanceof DataScope)  ?  Object.create( parent )  :  this;
     }
 
-    $.Class.extend(DataScope, null, {
-        commit:      function (iData) {
-            var _Data_ = { };
+    $.extend(DataScope.prototype = [ ],  {
+        constructor:    DataScope,
+        commit:         function (data, filter) {
 
-            if ($.likeArray( iData )) {
-                _Data_ = [ ];
+            data = data.valueOf();
 
-                this.__data__.splice(0, Infinity);
-            }
+            var diff = { };
 
-            for (var iKey in iData)
-                if (
-                    iData.hasOwnProperty( iKey )  &&  (iData[iKey] != null)  &&  (
-                        (typeof iData[iKey] == 'object')  ||
-                        (! this.__data__.hasOwnProperty( iKey ))  ||
-                        (iData[iKey] !== this.__data__[iKey])
-                    )
-                )  _Data_[iKey] = this.__data__[iKey] = iData[iKey];
+            for (var key in data)
+                if ((! this.hasOwnProperty( key ))  ||  (this[key] !== data[key]))
+                    this[ key ] = diff[ key ] = data[ key ];
 
-            return _Data_;
+            return diff;
         },
-        watch:       function (iKey, iSetter) {
+        valueOf:        function () {
 
-            if (! (iKey in this))
-                this.setPublic(iKey, {
-                    get:    function () {
+            if ( this.hasOwnProperty('length') )
+                return  Array.from(this,  function (data) {
 
-                        return  this.__data__[iKey];
-                    },
-                    set:    iSetter.bind(this, iKey)
+                    return data.valueOf();
                 });
-        },
-        valueOf:     function () {
 
-            var iValue = this.__data__.hasOwnProperty('length')  ?
-                    Array.apply(null, this.__data__)  :  { };
+            var data = { };
 
-            for (var iKey in this.__data__)
-                if (this.__data__.hasOwnProperty( iKey )  &&  (! $.isNumeric(iKey)))
-                    iValue[iKey] = this[iKey];
+            for (var key in this)
+                if ( this.hasOwnProperty( key ) )
+                    data[ key ] = this[ key ].valueOf();
 
-            return iValue;
-        },
-        clear:       function () {
-
-            var iData = this.__data__;
-
-            if ( iData.hasOwnProperty('length') )  iData.splice(0, Infinity);
-
-            for (var iKey in iData)  if (iData.hasOwnProperty( iKey )) {
-
-                if ($.likeArray( iData[iKey] ))
-                    iData.splice.call(iData[iKey], 0, Infinity);
-                else
-                    iData[iKey] = '';
-            }
-
-            return this;
+            return data;
         }
     });
 
@@ -617,22 +587,23 @@ var base_DataScope = (function ($) {
 
 var view_View = (function ($, Observer, DataScope, RenderNode) {
 
-    function View($_View, iScope) {
+    function View($_View, scope) {
 
-        var _This_ = Observer.call($.Class.call(this, View),  $_View);
+        var _This_ = Observer.call(
+                $.Class.call(this, View, ['render']),  $_View
+            );
 
         return  (_This_ !== this)  ?
             _This_ :
-            DataScope.call(this, iScope).setPrivate({
+            this.setPrivate({
                 id:          '',
                 name:        this.$_View[0].name || this.$_View[0].dataset.name,
+                data:        new DataScope( scope ),
                 parse:       0,
                 child:       [ ],
                 observer:    null
             }).attach();
     }
-
-    $.extend(View.prototype, DataScope.prototype);
 
     var Sub_Class = [ ];
 
@@ -777,6 +748,22 @@ var view_View = (function ($, Observer, DataScope, RenderNode) {
             this.__parse__ = $.now();
 
             return this;
+        },
+        watch:         function (key, get_set) {
+
+            this.setPublic(key, get_set, {
+                get:    function () {
+
+                    return  this.__data__[key];
+                },
+                set:    this.render.bind(this, key)
+            });
+
+            return this;
+        },
+        valueOf:       function () {
+
+            return  this.__data__.valueOf();
         },
         childOf:       function ($_Filter) {
 
@@ -1000,12 +987,23 @@ var view_HTMLView = (function ($, View, DOMkit, RenderNode) {
             this.setPrivate( {length: 0,  map: { }} );
     }
 
-    return  View.extend(HTMLView, {
+    View.extend(HTMLView, {
         is:             function () {
 
             return  (! $.expr[':'].list( arguments[0] ));
         },
-        rawSelector:    $.makeSet('code', 'xmp', 'template')
+        rawSelector:    $.makeSet('code', 'xmp', 'template'),
+        getValue:       function (field) {
+
+            return  (field.type !== 'checkbox')  ?
+                $( field )[
+                    ('value' in field) ? 'val' : 'html'
+                ]()  :
+                $.map(field.form.elements[ field.name ],  function (_This_) {
+
+                    return  _This_.checked ? _This_.value : null;
+                });
+        }
     }, {
         signIn:        function (iNode) {
 
@@ -1017,13 +1015,9 @@ var view_HTMLView = (function ($, View, DOMkit, RenderNode) {
                     iNode.__name__  ||  iNode.name
                 ];
 
-            for (var j = 0;  iName[j];  j++) {
-
-                this.watch(iName[j], this.render);
-
-                this.__map__[iName[j]] = (this.__map__[iName[j]] || 0)  +
-                    Math.pow(2, i);
-            }
+            for (var j = 0;  iName[j];  j++)
+                this.watch( iName[j] ).__map__[iName[j]] =
+                    (this.__map__[iName[j]] || 0)  +  Math.pow(2, i);
         },
         parsePlain:    function (iDOM) {
 
@@ -1084,7 +1078,9 @@ var view_HTMLView = (function ($, View, DOMkit, RenderNode) {
                     this.parsePlain( iNode );
             });
         },
-        getNode:       function (data, exclude) {
+        nodeOf:        function (data, exclude, forEach) {
+
+            forEach = (forEach instanceof Function)  &&  forEach;
 
             var iMask = '0',  _This_ = this;
 
@@ -1100,24 +1096,25 @@ var view_HTMLView = (function ($, View, DOMkit, RenderNode) {
 
                     if ((node !== exclude)  &&  (
                         (bit > 0)  ||  ((node || '').type > 1)
-                    ))
+                    )) {
+                        forEach  &&  forEach.call(_This_, node);
+
                         return node;
+                    }
                 }
             );
         },
         render:        function render(iData, value) {
 
-            var _This_ = this,  _Data_ = { },  $_Exclude;
+            var _Data_ = { },  exclude;
 
             if (iData instanceof Element) {
 
-                $_Exclude = $( iData );
+                exclude = iData;
 
-                iData = $_Exclude.attr('name');
+                iData = exclude.getAttribute('name');
 
-                value = $_Exclude.is('input[type="checkbox"]:not(:checked)')  ?
-                    ''  :
-                    $_Exclude[('value' in $_Exclude[0])  ?  'val'  :  'html']();
+                value = HTMLView.getValue( exclude );
             }
 
             if (typeof iData.valueOf() === 'string') {
@@ -1125,25 +1122,43 @@ var view_HTMLView = (function ($, View, DOMkit, RenderNode) {
                 _Data_[iData] = value;    iData = _Data_;
             }
 
-            iData = this.commit( iData );  _Data_ = this.__data__;
+            _Data_ = this.__data__;
 
-            if ( iData )
-                $.each(this.getNode(iData,  ($_Exclude || '')[0]),  function () {
+            this.nodeOf(_Data_.commit( iData ),  exclude,  function (node) {
 
-                    if (this instanceof RenderNode)
-                        this.render(_This_, _Data_);
-                    else if (this instanceof View) {
+                if (node instanceof RenderNode)
+                    node.render(this, _Data_);
+                else if (node instanceof View) {
 
-                        this.render(_Data_[this.__name__]);
+                    node.render(_Data_[node.__name__]);
 
-                        _Data_[this.__name__] = this.__data__;
-                    } else
-                        this.innerHTML = _Data_[ this.getAttribute('name') ];
-                });
+                    _Data_[node.__name__] = node.__data__;
+                } else
+                    node.innerHTML = _Data_[ node.getAttribute('name') ];
+            });
 
             return this;
         }
     }).registerEvent('template');
+
+//  Render data from user input
+
+    $('html').on('input change',  ':field',  $.throttle(function () {
+
+        var iView = HTMLView.instanceOf( this );
+
+        if ( iView )  iView.render( this );
+
+    })).on('reset',  'form',  function () {
+
+        var data = $.paramJSON('?'  +  $( this ).serialize());
+
+        for (var key in data)  data[ key ] = '';
+
+        HTMLView.instanceOf( this ).render( data );
+    });
+
+    return HTMLView;
 
 })(jquery, view_View, view_DOMkit, view_RenderNode);
 
@@ -1184,31 +1199,30 @@ var view_ListView = (function ($, View, HTMLView, InnerLink) {
                     new InnerLink( this );
                 });
 
+            iData.__index__ = Index = Index || 0;
+
+            this.splice(Index,  0,  Item.render( iData ));
+
+            this.__data__.splice(Index,  0,  Item.__data__);
+
             if (! iDelay)  Item.$_View.insertTo(this.$_View, Index);
-
-            iData.__index__ = Index || 0;
-
-            this.splice(iData.__index__,  0,  Item.render( iData ));
 
             return Item;
         },
-        render:     function (iList) {
+        render:     function (list, index) {
 
-            if ($.likeArray( iList ))
-                $(Array.prototype.map.call(iList,  function () {
+            if (! (index != null))  this.clear();
 
-                    return  this.insert.apply(this, arguments).$_View[0];
+            index = index || 0;
 
-                },  this)).insertTo( this.$_View );
+            if ($.likeArray( list ))
+                $(Array.from(list,  function (data, i) {
+
+                    return  this.insert(data, index + i, true).$_View[0];
+
+                },  this)).insertTo(this.$_View, index);
 
             return this;
-        },
-        push:       function () {
-
-            for (var i = 0;  arguments[i];  i++)
-                this.insert(arguments[i], this.length);
-
-            return this.length;
         },
         indexOf:    function ($_Item) {
 
@@ -1280,7 +1294,7 @@ var WebApp = (function ($, Observer, View, HTMLView, ListView, DOMkit, InnerLink
         this.length = 0;
         this.lastPage = -1;
 
-        self.setTimeout( this.listenDOM().listenBOM().boot.bind( this ) );
+        self.setTimeout( this.listen().boot.bind( this ) );
     }
 
     return  Observer.extend(WebApp, {
@@ -1427,37 +1441,6 @@ var WebApp = (function ($, Observer, View, HTMLView, ListView, DOMkit, InnerLink
                 if (iView instanceof View)  _This_._emit('ready', iLink, iView);
             });
         },
-        listenDOM:        function () {
-            var _This_ = this;
-
-            $('html').on('input change',  ':field',  $.throttle(function () {
-
-                var iView = HTMLView.instanceOf( this );
-
-                if ( iView )  iView.render( this );
-
-            })).on('reset',  'form',  function () {
-
-                var data = $.paramJSON('?'  +  $( this ).serialize());
-
-                for (var key in data)  data[ key ] = '';
-
-                HTMLView.instanceOf( this ).render( data );
-
-            }).on('click submit',  InnerLink.HTML_Link,  function (iEvent) {
-                if (
-                    ((this.tagName !== 'FORM')  ||  (iEvent.type === 'submit'))  &&
-                    ((this.target || '_self')  ===  '_self')  &&
-                    _This_.getCID(this.href || this.action)
-                ) {
-                    iEvent.preventDefault();
-
-                    _This_.load( this );
-                }
-            });
-
-            return this;
-        },
         loadPage:         function (iURI) {
 
             iURI = iURI || 0;
@@ -1473,9 +1456,21 @@ var WebApp = (function ($, Observer, View, HTMLView, ListView, DOMkit, InnerLink
 
             return  this.one({type: 'ready',  target: this.$_View[0]});
         },
-        listenBOM:        function () {
+        listen:           function () {
 
             var _This_ = this;
+
+            $('html').on('click submit',  InnerLink.HTML_Link,  function (iEvent) {
+                if (
+                    ((this.tagName !== 'FORM')  ||  (iEvent.type === 'submit'))  &&
+                    ((this.target || '_self')  ===  '_self')  &&
+                    _This_.getCID(this.href || this.action)
+                ) {
+                    iEvent.preventDefault();
+
+                    _This_.load( this );
+                }
+            });
 
             $( self ).on('popstate',  function () {
 
@@ -1535,7 +1530,7 @@ var WebApp = (function ($, Observer, View, HTMLView, ListView, DOMkit, InnerLink
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v4.0  (2017-09-14)  Beta
+//      [Version]    v4.0  (2017-09-18)  stable
 //
 //      [Require]    iQuery  ||  jQuery with jQueryKit
 //

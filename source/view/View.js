@@ -2,22 +2,23 @@ define([
     'jquery', '../base/Observer', '../base/DataScope', './RenderNode'
 ],  function ($, Observer, DataScope, RenderNode) {
 
-    function View($_View, iScope) {
+    function View($_View, scope) {
 
-        var _This_ = Observer.call($.Class.call(this, View),  $_View);
+        var _This_ = Observer.call(
+                $.Class.call(this, View, ['render']),  $_View
+            );
 
         return  (_This_ !== this)  ?
             _This_ :
-            DataScope.call(this, iScope).setPrivate({
+            this.setPrivate({
                 id:          '',
                 name:        this.$_View[0].name || this.$_View[0].dataset.name,
+                data:        new DataScope( scope ),
                 parse:       0,
                 child:       [ ],
                 observer:    null
             }).attach();
     }
-
-    $.extend(View.prototype, DataScope.prototype);
 
     var Sub_Class = [ ];
 
@@ -162,6 +163,22 @@ define([
             this.__parse__ = $.now();
 
             return this;
+        },
+        watch:         function (key, get_set) {
+
+            this.setPublic(key, get_set, {
+                get:    function () {
+
+                    return  this.__data__[key];
+                },
+                set:    this.render.bind(this, key)
+            });
+
+            return this;
+        },
+        valueOf:       function () {
+
+            return  this.__data__.valueOf();
         },
         childOf:       function ($_Filter) {
 

@@ -28,14 +28,14 @@
         <h1>易资讯</h1>
         <ul class="NavBar No_Select" data-href="?data=index.json">
             <li class="DropDown Head">
-                <a href="html/list.html?path=${this.path}&data=${this.path}/list?callback=?">
-                    ${this.title}
+                <a href="html/list.html?path=${view.path}&data=${view.path}/list?callback=?">
+                    ${view.title}
                 </a>
                 <ul class="DropDown Body"
-                    data-href="?data=${this.path}/classify?callback=?">
-                    <li title="${this.title}">
-                        <a href="html/list.html?path=${this.path}&data=${this.path}/list?id=${this.id}&callback=?">
-                            ${this.name}
+                    data-href="?data=${view.path}/classify?callback=?">
+                    <li title="${view.title}">
+                        <a href="html/list.html?path=${view.path}&data=${view.path}/list?id=${view.id}&callback=?">
+                            ${view.name}
                         </a>
                     </li>
                 </ul>

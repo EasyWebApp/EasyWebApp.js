@@ -1,72 +1,39 @@
-define(['jquery', 'jQueryKit'],  function ($) {
+define(['jquery'],  function ($) {
 
-    function DataScope(iSuper) {
+    function DataScope(parent) {
 
-        this.setPrivate('data',  Object.create(iSuper || { }));
-
-        this.__data__.splice = this.__data__.splice || Array.prototype.splice;
-
-        return this;
+        return  (parent instanceof DataScope)  ?  Object.create( parent )  :  this;
     }
 
-    $.Class.extend(DataScope, null, {
-        commit:      function (iData) {
-            var _Data_ = { };
+    $.extend(DataScope.prototype = [ ],  {
+        constructor:    DataScope,
+        commit:         function (data, filter) {
 
-            if ($.likeArray( iData )) {
-                _Data_ = [ ];
+            data = data.valueOf();
 
-                this.__data__.splice(0, Infinity);
-            }
+            var diff = { };
 
-            for (var iKey in iData)
-                if (
-                    iData.hasOwnProperty( iKey )  &&  (iData[iKey] != null)  &&  (
-                        (typeof iData[iKey] == 'object')  ||
-                        (! this.__data__.hasOwnProperty( iKey ))  ||
-                        (iData[iKey] !== this.__data__[iKey])
-                    )
-                )  _Data_[iKey] = this.__data__[iKey] = iData[iKey];
+            for (var key in data)
+                if ((! this.hasOwnProperty( key ))  ||  (this[key] !== data[key]))
+                    this[ key ] = diff[ key ] = data[ key ];
 
-            return _Data_;
+            return diff;
         },
-        watch:       function (iKey, iSetter) {
+        valueOf:        function () {
 
-            if (! (iKey in this))
-                this.setPublic(iKey, {
-                    get:    function () {
+            if ( this.hasOwnProperty('length') )
+                return  Array.from(this,  function (data) {
 
-                        return  this.__data__[iKey];
-                    },
-                    set:    iSetter.bind(this, iKey)
+                    return data.valueOf();
                 });
-        },
-        valueOf:     function () {
 
-            var iValue = this.__data__.hasOwnProperty('length')  ?
-                    Array.apply(null, this.__data__)  :  { };
+            var data = { };
 
-            for (var iKey in this.__data__)
-                if (this.__data__.hasOwnProperty( iKey )  &&  (! $.isNumeric(iKey)))
-                    iValue[iKey] = this[iKey];
+            for (var key in this)
+                if ( this.hasOwnProperty( key ) )
+                    data[ key ] = this[ key ].valueOf();
 
-            return iValue;
-        },
-        clear:       function () {
-
-            var iData = this.__data__;
-
-            if ( iData.hasOwnProperty('length') )  iData.splice(0, Infinity);
-
-            for (var iKey in iData)  if (iData.hasOwnProperty( iKey )) {
-
-                if ($.likeArray( iData[iKey] ))
-                    iData.splice.call(iData[iKey], 0, Infinity);
-                else
-                    iData[iKey] = '';
-            }
-
-            return this;
+            return data;
         }
     });
 

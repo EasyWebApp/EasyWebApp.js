@@ -23,7 +23,7 @@
 <div class="Grid-Row Head">
     <label>
         显示
-        <select name="rows" value="${this.rows}" onchange="${this.pageChange}">
+        <select name="rows" value="${view.rows}" onchange="${view.pageChange}">
             <option>10</option>
             <option>20</option>
             <option>30</option>
@@ -35,34 +35,34 @@
 <slot name="table"></slot>
 
 <div class="Grid-Row CenterY Foot">
-    <span>共 ${this.total} 行</span>
+    <span>共 ${view.total} 行</span>
     <label>
         跳转到
-        <input type="number" name="page" value="${this.page}"
-               min="1" max="${this.pageSum}" onchange="${this.pageChange}" />
+        <input type="number" name="page" value="${view.page}"
+               min="1" max="${view.pageSum}" onchange="${view.pageChange}" />
         页
     </label>
-    <ul class="NavBar Border-Column" onclick="${this.pageChange}">
-        <li style="display: ${(this.page < 3) ? 'none' : ''}">
+    <ul class="NavBar Border-Column" onclick="${view.pageChange}">
+        <li style="display: ${(view.page < 3) ? 'none' : ''}">
             1
         </li>
-        <li style="display: ${(vm.pageSum < 7) || (vm.page < 4) ? 'none' : ''}">
+        <li style="display: ${(view.pageSum < 7) || (view.page < 4) ? 'none' : ''}">
             …
         </li>
-        <li style="display: ${(this.page < 2) ? 'none' : ''}">
-            ${this.page - 1}
+        <li style="display: ${(view.page < 2) ? 'none' : ''}">
+            ${view.page - 1}
         </li>
         <li class="active">
-            ${this.page}
+            ${view.page}
         </li>
-        <li style="display: ${(+vm.page + 1 > vm.pageSum) ? 'none' : ''}">
-            ${+this.page + 1}
+        <li style="display: ${(+view.page + 1 > view.pageSum) ? 'none' : ''}">
+            ${+view.page + 1}
         </li>
-        <li style="display: ${(vm.pageSum < 6) || (+vm.page + 3 > vm.pageSum) ? 'none' : ''}">
+        <li style="display: ${(view.pageSum < 6) || (+view.page + 3 > view.pageSum) ? 'none' : ''}">
             …
         </li>
-        <li style="display: ${(+vm.page + 2 > vm.pageSum) ? 'none' : ''}">
-            ${this.pageSum}
+        <li style="display: ${(+view.page + 2 > view.pageSum) ? 'none' : ''}">
+            ${view.pageSum}
         </li>
     </ul>
 </div>

@@ -26,7 +26,7 @@ define([
         this.length = 0;
         this.lastPage = -1;
 
-        self.setTimeout( this.listenDOM().listenBOM().boot.bind( this ) );
+        self.setTimeout( this.listen().boot.bind( this ) );
     }
 
     return  Observer.extend(WebApp, {
@@ -173,37 +173,6 @@ define([
                 if (iView instanceof View)  _This_._emit('ready', iLink, iView);
             });
         },
-        listenDOM:        function () {
-            var _This_ = this;
-
-            $('html').on('input change',  ':field',  $.throttle(function () {
-
-                var iView = HTMLView.instanceOf( this );
-
-                if ( iView )  iView.render( this );
-
-            })).on('reset',  'form',  function () {
-
-                var data = $.paramJSON('?'  +  $( this ).serialize());
-
-                for (var key in data)  data[ key ] = '';
-
-                HTMLView.instanceOf( this ).render( data );
-
-            }).on('click submit',  InnerLink.HTML_Link,  function (iEvent) {
-                if (
-                    ((this.tagName !== 'FORM')  ||  (iEvent.type === 'submit'))  &&
-                    ((this.target || '_self')  ===  '_self')  &&
-                    _This_.getCID(this.href || this.action)
-                ) {
-                    iEvent.preventDefault();
-
-                    _This_.load( this );
-                }
-            });
-
-            return this;
-        },
         loadPage:         function (iURI) {
 
             iURI = iURI || 0;
@@ -219,9 +188,21 @@ define([
 
             return  this.one({type: 'ready',  target: this.$_View[0]});
         },
-        listenBOM:        function () {
+        listen:           function () {
 
             var _This_ = this;
+
+            $('html').on('click submit',  InnerLink.HTML_Link,  function (iEvent) {
+                if (
+                    ((this.tagName !== 'FORM')  ||  (iEvent.type === 'submit'))  &&
+                    ((this.target || '_self')  ===  '_self')  &&
+                    _This_.getCID(this.href || this.action)
+                ) {
+                    iEvent.preventDefault();
+
+                    _This_.load( this );
+                }
+            });
 
             $( self ).on('popstate',  function () {
 

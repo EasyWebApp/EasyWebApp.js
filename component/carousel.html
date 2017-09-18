@@ -21,10 +21,10 @@
 
 <ul data-name="list">
     <li>
-        <label for="${this.__id__ + this.__index__}"></label>
+        <label for="${view.__id__ + view.__index__}"></label>
         <input type="radio"
-               id="${this.__id__ + this.__index__}" name="${vm.name}"
-               checked="${! this.__index__}" />
-        <img src="${this.url}" />
+               id="${view.__id__ + view.__index__}" name="${scope.name}"
+               checked="${! view.__index__}" />
+        <img src="${view.url}" />
     </li>
 </ul>

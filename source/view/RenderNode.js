@@ -14,12 +14,12 @@ define(['jquery'],  function ($) {
 
     RenderNode.expression = /\$\{([\s\S]+?)\}/g;
 
-    RenderNode.reference = /(this|vm)\.(\w+)/g;
+    RenderNode.reference = /(view|scope)\.(\w+)/g;
 
 
-    function Eval(vm) {  'use strict';
+    function Eval(view, scope, expression) {  'use strict';
         try {
-            var iValue = eval( arguments[1] );
+            var iValue = eval( expression );
 
             return  (iValue != null)  ?  iValue  :  '';
 
@@ -51,7 +51,7 @@ define(['jquery'],  function ($) {
                         RenderNode.reference,  function (_, scope, key) {
 
                             _This_.type = _This_.type | (
-                                (scope === 'vm')  ?  4  :  1
+                                (scope === 'view')  ?  1  :  4
                             );
 
                             if (_This_.indexOf( key )  <  0)
@@ -65,18 +65,21 @@ define(['jquery'],  function ($) {
 
             return this;
         },
-        eval:        function (iContext, iScope) {
-            var iRefer;
+        eval:        function (context, scope) {
 
-            var iText = this.raw.replace(RenderNode.expression,  function () {
+            var refer,  _This_ = this.ownerElement;
 
-                    iRefer = Eval.call(iContext, iScope, arguments[1]);
+            var text = this.raw.replace(
+                    RenderNode.expression,
+                    function (template, expression, _, raw) {
 
-                    return  (arguments[0] == arguments[3])  ?
-                        arguments[3]  :  iRefer;
-                });
+                        refer = Eval.call(_This_, context, scope, expression);
 
-            return  (this.raw == iText)  ?  iRefer  :  iText;
+                        return  (template == raw)  ?  raw  :  refer;
+                    }
+                );
+
+            return  (this.raw == text)  ?  refer  :  text;
         },
         render:      function (iContext, iScope) {
 

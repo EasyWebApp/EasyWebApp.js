@@ -5,7 +5,8 @@
 
 require(['jquery', 'EasyWebApp'],  function ($, EWA) {
 
-    var API_Root = 'https://restapi.amap.com/v3/',
+    var iWebApp = new EWA(),
+        API_Root = 'https://restapi.amap.com/v3/',
         Request_Event = {
             type: 'request',  method: 'GET',  src: 'config/district'
         },
@@ -14,14 +15,12 @@ require(['jquery', 'EasyWebApp'],  function ($, EWA) {
 
     EWA.component(function (data) {
 
-        var iWebApp = new EWA();
-
     //  API URL 补全
 
         iWebApp.off( Request_Event ).on(Request_Event,  function (_, AJAX) {
 
             AJAX.option.url = $.extendURL(
-                AJAX.option.url.replace(iWebApp.pageRoot, API_Root),
+                AJAX.option.url.replace(this.pageRoot, API_Root),
                 {
                     key:            data.key,
                     extensions:     'base',
@@ -30,7 +29,12 @@ require(['jquery', 'EasyWebApp'],  function ($, EWA) {
             );
         });
 
-        $.extend(data, {
+        var ADcode = this.$_View.find('[name="adcode"]')[0];
+
+        data = $.extend({
+            province:   '',
+            city:       ''
+        }, data, {
             fixData:      function (_, data) {
 
                 data = data.districts[0].districts;
@@ -60,13 +64,24 @@ require(['jquery', 'EasyWebApp'],  function ($, EWA) {
             },
             loadSub:      function () {
 
-                var $_Sub = $( arguments[0].target ).next('select');
+                var _This_ = arguments[0].target;
 
-                if (! $_Sub[0])  return;
+                var sup = $(_This_).prev('select')[0];
 
-                iWebApp.load( $_Sub.show()[0] );
+                if ( _This_.value )
+                    ADcode.value = $( _This_.selectedOptions ).view().adcode;
+                else if ( sup )
+                    ADcode.value = $( sup.selectedOptions ).view().adcode;
+                else
+                    ADcode.value = 100000;
 
-                $_Sub.view().clear().$_View.next('select').hide();
+                var sub = $(_This_).next('select')[0];
+
+                if (! sub)  return;
+
+                if ( _This_.value )  iWebApp.load( sub );
+
+                this[ sub.name ] = '';
             }
         });
 
@@ -77,5 +92,7 @@ require(['jquery', 'EasyWebApp'],  function ($, EWA) {
             if ('adcode' in arguments[1])
                 this.checkCode( {target: this.$_View.find('select')[0]} );
         });
+
+        return data;
     });
 });

@@ -1,5 +1,5 @@
 define([
-    'jquery', './View', './DOMkit', './RenderNode', 'jQueryKit'
+    'jquery', './View', './DOMkit', './RenderNode'
 ],  function ($, View, DOMkit, RenderNode) {
 
     function HTMLView($_View, iScope) {
@@ -11,12 +11,23 @@ define([
             this.setPrivate( {length: 0,  map: { }} );
     }
 
-    return  View.extend(HTMLView, {
+    View.extend(HTMLView, {
         is:             function () {
 
             return  (! $.expr[':'].list( arguments[0] ));
         },
-        rawSelector:    $.makeSet('code', 'xmp', 'template')
+        rawSelector:    $.makeSet('code', 'xmp', 'template'),
+        getValue:       function (field) {
+
+            return  (field.type !== 'checkbox')  ?
+                $( field )[
+                    ('value' in field) ? 'val' : 'html'
+                ]()  :
+                $.map(field.form.elements[ field.name ],  function (_This_) {
+
+                    return  _This_.checked ? _This_.value : null;
+                });
+        }
     }, {
         signIn:        function (iNode) {
 
@@ -28,13 +39,9 @@ define([
                     iNode.__name__  ||  iNode.name
                 ];
 
-            for (var j = 0;  iName[j];  j++) {
-
-                this.watch(iName[j], this.render);
-
-                this.__map__[iName[j]] = (this.__map__[iName[j]] || 0)  +
-                    Math.pow(2, i);
-            }
+            for (var j = 0;  iName[j];  j++)
+                this.watch( iName[j] ).__map__[iName[j]] =
+                    (this.__map__[iName[j]] || 0)  +  Math.pow(2, i);
         },
         parsePlain:    function (iDOM) {
 
@@ -95,7 +102,9 @@ define([
                     this.parsePlain( iNode );
             });
         },
-        getNode:       function (data, exclude) {
+        nodeOf:        function (data, exclude, forEach) {
+
+            forEach = (forEach instanceof Function)  &&  forEach;
 
             var iMask = '0',  _This_ = this;
 
@@ -111,24 +120,25 @@ define([
 
                     if ((node !== exclude)  &&  (
                         (bit > 0)  ||  ((node || '').type > 1)
-                    ))
+                    )) {
+                        forEach  &&  forEach.call(_This_, node);
+
                         return node;
+                    }
                 }
             );
         },
         render:        function render(iData, value) {
 
-            var _This_ = this,  _Data_ = { },  $_Exclude;
+            var _Data_ = { },  exclude;
 
             if (iData instanceof Element) {
 
-                $_Exclude = $( iData );
+                exclude = iData;
 
-                iData = $_Exclude.attr('name');
+                iData = exclude.getAttribute('name');
 
-                value = $_Exclude.is('input[type="checkbox"]:not(:checked)')  ?
-                    ''  :
-                    $_Exclude[('value' in $_Exclude[0])  ?  'val'  :  'html']();
+                value = HTMLView.getValue( exclude );
             }
 
             if (typeof iData.valueOf() === 'string') {
@@ -136,24 +146,42 @@ define([
                 _Data_[iData] = value;    iData = _Data_;
             }
 
-            iData = this.commit( iData );  _Data_ = this.__data__;
+            _Data_ = this.__data__;
 
-            if ( iData )
-                $.each(this.getNode(iData,  ($_Exclude || '')[0]),  function () {
+            this.nodeOf(_Data_.commit( iData ),  exclude,  function (node) {
 
-                    if (this instanceof RenderNode)
-                        this.render(_This_, _Data_);
-                    else if (this instanceof View) {
+                if (node instanceof RenderNode)
+                    node.render(this, _Data_);
+                else if (node instanceof View) {
 
-                        this.render(_Data_[this.__name__]);
+                    node.render(_Data_[node.__name__]);
 
-                        _Data_[this.__name__] = this.__data__;
-                    } else
-                        this.innerHTML = _Data_[ this.getAttribute('name') ];
-                });
+                    _Data_[node.__name__] = node.__data__;
+                } else
+                    node.innerHTML = _Data_[ node.getAttribute('name') ];
+            });
 
             return this;
         }
     }).registerEvent('template');
+
+//  Render data from user input
+
+    $('html').on('input change',  ':field',  $.throttle(function () {
+
+        var iView = HTMLView.instanceOf( this );
+
+        if ( iView )  iView.render( this );
+
+    })).on('reset',  'form',  function () {
+
+        var data = $.paramJSON('?'  +  $( this ).serialize());
+
+        for (var key in data)  data[ key ] = '';
+
+        HTMLView.instanceOf( this ).render( data );
+    });
+
+    return HTMLView;
 
 });

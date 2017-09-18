@@ -54,29 +54,29 @@
     }
 </style>
 <div class="Content">
-    <div class="Background-Image" style="background-image: url(${this.img})"></div>
-    <h1>${this.title}</h1>
+    <div class="Background-Image" style="background-image: url(${view.img})"></div>
+    <h1>${view.title}</h1>
     <small class="Grid-Row CenterX">
-        <span>${this.timePassed}</span>
-        <a class="CenterX" target="_blank" href="${this.fromurl}">
-            ${this.fromname}
+        <span>${view.timePassed}</span>
+        <a class="CenterX" target="_blank" href="${view.fromurl}">
+            ${view.fromname}
         </a>
         <span>
             <i class="Icon Eye"></i>
-            <em>${this.count}</em>
+            <em>${view.count}</em>
         </span>
     </small>
-    <pre class="CenterX">${this.description}</pre>
-    <p>${this.message}</p>
+    <pre class="CenterX">${view.description}</pre>
+    <p>${view.message}</p>
     <ul data-name="list">
         <li class="Item-Box visible">
-            <img class="Logo" src="${this.img}" />
+            <img class="Logo" src="${view.img}" />
         </li>
     </ul>
     <div class="Panel">
         <div class="Head">网友评论</div>
         <div class="Body"
-             data-href="html/comment.html?data=memo/comment?type=top&id=${this.id}&callback=?">
+             data-href="html/comment.html?data=memo/comment?type=top&id=${view.id}&callback=?">
         </div>
     </div>
 </div>

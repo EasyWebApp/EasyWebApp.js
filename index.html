@@ -1,5 +1,6 @@
 <!DocType HTML>
 <html data-href="?data=docs/index.json"><head>
+
     <meta http-equiv="Cache-Control"
           content="no-cache, no-store, must-revalidate" />
     <meta http-equiv="Pragma" content="no-cache" />
@@ -9,7 +10,7 @@
 
     <meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
 
-    <title>${this.Title} 官方网站 - EWAwiki</title>
+    <title>${view.Title} 官方网站 - EWAwiki</title>
 
     <link rel="stylesheet" href="docs/css/EasyWebUI.css" />
     <link rel="stylesheet" href="docs/css/index.css" />
@@ -47,16 +48,16 @@
         <div class="Grid-Row CenterY">
             <div id="Main_Title">
                 <h1><a href="docs/html/Git_List.html?data=docs/html/Git_List.json">
-                    ${this.Title}
+                    ${view.Title}
                 </a></h1>
-                <p>${this.Description}</p>
+                <p>${view.Description}</p>
             </div>
         </div>
         <div class="DropDown Head">
             <ul class="NavBar Black_O" id="Main_Nav" data-name="Main_Nav">
-                <li><a target="${this.target || '_self'}" href="${this.href}"
-                       data-autofocus="${this.autofocus}">
-                    ${this.title}
+                <li><a target="${view.target || '_self'}" href="${view.href}"
+                       data-autofocus="${view.autofocus}">
+                    ${view.title}
                 </a></li>
             </ul>
         </div>
