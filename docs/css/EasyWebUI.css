@@ -8,7 +8,7 @@
  *    and can be used in the Web UI development of
  *    Any Platform.
  *
- *    [Version]    v1.0  (2017-05-26)
+ *    [Version]    v1.0  (2017-09-22)
  *
  *    [Require]    CSS 2.1  (Best Effect with CSS 3),
  *
@@ -466,7 +466,7 @@ iframe[rel~="nofollow"] {
         Column Box based on the Proportion of Parent Element Width,
         which is easy to set contents to Vertical-Center.
 
-    [ Item Box ]
+    [ Flow Box ]
 
         A kind of Content Box with Cool Border, which can Float to
         Fit the Size Changing of the Viewport.
@@ -631,12 +631,18 @@ html.Fixed > body > .Fix-Top {
 .Column_11-20 {
     width:    55%;
 }
-/* ----- Item Box ----- */
-.Item-Box {
+/* ----- Flow Box ----- */
+.Flow-Box {
+    padding:      0;
+    font-size:    0  !important;
+}
+.Flow-Box > * {
     display:           inline-block;
     vertical-align:    middle;
+    font-size:         16px;
+    font-size:         1rem;
 }
-.Item-Box.visible {
+.Flow-Box > *.visible {
         background-color:    white;
         padding:             1em;
         margin:              0.25em  2px;
@@ -647,8 +653,8 @@ html.Fixed > body > .Fix-Top {
 -webkit-transition:          0.25s;
         transition:          0.25s;
 }
-.Item-Box.visible:hover,
-.Item-Box.active {
+.Flow-Box > *.visible:hover,
+.Flow-Box > *.active {
     border-color:    rgb(14, 144, 210);
     box-shadow:      inset  0  1px  1px  rgba(0, 0, 0, 0.075),
                      0  0  8px  rgba(14, 144, 210, 0.6);
@@ -803,11 +809,11 @@ form.Dialog > fieldset {
     margin:        0;
 }
 form.Dialog > fieldset > legend {
-    background:       white;
-    width:            100%;
-    margin-left:      -0.75em;
-    padding:          0.5em;
-    padding-right:    1em;
+    background:     white;
+    border:         0;
+    margin-left:    -1em;
+    width:          108.3%;
+    padding:        1em;
 }
 form.Dialog img,  form.Dialog table  {
     max-width:    100%;

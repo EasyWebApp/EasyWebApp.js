@@ -1,12 +1,12 @@
 define(['jquery', 'jQueryKit'],  function ($) {
 
-    function Observer($_View) {
+    function Observer($_View, all_event) {
 
         this.$_View = ($_View instanceof $)  ?  $_View  :  $( $_View );
 
         this.setPrivate('handle',  { });
 
-        return this.init();
+        return  this.init( all_event );
     }
 
     function basicMethod(iClass) {
@@ -14,15 +14,15 @@ define(['jquery', 'jQueryKit'],  function ($) {
         var iType = Observer.prototype.toString.call({constructor: iClass});
 
         $.extend(iClass.prototype, {
-            init:          function () {
+            init:          function (all_event) {
 
                 var _This_ = this.$_View.data( iType );
 
                 return  ((_This_ != null)  &&  (_This_ !== this))  ?
                     _This_  :
-                    $.data(this.$_View[0], iType, this.setHandle());
+                    $.data(this.$_View[0],  iType,  this.setHandle( all_event ));
             },
-            setHandle:     function () {
+            setHandle:     function (all_event) {
 
                 var _This_ = this;
 
@@ -32,7 +32,7 @@ define(['jquery', 'jQueryKit'],  function ($) {
 
                     if (
                         (! iName)  ||
-                        !(iName in iClass.Bind_Event)  ||
+                        !(all_event  ||  (iName in iClass.Bind_Event))  ||
                         (this.nodeName in this.ownerElement)
                     )
                         return;

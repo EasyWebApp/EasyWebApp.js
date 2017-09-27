@@ -102,7 +102,7 @@ define([
                 !(iURL[0] in URL_Prefix)  &&
                 (iURL  !==  (expression || [ ]).join(''))
             ) {
-                var root = self.location.href.split('?')[0];
+                var root = $.filePath() + '/';
 
                 iURL = (
                     new URL(iURL,  new URL(iBase || '', root))  +  ''

@@ -7,27 +7,10 @@ require(['jquery', 'EasyWebApp'],  function ($, EWA) {
 
     var iWebApp = new EWA(),
         API_Root = 'https://restapi.amap.com/v3/',
-        Request_Event = {
-            type: 'request',  method: 'GET',  src: 'config/district'
-        },
         AD_Level = {province: 2,  city: 4,  district: 6};
 
 
     EWA.component(function (data) {
-
-    //  API URL 补全
-
-        iWebApp.off( Request_Event ).on(Request_Event,  function (_, AJAX) {
-
-            AJAX.option.url = $.extendURL(
-                AJAX.option.url.replace(this.pageRoot, API_Root),
-                {
-                    key:            data.key,
-                    extensions:     'base',
-                    subdistrict:    1
-                }
-            );
-        });
 
         var ADcode = this.$_View.find('[name="adcode"]')[0];
 
@@ -35,6 +18,17 @@ require(['jquery', 'EasyWebApp'],  function ($, EWA) {
             province:   '',
             city:       ''
         }, data, {
+            setParam:     function (_, AJAX) {    //  API URL 补全
+
+                AJAX.option.url = $.extendURL(
+                    AJAX.option.url.replace(iWebApp.pageRoot, API_Root),
+                    {
+                        key:            data.key,
+                        extensions:     'base',
+                        subdistrict:    1
+                    }
+                );
+            },
             fixData:      function (_, data) {
 
                 data = data.districts[0].districts;
@@ -47,7 +41,7 @@ require(['jquery', 'EasyWebApp'],  function ($, EWA) {
 
                 var select = event.target;
 
-                var ADcode = this.adcode.slice(0,  AD_Level[ select.name ])
+                var ADcode = (this.adcode + '').slice(0,  AD_Level[ select.name ])
                         .padEnd(6, 0);
 
                 $.each($( select ).view(),  function () {
@@ -77,7 +71,7 @@ require(['jquery', 'EasyWebApp'],  function ($, EWA) {
 
                 var sub = $(_This_).next('select')[0];
 
-                if (! sub)  return;
+                if (! sub)  return this.emit('loaded');
 
                 if ( _This_.value )  iWebApp.load( sub );
 

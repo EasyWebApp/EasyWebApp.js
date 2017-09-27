@@ -19,14 +19,18 @@ define([
         rawSelector:    $.makeSet('code', 'xmp', 'template'),
         getValue:       function (field) {
 
-            return  (field.type !== 'checkbox')  ?
-                $( field )[
-                    ('value' in field) ? 'val' : 'html'
-                ]()  :
-                $.map(field.form.elements[ field.name ],  function (_This_) {
+            if (field.type !== 'checkbox')
+                return  $( field )[('value' in field) ? 'val' : 'html']();
+
+            field = field.form.elements[ field.name ];
+
+            return  $.likeArray( field )  ?
+                $.map(field,  function (_This_) {
 
                     return  _This_.checked ? _This_.value : null;
-                });
+                })  :  (
+                    field.checked ? field.value : ''
+                );
         }
     }, {
         signIn:        function (iNode) {
@@ -171,7 +175,7 @@ define([
 
         var iView = HTMLView.instanceOf( this );
 
-        if ( iView )  iView.render( this );
+        if (iView  &&  $( this ).validate())  iView.render( this );
 
     })).on('reset',  'form',  function () {
 

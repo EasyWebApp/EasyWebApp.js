@@ -15,13 +15,13 @@
 
 var base_Observer = (function ($) {
 
-    function Observer($_View) {
+    function Observer($_View, all_event) {
 
         this.$_View = ($_View instanceof $)  ?  $_View  :  $( $_View );
 
         this.setPrivate('handle',  { });
 
-        return this.init();
+        return  this.init( all_event );
     }
 
     function basicMethod(iClass) {
@@ -29,15 +29,15 @@ var base_Observer = (function ($) {
         var iType = Observer.prototype.toString.call({constructor: iClass});
 
         $.extend(iClass.prototype, {
-            init:          function () {
+            init:          function (all_event) {
 
                 var _This_ = this.$_View.data( iType );
 
                 return  ((_This_ != null)  &&  (_This_ !== this))  ?
                     _This_  :
-                    $.data(this.$_View[0], iType, this.setHandle());
+                    $.data(this.$_View[0],  iType,  this.setHandle( all_event ));
             },
-            setHandle:     function () {
+            setHandle:     function (all_event) {
 
                 var _This_ = this;
 
@@ -47,7 +47,7 @@ var base_Observer = (function ($) {
 
                     if (
                         (! iName)  ||
-                        !(iName in iClass.Bind_Event)  ||
+                        !(all_event  ||  (iName in iClass.Bind_Event))  ||
                         (this.nodeName in this.ownerElement)
                     )
                         return;
@@ -461,17 +461,32 @@ var InnerLink = (function ($, Observer) {
         },
         loadData:    function () {
 
-            var URI = this.method + ' ';
+            var Get_URL,  header = { };
 
             var iOption = {
-                    type:           this.method,
+                    method:         this.method,
+                    url:            this.src,
                     beforeSend:     arguments[0],
                     contentType:
                         this.contentType  +  '; charset='  +  this.charset[0],
                     dataType:
                         (this.src.match(/\?/g) || '')[1]  ?  'jsonp'  :  'json',
-                    complete:       function () {
-                        URI += this.url;
+                    complete:       function (XHR) {
+
+                        if (this.method === 'GET')  Get_URL = this.url;
+
+                        XHR.getAllResponseHeaders().replace(
+                            /^([\w\-]+):\s*(.*)$/mg,  function (_, key, value) {
+
+                                if (typeof header[ key ]  ===  'string')
+                                    header[ key ] = [header[ key ]];
+
+                                if (header[ key ]  instanceof  Array)
+                                    header[ key ].push( value );
+                                else
+                                    header[ key ] = value;
+                            }
+                        );
                     }
                 };
 
@@ -500,14 +515,16 @@ var InnerLink = (function ($, Observer) {
                 iOption.processData = false;
             }
 
-            var iJSON = Promise.resolve( $.ajax(this.src, iOption) );
+            return  Promise.resolve( $.ajax( iOption ) ).then(
+                function (data) {
 
-            return  (this.method != 'GET')  ?  iJSON  :  iJSON.then(
-                function () {
-                    return  $.storage(URI, arguments[0]);
+                    data = {head: header,  body: data};
+
+                    return  Get_URL  ?  $.storage(Get_URL, data)  :  data;
                 },
                 function () {
-                    return  $.storage( URI );
+
+                    if ( Get_URL )  return  $.storage( Get_URL );
                 }
             );
         },
@@ -523,20 +540,19 @@ var InnerLink = (function ($, Observer) {
             ]);
         },
         valueOf:     function () {
+
             var _This_ = { };
 
             for (var iKey in this)
-                if (
-                    (typeof this[iKey] != 'object')  &&
-                    (typeof this[iKey] != 'function')
-                )
-                    _This_[iKey] = this[iKey];
+                if (this.hasOwnProperty( iKey ))  _This_[iKey] = this[iKey];
+
+            delete _This_.$_View;
 
             _This_.target = this.$_View[0];
 
             return _This_;
         }
-    }).registerEvent('data');
+    }).registerEvent('request', 'data');
 
 })(jquery, base_Observer);
 
@@ -590,7 +606,7 @@ var view_View = (function ($, Observer, DataScope, RenderNode) {
     function View($_View, scope) {
 
         var _This_ = Observer.call(
-                $.Class.call(this, View, ['render']),  $_View
+                $.Class.call(this, View, ['render']),  $_View,  true
             );
 
         return  (_This_ !== this)  ?
@@ -755,13 +771,14 @@ var view_View = (function ($, Observer, DataScope, RenderNode) {
         },
         watch:         function (key, get_set) {
 
-            this.setPublic(key, get_set, {
-                get:    function () {
+            if (! (key in Object.getPrototypeOf( this )))
+                this.setPublic(key, get_set, {
+                    get:    function () {
 
-                    return  this.__data__[key];
-                },
-                set:    this.render.bind(this, key)
-            });
+                        return  this.__data__[key];
+                    },
+                    set:    this.render.bind(this, key)
+                });
 
             return this;
         },
@@ -887,7 +904,7 @@ var view_DOMkit = (function ($, RenderNode, InnerLink) {
                 !(iURL[0] in URL_Prefix)  &&
                 (iURL  !==  (expression || [ ]).join(''))
             ) {
-                var root = self.location.href.split('?')[0];
+                var root = $.filePath() + '/';
 
                 iURL = (
                     new URL(iURL,  new URL(iBase || '', root))  +  ''
@@ -999,14 +1016,18 @@ var view_HTMLView = (function ($, View, DOMkit, RenderNode) {
         rawSelector:    $.makeSet('code', 'xmp', 'template'),
         getValue:       function (field) {
 
-            return  (field.type !== 'checkbox')  ?
-                $( field )[
-                    ('value' in field) ? 'val' : 'html'
-                ]()  :
-                $.map(field.form.elements[ field.name ],  function (_This_) {
+            if (field.type !== 'checkbox')
+                return  $( field )[('value' in field) ? 'val' : 'html']();
+
+            field = field.form.elements[ field.name ];
+
+            return  $.likeArray( field )  ?
+                $.map(field,  function (_This_) {
 
                     return  _This_.checked ? _This_.value : null;
-                });
+                })  :  (
+                    field.checked ? field.value : ''
+                );
         }
     }, {
         signIn:        function (iNode) {
@@ -1151,7 +1172,7 @@ var view_HTMLView = (function ($, View, DOMkit, RenderNode) {
 
         var iView = HTMLView.instanceOf( this );
 
-        if ( iView )  iView.render( this );
+        if (iView  &&  $( this ).validate())  iView.render( this );
 
     })).on('reset',  'form',  function () {
 
@@ -1332,20 +1353,22 @@ var WebApp = (function ($, Observer, View, HTMLView, ListView, TreeView, DOMkit,
 
         if (_This_ !== this)  return _This_;
 
-        Observer.call(this, Page_Box).apiRoot = new URL(
-            API_Root || '',  self.location.href
-        );
+        Observer.call(this, Page_Box).pageRoot = new URL($.filePath() + '/');
 
-        var path = self.location.href.split( /\?|#/ )[0];
-
-        this.pageRoot = new URL(
-            path  +  (path.match( /\/([^\/]+?\.html?)?$/i )  ?  ''  :  '/')
-        );
+        this.apiRoot = new URL(API_Root || '',  this.pageRoot);
 
         this.length = 0;
+
         this.lastPage = -1;
 
         self.setTimeout( this.listen().boot.bind( this ) );
+    }
+
+    function linkOf(URL, part) {
+
+        return this.filter(
+            '[href'  +  (part ? '^' : '')  +  '="'  +  URL  +  '"]'
+        );
     }
 
     return  Observer.extend(WebApp, {
@@ -1355,19 +1378,9 @@ var WebApp = (function ($, Observer, View, HTMLView, ListView, TreeView, DOMkit,
         TreeView:    TreeView
     }, {
         splice:           Array.prototype.splice,
-        switchTo:         function (Index) {
+        getCID:           function () {
 
-            if (this.lastPage == Index)  return;
-
-            var iPage = View.instanceOf(this.$_View, false);
-
-            if ( iPage )  iPage.detach();
-
-            if (this.lastPage > -1)  this[ this.lastPage ].view = iPage;
-
-            iPage = (this[ Index ]  ||  '').view;
-
-            return  iPage && iPage.attach();
+            return  (arguments[0] + '').replace(this.pageRoot, '').split('#')[0];
         },
         getRoute:         function () {
             try {
@@ -1375,28 +1388,6 @@ var WebApp = (function ($, Observer, View, HTMLView, ListView, TreeView, DOMkit,
                     (self.location.hash.match(/^\#!(.+)/) || '')[1]  ||  ''
                 );
             } catch (error) { }
-        },
-        setRoute:         function (iLink) {
-
-            this.switchTo();
-
-            if (this[ this.lastPage ]  !=  (iLink + '')) {
-
-                if (++this.lastPage != this.length)
-                    this.splice(this.lastPage, Infinity);
-
-                self.history[
-                    ((this.getRoute() == iLink) ? 'replace' : 'push')  +  'State'
-                ](
-                    {index: this.length},
-                    document.title = iLink.title,
-                    '#!'  +  self.btoa( iLink )
-                );
-
-                this[ this.length++ ] = iLink;
-            }
-
-            return this;
         },
         _emit:            function (iType, iLink, iData) {
 
@@ -1414,9 +1405,64 @@ var WebApp = (function ($, Observer, View, HTMLView, ListView, TreeView, DOMkit,
 
             return  observer  ?  (observer.emit(iLink, iData)  ||  iData)  :  iData;
         },
-        getCID:           function () {
+        emitRoute:        function (link) {
 
-            return  arguments[0].replace(this.pageRoot, '').split('#')[0];
+            var $_Nav = $('a[href], area[href]').not(
+                    this.$_View.find('a, area').addBack()
+                ),
+                route = this.getRoute();
+
+            var page = route.split('?')[0];
+
+            var path = $.filePath( page )  ||  page,  $_Item;
+
+            if (
+                ($_Item = linkOf.call($_Nav, route))[0]  ||
+                ($_Item = linkOf.call($_Nav, page))[0]  ||
+                ($_Item = linkOf.call($_Nav, path, true))[0]
+            )
+                this._emit('route', link, $_Item);
+        },
+        switchTo:         function (Index) {
+
+            if (this.lastPage == Index)  return;
+
+            var iPage = View.instanceOf(this.$_View, false);
+
+            if ( iPage )  iPage.detach();
+
+            if (this.lastPage > -1)  this[ this.lastPage ].view = iPage;
+
+            if (iPage = (this[ Index ]  ||  '').view) {
+
+                iPage.attach();
+
+                this.emitRoute( this[ Index ] );
+
+                return iPage;
+            }
+        },
+        setRoute:         function (iLink) {
+
+            this.switchTo();
+
+            if (this[ this.lastPage ]  !=  (iLink + '')) {
+
+                if (++this.lastPage != this.length)
+                    this.splice(this.lastPage, Infinity);
+
+                self.history[
+                    ((this.getRoute() == iLink) ? 'replace' : 'push')  +  'State'
+                ](
+                    {index: this.length},
+                    document.title = iLink.title,
+                    '#!'  +  self.btoa( this.getCID( iLink ) )
+                );
+
+                this.emitRoute( this[ this.length++ ] = iLink );
+            }
+
+            return this;
         },
         loadView:         function (iLink, iHTML) {
 
@@ -1472,7 +1518,7 @@ var WebApp = (function ($, Observer, View, HTMLView, ListView, TreeView, DOMkit,
                 if ((this.dataType || '').slice(0, 4)  ===  'json')
                     this.url = (new URL(this.url, _This_.apiRoot))  +  '';
 
-                _This_.emit($.extend(iLink.valueOf(), {type: 'request'}),  {
+                _This_._emit('request', iLink, {
                     option:       this,
                     transport:    arguments[0]
                 });
@@ -1483,7 +1529,12 @@ var WebApp = (function ($, Observer, View, HTMLView, ListView, TreeView, DOMkit,
 
                 var iData = arguments[0][1];
 
-                if (iData != null)  iData = _This_._emit('data', iLink, iData);
+                if (iData != null) {
+
+                    iLink.header = iData.head;
+
+                    iData = _This_._emit('data', iLink, iData.body);
+                }
 
                 if (iLink.target !== 'data')
                     return  _This_.loadComponent(iLink, arguments[0][0], iData);
@@ -1533,7 +1584,7 @@ var WebApp = (function ($, Observer, View, HTMLView, ListView, TreeView, DOMkit,
             //  To reload history pages after the Web App reloading
 
                 if ((! link)  ||  (
-                    route  &&  (! state.data)  &&  (route != link)
+                    route  &&  (! state.data)  &&  (route != _This_.getCID( link ))
                 ))
                     return  route  &&  _This_.loadPage( route );
 
@@ -1582,7 +1633,7 @@ var WebApp = (function ($, Observer, View, HTMLView, ListView, TreeView, DOMkit,
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v4.0  (2017-09-18)  stable
+//      [Version]    v4.0  (2017-09-27)  stable
 //
 //      [Require]    iQuery  ||  jQuery with jQueryKit
 //

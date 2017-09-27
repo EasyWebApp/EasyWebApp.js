@@ -13,20 +13,22 @@ define([
 
         if (_This_ !== this)  return _This_;
 
-        Observer.call(this, Page_Box).apiRoot = new URL(
-            API_Root || '',  self.location.href
-        );
+        Observer.call(this, Page_Box).pageRoot = new URL($.filePath() + '/');
 
-        var path = self.location.href.split( /\?|#/ )[0];
-
-        this.pageRoot = new URL(
-            path  +  (path.match( /\/([^\/]+?\.html?)?$/i )  ?  ''  :  '/')
-        );
+        this.apiRoot = new URL(API_Root || '',  this.pageRoot);
 
         this.length = 0;
+
         this.lastPage = -1;
 
         self.setTimeout( this.listen().boot.bind( this ) );
+    }
+
+    function linkOf(URL, part) {
+
+        return this.filter(
+            '[href'  +  (part ? '^' : '')  +  '="'  +  URL  +  '"]'
+        );
     }
 
     return  Observer.extend(WebApp, {
@@ -36,19 +38,9 @@ define([
         TreeView:    TreeView
     }, {
         splice:           Array.prototype.splice,
-        switchTo:         function (Index) {
+        getCID:           function () {
 
-            if (this.lastPage == Index)  return;
-
-            var iPage = View.instanceOf(this.$_View, false);
-
-            if ( iPage )  iPage.detach();
-
-            if (this.lastPage > -1)  this[ this.lastPage ].view = iPage;
-
-            iPage = (this[ Index ]  ||  '').view;
-
-            return  iPage && iPage.attach();
+            return  (arguments[0] + '').replace(this.pageRoot, '').split('#')[0];
         },
         getRoute:         function () {
             try {
@@ -56,28 +48,6 @@ define([
                     (self.location.hash.match(/^\#!(.+)/) || '')[1]  ||  ''
                 );
             } catch (error) { }
-        },
-        setRoute:         function (iLink) {
-
-            this.switchTo();
-
-            if (this[ this.lastPage ]  !=  (iLink + '')) {
-
-                if (++this.lastPage != this.length)
-                    this.splice(this.lastPage, Infinity);
-
-                self.history[
-                    ((this.getRoute() == iLink) ? 'replace' : 'push')  +  'State'
-                ](
-                    {index: this.length},
-                    document.title = iLink.title,
-                    '#!'  +  self.btoa( iLink )
-                );
-
-                this[ this.length++ ] = iLink;
-            }
-
-            return this;
         },
         _emit:            function (iType, iLink, iData) {
 
@@ -95,9 +65,64 @@ define([
 
             return  observer  ?  (observer.emit(iLink, iData)  ||  iData)  :  iData;
         },
-        getCID:           function () {
+        emitRoute:        function (link) {
 
-            return  arguments[0].replace(this.pageRoot, '').split('#')[0];
+            var $_Nav = $('a[href], area[href]').not(
+                    this.$_View.find('a, area').addBack()
+                ),
+                route = this.getRoute();
+
+            var page = route.split('?')[0];
+
+            var path = $.filePath( page )  ||  page,  $_Item;
+
+            if (
+                ($_Item = linkOf.call($_Nav, route))[0]  ||
+                ($_Item = linkOf.call($_Nav, page))[0]  ||
+                ($_Item = linkOf.call($_Nav, path, true))[0]
+            )
+                this._emit('route', link, $_Item);
+        },
+        switchTo:         function (Index) {
+
+            if (this.lastPage == Index)  return;
+
+            var iPage = View.instanceOf(this.$_View, false);
+
+            if ( iPage )  iPage.detach();
+
+            if (this.lastPage > -1)  this[ this.lastPage ].view = iPage;
+
+            if (iPage = (this[ Index ]  ||  '').view) {
+
+                iPage.attach();
+
+                this.emitRoute( this[ Index ] );
+
+                return iPage;
+            }
+        },
+        setRoute:         function (iLink) {
+
+            this.switchTo();
+
+            if (this[ this.lastPage ]  !=  (iLink + '')) {
+
+                if (++this.lastPage != this.length)
+                    this.splice(this.lastPage, Infinity);
+
+                self.history[
+                    ((this.getRoute() == iLink) ? 'replace' : 'push')  +  'State'
+                ](
+                    {index: this.length},
+                    document.title = iLink.title,
+                    '#!'  +  self.btoa( this.getCID( iLink ) )
+                );
+
+                this.emitRoute( this[ this.length++ ] = iLink );
+            }
+
+            return this;
         },
         loadView:         function (iLink, iHTML) {
 
@@ -153,7 +178,7 @@ define([
                 if ((this.dataType || '').slice(0, 4)  ===  'json')
                     this.url = (new URL(this.url, _This_.apiRoot))  +  '';
 
-                _This_.emit($.extend(iLink.valueOf(), {type: 'request'}),  {
+                _This_._emit('request', iLink, {
                     option:       this,
                     transport:    arguments[0]
                 });
@@ -164,7 +189,12 @@ define([
 
                 var iData = arguments[0][1];
 
-                if (iData != null)  iData = _This_._emit('data', iLink, iData);
+                if (iData != null) {
+
+                    iLink.header = iData.head;
+
+                    iData = _This_._emit('data', iLink, iData.body);
+                }
 
                 if (iLink.target !== 'data')
                     return  _This_.loadComponent(iLink, arguments[0][0], iData);
@@ -214,7 +244,7 @@ define([
             //  To reload history pages after the Web App reloading
 
                 if ((! link)  ||  (
-                    route  &&  (! state.data)  &&  (route != link)
+                    route  &&  (! state.data)  &&  (route != _This_.getCID( link ))
                 ))
                     return  route  &&  _This_.loadPage( route );
 

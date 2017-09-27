@@ -85,17 +85,32 @@ define(['jquery', './base/Observer', 'jQueryKit'],  function ($, Observer) {
         },
         loadData:    function () {
 
-            var URI = this.method + ' ';
+            var Get_URL,  header = { };
 
             var iOption = {
-                    type:           this.method,
+                    method:         this.method,
+                    url:            this.src,
                     beforeSend:     arguments[0],
                     contentType:
                         this.contentType  +  '; charset='  +  this.charset[0],
                     dataType:
                         (this.src.match(/\?/g) || '')[1]  ?  'jsonp'  :  'json',
-                    complete:       function () {
-                        URI += this.url;
+                    complete:       function (XHR) {
+
+                        if (this.method === 'GET')  Get_URL = this.url;
+
+                        XHR.getAllResponseHeaders().replace(
+                            /^([\w\-]+):\s*(.*)$/mg,  function (_, key, value) {
+
+                                if (typeof header[ key ]  ===  'string')
+                                    header[ key ] = [header[ key ]];
+
+                                if (header[ key ]  instanceof  Array)
+                                    header[ key ].push( value );
+                                else
+                                    header[ key ] = value;
+                            }
+                        );
                     }
                 };
 
@@ -124,14 +139,16 @@ define(['jquery', './base/Observer', 'jQueryKit'],  function ($, Observer) {
                 iOption.processData = false;
             }
 
-            var iJSON = Promise.resolve( $.ajax(this.src, iOption) );
+            return  Promise.resolve( $.ajax( iOption ) ).then(
+                function (data) {
 
-            return  (this.method != 'GET')  ?  iJSON  :  iJSON.then(
-                function () {
-                    return  $.storage(URI, arguments[0]);
+                    data = {head: header,  body: data};
+
+                    return  Get_URL  ?  $.storage(Get_URL, data)  :  data;
                 },
                 function () {
-                    return  $.storage( URI );
+
+                    if ( Get_URL )  return  $.storage( Get_URL );
                 }
             );
         },
@@ -147,19 +164,18 @@ define(['jquery', './base/Observer', 'jQueryKit'],  function ($, Observer) {
             ]);
         },
         valueOf:     function () {
+
             var _This_ = { };
 
             for (var iKey in this)
-                if (
-                    (typeof this[iKey] != 'object')  &&
-                    (typeof this[iKey] != 'function')
-                )
-                    _This_[iKey] = this[iKey];
+                if (this.hasOwnProperty( iKey ))  _This_[iKey] = this[iKey];
+
+            delete _This_.$_View;
 
             _This_.target = this.$_View[0];
 
             return _This_;
         }
-    }).registerEvent('data');
+    }).registerEvent('request', 'data');
 
 });

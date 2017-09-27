@@ -5,7 +5,7 @@ define([
     function View($_View, scope) {
 
         var _This_ = Observer.call(
-                $.Class.call(this, View, ['render']),  $_View
+                $.Class.call(this, View, ['render']),  $_View,  true
             );
 
         return  (_This_ !== this)  ?
@@ -170,13 +170,14 @@ define([
         },
         watch:         function (key, get_set) {
 
-            this.setPublic(key, get_set, {
-                get:    function () {
+            if (! (key in Object.getPrototypeOf( this )))
+                this.setPublic(key, get_set, {
+                    get:    function () {
 
-                    return  this.__data__[key];
-                },
-                set:    this.render.bind(this, key)
-            });
+                        return  this.__data__[key];
+                    },
+                    set:    this.render.bind(this, key)
+                });
 
             return this;
         },
