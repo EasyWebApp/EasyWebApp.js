@@ -7,13 +7,15 @@
 <script src="try.js"></script>
 
 <h3>数据绑定</h3>
-<form target="_blank" onsubmit="return false">
+<form onsubmit="return false">
     <fieldset>
         <legend>单一对象</legend>
 
         <input type="text" name="Nick_Name" value="${view.Nick_Name}" />
 
-        <span title="Hi, ${view.Nick_Name} !">Hello, ${view.Nick_Name} !</span>
+        <span title="Hi, ${view.Nick_Name} !">
+            Hello,<!-- ${view.Nick_Name} -->!
+        </span>
     </fieldset>
     <fieldset>
         <legend>对象数组</legend>
@@ -22,7 +24,7 @@
                 <input type="text" name="Nick_Name" value="${view.Nick_Name}" />
 
                 <span title="Hi, ${view.Nick_Name} !">
-                    Hello, ${view.Nick_Name} !
+                    Hello,<!-- ${view.Nick_Name} -->!
                 </span>
             </li>
         </ul>
@@ -33,7 +35,7 @@
         <textarea name="Twitter" maxlength="140" onpaste="${view.check}"
                   placeholder="一条微博"></textarea>
 
-        还可写 ${140 - view.Twitter.length} 字
+        还可写<!-- ${140 - view.Twitter.length} -->字
     </fieldset>
     <fieldset>
         <legend>同名单选按钮</legend>
@@ -43,7 +45,7 @@
         <label>
             <input type="radio" name="radioID" value="2" /> 2
         </label>
-        当前选中：${view.radioID}
+        当前选中：<!--${view.radioID}-->
     </fieldset>
     <fieldset>
         <legend>同名多选按钮</legend>
@@ -56,7 +58,7 @@
         <label>
             <input type="checkbox" name="checkList" value="他" /> 他
         </label>
-        当前选中：${view.checkList}
+        当前选中：<!--${view.checkList}-->
     </fieldset>
     <fieldset>
         <legend>多级联动选择</legend>
@@ -85,7 +87,7 @@
         Yi Kai 的理解
     </a></li>
 </ul>
-<form target="_blank" onsubmit="return false">
+<form onsubmit="return false">
     <fieldset>
         <legend>组件外传参</legend>
         <label>

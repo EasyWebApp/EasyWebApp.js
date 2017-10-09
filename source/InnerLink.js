@@ -1,4 +1,4 @@
-define(['jquery', './base/Observer', 'jQueryKit'],  function ($, Observer) {
+define(['jquery', './base/Observer'],  function ($, Observer) {
 
     function InnerLink($_View) {
 
@@ -85,7 +85,7 @@ define(['jquery', './base/Observer', 'jQueryKit'],  function ($, Observer) {
         },
         loadData:    function () {
 
-            var Get_URL,  header = { };
+            var Get_URL, header;
 
             var iOption = {
                     method:         this.method,
@@ -99,18 +99,7 @@ define(['jquery', './base/Observer', 'jQueryKit'],  function ($, Observer) {
 
                         if (this.method === 'GET')  Get_URL = this.url;
 
-                        XHR.getAllResponseHeaders().replace(
-                            /^([\w\-]+):\s*(.*)$/mg,  function (_, key, value) {
-
-                                if (typeof header[ key ]  ===  'string')
-                                    header[ key ] = [header[ key ]];
-
-                                if (header[ key ]  instanceof  Array)
-                                    header[ key ].push( value );
-                                else
-                                    header[ key ] = value;
-                            }
-                        );
+                        header = $.parseHeader( XHR.getAllResponseHeaders() );
                     }
                 };
 

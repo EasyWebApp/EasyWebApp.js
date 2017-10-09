@@ -67,10 +67,7 @@ define([
         },
         emitRoute:        function (link) {
 
-            var $_Nav = $('a[href], area[href]').not(
-                    this.$_View.find('a, area').addBack()
-                ),
-                route = this.getRoute();
+            var $_Nav = $('a[href], area[href]'),  route = this.getRoute();
 
             var page = route.split('?')[0];
 

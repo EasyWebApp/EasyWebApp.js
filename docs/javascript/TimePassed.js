@@ -1,4 +1,4 @@
-define(['jquery'],  function ($) {
+define(function () {
 
     var TimeUnit = [
             {
@@ -31,8 +31,9 @@ define(['jquery'],  function ($) {
             }
         ];
 
-    function TimePassed(iTS) {
-        iTS = $.now() - iTS;
+    return  function (iTS) {
+
+        iTS = Date.now()  -  new Date( iTS );
 
         for (var i = 0, _Value_ = iTS;  TimeUnit[i];  i++) {
             _Value_ = _Value_ / TimeUnit[i].scale;
@@ -44,7 +45,5 @@ define(['jquery'],  function ($) {
         }
 
         return  (! i)  ?  "刚刚"  :  (iTS.toFixed(0) + TimeUnit[--i].name + "前");
-    }
-
-    return TimePassed;
+    };
 });

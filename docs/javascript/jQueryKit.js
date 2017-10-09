@@ -1642,6 +1642,14 @@ var object_ext_Class = (function ($) {
         return  (iDOM.tagName in pMedia)  ||  $.expr[':'].image( iDOM );
     };
 
+    /* ----- :loaded ----- */
+
+    $.expr[':'].loaded = function (iDOM) {
+
+        return  iDOM.complete ||                    //  <img />
+            (iDOM.readyState === 'complete')  ||    //  document
+            (iDOM.readyState > 0);                  //  <audio />  &  <video />
+    };
 })(jquery);
 
 
@@ -2381,6 +2389,20 @@ var AJAX_ext_URL = (function ($) {
             });
 
             return this;
+        },
+        mediaReady:       function () {
+
+            var $_Media = this.find('img, audio, video')
+                    .addBack('img, audio, video');
+
+            return  new Promise(function (resolve) {
+
+                $.every(0.25,  function () {
+
+                    if (! ($_Media = $_Media.not(':loaded'))[0])
+                        return  (!! resolve());
+                });
+            });
         }
     });
 
@@ -2616,12 +2638,12 @@ var AJAX_ext_HTML_Request = (function ($) {
     }
 
     $.extend(HTMLHttpRequest.prototype, {
-        open:                 function () {
+        open:                     function () {
             this.responseURL = arguments[1];
 
             this.readyState = 1;
         },
-        send:                 function (iData) {
+        send:                     function (iData) {
 
             if (! Allow_Send.call( this ))  return;
 
@@ -2637,20 +2659,31 @@ var AJAX_ext_HTML_Request = (function ($) {
 
             this.readyState = 2;
         },
-        abort:                function () {
+        abort:                    function () {
             this.$_Transport.remove();
 
             this.$_Transport = null;
 
             this.readyState = 0;
         },
-        setRequestHeader:     function () {
+        setRequestHeader:         function () {
 
             console.warn("JSONP/iframe doesn't support Changing HTTP Headers...");
         },
-        getResponseHeader:    function () {
+        getResponseHeader:        function () {
 
             return  this.responseHeader[ arguments[0] ]  ||  null;
+        },
+        getAllResponseHeaders:    function () {
+
+            return Array.from(
+                Object.keys( this.responseHeader ),
+                function (key) {
+
+                    return  key.toLowerCase()  +  ': '  +  this[ key ];
+                },
+                this.responseHeader
+            ).join("\r\n");
         }
     });
 
@@ -2766,6 +2799,51 @@ var AJAX_ext_HTML_Request = (function ($) {
         };
     });
 })(jquery, AJAX_ext_HTML_Request);
+
+
+(function ($) {
+
+    var parser = {
+            link:    function (raw) {
+
+                var link = { };
+
+                raw.replace(
+                    /\<(\S+?)\>; rel="(\w+)"(; title="(.*?)")?/g,
+                    function (_, URI, rel, _, title) {
+
+                        link[ rel ] = {
+                            uri:      URI,
+                            rel:      rel,
+                            title:    title
+                        };
+                    }
+                );
+
+                return link;
+            }
+        };
+
+    $.parseHeader = function (raw) {
+
+        var header = { };
+
+        raw.replace(/^([\w\-]+):\s*(.*)$/mg,  function (_, key, value) {
+
+            if (parser[ key ])  value = parser[ key ]( value );
+
+            if (typeof header[ key ]  ===  'string')
+                header[ key ] = [header[ key ]];
+
+            if (header[ key ]  instanceof  Array)
+                header[ key ].push( value );
+            else
+                header[ key ] = value;
+        });
+
+        return header;
+    };
+})(jquery);
 
 
 (function ($) {
@@ -3038,359 +3116,6 @@ var AJAX_ext_HTML_Request = (function ($) {
 
 (function ($) {
 
-/* ---------- Smart zIndex ---------- */
-
-    function Get_zIndex() {
-        for (
-            var $_This = $( this ),  zIndex;
-            $_This[0];
-            $_This = $( $_This[0].offsetParent )
-        )
-            if ($_This.css('position') != 'static') {
-
-                zIndex = parseInt( $_This.css('z-index') );
-
-                if (zIndex > 0)  return zIndex;
-            }
-
-        return 0;
-    }
-
-    function Set_zIndex() {
-
-        var $_This = $( this ),  _Index_ = 0;
-
-        $_This.siblings().addBack().filter(':visible').each(function () {
-
-            _Index_ = Math.max(_Index_,  Get_zIndex.call( this ));
-        });
-
-        $_This.css('z-index', ++_Index_);
-    }
-
-    $.fn.zIndex = function (new_Index) {
-
-        if (! arguments.length)  return  Get_zIndex.call( this[0] );
-
-        if (new_Index === '+')  return  this.each( Set_zIndex );
-
-        return  this.css('z-index',  parseInt( new_Index ) || 'auto');
-    };
-
-})(jquery);
-
-
-(function ($) {
-
-/* ---------- Single Finger Touch ---------- */
-
-    function get_Touch(iEvent) {
-
-        var iTouch = iEvent;
-
-        if ($.browser.mobile)  try {
-
-            iTouch = iEvent.changedTouches[0];
-
-        } catch (iError) {
-
-            iTouch = iEvent.touches[0];
-        }
-
-        iTouch.timeStamp = iEvent.timeStamp || $.now();
-
-        return iTouch;
-    }
-
-    var sType = $.browser.mobile ? 'touchstart MSPointerDown' : 'mousedown',
-        eType = $.browser.mobile ? 'touchend touchcancel MSPointerUp' : 'mouseup';
-
-    $.customEvent('tap press swipe',  function (DOM, type) {
-
-        var iStart;
-
-        return  $.Observer(function (next) {
-
-            function sTouch() {
-
-                iStart = get_Touch( arguments[0].originalEvent );
-            }
-
-            function eTouch(iEvent) {
-
-                var iEnd = get_Touch( iEvent.originalEvent );
-
-                iEvent = {
-                    target:    iEvent.target,
-                    detail:    iEnd.timeStamp - iStart.timeStamp,
-                    deltaX:    iStart.pageX - iEnd.pageX,
-                    deltaY:    iStart.pageY - iEnd.pageY
-                };
-
-                var iShift = Math.sqrt(
-                        Math.pow(iEvent.deltaX, 2)  +  Math.pow(iEvent.deltaY, 2)
-                    );
-
-                if (iEvent.detail > 300)
-                    iEvent.type = 'press';
-                else if (iShift < 22)
-                    iEvent.type = 'tap';
-                else
-                    iEvent.type = 'swipe',  iEvent.detail = iShift;
-
-                if (iEvent.type === type)  next( iEvent );
-            }
-
-            $( DOM ).on(sType, sTouch).on(eType, eTouch);
-
-            return  function () {
-
-                $( DOM ).off(sType, sTouch).off(eType, eTouch);
-            };
-        });
-    });
-
-/* ---------- Text Input Event ---------- */
-
-    if ( $.browser.modern )  return;
-
-    function from_Input() {
-
-        switch ( self.event.srcElement.tagName.toLowerCase() ) {
-            case 'input':       ;
-            case 'textarea':    return true;
-        }
-    }
-
-    $.customEvent('input',  function (DOM) {
-
-        if ('oninput'  in  Object.getPrototypeOf( DOM ))  return;
-
-        return  new Observer(function (next) {
-
-            var handler = {
-                    propertychange:    function () {
-
-                        if (self.event.propertyName === 'value')
-                            next( arguments[0] );
-                    },
-                    paste:             function () {
-
-                        if (! from_Input())  next( arguments[0] );
-                    },
-                    keyup:             function (iEvent) {
-
-                        var iKey = iEvent.keyCode;
-
-                        if (
-                            from_Input()  ||
-                            (iKey < 48)  ||  (iKey > 105)  ||
-                            ((iKey > 90)  &&  (iKey < 96))  ||
-                            iEvent.ctrlKey  ||  iEvent.shiftKey  ||  iEvent.altKey
-                        )
-                            return;
-
-                        next( iEvent );
-                    }
-                };
-
-            for (var type in handler)
-                DOM.attachEvent('on' + type,  handler[ type ]);
-
-            return  function () {
-
-                for (var type in handler)
-                    DOM.detachEvent('on' + type,  handler[ type ]);
-            };
-        });
-    });
-})(jquery);
-
-
-(function ($) {
-
-/* ---------- Focus AnyWhere ---------- */
-
-    var DOM_Focus = $.fn.focus;
-
-    $.fn.focus = function () {
-
-        this.not(':focusable').attr('tabIndex', -1).css('outline', 'none');
-
-        return  DOM_Focus.apply(this, arguments);
-    };
-
-/* ---------- User Idle Event ---------- */
-
-    var End_Event = 'keydown mousedown scroll';
-
-    $.fn.onIdleFor = function (iSecond, iCallback) {
-
-        return  this.each(function _Self_() {
-
-            var iNO,  $_This = $( this );
-
-            function iCancel() {
-
-                clearTimeout( iNO );
-
-                _Self_.call( $_This.off(End_Event, iCancel)[0] );
-            }
-
-            iNO = $.wait(iSecond,  function () {
-
-                iCallback.call(
-                    $_This.off(End_Event, iCancel)[0],
-                    $.Event({
-                        type:      'idle',
-                        target:    $_This[0]
-                    })
-                );
-
-                _Self_.call( $_This[0] );
-            });
-
-            $_This.one(End_Event, iCancel);
-        });
-    };
-
-/* ---------- Cross Page Event ---------- */
-
-    function CrossPageEvent(iType, iSource) {
-
-        if (typeof iType === 'string') {
-
-            this.type = iType;  this.target = iSource;
-        } else
-            $.extend(this, iType);
-
-        if (! (iSource && (iSource instanceof Element)))  return;
-
-        $.extend(this,  $.map(iSource.dataset,  function (iValue) {
-
-            if (typeof iValue === 'string')  try {
-
-                return  $.parseJSON( iValue );
-
-            } catch (iError) { }
-
-            return iValue;
-        }));
-    }
-
-    CrossPageEvent.prototype.valueOf = function () {
-
-        var iValue = $.extend({ }, this);
-
-        delete iValue.data;  delete iValue.target;  delete iValue.valueOf;
-
-        return iValue;
-    };
-
-    var $_BOM = $( self );
-
-    $.fn.onReply = function (iType, iData, iCallback) {
-
-        var iTarget = this[0],  $_Source;
-
-        if (typeof iTarget.postMessage != 'function')  return this;
-
-        if (arguments.length === 4) {
-
-            $_Source = $( iData );  iData = iCallback;  iCallback = arguments[3];
-        }
-
-        var _Event_ = new CrossPageEvent(iType,  ($_Source || { })[0]);
-
-        if (typeof iCallback === 'function')
-            $_BOM.on('message',  function onMessage(iEvent) {
-
-                iEvent = iEvent.originalEvent || iEvent;
-
-                var iReturn = new CrossPageEvent(
-                        (typeof iEvent.data === 'string')  ?
-                            $.parseJSON( iEvent.data )  :  iEvent.data
-                    );
-                if (
-                    (iEvent.source === iTarget)  &&
-                    (iReturn.type === iType)  &&
-                    $.isEqual(iReturn, _Event_)
-                ) {
-                    iCallback.call($_Source ? $_Source[0] : this,  iReturn);
-
-                    $_BOM.off('message', onMessage);
-                }
-            });
-
-        iData = $.extend({data: iData},  _Event_.valueOf());
-
-        iTarget.postMessage(
-            ($.browser.msie < 10)  ?  JSON.stringify( iData )  :  iData,  '*'
-        );
-    };
-})(jquery);
-
-
-(function ($) {
-
-/* ---------- RESTful API ---------- */
-
-    $.map(['get', 'post', 'put', 'delete'],  function (method) {
-
-        $[ method ] = $[ method ]  ||  function (URL, data, callback, DataType) {
-
-            if (typeof data === 'function')
-                DataType = callback,  callback = data,  data = null;
-
-            return $.ajax($.extend(
-                {
-                    type:           method,
-                    url:            URL,
-                    crossDomain:    true,
-                    data:           data,
-                    dataType:       DataType,
-                    success:        callback
-                },
-                $.isPlainObject( URL )  ?  URL  :  { }
-            ));
-        };
-    });
-
-    $.getJSON = $.getJSON || $.get;
-
-
-/* ---------- Smart Load ---------- */
-
-    $.fn.load = function (iURL, iData, iCallback) {
-
-        if (! this[0])  return this;
-
-        if (typeof iData == 'function')
-            iCallback = iData,  iData = null;
-
-        var $_This = this;
-
-        iURL = iURL.trim().split(/\s+/);
-
-        $[iData ? 'post' : 'get'](iURL[0],  iData,  function (iHTML, _, iXHR) {
-
-            $_This.htmlExec(
-                (typeof iHTML === 'string')  ?  iHTML  :  iXHR.responseText,
-                iURL[1]
-            );
-
-            if (typeof iCallback === 'function')
-                $_This.each( $.proxy(iCallback, null, iHTML, _, iXHR) );
-        },  'html');
-
-        return this;
-    };
-
-})(jquery);
-
-
-(function ($) {
-
     var W3C_Selection = (typeof document.getSelection === 'function');
 
     function Select_Node(iSelection) {
@@ -3481,112 +3206,55 @@ var AJAX_ext_HTML_Request = (function ($) {
 
 (function ($) {
 
-/* ---------- Form Field Validation ---------- */
+/* ---------- RESTful API ---------- */
 
-    function Value_Check() {
+    $.map(['get', 'post', 'put', 'delete'],  function (method) {
 
-        if ((! this.value)  &&  (this.getAttribute('required') != null))
-            return false;
+        $[ method ] = $[ method ]  ||  function (URL, data, callback, DataType) {
 
-        var iRegEx = this.getAttribute('pattern');
+            if (typeof data === 'function')
+                DataType = callback,  callback = data,  data = null;
 
-        if (iRegEx)  try {
+            return $.ajax($.extend(
+                {
+                    type:           method,
+                    url:            URL,
+                    crossDomain:    true,
+                    data:           data,
+                    dataType:       DataType,
+                    success:        callback
+                },
+                $.isPlainObject( URL )  ?  URL  :  { }
+            ));
+        };
+    });
 
-            return  RegExp( iRegEx ).test( this.value );
+    $.getJSON = $.getJSON || $.get;
 
-        } catch (iError) { }
 
-        if (
-            (this.tagName.toLowerCase() === 'input')  &&
-            (this.getAttribute('type') === 'number')
-        ) {
-            var iNumber = Number( this.value ),
-                iMin = Number( this.getAttribute('min') );
-            if (
-                isNaN( iNumber )  ||
-                (iNumber < iMin)  ||
-                (iNumber > Number(this.getAttribute('max') || Infinity))  ||
-                ((iNumber - iMin)  %  Number( this.getAttribute('step') ))
-            )
-                return false;
-        }
+/* ---------- Smart Load ---------- */
 
-        return true;
-    }
-
-    $.fn.validate = function () {
-
-        var $_Field = this.find(':field').addBack(':field').removeClass('invalid');
-
-        for (var i = 0;  $_Field[i];  i++)
-            if ((
-                (typeof $_Field[i].checkValidity === 'function')  &&
-                (! $_Field[i].checkValidity())
-            )  ||  (
-                ! Value_Check.call( $_Field[i] )
-            )) {
-                $_Field = $( $_Field[i] ).addClass('invalid');
-
-                $_Field.scrollParents().eq(0).scrollTo( $_Field.focus() );
-
-                return false;
-            }
-
-        return true;
-    };
-
-/* ---------- Form Element AJAX Submit ---------- */
-
-    function AJAX_Submit(DataType, iCallback) {
-
-        var $_Form = $( this );
-
-        if ((! $_Form.validate())  ||  $_Form.data('_AJAX_Submitting_'))
-            return false;
-
-        $_Form.data('_AJAX_Submitting_', 1);
-
-        var iMethod = ($_Form.attr('method') || 'Get').toLowerCase();
-
-        arguments[0].preventDefault();
-
-        var iOption = {
-                type:        iMethod,
-                dataType:    DataType || 'json'
-            };
-
-        if (! $_Form.find('input[type="file"]')[0])
-            iOption.data = $_Form.serialize();
-        else {
-            iOption.data = new self.FormData( $_Form[0] );
-
-            iOption.contentType = iOption.processData = false;
-        }
-
-        $.ajax(this.action, iOption).then(function () {
-
-            $_Form.data('_AJAX_Submitting_', 0);
-
-            if (typeof iCallback === 'function')
-                iCallback.call($_Form[0], arguments[0]);
-        });
-    }
-
-    $.fn.ajaxSubmit = function (DataType, iCallback) {
+    $.fn.load = function (iURL, iData, iCallback) {
 
         if (! this[0])  return this;
 
-        if (typeof DataType === 'function')
-            iCallback = DataType,  DataType = '';
+        if (typeof iData == 'function')
+            iCallback = iData,  iData = null;
 
-        iCallback = $.proxy(AJAX_Submit, null, DataType, iCallback);
+        var $_This = this;
 
-        var $_This = (this.length < 2)  ?  this  :  this.sameParents().eq(0);
+        iURL = iURL.trim().split(/\s+/);
 
-        if ($_This[0].tagName.toLowerCase() === 'form')
-            $_This.submit( iCallback );
-        else
-            $_This.on('submit', 'form', iCallback);
+        $[iData ? 'post' : 'get'](iURL[0],  iData,  function (iHTML, _, iXHR) {
+
+            $_This.htmlExec(
+                (typeof iHTML === 'string')  ?  iHTML  :  iXHR.responseText,
+                iURL[1]
+            );
+
+            if (typeof iCallback === 'function')
+                $_This.each( $.proxy(iCallback, null, iHTML, _, iXHR) );
+        },  'html');
 
         return this;
     };
@@ -3797,5 +3465,415 @@ var AJAX_ext_HTML_Request = (function ($) {
             ).then( BufferToString );
     };
 
+})(jquery);
+
+
+(function ($) {
+
+/* ---------- Smart zIndex ---------- */
+
+    function Get_zIndex() {
+        for (
+            var $_This = $( this ),  zIndex;
+            $_This[0];
+            $_This = $( $_This[0].offsetParent )
+        )
+            if ($_This.css('position') != 'static') {
+
+                zIndex = parseInt( $_This.css('z-index') );
+
+                if (zIndex > 0)  return zIndex;
+            }
+
+        return 0;
+    }
+
+    function Set_zIndex() {
+
+        var $_This = $( this ),  _Index_ = 0;
+
+        $_This.siblings().addBack().filter(':visible').each(function () {
+
+            _Index_ = Math.max(_Index_,  Get_zIndex.call( this ));
+        });
+
+        $_This.css('z-index', ++_Index_);
+    }
+
+    $.fn.zIndex = function (new_Index) {
+
+        if (! arguments.length)  return  Get_zIndex.call( this[0] );
+
+        if (new_Index === '+')  return  this.each( Set_zIndex );
+
+        return  this.css('z-index',  parseInt( new_Index ) || 'auto');
+    };
+
+})(jquery);
+
+
+(function ($) {
+
+/* ---------- Single Finger Touch ---------- */
+
+    function get_Touch(iEvent) {
+
+        var iTouch = iEvent;
+
+        if ($.browser.mobile)  try {
+
+            iTouch = iEvent.changedTouches[0];
+
+        } catch (iError) {
+
+            iTouch = iEvent.touches[0];
+        }
+
+        iTouch.timeStamp = iEvent.timeStamp || $.now();
+
+        return iTouch;
+    }
+
+    var sType = $.browser.mobile ? 'touchstart MSPointerDown' : 'mousedown',
+        eType = $.browser.mobile ? 'touchend touchcancel MSPointerUp' : 'mouseup';
+
+    $.customEvent('tap press swipe',  function (DOM, type) {
+
+        var iStart;
+
+        return  $.Observer(function (next) {
+
+            function sTouch() {
+
+                iStart = get_Touch( arguments[0].originalEvent );
+            }
+
+            function eTouch(iEvent) {
+
+                var iEnd = get_Touch( iEvent.originalEvent );
+
+                iEvent = {
+                    target:    iEvent.target,
+                    detail:    iEnd.timeStamp - iStart.timeStamp,
+                    deltaX:    iStart.pageX - iEnd.pageX,
+                    deltaY:    iStart.pageY - iEnd.pageY
+                };
+
+                var iShift = Math.sqrt(
+                        Math.pow(iEvent.deltaX, 2)  +  Math.pow(iEvent.deltaY, 2)
+                    );
+
+                if (iEvent.detail > 300)
+                    iEvent.type = 'press';
+                else if (iShift < 22)
+                    iEvent.type = 'tap';
+                else
+                    iEvent.type = 'swipe',  iEvent.detail = iShift;
+
+                if (iEvent.type === type)  next( iEvent );
+            }
+
+            $( DOM ).on(sType, sTouch).on(eType, eTouch);
+
+            return  function () {
+
+                $( DOM ).off(sType, sTouch).off(eType, eTouch);
+            };
+        });
+    });
+
+/* ---------- Text Input Event ---------- */
+
+    if ( $.browser.modern )  return;
+
+    function from_Input() {
+
+        switch ( self.event.srcElement.tagName.toLowerCase() ) {
+            case 'input':       ;
+            case 'textarea':    return true;
+        }
+    }
+
+    $.customEvent('input',  function (DOM) {
+
+        if ('oninput'  in  Object.getPrototypeOf( DOM ))  return;
+
+        return  new Observer(function (next) {
+
+            var handler = {
+                    propertychange:    function () {
+
+                        if (self.event.propertyName === 'value')
+                            next( arguments[0] );
+                    },
+                    paste:             function () {
+
+                        if (! from_Input())  next( arguments[0] );
+                    },
+                    keyup:             function (iEvent) {
+
+                        var iKey = iEvent.keyCode;
+
+                        if (
+                            from_Input()  ||
+                            (iKey < 48)  ||  (iKey > 105)  ||
+                            ((iKey > 90)  &&  (iKey < 96))  ||
+                            iEvent.ctrlKey  ||  iEvent.shiftKey  ||  iEvent.altKey
+                        )
+                            return;
+
+                        next( iEvent );
+                    }
+                };
+
+            for (var type in handler)
+                DOM.attachEvent('on' + type,  handler[ type ]);
+
+            return  function () {
+
+                for (var type in handler)
+                    DOM.detachEvent('on' + type,  handler[ type ]);
+            };
+        });
+    });
+})(jquery);
+
+
+(function ($) {
+
+/* ---------- Form Field Validation ---------- */
+
+    function Value_Check() {
+
+        if ((! this.value)  &&  (this.getAttribute('required') != null))
+            return false;
+
+        var iRegEx = this.getAttribute('pattern');
+
+        if (iRegEx)  try {
+
+            return  RegExp( iRegEx ).test( this.value );
+
+        } catch (iError) { }
+
+        if (
+            (this.tagName.toLowerCase() === 'input')  &&
+            (this.getAttribute('type') === 'number')
+        ) {
+            var iNumber = Number( this.value ),
+                iMin = Number( this.getAttribute('min') );
+            if (
+                isNaN( iNumber )  ||
+                (iNumber < iMin)  ||
+                (iNumber > Number(this.getAttribute('max') || Infinity))  ||
+                ((iNumber - iMin)  %  Number( this.getAttribute('step') ))
+            )
+                return false;
+        }
+
+        return true;
+    }
+
+    $.fn.validate = function () {
+
+        var $_Field = this.find(':field').addBack(':field').removeClass('invalid');
+
+        for (var i = 0;  $_Field[i];  i++)
+            if ((
+                (typeof $_Field[i].checkValidity === 'function')  &&
+                (! $_Field[i].checkValidity())
+            )  ||  (
+                ! Value_Check.call( $_Field[i] )
+            )) {
+                $_Field = $( $_Field[i] ).addClass('invalid');
+
+                $_Field.scrollParents().eq(0).scrollTo( $_Field.focus() );
+
+                return false;
+            }
+
+        return true;
+    };
+
+/* ---------- Form Element AJAX Submit ---------- */
+
+    function AJAX_Submit(DataType, iCallback) {
+
+        var $_Form = $( this );
+
+        if ((! $_Form.validate())  ||  $_Form.data('_AJAX_Submitting_'))
+            return false;
+
+        $_Form.data('_AJAX_Submitting_', 1);
+
+        var iMethod = ($_Form.attr('method') || 'Get').toLowerCase();
+
+        arguments[0].preventDefault();
+
+        var iOption = {
+                type:        iMethod,
+                dataType:    DataType || 'json'
+            };
+
+        if (! $_Form.find('input[type="file"]')[0])
+            iOption.data = $_Form.serialize();
+        else {
+            iOption.data = new self.FormData( $_Form[0] );
+
+            iOption.contentType = iOption.processData = false;
+        }
+
+        $.ajax(this.action, iOption).then(function () {
+
+            $_Form.data('_AJAX_Submitting_', 0);
+
+            if (typeof iCallback === 'function')
+                iCallback.call($_Form[0], arguments[0]);
+        });
+    }
+
+    $.fn.ajaxSubmit = function (DataType, iCallback) {
+
+        if (! this[0])  return this;
+
+        if (typeof DataType === 'function')
+            iCallback = DataType,  DataType = '';
+
+        iCallback = $.proxy(AJAX_Submit, null, DataType, iCallback);
+
+        var $_This = (this.length < 2)  ?  this  :  this.sameParents().eq(0);
+
+        if ($_This[0].tagName.toLowerCase() === 'form')
+            $_This.submit( iCallback );
+        else
+            $_This.on('submit', 'form', iCallback);
+
+        return this;
+    };
+
+})(jquery);
+
+
+(function ($) {
+
+/* ---------- Focus AnyWhere ---------- */
+
+    var DOM_Focus = $.fn.focus;
+
+    $.fn.focus = function () {
+
+        this.not(':focusable').attr('tabIndex', -1).css('outline', 'none');
+
+        return  DOM_Focus.apply(this, arguments);
+    };
+
+/* ---------- User Idle Event ---------- */
+
+    var End_Event = 'keydown mousedown scroll';
+
+    $.fn.onIdleFor = function (iSecond, iCallback) {
+
+        return  this.each(function _Self_() {
+
+            var iNO,  $_This = $( this );
+
+            function iCancel() {
+
+                clearTimeout( iNO );
+
+                _Self_.call( $_This.off(End_Event, iCancel)[0] );
+            }
+
+            iNO = $.wait(iSecond,  function () {
+
+                iCallback.call(
+                    $_This.off(End_Event, iCancel)[0],
+                    $.Event({
+                        type:      'idle',
+                        target:    $_This[0]
+                    })
+                );
+
+                _Self_.call( $_This[0] );
+            });
+
+            $_This.one(End_Event, iCancel);
+        });
+    };
+
+/* ---------- Cross Page Event ---------- */
+
+    function CrossPageEvent(iType, iSource) {
+
+        if (typeof iType === 'string') {
+
+            this.type = iType;  this.target = iSource;
+        } else
+            $.extend(this, iType);
+
+        if (! (iSource && (iSource instanceof Element)))  return;
+
+        $.extend(this,  $.map(iSource.dataset,  function (iValue) {
+
+            if (typeof iValue === 'string')  try {
+
+                return  $.parseJSON( iValue );
+
+            } catch (iError) { }
+
+            return iValue;
+        }));
+    }
+
+    CrossPageEvent.prototype.valueOf = function () {
+
+        var iValue = $.extend({ }, this);
+
+        delete iValue.data;  delete iValue.target;  delete iValue.valueOf;
+
+        return iValue;
+    };
+
+    var $_BOM = $( self );
+
+    $.fn.onReply = function (iType, iData, iCallback) {
+
+        var iTarget = this[0],  $_Source;
+
+        if (typeof iTarget.postMessage != 'function')  return this;
+
+        if (arguments.length === 4) {
+
+            $_Source = $( iData );  iData = iCallback;  iCallback = arguments[3];
+        }
+
+        var _Event_ = new CrossPageEvent(iType,  ($_Source || { })[0]);
+
+        if (typeof iCallback === 'function')
+            $_BOM.on('message',  function onMessage(iEvent) {
+
+                iEvent = iEvent.originalEvent || iEvent;
+
+                var iReturn = new CrossPageEvent(
+                        (typeof iEvent.data === 'string')  ?
+                            $.parseJSON( iEvent.data )  :  iEvent.data
+                    );
+                if (
+                    (iEvent.source === iTarget)  &&
+                    (iReturn.type === iType)  &&
+                    $.isEqual(iReturn, _Event_)
+                ) {
+                    iCallback.call($_Source ? $_Source[0] : this,  iReturn);
+
+                    $_BOM.off('message', onMessage);
+                }
+            });
+
+        iData = $.extend({data: iData},  _Event_.valueOf());
+
+        iTarget.postMessage(
+            ($.browser.msie < 10)  ?  JSON.stringify( iData )  :  iData,  '*'
+        );
+    };
 })(jquery);
 });

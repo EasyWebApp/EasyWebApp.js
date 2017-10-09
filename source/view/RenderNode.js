@@ -1,4 +1,4 @@
-define(['jquery'],  function ($) {
+define(['jquery', 'jQueryKit'],  function ($) {
 
     function RenderNode(iNode) {
 
@@ -16,6 +16,7 @@ define(['jquery'],  function ($) {
 
     RenderNode.reference = /(view|scope)\.(\w+)/g;
 
+    RenderNode.Template_Type = $.makeSet(2, 3, 8);
 
     function Eval(view, scope, expression) {  'use strict';
         try {
@@ -37,11 +38,11 @@ define(['jquery'],  function ($) {
         push:        Array.prototype.push,
         scan:        function () {
 
-            var _This_ = this;
+            var _This_ = this,  node = this.ownerNode;
 
             this.splice(0, Infinity);    this.type = 0;
 
-            this.ownerNode.nodeValue = this.raw.replace(
+            node.nodeValue = this.raw.replace(
                 RenderNode.expression,  function (_, expression) {
 
                     if (/\w+\s*\([\s\S]*?\)/.test( expression ))
@@ -62,6 +63,26 @@ define(['jquery'],  function ($) {
                     return '';
                 }
             );
+
+            if ( this[0] )  switch ( node.nodeType ) {
+                case 8:    {
+                    this.ownerElement.replaceChild(
+                        node = document.createTextNode( node.nodeValue ),
+                        this.ownerNode
+                    );
+                    this.ownerNode = node,  this.name = node.nodeName;
+
+                    break;
+                }
+                case 2:
+                    if (
+                        (! node.nodeValue)  &&  (
+                            ($.propFix[node.nodeName] || node.nodeName)  in
+                            this.ownerElement
+                        )
+                    )
+                        this.ownerElement.removeAttribute( node.nodeName );
+            }
 
             return this;
         },

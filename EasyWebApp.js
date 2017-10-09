@@ -263,6 +263,7 @@ var view_RenderNode = (function ($) {
 
     RenderNode.reference = /(view|scope)\.(\w+)/g;
 
+    RenderNode.Template_Type = $.makeSet(2, 3, 8);
 
     function Eval(view, scope, expression) {  'use strict';
         try {
@@ -284,11 +285,11 @@ var view_RenderNode = (function ($) {
         push:        Array.prototype.push,
         scan:        function () {
 
-            var _This_ = this;
+            var _This_ = this,  node = this.ownerNode;
 
             this.splice(0, Infinity);    this.type = 0;
 
-            this.ownerNode.nodeValue = this.raw.replace(
+            node.nodeValue = this.raw.replace(
                 RenderNode.expression,  function (_, expression) {
 
                     if (/\w+\s*\([\s\S]*?\)/.test( expression ))
@@ -309,6 +310,26 @@ var view_RenderNode = (function ($) {
                     return '';
                 }
             );
+
+            if ( this[0] )  switch ( node.nodeType ) {
+                case 8:    {
+                    this.ownerElement.replaceChild(
+                        node = document.createTextNode( node.nodeValue ),
+                        this.ownerNode
+                    );
+                    this.ownerNode = node,  this.name = node.nodeName;
+
+                    break;
+                }
+                case 2:
+                    if (
+                        (! node.nodeValue)  &&  (
+                            ($.propFix[node.nodeName] || node.nodeName)  in
+                            this.ownerElement
+                        )
+                    )
+                        this.ownerElement.removeAttribute( node.nodeName );
+            }
 
             return this;
         },
@@ -461,7 +482,7 @@ var InnerLink = (function ($, Observer) {
         },
         loadData:    function () {
 
-            var Get_URL,  header = { };
+            var Get_URL, header;
 
             var iOption = {
                     method:         this.method,
@@ -475,18 +496,7 @@ var InnerLink = (function ($, Observer) {
 
                         if (this.method === 'GET')  Get_URL = this.url;
 
-                        XHR.getAllResponseHeaders().replace(
-                            /^([\w\-]+):\s*(.*)$/mg,  function (_, key, value) {
-
-                                if (typeof header[ key ]  ===  'string')
-                                    header[ key ] = [header[ key ]];
-
-                                if (header[ key ]  instanceof  Array)
-                                    header[ key ].push( value );
-                                else
-                                    header[ key ] = value;
-                            }
-                        );
+                        header = $.parseHeader( XHR.getAllResponseHeaders() );
                     }
                 };
 
@@ -742,7 +752,12 @@ var view_View = (function ($, Observer, DataScope, RenderNode) {
                             iDOM.dataset.name  ||
                             (iView = View.instanceOf(iDOM, false))
                         ) {
-                            Sub_View.push(iView  ||  View.getSub( iDOM ));
+                            iView = iView  ||  View.getSub( iDOM );
+
+                            Sub_View.push(
+                                (iView.parse  &&  (! iView.__parse__))  ?
+                                    iView.parse()  :  iView
+                            );
 
                             return null;
 
@@ -961,7 +976,7 @@ var view_DOMkit = (function ($, RenderNode, InnerLink) {
                 base = base.dataset.href;
 
 
-            $_Root.find( Object.keys( URL_DOM ) + '' ).each(function () {
+            $_Root.find(Object.keys( URL_DOM ) + '').not('head *').each(function () {
 
                 var URL = _This_.fixURL(
                         this,
@@ -1046,31 +1061,24 @@ var view_HTMLView = (function ($, View, DOMkit, RenderNode) {
         },
         parsePlain:    function (iDOM) {
 
-            var _This_ = this;
-
-            $.each(
+            Array.from(
                 Array.prototype.concat.apply(
                     $.makeArray( iDOM.attributes ),  iDOM.childNodes
                 ),
-                function () {
-                    if ((! this.nodeValue)  ||  (
-                        (this.nodeType != 2)  &&  (this.nodeType != 3)
-                    ))
-                        return;
+                function (node) {
+                    if (
+                        node.nodeValue  &&
+                        (node.nodeType in RenderNode.Template_Type)
+                    ) {
+                        node = new RenderNode( node );
 
-                    var iTemplate = new RenderNode( this );
-
-                    if (! iTemplate[0])  return;
-
-                    _This_.signIn( iTemplate );
-
-                    if ((! this.nodeValue)  &&  (this.nodeType == 2)  &&  (
-                        ($.propFix[this.nodeName] || this.nodeName)  in
-                        this.ownerElement
-                    ))
-                        this.ownerElement.removeAttribute( this.nodeName );
-                }
+                        if ( node[0] )  this.signIn( node );
+                    }
+                },
+                this
             );
+
+            return this;
         },
         parse:         function () {
 
@@ -1098,7 +1106,7 @@ var view_HTMLView = (function ($, View, DOMkit, RenderNode) {
                     }
 
                 if (iNode instanceof View)
-                    this.signIn( iNode );
+                    this.parsePlain( iNode.$_View[0] ).signIn( iNode );
                 else if ( !(tag in HTMLView.rawSelector))
                     this.parsePlain( iNode );
             });
@@ -1407,10 +1415,7 @@ var WebApp = (function ($, Observer, View, HTMLView, ListView, TreeView, DOMkit,
         },
         emitRoute:        function (link) {
 
-            var $_Nav = $('a[href], area[href]').not(
-                    this.$_View.find('a, area').addBack()
-                ),
-                route = this.getRoute();
+            var $_Nav = $('a[href], area[href]'),  route = this.getRoute();
 
             var page = route.split('?')[0];
 
@@ -1633,7 +1638,7 @@ var WebApp = (function ($, Observer, View, HTMLView, ListView, TreeView, DOMkit,
 //                    >>>  EasyWebApp.js  <<<
 //
 //
-//      [Version]    v4.0  (2017-09-27)  stable
+//      [Version]    v4.0  (2017-10-09)  stable
 //
 //      [Require]    iQuery  ||  jQuery with jQueryKit
 //

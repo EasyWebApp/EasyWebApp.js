@@ -1,5 +1,5 @@
 define([
-    'jquery', './RenderNode', '../InnerLink', 'jQueryKit'
+    'jquery', './RenderNode', '../InnerLink'
 ],  function ($, RenderNode, InnerLink) {
 
     var Invalid_Style = $.makeSet('inherit', 'initial'),
@@ -159,7 +159,7 @@ define([
                 base = base.dataset.href;
 
 
-            $_Root.find( Object.keys( URL_DOM ) + '' ).each(function () {
+            $_Root.find(Object.keys( URL_DOM ) + '').not('head *').each(function () {
 
                 var URL = _This_.fixURL(
                         this,

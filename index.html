@@ -15,29 +15,27 @@
     <link rel="stylesheet" href="docs/css/EasyWebUI.css" />
     <link rel="stylesheet" href="docs/css/index.css" />
     <link rel="stylesheet"
-          href="//cdn.bootcss.com/medium-editor/5.22.1/css/medium-editor.min.css" />
+          href="https://cdn.bootcss.com/medium-editor/5.23.2/css/medium-editor.min.css" />
     <link rel="stylesheet"
-          href="//cdn.bootcss.com/medium-editor/5.22.1/css/themes/default.min.css" />
+          href="https://cdn.bootcss.com/medium-editor/5.23.2/css/themes/default.min.css" />
 <!--[if lte IE 9]>
-    <script src="//cdn.bootcss.com/html5-history-api/4.2.8/history.min.js"></script>
+    <script src="https://cdn.bootcss.com/html5-history-api/4.2.8/history.min.js"></script>
 <![endif]-->
-    <script src="//cdn.bootcss.com/MutationObserver.js/0.3.2/mutationobserver.min.js"></script>
-    <script src="//cdn.bootcss.com/require.js/2.3.3/require.min.js"></script>
+    <script src="https://cdn.bootcss.com/MutationObserver.js/0.3.2/mutationobserver.min.js"></script>
+    <script src="https://cdn.bootcss.com/require.js/2.3.5/require.min.js"></script>
     <script>
     require.config({
         baseUrl:    'source/',
         paths:      {
-            jquery:          '//cdn.bootcss.com/jquery/3.2.1/jquery.min',
-            jQueryKit:       '../demo/javascript/jQueryKit',
+            jquery:          'https://cdn.bootcss.com/jquery/3.2.1/jquery.min',
+            jQueryKit:       '../docs/javascript/jQueryKit',
             EasyWebApp:      '../EasyWebApp',
             EasyWebUI:       '../docs/css/EasyWebUI',
-            marked:          '//cdn.bootcss.com/marked/0.3.6/marked.min',
+            marked:          'https://cdn.bootcss.com/marked/0.3.6/marked.min',
             MediumEditor:
-                '//cdn.bootcss.com/medium-editor/5.22.1/js/medium-editor.min',
+                'https://cdn.bootcss.com/medium-editor/5.23.2/js/medium-editor.min',
             QRcode:
-                '//cdn.bootcss.com/lrsjng.jquery-qrcode/0.14.0/jquery-qrcode.min',
-            Git_List:        '../docs/html/Git_List',
-            Data_Table:      '../component/Data_Table'
+                'https://cdn.bootcss.com/lrsjng.jquery-qrcode/0.14.0/jquery-qrcode.min'
         },
         shim:       {QRcode:  ['jquery']}
     });
@@ -47,17 +45,15 @@
     <div class="Head CenterX Black_O">
         <div class="Grid-Row CenterY">
             <div id="Main_Title">
-                <h1><a href="docs/html/Git_List.html?data=docs/html/Git_List.json">
-                    ${view.Title}
-                </a></h1>
-                <p>${view.Description}</p>
+                <h1><!--${view.Title}--></h1>
+                <p><!--${view.Description}--></p>
             </div>
         </div>
         <div class="DropDown Head">
             <ul class="NavBar Black_O" id="Main_Nav" data-name="Main_Nav">
                 <li><a target="${view.target || '_self'}" href="${view.href}"
                        data-autofocus="${view.autofocus}">
-                    ${view.title}
+                    <!--${view.title}-->
                 </a></li>
             </ul>
         </div>

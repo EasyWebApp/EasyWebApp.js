@@ -141,7 +141,12 @@ define([
                             iDOM.dataset.name  ||
                             (iView = View.instanceOf(iDOM, false))
                         ) {
-                            Sub_View.push(iView  ||  View.getSub( iDOM ));
+                            iView = iView  ||  View.getSub( iDOM );
+
+                            Sub_View.push(
+                                (iView.parse  &&  (! iView.__parse__))  ?
+                                    iView.parse()  :  iView
+                            );
 
                             return null;
 

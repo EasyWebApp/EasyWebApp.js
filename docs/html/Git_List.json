@@ -1,8 +1,0 @@
-{
-    "Git_API":        "https://api.github.com",
-    "Git_Token":      "39ff883676bf43c5723e92701487a020ad1abfb2",
-    "Git_Account":    "TechQuery",
-    "Git_Repo":       "EasyWebApp.js",
-    "Git_Branch":     "MVVM",
-    "Root_Path":      "docs/markdown"
-}

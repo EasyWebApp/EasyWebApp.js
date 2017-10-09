@@ -49,31 +49,24 @@ define([
         },
         parsePlain:    function (iDOM) {
 
-            var _This_ = this;
-
-            $.each(
+            Array.from(
                 Array.prototype.concat.apply(
                     $.makeArray( iDOM.attributes ),  iDOM.childNodes
                 ),
-                function () {
-                    if ((! this.nodeValue)  ||  (
-                        (this.nodeType != 2)  &&  (this.nodeType != 3)
-                    ))
-                        return;
+                function (node) {
+                    if (
+                        node.nodeValue  &&
+                        (node.nodeType in RenderNode.Template_Type)
+                    ) {
+                        node = new RenderNode( node );
 
-                    var iTemplate = new RenderNode( this );
-
-                    if (! iTemplate[0])  return;
-
-                    _This_.signIn( iTemplate );
-
-                    if ((! this.nodeValue)  &&  (this.nodeType == 2)  &&  (
-                        ($.propFix[this.nodeName] || this.nodeName)  in
-                        this.ownerElement
-                    ))
-                        this.ownerElement.removeAttribute( this.nodeName );
-                }
+                        if ( node[0] )  this.signIn( node );
+                    }
+                },
+                this
             );
+
+            return this;
         },
         parse:         function () {
 
@@ -101,7 +94,7 @@ define([
                     }
 
                 if (iNode instanceof View)
-                    this.signIn( iNode );
+                    this.parsePlain( iNode.$_View[0] ).signIn( iNode );
                 else if ( !(tag in HTMLView.rawSelector))
                     this.parsePlain( iNode );
             });
