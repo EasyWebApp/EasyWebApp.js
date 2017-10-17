@@ -133,7 +133,10 @@ define([
 
                         if ( iDOM.dataset.href ) {
 
-                            this.__child__.push( View.getSub( iDOM ) );
+                            iView = View.getSub( iDOM );
+
+                            if (this.__child__.indexOf( iView )  <  0)
+                                this.__child__.push( iView );
 
                             return null;
 

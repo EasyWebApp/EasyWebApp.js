@@ -2,6 +2,7 @@
 
 基于 AMD 规范加载器、jQuery v3.2+ 构建，兼容 IE 9+、ECMAScript 5+、HTML 5+
 
+[![Learn it with Demo](https://img.shields.io/badge/Learn%20it-with%20Demo-blue.svg)](https://github.com/TechQuery/GitHub/)
 [![Join the chat at https://gitter.im/EasyWebApp-js/Lobby](https://badges.gitter.im/EasyWebApp-js/Lobby.svg)](https://gitter.im/EasyWebApp-js/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 
@@ -41,12 +42,6 @@ MVVM 引擎只需扫描 DOM 树，即可 **自动加载 HTML、JSON** 来构建 
 
 ### 内置视图对象
 
- - **事件接口** `Observer($_Box)`
-   - 查找实例：`.instanceOf(iDOM, Check_Parent)` 
-   - 注册回调：`.prototype.on(iEvent, iCallback)`
-   - 注销回调：`.prototype.off(iEvent, iCallback)`
-   - 一次监听：`.prototype.one(iEvent, iCallback)`
-   - 触发事件：`.prototype.emit(iEvent, iData)`
  - **抽象视图** `View($_Box, scope)`（不可实例化）
    - 继承父类：`Observer()`
    - 继承视图：`.extend(iConstructor, iStatic, iPrototype)`
@@ -68,7 +63,7 @@ MVVM 引擎只需扫描 DOM 树，即可 **自动加载 HTML、JSON** 来构建 
    - 查找一项：`.prototype.indexOf( $_Item )`
    - 删除一项：`.prototype.remove( Index )`
  - **树形视图** `TreeView($_Box, scope)`（对应 JSON 数组 + 对象）
-   - 数据转换：`.fromFlat(list, child_key)
+   - 数据转换：`.fromFlat(list, child_key)`
 
 以上视图的构造函数 均可从 `$.fn.iWebApp` 命名空间访问到，并可无需 `WebApp()` 实例初始化即可单独使用。
 
@@ -306,7 +301,7 @@ EWA 引擎会自动用它返回的数据对象来更新 VM。
 
 ### （二）官方组件
 
- 1. [全局 AJAX 加载遮罩](component/loading/)
+ 1. [全局 AJAX 加载遮罩](component/loading.html)
 
  2. [行政区多级联动选择](component/Admin_District.html)（基于高德地图 HTTP API）
 
@@ -315,6 +310,55 @@ EWA 引擎会自动用它返回的数据对象来更新 VM。
  4. [轮播图](component/carousel.html)
 
  5. [阅读导航栏](component/read-nav.html)
+
+
+
+## 【声明式事件】
+
+
+**声明式事件绑定**的统一形式：`<element onEvent="${view.callback}" />`
+
+ - `element`：HTML 标签名
+ - `Event`：HTML / EWA 事件名
+ - `callback`：事件回调在数据对象中的键名，该函数运行时 `this` 指向 `element` 在 HTML 结构上所处视图的 VM 对象
+
+
+### 内置事件
+
+| 事件名    | 来源对象   | 监听方式   | 触发原因     | 触发阶段 | 回调数据                                    |
+|:--------:|:---------:|----------|:-----------:|:-------:|-------------------------------------------|
+| request  | InnerLink | JS、HTML | AJAX 请求    | 之前     | jQuery AJAX 选项、jqXHR 对象               |
+| template | HTMLView  | JS、HTML | 组件模板      | 之后     | 组件结构代码（如 HTML、MarkDown）           |
+| data     | InnerLink | JS、HTML | 数据加载      | 之后     | JSON 对象                                |
+| ready    | View      | JS、HTML | 组件渲染      | 之后     | 视图对象                                  |
+| route    | WebApp    | JS       | 路由切换      | 之后     | 当前页**匹配的超链接**元素集合（jQuery 对象） |
+| attach   | View      | JS       | 组件挂载      | 之后     |                                         |
+| detach   | View      | JS       | 组件卸载      | 之后     |                                         |
+| update   | View      | JS、HTML | 自定义属性更新 | 之后     | 更新的键值对                              |
+
+
+### 事件接口
+
+ - 多条件观察者 `Observer($_Box)`
+
+   - 查找实例：`.instanceOf(iDOM, Check_Parent)` 
+
+   - 注册回调：`.prototype.on(iEvent, iCallback)`
+     - 回调函数 `this` 指向注册时的对象
+     - 回调函数 第一参数为事件对象，第二参数为事件触发时的附加数据
+     - 当前回调函数的返回值 将作为下个执行回调的第二参数
+
+   - 注销回调：`.prototype.off(iEvent, iCallback)`
+
+   - 一次监听：`.prototype.one(iEvent, iCallback)`
+     - 省略回调 将返回 Promise 对象
+
+   - 触发事件：`.prototype.emit(iEvent, iData)`
+
+ - 实现类：`View`、`InnerLink`、`WebApp`
+
+上述 `iEvent` 参数可仅为一个事件名字符串，也可用一个对象描述更多的条件（对象属性值可为字符串、正则表达式、DOM 对象等）。
+
 
 
 ## 【沉浸式体验】

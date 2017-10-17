@@ -139,11 +139,18 @@ define([
 
             return iView;
         },
+        loadChild:        function (view) {
+
+            return Promise.all($.map(
+                view.childOf(':visible'),  this.load.bind( this )
+            )).then(function () {
+
+                return view;
+            });
+        },
         loadComponent:    function (iLink, iHTML, iData) {
 
-            var JS_Load = iLink.one('load');
-
-            var iView = this.loadView(iLink, iHTML),  _This_ = this;
+            var JS_Load = iLink.one('load'),  iView = this.loadView(iLink, iHTML);
 
             return  JS_Load.then(function (iFactory) {
 
@@ -151,15 +158,24 @@ define([
                     iData,  iLink.data,  iLink.$_View[0].dataset,  iData
                 );
 
-                iView.render(
+                return iView.render(
                     iFactory  ?  (iFactory.call(iView, iData)  ||  iData)  :  iData
                 );
-            }).then(function () {
+            }).then( this.loadChild.bind( this ) );
+        },
+        autoFocus:        function (global) {
 
-                return Promise.all($.map(
-                    iView.childOf(':visible'),  _This_.load.bind(_This_)
-                ));
-            }).then(function () {  return iView;  });
+            var target = $(
+                    'a[href][data-autofocus="true"]',
+                    global ? document : this.$_View[0]
+                )[0];
+
+            if ( target ) {
+
+                target.click();
+
+                return  this.one({type: 'ready',  target: this.$_View[0]});
+            }
         },
         load:             function (iLink) {
 
@@ -196,9 +212,18 @@ define([
                 if (iLink.target !== 'data')
                     return  _This_.loadComponent(iLink, arguments[0][0], iData);
 
-            }).then(function (iView) {
+            }).then(function (view) {
 
-                if (iView instanceof View)  _This_._emit('ready', iLink, iView);
+                if (! (view instanceof View))  return;
+
+                var promise = view.one('ready');
+
+                _This_._emit('ready', iLink, view);
+
+                if (iLink.target === 'page')
+                    promise = _This_.autoFocus() || promise;
+
+                return promise;
             });
         },
         loadPage:         function (iURI) {
@@ -262,24 +287,19 @@ define([
         },
         boot:             function () {
 
-            var $_View = $('[data-href]:not([data-href] *)').not(
-                    this.$_View.find('[data-href]')
-                ),
+            DOMkit.build(document.body, '');
+
+            var root = (new HTMLView('html')).parse().render( $.paramJSON() ),
                 _This_ = this;
 
-            DOMkit.build($_View.sameParents()[0], '');
-
-            return  Promise.all($.map($_View,  function () {
-
-                return  _This_.load( arguments[0] );
-
-            })).then(function () {
+            return  this[root.$_View[0].dataset.href ? 'load' : 'loadChild'](
+                root
+            ).then(function () {
 
                 var Init = _This_.getRoute();
 
-                if ( Init )  return  _This_.loadPage( Init );
-
-                $('a[href][data-autofocus="true"]').eq(0).click();
+                return  Init ?
+                    _This_.loadPage( Init )  :  _This_.autoFocus( true );
             });
         }
     });

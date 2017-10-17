@@ -33,6 +33,7 @@ define([
                 );
         }
     }, {
+        indexOf:       Array.prototype.indexOf,
         signIn:        function (iNode) {
 
             for (var i = 0;  this[i];  i++)  if (this[i] == iNode)  return;
@@ -93,9 +94,12 @@ define([
                         case 'script':    return  DOMkit.fixScript( iNode );
                     }
 
-                if (iNode instanceof View)
-                    this.parsePlain( iNode.$_View[0] ).signIn( iNode );
-                else if ( !(tag in HTMLView.rawSelector))
+                if (iNode instanceof View) {
+
+                    if (this.indexOf( iNode )  <  0)
+                        this.parsePlain( iNode.$_View[0] ).signIn( iNode );
+
+                } else if ( !(tag in HTMLView.rawSelector))
                     this.parsePlain( iNode );
             });
         },
@@ -125,7 +129,7 @@ define([
                 }
             );
         },
-        render:        function render(iData, value) {
+        render:        function (iData, value) {
 
             var _Data_ = { },  exclude;
 
