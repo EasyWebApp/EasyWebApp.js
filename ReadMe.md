@@ -42,32 +42,11 @@ MVVM 引擎只需扫描 DOM 树，即可 **自动加载 HTML、JSON** 来构建 
 
 ### 内置视图对象
 
- - **抽象视图** `View($_Box, scope)`（不可实例化）
-   - 继承父类：`Observer()`
-   - 继承视图：`.extend(iConstructor, iStatic, iPrototype)`
-   - 遍历 DOM：`.prototype.scan( iParser )` 
-   - 双向绑定：`.prototype.watch(key, get_set)` 
-   - 获取数据：`.prototype.valueOf()`
-   - 查子组件：`.prototype.childOf( iSelector )`
- - **普通视图** `HTMLView($_Box, scope)`（对应 JSON 对象）
-   - 继承父类：`View()`
-   - 解析 DOM：`.prototype.parse(BaseURL, Template_with_Slot)`
-   - 渲染数据：`.prototype.render( iObject )`
- - **迭代视图** `ListView($_Box, scope)`（对应 JSON 数组）
-   - 继承父类：`View()`
-   - 默认匹配：设置了 `data-name` 属性的 `ul, ol, tbody, select, datalist` 元素
-   - 清空列表：`.prototype.clear()`
-   - 插入一项：`.prototype.insert(iObject, Index)`
-   - 渲染列表：`.prototype.render(list, index)` 
-   - 列表排序：`.prototype.sort( iCallback )`
-   - 查找一项：`.prototype.indexOf( $_Item )`
-   - 删除一项：`.prototype.remove( Index )`
- - **树形视图** `TreeView($_Box, scope)`（对应 JSON 数组 + 对象）
-   - 数据转换：`.fromFlat(list, child_key)`
+<a target="_blank" href="docs/API/">【API 文档】</a>
 
 以上视图的构造函数 均可从 `$.fn.iWebApp` 命名空间访问到，并可无需 `WebApp()` 实例初始化即可单独使用。
 
-【jQuery 快捷方法】
+<a target="_blank" href="docs/API/external-_jQuery.fn_.html">【jQuery 快捷方法】</a>
 
  - 构建视图：`$('selector of view').view(Class_Name, iScope)`
  - 查找视图：`$(':view', Root_DOM).view()`
@@ -310,6 +289,8 @@ EWA 引擎会自动用它返回的数据对象来更新 VM。
  4. [轮播图](component/carousel.html)
 
  5. [阅读导航栏](component/read-nav.html)
+
+ 6. [GitHub 网页挂件](https://github.com/TechQuery/GitHub-Web-Widget)
 
 
 

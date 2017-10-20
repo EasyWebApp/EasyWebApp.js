@@ -15,9 +15,14 @@
             "href":     "docs/html/try.html?data=docs/html/try.json"
         },
         {
+            "title":     "API 文档",
+            "target":    "_blank",
+            "href":      "docs/API/"
+        },
+        {
             "title":     "演示程序",
             "target":    "_blank",
-            "href":      "demo/"
+            "href":      "https://techquery.github.io/GitHub"
         },
         {
             "title":     "开源代码",

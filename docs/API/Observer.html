@@ -1,0 +1,1933 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Class: Observer</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Class: Observer</h1>
+
+
+
+
+
+
+<section>
+
+<header>
+
+        <h2><span class="attribs"><span class="type-signature"></span></span>Observer<span class="signature">($_View, all_event<span class="signature-attributes">opt</span>)</span><span class="type-signature"> &rarr; {<a href="Observer.html">Observer</a>}</span></h2>
+
+
+</header>
+
+<article>
+    <div class="container-overview">
+
+
+
+
+
+
+    <h4 class="name" id="Observer"><span class="type-signature"></span>new Observer<span class="signature">($_View, all_event<span class="signature-attributes">opt</span>)</span><span class="type-signature"> &rarr; {<a href="Observer.html">Observer</a>}</span></h4>
+
+
+
+
+
+
+<div class="description">
+    多条件观察者
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+
+
+<table class="params">
+    <thead>
+    <tr>
+
+        <th>Name</th>
+
+
+        <th>Type</th>
+
+
+        <th>Attributes</th>
+
+
+
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+
+
+        <tr>
+
+                <td class="name"><code>$_View</code></td>
+
+
+            <td class="type">
+
+
+<span class="param-type">jQueryAcceptable</span>
+
+
+
+            </td>
+
+
+                <td class="attributes">
+
+
+
+
+
+                </td>
+
+
+
+
+            <td class="description last">Container DOM of Observer</td>
+        </tr>
+
+
+
+        <tr>
+
+                <td class="name"><code>all_event</code></td>
+
+
+            <td class="type">
+
+
+<span class="param-type">boolean</span>
+
+
+
+            </td>
+
+
+                <td class="attributes">
+
+                    &lt;optional><br>
+
+
+
+
+
+                </td>
+
+
+
+
+            <td class="description last">Register all kinds of
+                                          event handlers in HTML code</td>
+        </tr>
+
+
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <dt class="tag-author">Author:</dt>
+    <dd class="tag-author">
+        <ul>
+            <li>TechQuery</li>
+        </ul>
+    </dd>
+
+
+
+
+
+
+
+
+
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="base_Observer.js.html">base/Observer.js</a>, <a href="base_Observer.js.html#line3">line 3</a>
+    </li></ul></dd>
+
+
+
+
+
+
+
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+
+<div class="param-desc">
+    Return the last one if a Observer instance
+                            has been created on this element
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+
+<span class="param-type"><a href="Observer.html">Observer</a></span>
+
+
+    </dd>
+</dl>
+
+
+
+
+
+
+
+
+    </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        <h3 class="subsection-title">Methods</h3>
+
+
+
+
+
+
+
+    <h4 class="name" id=".extend"><span class="type-signature">(static) </span>extend<span class="signature">(constructor, Static<span class="signature-attributes">nullable</span>, prototype<span class="signature-attributes">opt</span>)</span><span class="type-signature"> &rarr; {function}</span></h4>
+
+
+
+
+
+
+<div class="description">
+    继承出一个观察者子类
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+
+
+<table class="params">
+    <thead>
+    <tr>
+
+        <th>Name</th>
+
+
+        <th>Type</th>
+
+
+        <th>Attributes</th>
+
+
+
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+
+
+        <tr>
+
+                <td class="name"><code>constructor</code></td>
+
+
+            <td class="type">
+
+
+<span class="param-type">function</span>
+
+
+
+            </td>
+
+
+                <td class="attributes">
+
+
+
+
+
+                </td>
+
+
+
+
+            <td class="description last">Constructor of the Sub Class</td>
+        </tr>
+
+
+
+        <tr>
+
+                <td class="name"><code>Static</code></td>
+
+
+            <td class="type">
+
+
+<span class="param-type">object</span>
+
+
+
+            </td>
+
+
+                <td class="attributes">
+
+
+
+                    &lt;nullable><br>
+
+
+
+                </td>
+
+
+
+
+            <td class="description last">Static properties</td>
+        </tr>
+
+
+
+        <tr>
+
+                <td class="name"><code>prototype</code></td>
+
+
+            <td class="type">
+
+
+<span class="param-type">object</span>
+
+
+
+            </td>
+
+
+                <td class="attributes">
+
+                    &lt;optional><br>
+
+
+
+
+
+                </td>
+
+
+
+
+            <td class="description last">Instance properties</td>
+        </tr>
+
+
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <dt class="tag-author">Author:</dt>
+    <dd class="tag-author">
+        <ul>
+            <li>TechQuery</li>
+        </ul>
+    </dd>
+
+
+
+
+
+
+
+
+
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="base_Observer.js.html">base/Observer.js</a>, <a href="base_Observer.js.html#line156">line 156</a>
+    </li></ul></dd>
+
+
+
+
+
+
+
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+
+<div class="param-desc">
+    The Sub Class
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+
+<span class="param-type">function</span>
+
+
+    </dd>
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <h4 class="name" id=".instanceOf"><span class="type-signature">(static) </span>instanceOf<span class="signature">($_DOM, Check_Parent)</span><span class="type-signature"> &rarr; {<a href="Observer.html">Observer</a>}</span></h4>
+
+
+
+
+
+
+<div class="description">
+    从一个元素节点开始向上查找实例，并返回首个发现的实例
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+
+
+<table class="params">
+    <thead>
+    <tr>
+
+        <th>Name</th>
+
+
+        <th>Type</th>
+
+
+
+
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+
+
+        <tr>
+
+                <td class="name"><code>$_DOM</code></td>
+
+
+            <td class="type">
+
+
+<span class="param-type">jQueryAcceptable</span>
+
+
+
+            </td>
+
+
+
+
+
+            <td class="description last">Search up from this Element</td>
+        </tr>
+
+
+
+        <tr>
+
+                <td class="name"><code>Check_Parent</code></td>
+
+
+            <td class="type">
+
+
+<span class="param-type">boolean</span>
+
+
+
+            </td>
+
+
+
+
+
+            <td class="description last"></td>
+        </tr>
+
+
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <dt class="tag-author">Author:</dt>
+    <dd class="tag-author">
+        <ul>
+            <li>TechQuery</li>
+        </ul>
+    </dd>
+
+
+
+
+
+
+
+
+
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="base_Observer.js.html">base/Observer.js</a>, <a href="base_Observer.js.html#line126">line 126</a>
+    </li></ul></dd>
+
+
+
+
+
+
+
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+
+<div class="param-desc">
+    Observer instance
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+
+<span class="param-type"><a href="Observer.html">Observer</a></span>
+
+
+    </dd>
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <h4 class="name" id=".registerEvent"><span class="type-signature">(protected, static) </span>registerEvent<span class="signature">(&hellip;name)</span><span class="type-signature"> &rarr; {function}</span></h4>
+
+
+
+
+
+
+<div class="description">
+    注册子类事件类型
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+
+
+<table class="params">
+    <thead>
+    <tr>
+
+        <th>Name</th>
+
+
+        <th>Type</th>
+
+
+        <th>Attributes</th>
+
+
+
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+
+
+        <tr>
+
+                <td class="name"><code>name</code></td>
+
+
+            <td class="type">
+
+
+<span class="param-type">string</span>
+
+
+
+            </td>
+
+
+                <td class="attributes">
+
+
+
+
+
+                    &lt;repeatable><br>
+
+                </td>
+
+
+
+
+            <td class="description last">Event Names</td>
+        </tr>
+
+
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <dt class="tag-author">Author:</dt>
+    <dd class="tag-author">
+        <ul>
+            <li>TechQuery</li>
+        </ul>
+    </dd>
+
+
+
+
+
+
+
+
+
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="base_Observer.js.html">base/Observer.js</a>, <a href="base_Observer.js.html#line96">line 96</a>
+    </li></ul></dd>
+
+
+
+
+
+
+
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+
+<div class="param-desc">
+    Sub Class of Observer
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+
+<span class="param-type">function</span>
+
+
+    </dd>
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <h4 class="name" id="emit"><span class="type-signature"></span>emit<span class="signature">(event, data<span class="signature-attributes">opt</span>)</span><span class="type-signature"> &rarr; {*}</span></h4>
+
+
+
+
+
+
+<div class="description">
+    触发一个事件
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+
+
+<table class="params">
+    <thead>
+    <tr>
+
+        <th>Name</th>
+
+
+        <th>Type</th>
+
+
+        <th>Attributes</th>
+
+
+
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+
+
+        <tr>
+
+                <td class="name"><code>event</code></td>
+
+
+            <td class="type">
+
+
+<span class="param-type">string</span>
+|
+
+<span class="param-type">object</span>
+
+
+
+            </td>
+
+
+                <td class="attributes">
+
+
+
+
+
+                </td>
+
+
+
+
+            <td class="description last">An Event Name or Event Object</td>
+        </tr>
+
+
+
+        <tr>
+
+                <td class="name"><code>data</code></td>
+
+
+            <td class="type">
+
+
+<span class="param-type">*</span>
+
+
+
+            </td>
+
+
+                <td class="attributes">
+
+                    &lt;optional><br>
+
+
+
+
+
+                </td>
+
+
+
+
+            <td class="description last">Additional Data for callbacks</td>
+        </tr>
+
+
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <dt class="tag-author">Author:</dt>
+    <dd class="tag-author">
+        <ul>
+            <li>TechQuery</li>
+        </ul>
+    </dd>
+
+
+
+
+
+
+
+
+
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="base_Observer.js.html">base/Observer.js</a>, <a href="base_Observer.js.html#line265">line 265</a>
+    </li></ul></dd>
+
+
+
+
+
+
+
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+
+<div class="param-desc">
+    Data returned by last callback
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+
+<span class="param-type">*</span>
+
+
+    </dd>
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <h4 class="name" id="off"><span class="type-signature"></span>off<span class="signature">(event, callback<span class="signature-attributes">opt</span>)</span><span class="type-signature"> &rarr; {<a href="Observer.html">Observer</a>}</span></h4>
+
+
+
+
+
+
+<div class="description">
+    注销事件回调
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+
+
+<table class="params">
+    <thead>
+    <tr>
+
+        <th>Name</th>
+
+
+        <th>Type</th>
+
+
+        <th>Attributes</th>
+
+
+
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+
+
+        <tr>
+
+                <td class="name"><code>event</code></td>
+
+
+            <td class="type">
+
+
+<span class="param-type">string</span>
+|
+
+<span class="param-type">object</span>
+
+
+
+            </td>
+
+
+                <td class="attributes">
+
+
+
+
+
+                </td>
+
+
+
+
+            <td class="description last">An Event Name or Event Object</td>
+        </tr>
+
+
+
+        <tr>
+
+                <td class="name"><code>callback</code></td>
+
+
+            <td class="type">
+
+
+<span class="param-type">function</span>
+
+
+
+            </td>
+
+
+                <td class="attributes">
+
+                    &lt;optional><br>
+
+
+
+
+
+                </td>
+
+
+
+
+            <td class="description last"></td>
+        </tr>
+
+
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <dt class="tag-author">Author:</dt>
+    <dd class="tag-author">
+        <ul>
+            <li>TechQuery</li>
+        </ul>
+    </dd>
+
+
+
+
+
+
+
+
+
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="base_Observer.js.html">base/Observer.js</a>, <a href="base_Observer.js.html#line294">line 294</a>
+    </li></ul></dd>
+
+
+
+
+
+
+
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+
+<div class="param-desc">
+    Current Observer
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+
+<span class="param-type"><a href="Observer.html">Observer</a></span>
+
+
+    </dd>
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <h4 class="name" id="on"><span class="type-signature"></span>on<span class="signature">(event, callback)</span><span class="type-signature"> &rarr; {<a href="Observer.html">Observer</a>}</span></h4>
+
+
+
+
+
+
+<div class="description">
+    注册一个事件回调
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+
+
+<table class="params">
+    <thead>
+    <tr>
+
+        <th>Name</th>
+
+
+        <th>Type</th>
+
+
+
+
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+
+
+        <tr>
+
+                <td class="name"><code>event</code></td>
+
+
+            <td class="type">
+
+
+<span class="param-type">string</span>
+|
+
+<span class="param-type">object</span>
+
+
+
+            </td>
+
+
+
+
+
+            <td class="description last">An Event Name or Event Object</td>
+        </tr>
+
+
+
+        <tr>
+
+                <td class="name"><code>callback</code></td>
+
+
+            <td class="type">
+
+
+<span class="param-type">function</span>
+
+
+
+            </td>
+
+
+
+
+
+            <td class="description last"></td>
+        </tr>
+
+
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <dt class="tag-author">Author:</dt>
+    <dd class="tag-author">
+        <ul>
+            <li>TechQuery</li>
+        </ul>
+    </dd>
+
+
+
+
+
+
+
+
+
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="base_Observer.js.html">base/Observer.js</a>, <a href="base_Observer.js.html#line239">line 239</a>
+    </li></ul></dd>
+
+
+
+
+
+
+
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+
+<div class="param-desc">
+    Current Observer
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+
+<span class="param-type"><a href="Observer.html">Observer</a></span>
+
+
+    </dd>
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <h4 class="name" id="one"><span class="type-signature"></span>one<span class="signature">(event, callback<span class="signature-attributes">opt</span>)</span><span class="type-signature"> &rarr; {<a href="Observer.html">Observer</a>|Promise}</span></h4>
+
+
+
+
+
+
+<div class="description">
+    注册一个事件回调（一次性）
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+
+
+<table class="params">
+    <thead>
+    <tr>
+
+        <th>Name</th>
+
+
+        <th>Type</th>
+
+
+        <th>Attributes</th>
+
+
+
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+
+
+        <tr>
+
+                <td class="name"><code>event</code></td>
+
+
+            <td class="type">
+
+
+<span class="param-type">string</span>
+|
+
+<span class="param-type">object</span>
+
+
+
+            </td>
+
+
+                <td class="attributes">
+
+
+
+
+
+                </td>
+
+
+
+
+            <td class="description last">An Event Name or Event Object</td>
+        </tr>
+
+
+
+        <tr>
+
+                <td class="name"><code>callback</code></td>
+
+
+            <td class="type">
+
+
+<span class="param-type">function</span>
+
+
+
+            </td>
+
+
+                <td class="attributes">
+
+                    &lt;optional><br>
+
+
+
+
+
+                </td>
+
+
+
+
+            <td class="description last"></td>
+        </tr>
+
+
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <dt class="tag-author">Author:</dt>
+    <dd class="tag-author">
+        <ul>
+            <li>TechQuery</li>
+        </ul>
+    </dd>
+
+
+
+
+
+
+
+
+
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="base_Observer.js.html">base/Observer.js</a>, <a href="base_Observer.js.html#line319">line 319</a>
+    </li></ul></dd>
+
+
+
+
+
+
+
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+
+<div class="param-desc">
+    Current Observer or Promise
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+
+<span class="param-type"><a href="Observer.html">Observer</a></span>
+|
+
+<span class="param-type">Promise</span>
+
+
+    </dd>
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <h4 class="name" id="valueOf"><span class="type-signature"></span>valueOf<span class="signature">(event<span class="signature-attributes">opt</span>, key<span class="signature-attributes">opt</span>)</span><span class="type-signature"> &rarr; {object|Array.&lt;object>}</span></h4>
+
+
+
+
+
+
+<div class="description">
+    查询事件
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+
+
+<table class="params">
+    <thead>
+    <tr>
+
+        <th>Name</th>
+
+
+        <th>Type</th>
+
+
+        <th>Attributes</th>
+
+
+
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+
+
+        <tr>
+
+                <td class="name"><code>event</code></td>
+
+
+            <td class="type">
+
+
+<span class="param-type">string</span>
+
+
+
+            </td>
+
+
+                <td class="attributes">
+
+                    &lt;optional><br>
+
+
+
+
+
+                </td>
+
+
+
+
+            <td class="description last">Event Name</td>
+        </tr>
+
+
+
+        <tr>
+
+                <td class="name"><code>key</code></td>
+
+
+            <td class="type">
+
+
+<span class="param-type">string</span>
+
+
+
+            </td>
+
+
+                <td class="attributes">
+
+                    &lt;optional><br>
+
+
+
+
+
+                </td>
+
+
+
+
+            <td class="description last">Key of Event property</td>
+        </tr>
+
+
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <dt class="tag-author">Author:</dt>
+    <dd class="tag-author">
+        <ul>
+            <li>TechQuery</li>
+        </ul>
+    </dd>
+
+
+
+
+
+
+
+
+
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="base_Observer.js.html">base/Observer.js</a>, <a href="base_Observer.js.html#line217">line 217</a>
+    </li></ul></dd>
+
+
+
+
+
+
+
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+<h5>Returns:</h5>
+
+
+<div class="param-desc">
+    Event Handlers
+</div>
+
+
+
+<dl>
+    <dt>
+        Type
+    </dt>
+    <dd>
+
+<span class="param-type">object</span>
+|
+
+<span class="param-type">Array.&lt;object></span>
+
+
+    </dd>
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+</article>
+
+</section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-WebApp.html">WebApp</a></li></ul><h3>Externals</h3><ul><li><a href="external-_jQuery.fn_.html">jQuery.fn</a></li></ul><h3>Classes</h3><ul><li><a href="DataScope.html">DataScope</a></li><li><a href="HTMLView.html">HTMLView</a></li><li><a href="InnerLink.html">InnerLink</a></li><li><a href="ListView.html">ListView</a></li><li><a href="Observer.html">Observer</a></li><li><a href="RenderNode.html">RenderNode</a></li><li><a href="TreeView.html">TreeView</a></li><li><a href="View.html">View</a></li><li><a href="WebApp.html">WebApp</a></li></ul><h3>Events</h3><ul><li><a href="HTMLView.html#event:attach">attach</a></li><li><a href="HTMLView.html#event:update">update</a></li><li><a href="ListView.html#event:attach">attach</a></li><li><a href="ListView.html#event:update">update</a></li><li><a href="TreeView.html#event:attach">attach</a></li><li><a href="TreeView.html#event:update">update</a></li><li><a href="View.html#event:attach">attach</a></li><li><a href="View.html#event:update">update</a></li><li><a href="WebApp.html#event:data">data</a></li><li><a href="WebApp.html#event:ready">ready</a></li><li><a href="WebApp.html#event:request">request</a></li><li><a href="WebApp.html#event:route">route</a></li><li><a href="WebApp.html#event:template">template</a></li></ul><h3><a href="global.html">Global</a></h3>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> on Sat Oct 21 2017 06:48:34 GMT+0800 (中国标准时间)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

@@ -1,5 +1,18 @@
 define(['jquery'],  function ($) {
 
+    /**
+     * 数据作用域
+     *
+     * @author  TechQuery
+     *
+     * @class   DataScope
+     * @extends Array
+     *
+     * @param   {object|object[]|DataScope} parent - Parent Scope
+     *
+     * @returns {DataScope}                 New Scope inherit from its Parent Scope
+     */
+
     function DataScope(parent) {
 
         return  (parent instanceof DataScope)  ?  Object.create( parent )  :  this;
@@ -14,7 +27,11 @@ define(['jquery'],  function ($) {
             var diff = { };
 
             for (var key in data)
-                if ((! this.hasOwnProperty( key ))  ||  (this[key] !== data[key]))
+                if (
+                    (data[ key ]  !=  null)  ||
+                    (! this.hasOwnProperty( key ))  ||
+                    (this[key] !== data[key])
+                )
                     this[ key ] = diff[ key ] = data[ key ];
 
             return diff;

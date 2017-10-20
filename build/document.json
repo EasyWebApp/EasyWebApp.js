@@ -1,0 +1,8 @@
+{
+    "opts":         {
+        "recurse":        true,
+        "readme":         "./ReadMe.md",
+        "destination":    "./docs/API/",
+        "verbose":        true
+    }
+}

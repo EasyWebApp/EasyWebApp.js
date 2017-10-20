@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Home</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Home</h1>
+
+
+
+
+
+
+
+
+    <h3> </h3>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <section>
+        <article><h1>声明式 MVVM 引擎 —— EasyWebApp v4</h1><p>基于 AMD 规范加载器、jQuery v3.2+ 构建，兼容 IE 9+、ECMAScript 5+、HTML 5+</p>
+<p><a href="https://github.com/TechQuery/GitHub/"><img src="https://img.shields.io/badge/Learn%20it-with%20Demo-blue.svg" alt="Learn it with Demo"></a>
+<a href="https://gitter.im/EasyWebApp-js/Lobby?utm_source=badge&amp;utm_medium=badge&amp;utm_campaign=pr-badge&amp;utm_content=badge"><img src="https://badges.gitter.im/EasyWebApp-js/Lobby.svg" alt="Join the chat at https://gitter.im/EasyWebApp-js/Lobby"></a></p>
+<h2>【原生态模板】</h2><p><strong>EWA 模板语法</strong>完全沿用各种 <strong>Web 前端原生技术</strong>的标准语义 ——</p>
+<ul>
+<li><p><strong>UI 结构</strong>：HTML 5+ 标准标签、<code>data-*</code> 自定义属性</p>
+</li>
+<li><p><strong>数据绑定</strong>：HTML 标签文本、属性中书写 <strong>ECMAScript 6 模板字符串</strong>（形如 <code>${view.propX}</code>）</p>
+</li>
+<li><p><strong>事件回调</strong>：像绑定数据一样去绑定函数</p>
+</li>
+<li><p><strong>资源加载</strong>：可带参数的 HTTP URL，并自动处理相对路径</p>
+</li>
+</ul>
+<p>MVVM 引擎只需扫描 DOM 树，即可 <strong>自动加载 HTML、JSON</strong> 来构建 VM 树，开发者专注于数据整理、事件回调即可，无需任何本地编译、打包环境，享受低学习成本的 <strong>原生 HTML、JavaScript 开发体验</strong>。</p>
+<h2>【易拆分视图】</h2><p><strong>ViewModel</strong> 是对 View (HTML/DOM) 基于 <strong>“数据驱动”模型</strong>的面向对象封装 ——</p>
+<ol>
+<li><p>View 的所有 HTML 结构要放在唯一的容器元素中，方便 <strong>VM 挂载</strong></p>
+</li>
+<li><p>同一时刻 <strong>View 容器</strong>只能挂载一个 VM 对象</p>
+</li>
+<li><p>VM 在渲染时会检测 <strong>JavaScript 数据类型</strong>，自动匹配 HTML 模板中对应的 HTML 标签属性、DOM 对象属性</p>
+</li>
+<li><p>DOM 标准事件、VM 自定义事件的回调函数，也视同数据的一部分绑定到 View，无需专门的 API</p>
+</li>
+<li><p>View 容器本身的 HTML 标签属于上级 View 的结构，但挂载于其上的 VM 会监听其 <code>data-*=&quot;&quot;</code> 自定义属性的数据变更</p>
+</li>
+<li><p>若不存在指向 解挂的 VM 或摘下的容器元素的其它引用，整个视图将被 <strong>自动垃圾回收</strong></p>
+</li>
+</ol>
+<h3>内置视图对象</h3><p><a target="_blank" href="docs/API/">【API 文档】</a></p>
+<p>以上视图的构造函数 均可从 <code>$.fn.iWebApp</code> 命名空间访问到，并可无需 <code>WebApp()</code> 实例初始化即可单独使用。</p>
+<p>【jQuery 快捷方法】</p>
+<ul>
+<li>构建视图：<code>$('selector of view').view(Class_Name, iScope)</code></li>
+<li>查找视图：<code>$(':view', Root_DOM).view()</code></li>
+</ul>
+<h2>【声明式 AJAX】</h2><p>如下格式的合法 HTTP URL 会被 EWA 引擎理解 ——</p>
+<pre class="prettyprint source"><code>path/to/template.html?key1=value1&keyN=valueN&data=/path/to/json</code></pre><p><code>path/to/template.html</code>、<code>/path/to/json</code> 会被并行加载，<code>{key1: value1, keyN: valueN}</code> 会成为 <code>template.html</code> 对应 VM 初始数据的一部分。</p>
+<h3>（〇）加载页面</h3><pre class="prettyprint source lang-HTML"><code>&lt;a target=&quot;_blank&quot; href=&quot;path/to/outer.html&quot;>
+    新窗口打开外部页面
+&lt;/a>
+&lt;a href=&quot;path/to/static.html&quot;>
+    纯静态 SPA 页
+&lt;/a>
+&lt;a href=&quot;path/to/template.html&quot;>
+    无初始数据的模板
+&lt;/a>
+&lt;a href=&quot;path/to/template.html?data=/path/to/json&quot;>
+    用一份数据初始化一个模板
+&lt;/a>
+&lt;a href=&quot;path/to/template.html?key1=value1&keyN=valueN&data=/path/to/json&quot;>
+    用一份数据初始化一个模板，并传入一些参数
+&lt;/a>
+&lt;div id=&quot;PageBox&quot;>&lt;/div>
+&lt;script>
+    $('#PageBox').iWebApp('//api.test.com/v1');
+&lt;/script></code></pre><p><strong>SPA 页面</strong>总是在初始化 <strong>WebApp 实例</strong>的元素中被加载。</p>
+<h3>（一）提交表单</h3><pre class="prettyprint source lang-HTML"><code>&lt;form method=&quot;put&quot; enctype=&quot;application/json&quot; action=&quot;?data=/path/to/submit&quot;>
+    &lt;input type=&quot;hidden&quot; name=&quot;extraParam&quot; />
+
+    &lt;input type=&quot;text&quot; name=&quot;key1&quot; required /> 已填 ${view.key1.length} 字
+
+    &lt;input type=&quot;submit&quot; />
+&lt;/form></code></pre><ul>
+<li><code>method</code> 属性支持 <a href="http://www.ruanyifeng.com/blog/2014/05/restful_api.html">RESTful API 规范</a>中的常用 HTTP 动词</li>
+<li><code>enctype</code> 属性支持 <a href="http://www.iana.org/assignments/media-types/media-types.xhtml">MIME-Type 标准</a>中的常用类型（如 <code>application/json</code>）</li>
+<li><strong>数据字段校验</strong>：完全依赖 HTML 5 Form API</li>
+</ul>
+<h3>（二）引用组件</h3><pre class="prettyprint source lang-HTML"><code>&lt;div data-href=&quot;path/to/template.html&quot; data-key1=&quot;${view.Key1}&quot; data-keyN=&quot;${view.KeyN}&quot;>
+    &lt;span slot=&quot;Slot_1&quot;>&lt;/span>
+    &lt;span slot=&quot;Slot_2&quot;>&lt;/span>
+&lt;/div></code></pre><p><strong>EWA 组件</strong>支持 <a href="//webcomponents.org">Web Components 标准草案</a>的 Slot 机制、自定义属性，但引用时无需自定义标签。</p>
+<h3>（三）请求接口</h3><pre class="prettyprint source lang-HTML"><code>&lt;a data-method=&quot;PUT&quot; href=&quot;?data=/path/to/put&quot;>点个赞&lt;/a>
+
+&lt;h3>列个表&lt;/h3>
+&lt;div data-href=&quot;?data=/path/to/list?count=10&page=1&quot;>
+    &lt;ul data-name=&quot;list&quot;>
+        &lt;li>内置索引号：${view.__index__}&lt;/li>
+    &lt;/ul>
+    共 ${view.total} 项
+&lt;/div></code></pre><h2>【纯前端路由】</h2><p>利用 HTML 5 History API 对“纯 Hash URL”的支持，EWA 引擎直接把 <strong>SPA 页面 URL</strong> 置于 <code>#!</code> （Hash Bang，Google 提出的纯前端路由规则）之后，即使无后端渲染支持，用户也可随意【F5】或【Ctrl + C/V】。</p>
+<h3>（〇）请求拦截</h3><pre class="prettyprint source lang-JavaScript"><code>(new EWA()).on({
+    type:    'request',
+    src:     'api.test.com'
+},  function (iEvent, iAJAX) {
+
+    //  基于 iQuery 扩展的实用方法，处理 jQuery AJAX 选项对象
+
+    iAJAX.option.url = $.extendURL(iAJAX.option.url, {
+        token:    self.sessionStorage.token
+    });
+});</code></pre><h3>（一）响应处理</h3><pre class="prettyprint source lang-JavaScript"><code>(new EWA()).on({
+    type:    'template',
+    href:    /\.md$/i
+},  function (iEvent, iData) {
+
+    //  MarkDown 转 HTML
+
+    return  marked( iData );
+
+}).on({
+    type:    'data',
+    src:     'api.test.com'
+},  function (iEvent, iData) {
+
+    if (iData.code  ||  (iEvent.method != 'GET'))
+        self.alert( iData.message );
+    else
+        return iData.data;
+});</code></pre><h3>（二）加载收尾</h3><pre class="prettyprint source lang-JavaScript"><code>(new EWA()).on({
+    type:    'ready',
+    href:    'path/to/template.html'
+},  function (iEvent) {
+
+    //  一个组件/页面的 DOM Ready
+
+    //  即除 img、iframe、audio、video 等多媒体资源的 UI 渲染完成
+});</code></pre><h3>（三）实用方法</h3><ul>
+<li><p>获取 <strong>页面路由原文</strong>：<code>WebApp.prototype.getRoute()</code></p>
+<ul>
+<li>为防止某些 URL 解析库欠考虑，EWA 路由做了一次 Base64 编码</li>
+</ul>
+</li>
+<li><p>修改 <strong>路由初始数据</strong>：<code>WebApp.prototype.setURLData(key, value)</code></p>
+<ul>
+<li><p>调用时可只传一个数据对象</p>
+</li>
+<li><p>每次调用都生成一条新浏览历史</p>
+</li>
+</ul>
+</li>
+<li><p><strong>页面浏览历史</strong> 导航：<code>WebApp.prototype.loadPage( iStep )</code></p>
+<ul>
+<li><p>不传参时刷新当前页</p>
+</li>
+<li><p>传参时，参数与 <code>window.history.go()</code> 的用法一致</p>
+</li>
+<li><p>页面切换后会重新加载，并解决本方法返回的 Promise 对象</p>
+</li>
+</ul>
+</li>
+</ul>
+<h2>【异步式组件】</h2><h3>（〇）HTML 模板</h3><p><strong>EWA 组件</strong>代码本身是完全合法的 HTML 片段，可直接被 AJAX 加载并在 DOM 树中实例化 ——</p>
+<pre class="prettyprint source lang-HTML"><code>&lt;style disabled>
+    /*  此处的 disabled 标准属性是为了防止 DOM 子树初始化时影响全局 CSS，
+     *  组件 VM 对象初始化时会自动生成 CSS 作用域
+     */
+&lt;/style>
+&lt;!--
+    一个组件只有一份 JS 代码，推荐写在其 HTML 文件同目录的同名 .js 文件中
+-->
+&lt;script src=&quot;component.js&quot;>&lt;/script>
+&lt;!--
+    组件 UI 结构完全是普通的 HTML、JavaScript 表达式
+-->
+&lt;div>
+    现在是 ${(new Date()).toLocaleString()}
+    &lt;slot name=&quot;Slot_1&quot; />
+&lt;/div></code></pre><h3>（一）JavaScript 模块</h3><p>无论 EWA 引擎本身，还是 EWA 组件的 JS 代码，均遵循 <a href="https://github.com/amdjs/amdjs-api/wiki/AMD">AMD 规范</a>，其必要格式如下 ——</p>
+<pre class="prettyprint source lang-JavaScript"><code>require([
+    'jquery', 'Module_1', 'Module_N', 'EasyWebApp'
+],  function ($, Module_1, Module_N, EWA) {
+
+    //  获取已初始化的 WebApp 单例
+
+    var iWebApp = new EWA();
+
+    EWA.component(function (iData) {
+
+        //  iData 是与组件 HTML 并行加载的 JSON
+
+        //  此处的 this 是自动创建好的 VM 对象
+
+        var VM = this;
+
+        iData.handler_1 = function () {
+
+            //  回调函数也可以作为数据的一部分，用同样的模板语法绑定到 HTML 上
+
+            //  此处的 this 还是 VM 对象
+
+            this.xxx = 'yyy';
+        };
+
+        //  若你改变了传入的数据对象的引用，就必须 return 新的对象
+
+        iData = $.extend({ }, iData);
+
+        return iData;
+    });
+});</code></pre><p>EWA 引擎会自动用它返回的数据对象来更新 VM。</p>
+<h3>（二）官方组件</h3><ol>
+<li><p><a href="component/loading.html">全局 AJAX 加载遮罩</a></p>
+</li>
+<li><p><a href="component/Admin_District.html">行政区多级联动选择</a>（基于高德地图 HTTP API）</p>
+</li>
+<li><p><a href="component/Data_Table.html">分页数据表</a></p>
+</li>
+<li><p><a href="component/carousel.html">轮播图</a></p>
+</li>
+<li><p><a href="component/read-nav.html">阅读导航栏</a></p>
+</li>
+<li><p><a href="https://github.com/TechQuery/GitHub-Web-Widget">GitHub 网页挂件</a></p>
+</li>
+</ol>
+<h2>【声明式事件】</h2><p><strong>声明式事件绑定</strong>的统一形式：<code>&lt;element onEvent=&quot;${view.callback}&quot; /&gt;</code></p>
+<ul>
+<li><code>element</code>：HTML 标签名</li>
+<li><code>Event</code>：HTML / EWA 事件名</li>
+<li><code>callback</code>：事件回调在数据对象中的键名，该函数运行时 <code>this</code> 指向 <code>element</code> 在 HTML 结构上所处视图的 VM 对象</li>
+</ul>
+<h3>内置事件</h3><table>
+<thead>
+<tr>
+<th style="text-align:center">事件名</th>
+<th style="text-align:center">来源对象</th>
+<th>监听方式</th>
+<th style="text-align:center">触发原因</th>
+<th style="text-align:center">触发阶段</th>
+<th>回调数据</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">request</td>
+<td style="text-align:center">InnerLink</td>
+<td>JS、HTML</td>
+<td style="text-align:center">AJAX 请求</td>
+<td style="text-align:center">之前</td>
+<td>jQuery AJAX 选项、jqXHR 对象</td>
+</tr>
+<tr>
+<td style="text-align:center">template</td>
+<td style="text-align:center">HTMLView</td>
+<td>JS、HTML</td>
+<td style="text-align:center">组件模板</td>
+<td style="text-align:center">之后</td>
+<td>组件结构代码（如 HTML、MarkDown）</td>
+</tr>
+<tr>
+<td style="text-align:center">data</td>
+<td style="text-align:center">InnerLink</td>
+<td>JS、HTML</td>
+<td style="text-align:center">数据加载</td>
+<td style="text-align:center">之后</td>
+<td>JSON 对象</td>
+</tr>
+<tr>
+<td style="text-align:center">ready</td>
+<td style="text-align:center">View</td>
+<td>JS、HTML</td>
+<td style="text-align:center">组件渲染</td>
+<td style="text-align:center">之后</td>
+<td>视图对象</td>
+</tr>
+<tr>
+<td style="text-align:center">route</td>
+<td style="text-align:center">WebApp</td>
+<td>JS</td>
+<td style="text-align:center">路由切换</td>
+<td style="text-align:center">之后</td>
+<td>当前页<strong>匹配的超链接</strong>元素集合（jQuery 对象）</td>
+</tr>
+<tr>
+<td style="text-align:center">attach</td>
+<td style="text-align:center">View</td>
+<td>JS</td>
+<td style="text-align:center">组件挂载</td>
+<td style="text-align:center">之后</td>
+<td></td>
+</tr>
+<tr>
+<td style="text-align:center">detach</td>
+<td style="text-align:center">View</td>
+<td>JS</td>
+<td style="text-align:center">组件卸载</td>
+<td style="text-align:center">之后</td>
+<td></td>
+</tr>
+<tr>
+<td style="text-align:center">update</td>
+<td style="text-align:center">View</td>
+<td>JS、HTML</td>
+<td style="text-align:center">自定义属性更新</td>
+<td style="text-align:center">之后</td>
+<td>更新的键值对</td>
+</tr>
+</tbody>
+</table>
+<h3>事件接口</h3><ul>
+<li><p>多条件观察者 <code>Observer($_Box)</code></p>
+<ul>
+<li><p>查找实例：<code>.instanceOf(iDOM, Check_Parent)</code> </p>
+</li>
+<li><p>注册回调：<code>.prototype.on(iEvent, iCallback)</code></p>
+<ul>
+<li>回调函数 <code>this</code> 指向注册时的对象</li>
+<li>回调函数 第一参数为事件对象，第二参数为事件触发时的附加数据</li>
+<li>当前回调函数的返回值 将作为下个执行回调的第二参数</li>
+</ul>
+</li>
+<li><p>注销回调：<code>.prototype.off(iEvent, iCallback)</code></p>
+</li>
+<li><p>一次监听：<code>.prototype.one(iEvent, iCallback)</code></p>
+<ul>
+<li>省略回调 将返回 Promise 对象</li>
+</ul>
+</li>
+<li><p>触发事件：<code>.prototype.emit(iEvent, iData)</code></p>
+</li>
+</ul>
+</li>
+<li><p>实现类：<code>View</code>、<code>InnerLink</code>、<code>WebApp</code></p>
+</li>
+</ul>
+<p>上述 <code>iEvent</code> 参数可仅为一个事件名字符串，也可用一个对象描述更多的条件（对象属性值可为字符串、正则表达式、DOM 对象等）。</p>
+<h2>【沉浸式体验】</h2><p>EWA 充分利用现有技术，实现 <a href="https://developers.google.cn/web/progressive-web-apps/">Google PWA 规范</a>一般的 App 体验，并且一切都是自动完成的 ——</p>
+<ol>
+<li><p><strong>跨域超链接</strong> 自动在新网页中打开，不会全局刷新当前页，防止丢失应用状态</p>
+</li>
+<li><p>组件模板 <strong>预加载</strong>：基于 <code>&lt;link rel=&quot;prefetch&quot; /&gt;</code>，支持 IE 11+ 及所有非 Safari/Webkit 浏览器</p>
+</li>
+<li><p>HTTP API <strong>数据缓存</strong>：基于 <code>Window.localStorage</code>，GET 请求失败也可正常显示页面</p>
+</li>
+</ol></article>
+    </section>
+
+
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-WebApp.html">WebApp</a></li></ul><h3>Externals</h3><ul><li><a href="external-_jQuery.fn_.html">jQuery.fn</a></li></ul><h3>Classes</h3><ul><li><a href="DataScope.html">DataScope</a></li><li><a href="HTMLView.html">HTMLView</a></li><li><a href="InnerLink.html">InnerLink</a></li><li><a href="ListView.html">ListView</a></li><li><a href="Observer.html">Observer</a></li><li><a href="RenderNode.html">RenderNode</a></li><li><a href="TreeView.html">TreeView</a></li><li><a href="View.html">View</a></li><li><a href="WebApp.html">WebApp</a></li></ul><h3>Events</h3><ul><li><a href="HTMLView.html#event:attach">attach</a></li><li><a href="HTMLView.html#event:update">update</a></li><li><a href="ListView.html#event:attach">attach</a></li><li><a href="ListView.html#event:update">update</a></li><li><a href="TreeView.html#event:attach">attach</a></li><li><a href="TreeView.html#event:update">update</a></li><li><a href="View.html#event:attach">attach</a></li><li><a href="View.html#event:update">update</a></li><li><a href="WebApp.html#event:data">data</a></li><li><a href="WebApp.html#event:ready">ready</a></li><li><a href="WebApp.html#event:request">request</a></li><li><a href="WebApp.html#event:route">route</a></li><li><a href="WebApp.html#event:template">template</a></li></ul><h3><a href="global.html">Global</a></h3>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> on Sat Oct 21 2017 06:48:34 GMT+0800 (中国标准时间)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>
