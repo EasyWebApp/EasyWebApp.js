@@ -42,7 +42,7 @@ MVVM 引擎只需扫描 DOM 树，即可 **自动加载 HTML、JSON** 来构建 
 
 ### 内置视图对象
 
-<a target="_blank" href="docs/API/">【API 文档】</a>
+<a target="_blank" href="docs/API/TreeView.html">【API 文档】</a>
 
 以上视图的构造函数 均可从 `$.fn.iWebApp` 命名空间访问到，并可无需 `WebApp()` 实例初始化即可单独使用。
 
