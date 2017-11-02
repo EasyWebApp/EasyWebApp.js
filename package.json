@@ -13,13 +13,18 @@
     "bundle": "cd source  &&  amd-bundle ../EasyWebApp.js -e jquery,jQueryKit",
     "compress": "uglifyjs EasyWebApp.js -o build/EasyWebApp.min.js --config-file build/compress.json",
     "document": "jsdoc ./source/ -c ./build/document.json",
-    "build": "npm run bundle  &&  npm run compress  &&  npm run document",
+    "clean": "reduce-blank ./docs/API/",
+    "build": "npm run bundle  &&  npm run compress  &&  npm run document  &&  npm run clean",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
     "url": "https://git.oschina.net/Tech_Query/EasyWebApp.git"
   },
+  "bugs": {
+    "url": "https://github.com/TechQuery/EasyWebApp.js/issues"
+  },
+  "homepage": "https://tech_query.oschina.io/easywebapp/",
   "keywords": [
     "spa",
     "mvvm",
@@ -32,6 +37,7 @@
     "amd-bundle": "^0.4.2",
     "docdash": "^0.4.0",
     "jsdoc": "^3.5.5",
+    "reduce-blank": "^0.2.0",
     "uglify-js": "^3.0.24"
   }
 }
