@@ -6,6 +6,7 @@ define(['jquery', './base/Observer'],  function ($, Observer) {
      * @author  TechQuery
      *
      * @class   InnerLink
+     * @extends Observer
      *
      * @param   {jQueryAcceptable} $_View - HTMLElement of Inner Link
      *

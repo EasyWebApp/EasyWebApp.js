@@ -11,11 +11,16 @@
 	.Foot {
 		border-top:    1px  solid  lightgray;
         text-align:    center;
+        font-size:     0.9em;
 	}
     .Foot .NavBar > li {
         border-top:       1px  solid;
         border-bottom:    1px  solid;
         padding:          0.5em  1em;
+        cursor:           pointer;
+    }
+    .Foot .NavBar > li.disabled {
+        cursor:    not-allowed;
     }
 </style>
 <script src="Data_Table.js"></script>
@@ -46,7 +51,8 @@
         <li style="display: ${(view.page < 3) ? 'none' : ''}">
             1
         </li>
-        <li style="display: ${(view.pageSum < 7) || (view.page < 4) ? 'none' : ''}">
+        <li style="display: ${(view.pageSum < 7) || (view.page < 4) ? 'none' : ''}"
+            class="disabled">
             …
         </li>
         <li style="display: ${(view.page < 2) ? 'none' : ''}">
@@ -58,7 +64,8 @@
         <li style="display: ${(+view.page + 1 > view.pageSum) ? 'none' : ''}">
             ${+view.page + 1}
         </li>
-        <li style="display: ${(view.pageSum < 6) || (+view.page + 3 > view.pageSum) ? 'none' : ''}">
+        <li style="display: ${(view.pageSum < 6) || (+view.page + 3 > view.pageSum) ? 'none' : ''}"
+            class="disabled">
             …
         </li>
         <li style="display: ${(+view.page + 2 > view.pageSum) ? 'none' : ''}">

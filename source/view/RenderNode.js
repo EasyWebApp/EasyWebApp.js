@@ -24,7 +24,13 @@ define(['jquery', 'jQueryKit'],  function ($) {
 
     RenderNode.expression = /\$\{([\s\S]+?)\}/g;
 
-    RenderNode.reference = /(view|scope)\.(\w+)/g;
+    RenderNode.reference = /(\w+)(?:\.|\[(?:'|")|\()(\w+)?/g;
+
+    RenderNode.Reference_Mask = {
+        view:     1,
+        this:     4,
+        scope:    8
+    };
 
     RenderNode.Template_Type = $.makeSet(2, 3, 8);
 
@@ -61,11 +67,19 @@ define(['jquery', 'jQueryKit'],  function ($) {
                     expression.replace(
                         RenderNode.reference,  function (_, scope, key) {
 
+                            var global;
+
                             _This_.type = _This_.type | (
-                                (scope === 'view')  ?  1  :  4
+                                RenderNode.Reference_Mask[ scope ]  ||  (
+                                    (global = self[ scope ])  &&  16
+                                )
                             );
 
-                            if (_This_.indexOf( key )  <  0)
+                            if (
+                                (scope !== 'this')  &&
+                                (! global)  &&
+                                (_This_.indexOf( key )  <  0)
+                            )
                                 _This_.push( key );
                         }
                     );

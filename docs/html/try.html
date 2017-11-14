@@ -69,7 +69,7 @@
     </fieldset>
 </form>
 
-<h3>高级模板</h3>
+<h3><a href="https://boot-web.tk/">组件机制</a></h3>
 <div>
     <a target="_blank" href="http://webcomponents.org/">
         Web Component
@@ -87,46 +87,3 @@
         Yi Kai 的理解
     </a></li>
 </ul>
-<form onsubmit="return false">
-    <fieldset>
-        <legend>组件外传参</legend>
-        <label>
-            分页数
-            <select name="pageSize" value="${view.pageSize}">
-                <option>10</option>
-                <option>20</option>
-                <option>30</option>
-            </select>
-        </label>
-        <label>
-            页序号
-            <input type="number"
-                   name="pageIndex" value="${view.pageIndex}" min="1" max="100" />
-        </label>
-    </fieldset>
-</form>
-<div data-href="../../component/Data_Table.html"
-     data-rows="${view.pageSize}" data-page="${view.pageIndex}">
-    <span slot="toolbar">
-        <button>功能按钮</button>
-    </span>
-    <table slot="table">
-        <thead><tr>
-            <th>标题</th><th>配图</th><th>时间</th><th>稿源</th>
-        </tr></thead>
-        <tbody data-href="?data=http://www.tngou.net/api/top/list?page=${view.page}&rows=${view.rows}&callback=?"
-               ondata="${scope.fixData}">
-
-            <tr title="${view.description}">
-                <td>${view.title}</td>
-                <td>
-                    <img class="Logo" src="http://tnfs.tngou.net/img${view.img}" />
-                </td>
-                <td>${(new Date(view.time)).toLocaleString()}</td>
-                <td><a target="_blank" href="${view.fromurl}">
-                    ${view.fromname}
-                </a></td>
-            </tr>
-        </tbody>
-    </table>
-</div>

@@ -16,7 +16,17 @@ define(['jquery', 'jQueryKit'],  function ($) {
      */
 
     function Observer($_View, all_event) {
-
+        /**
+         * 容器元素的 jQuery 包装
+         *
+         * @name     $_View
+         * @type     {jQuery}
+         *
+         * @memberof Observer
+         * @instance
+         *
+         * @readonly
+         */
         this.$_View = ($_View instanceof $)  ?  $_View  :  $( $_View );
 
         this.setPrivate('handle',  { });

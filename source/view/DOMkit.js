@@ -131,18 +131,27 @@ define([
 
             $_Root.find('slot[name]').each(function () {
 
-                $('[slot="' + this.getAttribute('name') + '"]',  root)
-                    .replaceAll( this );
+                var name = this.name || this.getAttribute('name');
+
+                var $_Slot = $('[slot="' + name + '"]',  root);
+
+                if ( $_Slot[0] )  $_Slot.replaceAll( this );
             });
+
+            var default_all;
 
             $_Root.find('slot').each(function () {
 
-                if (! arguments[0])
-                    this.parentNode.replaceChild(
-                        $.buildFragment( root.childNodes ),  this
-                    );
-                else
-                    this.parentNode.removeChild( this );
+                var name = this.name || this.getAttribute('name');
+
+                var default_self = name || default_all;
+
+                this.parentNode.replaceChild(
+                    $.buildFragment((default_self ? this : root).childNodes),
+                    this
+                );
+
+                if (! default_self)  default_all = 1;
             });
         },
         build:        function (root, base, HTML) {

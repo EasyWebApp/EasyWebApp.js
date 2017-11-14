@@ -14,15 +14,6 @@ require(['jquery', 'EasyWebApp'],  function ($, EWA) {
                 var iMore = this.Twitter.length + iText.length - 140;
 
                 if (iMore > 0)  self.alert("超出的 " + iMore + "个字会被丢弃……");
-            },
-            fixData:    function (_, data) {
-
-                if (data.total != null) {
-
-                    data.list = data.tngou;
-
-                    delete data.tngou;
-                }
             }
         });
     });

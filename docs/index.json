@@ -27,7 +27,12 @@
         {
             "title":     "开源代码",
             "target":    "_blank",
-            "href":      "http://git.oschina.net/Tech_Query/EasyWebApp/tree/MVVM/"
+            "href":      "http://gitee.com/Tech_Query/EasyWebApp/"
+        },
+        {
+            "title":     "BootEWA 组件库",
+            "target":    "_blank",
+            "href":      "https://techquery.github.io/BootEWA"
         }
     ]
 }

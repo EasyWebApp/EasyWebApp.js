@@ -29,6 +29,8 @@ define([
                 id:          '',
                 name:        this.$_View[0].name || this.$_View[0].dataset.name,
                 /**
+                 * 视图数据作用域
+                 *
                  * @name      __data__
                  * @type      {DataScope}
                  *

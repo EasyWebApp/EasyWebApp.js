@@ -36,7 +36,7 @@ require(['jquery', 'EasyWebApp'],  function ($, EWA) {
                     value = parseInt(target.value || target.textContent);
 
                 if (
-                    $( target ).is(':field, li')  &&
+                    $( target ).is(':field, ul *')  &&
                     value  &&
                     ((target.name !== 'page')  ||  (value <= this.pageSum))
                 ) {

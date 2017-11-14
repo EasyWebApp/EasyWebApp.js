@@ -76,7 +76,7 @@ define([
                     ) {
                         node = new RenderNode( node );
 
-                        if ( node[0] )  this.signIn( node );
+                        if ( node.type )  this.signIn( node );
                     }
                 },
                 this
@@ -143,8 +143,12 @@ define([
 
                     node = _This_[ node ];
 
-                    if ((node !== exclude)  &&  (
+                    if ((
                         (bit > 0)  ||  ((node || '').type > 1)
+                    ) && (
+                        !(node instanceof RenderNode)  ||
+                        (node.name !== 'value')  ||
+                        (node.ownerElement !== exclude)
                     )) {
                         forEach  &&  forEach.call(_This_, node);
 
@@ -204,13 +208,16 @@ define([
 
 //  Render data from user input
 
-    $('html').on('input change',  ':field',  $.throttle(function () {
+    function reRender() {
 
         var iView = HTMLView.instanceOf( this );
 
         if (iView  &&  $( this ).validate())  iView.render( this );
+    }
 
-    })).on('reset',  'form',  function () {
+    $('html').on('change', ':field', reRender).on(
+        'input',  ':field',  $.throttle( reRender )
+    ).on('reset',  'form',  function () {
 
         var data = $.paramJSON('?'  +  $( this ).serialize());
 

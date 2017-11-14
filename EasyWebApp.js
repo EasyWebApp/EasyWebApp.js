@@ -31,7 +31,17 @@ var base_Observer = (function ($) {
      */
 
     function Observer($_View, all_event) {
-
+        /**
+         * 容器元素的 jQuery 包装
+         *
+         * @name     $_View
+         * @type     {jQuery}
+         *
+         * @memberof Observer
+         * @instance
+         *
+         * @readonly
+         */
         this.$_View = ($_View instanceof $)  ?  $_View  :  $( $_View );
 
         this.setPrivate('handle',  { });
@@ -383,7 +393,13 @@ var view_RenderNode = (function ($) {
 
     RenderNode.expression = /\$\{([\s\S]+?)\}/g;
 
-    RenderNode.reference = /(view|scope)\.(\w+)/g;
+    RenderNode.reference = /(\w+)(?:\.|\[(?:'|")|\()(\w+)?/g;
+
+    RenderNode.Reference_Mask = {
+        view:     1,
+        this:     4,
+        scope:    8
+    };
 
     RenderNode.Template_Type = $.makeSet(2, 3, 8);
 
@@ -420,11 +436,19 @@ var view_RenderNode = (function ($) {
                     expression.replace(
                         RenderNode.reference,  function (_, scope, key) {
 
+                            var global;
+
                             _This_.type = _This_.type | (
-                                (scope === 'view')  ?  1  :  4
+                                RenderNode.Reference_Mask[ scope ]  ||  (
+                                    (global = self[ scope ])  &&  16
+                                )
                             );
 
-                            if (_This_.indexOf( key )  <  0)
+                            if (
+                                (scope !== 'this')  &&
+                                (! global)  &&
+                                (_This_.indexOf( key )  <  0)
+                            )
                                 _This_.push( key );
                         }
                     );
@@ -534,6 +558,7 @@ var InnerLink = (function ($, Observer) {
      * @author  TechQuery
      *
      * @class   InnerLink
+     * @extends Observer
      *
      * @param   {jQueryAcceptable} $_View - HTMLElement of Inner Link
      *
@@ -810,6 +835,8 @@ var view_View = (function ($, Observer, DataScope, RenderNode) {
                 id:          '',
                 name:        this.$_View[0].name || this.$_View[0].dataset.name,
                 /**
+                 * 视图数据作用域
+                 *
                  * @name      __data__
                  * @type      {DataScope}
                  *
@@ -1252,18 +1279,27 @@ var view_DOMkit = (function ($, RenderNode, InnerLink) {
 
             $_Root.find('slot[name]').each(function () {
 
-                $('[slot="' + this.getAttribute('name') + '"]',  root)
-                    .replaceAll( this );
+                var name = this.name || this.getAttribute('name');
+
+                var $_Slot = $('[slot="' + name + '"]',  root);
+
+                if ( $_Slot[0] )  $_Slot.replaceAll( this );
             });
+
+            var default_all;
 
             $_Root.find('slot').each(function () {
 
-                if (! arguments[0])
-                    this.parentNode.replaceChild(
-                        $.buildFragment( root.childNodes ),  this
-                    );
-                else
-                    this.parentNode.removeChild( this );
+                var name = this.name || this.getAttribute('name');
+
+                var default_self = name || default_all;
+
+                this.parentNode.replaceChild(
+                    $.buildFragment((default_self ? this : root).childNodes),
+                    this
+                );
+
+                if (! default_self)  default_all = 1;
             });
         },
         build:        function (root, base, HTML) {
@@ -1392,7 +1428,7 @@ var view_HTMLView = (function ($, View, DOMkit, RenderNode) {
                     ) {
                         node = new RenderNode( node );
 
-                        if ( node[0] )  this.signIn( node );
+                        if ( node.type )  this.signIn( node );
                     }
                 },
                 this
@@ -1459,8 +1495,12 @@ var view_HTMLView = (function ($, View, DOMkit, RenderNode) {
 
                     node = _This_[ node ];
 
-                    if ((node !== exclude)  &&  (
+                    if ((
                         (bit > 0)  ||  ((node || '').type > 1)
+                    ) && (
+                        !(node instanceof RenderNode)  ||
+                        (node.name !== 'value')  ||
+                        (node.ownerElement !== exclude)
                     )) {
                         forEach  &&  forEach.call(_This_, node);
 
@@ -1520,13 +1560,16 @@ var view_HTMLView = (function ($, View, DOMkit, RenderNode) {
 
 //  Render data from user input
 
-    $('html').on('input change',  ':field',  $.throttle(function () {
+    function reRender() {
 
         var iView = HTMLView.instanceOf( this );
 
         if (iView  &&  $( this ).validate())  iView.render( this );
+    }
 
-    })).on('reset',  'form',  function () {
+    $('html').on('change', ':field', reRender).on(
+        'input',  ':field',  $.throttle( reRender )
+    ).on('reset',  'form',  function () {
 
         var data = $.paramJSON('?'  +  $( this ).serialize());
 
@@ -1823,7 +1866,17 @@ var WebApp = (function ($, Observer, View, HTMLView, ListView, TreeView, DOMkit,
         if (_This_ !== this)  return _This_;
 
         Observer.call(this, Page_Box).pageRoot = new URL($.filePath() + '/');
-
+        /**
+         * 后端 API 根路径
+         *
+         * @name     apiRoot
+         * @type     {URL}
+         *
+         * @memberof WebApp
+         * @instance
+         *
+         * @readonly
+         */
         this.apiRoot = new URL(API_Root || '',  this.pageRoot);
 
         this.length = 0;
@@ -2132,9 +2185,11 @@ var WebApp = (function ($, Observer, View, HTMLView, ListView, TreeView, DOMkit,
             if (isNaN( URI ))
                 return  this.load( $('<a href="' + URI + '" />')[0] );
 
-            var link = this[this.lastPage + URI];
+            var link = this[+URI + this.lastPage];
 
             if ( link )  delete link.view;
+
+            if (! URI)  return  this.load( link );
 
             self.history.go( URI );
 
@@ -2210,7 +2265,7 @@ var WebApp = (function ($, Observer, View, HTMLView, ListView, TreeView, DOMkit,
  *
  * @module    {function} WebApp
  *
- * @version   4.0 (2017-10-20) stable
+ * @version   4.0 (2017-11-15) stable
  *
  * @requires  jquery
  * @see       {@link http://jquery.com/ jQuery}
@@ -2256,25 +2311,44 @@ return  (function ($, WebApp, InnerLink) {
 
 /* ---------- AMD based Component API ---------- */
 
-    var _require_ = self.require,  _link_;
+    var _require_ = self.require,  _script_;
 
-    self.require = $.extend(function () {
+    /**
+     * 增强的 require()
+     *
+     * @global
+     * @function require
+     *
+     * @param {string[]} dependency
+     * @param {function} [factory]
+     * @param {function} [fallback]
+     *
+     * @return {Promise}
+     *
+     * @see {@link https://github.com/amdjs/amdjs-api/wiki/require#requirearray-function-}
+     */
 
-        if (! document.currentScript)  return _require_.apply(this, arguments);
+    self.require = $.extend(function (dependency, factory, fallback) {
 
-        var iArgs = arguments,  iWebApp = new WebApp();
+        var script = document.currentScript;
 
-        var view = WebApp.View.instanceOf( document.currentScript );
+        return  new Promise(function (resolve, reject) {
 
-        var link = (view.$_View[0] === iWebApp.$_View[0])  ?
-                iWebApp[ iWebApp.lastPage ]  :
-                InnerLink.instanceOf( view.$_View );
+            var parameter = [
+                    dependency,
+                    (factory instanceof Function)  ?  factory  :  resolve,
+                    (fallback instanceof Function)  ?  fallback  :  reject
+                ];
 
-        _require_.call(this,  iArgs[0],  function () {
+            if (! script)  return _require_.apply(null, parameter);
 
-            _link_ = link;
+            _require_.call(this,  parameter[0],  function () {
 
-            return  iArgs[1].apply(this, arguments);
+                _script_ = script;
+
+                return  parameter[1].apply(this, arguments);
+
+            },  parameter[2]);
         });
     },  _require_);
 
@@ -2292,7 +2366,13 @@ return  (function ($, WebApp, InnerLink) {
 
     WebApp.component = function (factory) {
 
-        if (_link_)  _link_.emit('load', factory);
+        var iWebApp = new this(), view = this.View.instanceOf(_script_);
+
+        var link = (view.$_View[0] === iWebApp.$_View[0])  ?
+                iWebApp[ iWebApp.lastPage ]  :
+                InnerLink.instanceOf( view.$_View );
+
+        if ( link )  link.emit('load', factory);
 
         return this;
     };

@@ -3,7 +3,7 @@
  *
  * @module    {function} WebApp
  *
- * @version   4.0 (2017-10-20) stable
+ * @version   4.0 (2017-11-15) stable
  *
  * @requires  jquery
  * @see       {@link http://jquery.com/ jQuery}
@@ -49,25 +49,44 @@ define(['jquery', './WebApp', './InnerLink'],  function ($, WebApp, InnerLink) {
 
 /* ---------- AMD based Component API ---------- */
 
-    var _require_ = self.require,  _link_;
+    var _require_ = self.require,  _script_;
 
-    self.require = $.extend(function () {
+    /**
+     * 增强的 require()
+     *
+     * @global
+     * @function require
+     *
+     * @param {string[]} dependency
+     * @param {function} [factory]
+     * @param {function} [fallback]
+     *
+     * @return {Promise}
+     *
+     * @see {@link https://github.com/amdjs/amdjs-api/wiki/require#requirearray-function-}
+     */
 
-        if (! document.currentScript)  return _require_.apply(this, arguments);
+    self.require = $.extend(function (dependency, factory, fallback) {
 
-        var iArgs = arguments,  iWebApp = new WebApp();
+        var script = document.currentScript;
 
-        var view = WebApp.View.instanceOf( document.currentScript );
+        return  new Promise(function (resolve, reject) {
 
-        var link = (view.$_View[0] === iWebApp.$_View[0])  ?
-                iWebApp[ iWebApp.lastPage ]  :
-                InnerLink.instanceOf( view.$_View );
+            var parameter = [
+                    dependency,
+                    (factory instanceof Function)  ?  factory  :  resolve,
+                    (fallback instanceof Function)  ?  fallback  :  reject
+                ];
 
-        _require_.call(this,  iArgs[0],  function () {
+            if (! script)  return _require_.apply(null, parameter);
 
-            _link_ = link;
+            _require_.call(this,  parameter[0],  function () {
 
-            return  iArgs[1].apply(this, arguments);
+                _script_ = script;
+
+                return  parameter[1].apply(this, arguments);
+
+            },  parameter[2]);
         });
     },  _require_);
 
@@ -85,7 +104,13 @@ define(['jquery', './WebApp', './InnerLink'],  function ($, WebApp, InnerLink) {
 
     WebApp.component = function (factory) {
 
-        if (_link_)  _link_.emit('load', factory);
+        var iWebApp = new this(), view = this.View.instanceOf(_script_);
+
+        var link = (view.$_View[0] === iWebApp.$_View[0])  ?
+                iWebApp[ iWebApp.lastPage ]  :
+                InnerLink.instanceOf( view.$_View );
+
+        if ( link )  link.emit('load', factory);
 
         return this;
     };
