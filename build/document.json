@@ -6,7 +6,9 @@
         "destination":    "docs/API/",
         "verbose":        true
     },
-    "plugins":     ["plugins/markdown"],
+    "plugins":     [
+        "plugins/markdown", "node_modules/jsdoc-inheritance-diagram"
+    ],
     "markdown":    {
         "hardwrap":    true
     }

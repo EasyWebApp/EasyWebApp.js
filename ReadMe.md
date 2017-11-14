@@ -5,6 +5,9 @@
 [![Learn it with Demo](https://img.shields.io/badge/Learn%20it-with%20Demo-blue.svg)](https://github.com/TechQuery/GitHub/)
 [![Join the chat at https://gitter.im/EasyWebApp-js/Lobby](https://badges.gitter.im/EasyWebApp-js/Lobby.svg)](https://gitter.im/EasyWebApp-js/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
+<a target='_blank' rel='nofollow' href='https://app.codesponsor.io/link/terHRJgDULkGjswWhddcBSDJ/TechQuery/EasyWebApp.js'>
+  <img alt='Sponsor' width='750' height='68' src='https://app.codesponsor.io/embed/terHRJgDULkGjswWhddcBSDJ/TechQuery/EasyWebApp.js.svg' />
+</a>
 
 
 ## 【原生态模板】
@@ -280,17 +283,7 @@ EWA 引擎会自动用它返回的数据对象来更新 VM。
 
 ### （二）官方组件
 
- 1. [全局 AJAX 加载遮罩](component/loading.html)
-
- 2. [行政区多级联动选择](component/Admin_District.html)（基于高德地图 HTTP API）
-
- 3. [分页数据表](component/Data_Table.html)
-
- 4. [轮播图](component/carousel.html)
-
- 5. [阅读导航栏](component/read-nav.html)
-
- 6. [GitHub 网页挂件](https://github.com/TechQuery/GitHub-Web-Widget)
+https://boot-web.tk/
 
 
 

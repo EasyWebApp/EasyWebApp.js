@@ -37,6 +37,7 @@
     "amd-bundle": "^0.4.2",
     "docdash": "^0.4.0",
     "jsdoc": "^3.5.5",
+    "jsdoc-inheritance-diagram": "^1.1.1",
     "reduce-blank": "^0.2.0",
     "uglify-js": "^3.0.24"
   }
