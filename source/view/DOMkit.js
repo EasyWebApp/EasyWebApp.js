@@ -3,11 +3,6 @@ define([
 ],  function ($, RenderNode, InnerLink) {
 
     var Invalid_Style = $.makeSet('inherit', 'initial'),
-        URL_DOM = $.extend(
-            $.makeSet(0,  ['script', 'img', 'iframe', 'audio', 'video']),
-            $.makeSet('href',  ['link', 'a', 'area']),
-            {form: 'action',  '[data-href]': 'data-href'}
-        ),
         URL_Prefix = $.makeSet('?', '#');
 
 
@@ -92,6 +87,37 @@ define([
 
             return iDOM;
         },
+        pathFix:      function (tag, node, base, isComponent) {
+
+            var key;  base = new URL(base, self.location);
+
+            if (! $( node ).parents('[slot]')[0])
+                switch ( tag ) {
+                    case 'a':         ;
+                    case 'area':      ;
+                    case 'link':      key = 'href';
+                    case 'form':      key = key || 'action';
+                    case 'img':       ;
+                    case 'iframe':    ;
+                    case 'audio':     ;
+                    case 'video':     ;
+                    case 'script':    key = key || 'src';
+                    default:          {
+                        if (! isComponent)  break;
+
+                        key = 'data-href';
+
+                        node.setAttribute(
+                            key,
+                            (new URL(node.getAttribute( key ), base) + '').replace(
+                                $.filePath(), ''
+                            )
+                        );
+                    }
+                }
+
+            return node;
+        },
         fixURL:       function (iDOM, iKey, iBase) {
 
             var iURL = iDOM.getAttribute( iKey )  ||  '';
@@ -126,33 +152,6 @@ define([
                         'next'  :  'prefetch',
                     href:    iURL
                 }).appendTo( document.head );
-        },
-        parseSlot:    function (root, $_Root) {
-
-            $_Root.find('slot[name]').each(function () {
-
-                var name = this.name || this.getAttribute('name');
-
-                var $_Slot = $('[slot="' + name + '"]',  root);
-
-                if ( $_Slot[0] )  $_Slot.replaceAll( this );
-            });
-
-            var default_all;
-
-            $_Root.find('slot').each(function () {
-
-                var name = this.name || this.getAttribute('name');
-
-                var default_self = name || default_all;
-
-                this.parentNode.replaceChild(
-                    $.buildFragment((default_self ? this : root).childNodes),
-                    this
-                );
-
-                if (! default_self)  default_all = 1;
-            });
         },
         build:        function (root, base, HTML) {
 
@@ -195,7 +194,6 @@ define([
 
 
             if ( HTML ) {
-                if ( root.childNodes[0] )  this.parseSlot(root, $_Root);
 
                 root.appendChild( $.buildFragment( $_Root.contents() ) );
             }

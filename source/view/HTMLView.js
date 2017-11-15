@@ -17,9 +17,9 @@ define([
      *                                 has been created on this element
      */
 
-    function HTMLView($_View, scope) {
+    function HTMLView($_View, scope, base) {
 
-        var _This_ = View.call(this, $_View, scope);
+        var _This_ = View.call(this, $_View, scope, base);
 
         return  (_This_ !== this)  ?
             _This_ :
@@ -91,22 +91,38 @@ define([
          *
          * @memberof HTMLView.prototype
          *
-         * @returns  {HTMLView}  Current HTMLView
+         * @param    {string}   [template] - A HTML String of the Component's template
+         *                                   with HTMLSlotElement
+         * @returns  {HTMLView} Current HTMLView
          */
-        parse:         function () {
+        parse:         function (template) {
 
-            return  this.scan(function (iNode) {
+            if (template = (template || '').trim()) {
 
-                var $_View = this.$_View,
-                    tag = (iNode.tagName || '').toLowerCase();
+                this.$_Slot = this.$_View.contents().remove();
 
-                if ((iNode instanceof Element)  &&  (iNode !== $_View[0]))
+                this.$_View[0].innerHTML = template;
+            }
+
+            var $_View = this.$_View, base = this.__base__, last_component;
+
+            this.scan(function (iNode) {
+
+                var tag = (iNode.tagName || '').toLowerCase(), isComponent, $_Slot;
+
+                if ((iNode instanceof Element)  &&  (iNode !== $_View[0])) {
+
+                    isComponent = ((iNode.dataset.href || '')[0]  !==  '?');
+
+                    last_component = isComponent && iNode;
+
                     switch ( tag ) {
-                        case 'link':      {
+                        case 'style':       return  DOMkit.fixStyle($_View, iNode);
+                        case 'link':        {
                             if (('rel' in iNode)  &&  (iNode.rel != 'stylesheet'))
                                 break;
 
-                            iNode.onload = function () {
+                            DOMkit.pathFix(tag, iNode, base).onload = function () {
 
                                 $( this ).replaceWith(
                                     DOMkit.fixStyle($_View, this)
@@ -114,9 +130,25 @@ define([
                             };
                             return;
                         }
-                        case 'style':     return  DOMkit.fixStyle($_View, iNode);
-                        case 'script':    return  DOMkit.fixScript( iNode );
+                        case 'script':
+                            return  DOMkit.pathFix(tag, DOMkit.fixScript( iNode ), base);
+                        case 'slot':        {
+                            $_Slot = this.$_Slot.filter(
+                                ($_Slot = iNode.getAttribute('name'))  ?
+                                    ('[slot="' + $_Slot + '"]')  :
+                                    function () {
+                                        return  (! this.getAttribute('slot'));
+                                    }
+                            );
+
+                            if ( $_Slot[0] )  return $_Slot;
+                        }
+                        case 'template':
+                            return  $( iNode ).contents();
+                        default:
+                            DOMkit.pathFix(tag, iNode, base, isComponent);
                     }
+                }
 
                 if (iNode instanceof View) {
 
@@ -126,6 +158,10 @@ define([
                 } else if ( !(tag in HTMLView.rawSelector))
                     this.parsePlain( iNode );
             });
+
+            delete this.$_Slot;
+
+            return this;
         },
         nodeOf:        function (data, exclude, forEach) {
 

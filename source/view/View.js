@@ -17,17 +17,22 @@ define([
      *                                 has been created on this element
      */
 
-    function View($_View, scope) {
+    function View($_View, scope, base) {
 
         var _This_ = Observer.call(
                 $.Class.call(this, View, ['render']),  $_View,  true
             );
 
+        var box = this.$_View[0];
+
         return  (_This_ !== this)  ?
             _This_ :
             this.setPrivate({
                 id:          '',
-                name:        this.$_View[0].name || this.$_View[0].dataset.name,
+                name:        box.name || box.dataset.name,
+                base:        base  ||
+                    $.filePath( box.dataset.href )  ||
+                    ($.filePath() + '/'),
                 /**
                  * 视图数据作用域
                  *
@@ -49,7 +54,7 @@ define([
     var Sub_Class = [ ];
 
     return  Observer.extend(View, {
-        getSub:    function (iDOM) {
+        getSub:    function (iDOM, base) {
 
             var is_View = iDOM.getAttribute('is');
 
@@ -61,7 +66,8 @@ define([
                 )
                     return  new Sub_Class[i](
                         iDOM,
-                        (this.instanceOf( iDOM.parentNode )  ||  '').__data__
+                        (this.instanceOf( iDOM.parentNode )  ||  '').__data__,
+                        base
                     );
         },
         /**
@@ -224,14 +230,16 @@ define([
          */
         scan:          function (parser) {
 
-            var Sub_View = [ ];
+            var last_component;
 
             var iSearcher = this.$_View.treeWalker(1,  (function (iDOM) {
 
                     var iView;
 
-                    if (this.$_View[0] !== iDOM) {
-
+                    if (
+                        (this.$_View[0] !== iDOM)  ||
+                        !(last_component  &&  $.contains(last_component, iDOM))
+                    ) {
                         if ( iDOM.dataset.href ) {
 
                             iView = View.getSub( iDOM );
@@ -239,15 +247,16 @@ define([
                             if (this.__child__.indexOf( iView )  <  0)
                                 this.__child__.push( iView );
 
-                            return null;
+                            last_component = iView;
 
                         } else if (
                             iDOM.dataset.name  ||
                             (iView = View.instanceOf(iDOM, false))
                         ) {
-                            iView = iView  ||  View.getSub( iDOM );
+                            iView = iView  ||  View.getSub(iDOM, this.__base__);
 
-                            Sub_View.push(
+                            parser.call(
+                                this,
                                 (iView.parse  &&  (! iView.__parse__))  ?
                                     iView.parse()  :  iView
                             );
@@ -266,12 +275,6 @@ define([
                 }).bind( this ));
 
             while (! iSearcher.next().done)  ;
-
-            for (var i = 0;  this.__child__[i];  i++)
-                parser.call(this,  this.__child__[i].$_View[0]);
-
-            for (var i = 0;  Sub_View[i];  i++)
-                parser.call(this, Sub_View[i]);
 
             this.__parse__ = $.now();
 

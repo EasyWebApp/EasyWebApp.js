@@ -189,12 +189,11 @@ define([
              * @type  {RouterEvent}
              */
 
-            if (HTML = this._emit('template', link, HTML))
-                DOMkit.build(target, link, HTML);
+            HTML = this._emit('template', link, HTML);
 
-            var view = View.getSub( target );
+            var view = View.getSub(target, link.href);
 
-            if ( view.parse )  view.parse();
+            if ( view.parse )  view.parse( HTML );
 
             if (! $('script:not(head > *)', target)[0])
                 link.emit('load');
@@ -401,8 +400,6 @@ define([
             return this;
         },
         boot:             function () {
-
-            DOMkit.build(document.body, '');
 
             var root = (new HTMLView('html')).parse().render( $.paramJSON() ),
                 _This_ = this;
