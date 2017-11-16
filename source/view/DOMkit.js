@@ -87,9 +87,9 @@ define([
 
             return iDOM;
         },
-        pathFix:      function (tag, node, base, isComponent) {
+        fixURL:       function (tag, node, base) {
 
-            var key;  base = new URL(base, self.location);
+            var key, URI;  base = new URL(base, self.location);
 
             if (! $( node ).parents('[slot]')[0])
                 switch ( tag ) {
@@ -103,100 +103,37 @@ define([
                     case 'video':     ;
                     case 'script':    key = key || 'src';
                     default:          {
-                        if (! isComponent)  break;
+                        key = key || 'data-href';
 
-                        key = 'data-href';
+                        if (! (URI = node.getAttribute( key )))  break;
 
-                        node.setAttribute(
-                            key,
-                            (new URL(node.getAttribute( key ), base) + '').replace(
-                                $.filePath(), ''
-                            )
-                        );
+                        if (
+                            ('target' in node)  &&
+                            (node.target !== '_self')  &&
+                            $.isXDomain( URI )
+                        ) {
+                            node.target = '_blank';
+
+                        } else if (
+                            !(URI[0] in URL_Prefix)  &&
+                            URI.replace(RenderNode.expression, '')
+                        ) {
+                            node.setAttribute(
+                                key,
+                                (new URL(URI, base) + '').replace(
+                                    $.filePath() + '/',  ''
+                                )
+                            );
+
+                            if ($( node ).is(
+                                InnerLink.HTML_Link + ', ' + InnerLink.Self_Link
+                            ))
+                                new InnerLink( node );
+                        }
                     }
                 }
 
             return node;
-        },
-        fixURL:       function (iDOM, iKey, iBase) {
-
-            var iURL = iDOM.getAttribute( iKey )  ||  '';
-
-            var expression = iURL.match( RenderNode.expression );
-
-            if (
-                !(iURL[0] in URL_Prefix)  &&
-                (iURL  !==  (expression || [ ]).join(''))
-            ) {
-                var root = $.filePath() + '/';
-
-                iURL = (
-                    new URL(iURL,  new URL(iBase || '', root))  +  ''
-                ).replace(root, '');
-
-                iDOM.setAttribute(
-                    iKey,  iURL = expression ? decodeURI( iURL ) : iURL
-                );
-            }
-
-            return iURL;
-        },
-        prefetch:     function (iURL) {
-            if (! (
-                (iURL[0] in URL_Prefix)  ||
-                iURL.match( RenderNode.expression )  ||
-                $('head link[href="' + iURL + '"]')[0]
-            ))
-                $('<link />', {
-                    rel:     (($.browser.msie < 11)  ||  $.browser.ios)  ?
-                        'next'  :  'prefetch',
-                    href:    iURL
-                }).appendTo( document.head );
-        },
-        build:        function (root, base, HTML) {
-
-            var $_Root = HTML  ?
-                    $('<div />').prop('innerHTML', HTML)  :  $( root ),
-                _This_ = this;
-
-            if ( base.href )
-                base = base.href;
-            else if (base  =  $( root ).parents(
-                '[data-href]:view:not([data-href^="?"])'
-            )[0])
-                base = base.dataset.href;
-
-
-            $_Root.find(Object.keys( URL_DOM ) + '').not('head *').each(function () {
-
-                var URL = _This_.fixURL(
-                        this,
-                        URL_DOM[ this.tagName.toLowerCase() ]  ||  (
-                            ('src' in this)  ?  'src'  :  'data-href'
-                        ),
-                        base
-                    );
-
-                if (
-                    $( this ).is( InnerLink.HTML_Link )  &&
-                    ((this.target || '_self')  ===  '_self')
-                ) {
-                    if ($.urlDomain(this.href || this.action)  !==  $.urlDomain())
-                        this.target = '_blank';
-
-                    if ((this.target || '_self')  ===  '_self')
-                        _This_.prefetch( URL );
-                }
-
-                if ($( this ).is(InnerLink.HTML_Link + ', ' + InnerLink.Self_Link))
-                    new InnerLink( this );
-            });
-
-
-            if ( HTML ) {
-
-                root.appendChild( $.buildFragment( $_Root.contents() ) );
-            }
         }
     };
 });

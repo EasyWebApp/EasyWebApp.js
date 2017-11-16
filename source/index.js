@@ -3,7 +3,7 @@
  *
  * @module    {function} WebApp
  *
- * @version   4.0 (2017-11-15) stable
+ * @version   4.0 (2017-11-16) stable
  *
  * @requires  jquery
  * @see       {@link http://jquery.com/ jQuery}

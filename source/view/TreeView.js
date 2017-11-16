@@ -9,13 +9,14 @@ define(['jquery', './ListView'],  function ($, ListView) {
      * @extends ListView
      *
      * @param   {jQueryAcceptable} $_View  - Container DOM of TreeView
-     * @param   {object}               [scope] - Data object as a scope
+     * @param   {object}           [scope] - Data object as a scope
+     * @param   {(string|URL)}     [base]
      *
      * @returns {TreeView}             Return the last one if a TreeView instance
      *                                 has been created on this element
      */
 
-    function TreeView($_View, scope) {
+    function TreeView($_View, scope, base) {
 
         $_View = $( $_View );
 
@@ -25,7 +26,7 @@ define(['jquery', './ListView'],  function ($, ListView) {
 
         $_View.children().append(this.__self__ = this.__self__.outerHTML);
 
-        var _This_ = ListView.call(this, $_View, scope);
+        var _This_ = ListView.call(this, $_View, scope, base);
 
         if (_This_ !== this)  return _This_;
     }

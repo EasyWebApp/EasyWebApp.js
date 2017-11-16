@@ -108,7 +108,7 @@ define(['jquery', './base/Observer'],  function ($, Observer) {
         },
         loadData:    function () {
 
-            var Get_URL, header;
+            var header;
 
             var iOption = {
                     method:         this.method,
@@ -119,8 +119,6 @@ define(['jquery', './base/Observer'],  function ($, Observer) {
                     dataType:
                         (this.src.match(/\?/g) || '')[1]  ?  'jsonp'  :  'json',
                     complete:       function (XHR) {
-
-                        if (this.method === 'GET')  Get_URL = this.url;
 
                         header = $.parseHeader( XHR.getAllResponseHeaders() );
                     }
@@ -151,18 +149,10 @@ define(['jquery', './base/Observer'],  function ($, Observer) {
                 iOption.processData = false;
             }
 
-            return  Promise.resolve( $.ajax( iOption ) ).then(
-                function (data) {
+            return  Promise.resolve( $.ajax( iOption ) ).then(function (data) {
 
-                    data = {head: header,  body: data};
-
-                    return  Get_URL  ?  $.storage(Get_URL, data)  :  data;
-                },
-                function () {
-
-                    if ( Get_URL )  return  $.storage( Get_URL );
-                }
-            );
+                return  {head: header,  body: data};
+            });
         },
         load:        function (onRequest) {
 

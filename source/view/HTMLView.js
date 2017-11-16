@@ -11,7 +11,8 @@ define([
      * @extends View
      *
      * @param   {jQueryAcceptable} $_View  - Container DOM of HTMLView
-     * @param   {object}               [scope] - Data object as a scope
+     * @param   {object}           [scope] - Data object as a scope
+     * @param   {(string|URL)}     [base]
      *
      * @returns {HTMLView}             Return the last one if a HTMLView instance
      *                                 has been created on this element
@@ -20,6 +21,18 @@ define([
     function HTMLView($_View, scope, base) {
 
         var _This_ = View.call(this, $_View, scope, base);
+        /**
+         * 本视图的插卡元素
+         *
+         * @name $_Slot
+         * @type {jQuery}
+         *
+         * @memberof HTMLView
+         * @instance
+         *
+         * @readonly
+         */
+        this.$_Slot = $();
 
         return  (_This_ !== this)  ?
             _This_ :
@@ -55,9 +68,8 @@ define([
 
             this[this.length++] = iNode;
 
-            var iName = (iNode instanceof RenderNode)  ?  iNode  :  [
-                    iNode.__name__  ||  iNode.name
-                ];
+            var iName = (iNode instanceof RenderNode)  ?
+                    iNode  :  [iNode.__name__];
 
             for (var j = 0;  iName[j];  j++)
                 this.watch( iName[j] ).__map__[iName[j]] =
@@ -84,6 +96,47 @@ define([
 
             return this;
         },
+        fixElement:    function (tag, node, last_slot) {
+
+            var $_View = this.$_View, base = this.__base__, $_Slot;
+
+            switch ( tag ) {
+                case 'style':       return  DOMkit.fixStyle($_View, node);
+                case 'link':        {
+
+                    DOMkit.fixURL(tag, node, base).onload = function () {
+
+                        $( this ).replaceWith(
+                            DOMkit.fixStyle($_View, this)
+                        );
+                    };
+                    return true;
+                }
+                case 'script':
+                    return  DOMkit.fixURL(tag, DOMkit.fixScript( node ), base);
+                case 'slot':        {
+                    $_Slot = this.$_Slot.filter(
+                        ($_Slot = node.getAttribute('name'))  ?
+                            ('[slot="' + $_Slot + '"]')  :
+                            function () {
+                                return  this.getAttribute &&
+                                    (! this.getAttribute('slot'));
+                            }
+                    );
+
+                    if ( $_Slot[0] )  return $_Slot;
+                }
+                case 'template':
+                    return  $( node ).contents();
+                default:
+                    if (
+                        (! last_slot)  ||
+                        this.$_Slot.has( last_slot )[0]  ||
+                        (! $.contains(last_slot, node))
+                    )
+                        DOMkit.fixURL(tag, node, base);
+            }
+        },
         /**
          * HTML 模板解析
          *
@@ -97,69 +150,49 @@ define([
          */
         parse:         function (template) {
 
+            if (this.__parse__)  return this;
+
             if (template = (template || '').trim()) {
 
-                this.$_Slot = this.$_View.contents().remove();
+                this.$_Slot = this.$_View.contents().remove().attr(
+                    'slot',  function () {
+
+                        return  arguments[1] || '';
+                    }
+                );
 
                 this.$_View[0].innerHTML = template;
             }
 
-            var $_View = this.$_View, base = this.__base__, last_component;
+            var last_slot;
 
-            this.scan(function (iNode) {
+            this.scan(function (node, last_view) {
 
-                var tag = (iNode.tagName || '').toLowerCase(), isComponent, $_Slot;
+                var tag = (node.tagName || '').toLowerCase(), newDOM;
 
-                if ((iNode instanceof Element)  &&  (iNode !== $_View[0])) {
+                last_slot = (last_slot  &&  $.contains(last_slot, node))  ?
+                    last_slot : null;
 
-                    isComponent = ((iNode.dataset.href || '')[0]  !==  '?');
+                if ((node instanceof Element)  &&  (node !== this.$_View[0])) {
 
-                    last_component = isComponent && iNode;
+                    if ( node.hasAttribute('slot') )  last_slot = node;
 
-                    switch ( tag ) {
-                        case 'style':       return  DOMkit.fixStyle($_View, iNode);
-                        case 'link':        {
-                            if (('rel' in iNode)  &&  (iNode.rel != 'stylesheet'))
-                                break;
+                    newDOM = this.fixElement(tag, node, last_slot);
 
-                            DOMkit.pathFix(tag, iNode, base).onload = function () {
+                    if ((newDOM === true)  ||  last_view)  return;
 
-                                $( this ).replaceWith(
-                                    DOMkit.fixStyle($_View, this)
-                                );
-                            };
-                            return;
-                        }
-                        case 'script':
-                            return  DOMkit.pathFix(tag, DOMkit.fixScript( iNode ), base);
-                        case 'slot':        {
-                            $_Slot = this.$_Slot.filter(
-                                ($_Slot = iNode.getAttribute('name'))  ?
-                                    ('[slot="' + $_Slot + '"]')  :
-                                    function () {
-                                        return  (! this.getAttribute('slot'));
-                                    }
-                            );
-
-                            if ( $_Slot[0] )  return $_Slot;
-                        }
-                        case 'template':
-                            return  $( iNode ).contents();
-                        default:
-                            DOMkit.pathFix(tag, iNode, base, isComponent);
-                    }
+                    if ( newDOM )  return newDOM;
                 }
 
-                if (iNode instanceof View) {
+                if (node instanceof View) {
 
-                    if (this.indexOf( iNode )  <  0)
-                        this.parsePlain( iNode.$_View[0] ).signIn( iNode );
+                    if (this.indexOf( node )  <  0)  this.signIn( node );
 
                 } else if ( !(tag in HTMLView.rawSelector))
-                    this.parsePlain( iNode );
+                    this.parsePlain( node );
             });
 
-            delete this.$_Slot;
+            this.$_Slot = this.$_Slot.filter( this.$_View.find('[slot]') );
 
             return this;
         },

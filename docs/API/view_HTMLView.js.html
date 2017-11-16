@@ -44,15 +44,28 @@
      * @extends View
      *
      * @param   {jQueryAcceptable} $_View  - Container DOM of HTMLView
-     * @param   {object}               [scope] - Data object as a scope
+     * @param   {object}           [scope] - Data object as a scope
+     * @param   {(string|URL)}     [base]
      *
      * @returns {HTMLView}             Return the last one if a HTMLView instance
      *                                 has been created on this element
      */
 
-    function HTMLView($_View, scope) {
+    function HTMLView($_View, scope, base) {
 
-        var _This_ = View.call(this, $_View, scope);
+        var _This_ = View.call(this, $_View, scope, base);
+        /**
+         * 本视图的插卡元素
+         *
+         * @name $_Slot
+         * @type {jQuery}
+         *
+         * @memberof HTMLView
+         * @instance
+         *
+         * @readonly
+         */
+        this.$_Slot = $();
 
         return  (_This_ !== this)  ?
             _This_ :
@@ -88,9 +101,8 @@
 
             this[this.length++] = iNode;
 
-            var iName = (iNode instanceof RenderNode)  ?  iNode  :  [
-                    iNode.__name__  ||  iNode.name
-                ];
+            var iName = (iNode instanceof RenderNode)  ?
+                    iNode  :  [iNode.__name__];
 
             for (var j = 0;  iName[j];  j++)
                 this.watch( iName[j] ).__map__[iName[j]] =
@@ -117,6 +129,47 @@
 
             return this;
         },
+        fixElement:    function (tag, node, last_slot) {
+
+            var $_View = this.$_View, base = this.__base__, $_Slot;
+
+            switch ( tag ) {
+                case 'style':       return  DOMkit.fixStyle($_View, node);
+                case 'link':        {
+
+                    DOMkit.fixURL(tag, node, base).onload = function () {
+
+                        $( this ).replaceWith(
+                            DOMkit.fixStyle($_View, this)
+                        );
+                    };
+                    return true;
+                }
+                case 'script':
+                    return  DOMkit.fixURL(tag, DOMkit.fixScript( node ), base);
+                case 'slot':        {
+                    $_Slot = this.$_Slot.filter(
+                        ($_Slot = node.getAttribute('name'))  ?
+                            ('[slot="' + $_Slot + '"]')  :
+                            function () {
+                                return  this.getAttribute &amp;&amp;
+                                    (! this.getAttribute('slot'));
+                            }
+                    );
+
+                    if ( $_Slot[0] )  return $_Slot;
+                }
+                case 'template':
+                    return  $( node ).contents();
+                default:
+                    if (
+                        (! last_slot)  ||
+                        this.$_Slot.has( last_slot )[0]  ||
+                        (! $.contains(last_slot, node))
+                    )
+                        DOMkit.fixURL(tag, node, base);
+            }
+        },
         /**
          * HTML 模板解析
          *
@@ -124,41 +177,57 @@
          *
          * @memberof HTMLView.prototype
          *
-         * @returns  {HTMLView}  Current HTMLView
+         * @param    {string}   [template] - A HTML String of the Component's template
+         *                                   with HTMLSlotElement
+         * @returns  {HTMLView} Current HTMLView
          */
-        parse:         function () {
+        parse:         function (template) {
 
-            return  this.scan(function (iNode) {
+            if (this.__parse__)  return this;
 
-                var $_View = this.$_View,
-                    tag = (iNode.tagName || '').toLowerCase();
+            if (template = (template || '').trim()) {
 
-                if ((iNode instanceof Element)  &amp;&amp;  (iNode !== $_View[0]))
-                    switch ( tag ) {
-                        case 'link':      {
-                            if (('rel' in iNode)  &amp;&amp;  (iNode.rel != 'stylesheet'))
-                                break;
+                this.$_Slot = this.$_View.contents().remove().attr(
+                    'slot',  function () {
 
-                            iNode.onload = function () {
-
-                                $( this ).replaceWith(
-                                    DOMkit.fixStyle($_View, this)
-                                );
-                            };
-                            return;
-                        }
-                        case 'style':     return  DOMkit.fixStyle($_View, iNode);
-                        case 'script':    return  DOMkit.fixScript( iNode );
+                        return  arguments[1] || '';
                     }
+                );
 
-                if (iNode instanceof View) {
+                this.$_View[0].innerHTML = template;
+            }
 
-                    if (this.indexOf( iNode )  &lt;  0)
-                        this.parsePlain( iNode.$_View[0] ).signIn( iNode );
+            var last_slot;
+
+            this.scan(function (node, last_view) {
+
+                var tag = (node.tagName || '').toLowerCase(), newDOM;
+
+                last_slot = (last_slot  &amp;&amp;  $.contains(last_slot, node))  ?
+                    last_slot : null;
+
+                if ((node instanceof Element)  &amp;&amp;  (node !== this.$_View[0])) {
+
+                    if ( node.hasAttribute('slot') )  last_slot = node;
+
+                    newDOM = this.fixElement(tag, node, last_slot);
+
+                    if ((newDOM === true)  ||  last_view)  return;
+
+                    if ( newDOM )  return newDOM;
+                }
+
+                if (node instanceof View) {
+
+                    if (this.indexOf( node )  &lt;  0)  this.signIn( node );
 
                 } else if ( !(tag in HTMLView.rawSelector))
-                    this.parsePlain( iNode );
+                    this.parsePlain( node );
             });
+
+            this.$_Slot = this.$_Slot.filter( this.$_View.find('[slot]') );
+
+            return this;
         },
         nodeOf:        function (data, exclude, forEach) {
 
@@ -261,7 +330,8 @@
 
     return HTMLView;
 
-});</code></pre>
+});
+</code></pre>
         </article>
     </section>
 
@@ -270,7 +340,7 @@
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> on Wed Nov 15 2017 06:00:45 GMT+0800 (中国标准时间) using the <a href="https://github.com/clenemt/docdash">docdash</a> theme.
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.5.5</a> on Fri Nov 17 2017 07:22:37 GMT+0800 (中国标准时间) using the <a href="https://github.com/clenemt/docdash">docdash</a> theme.
 </footer>
 
 <script>prettyPrint();</script>

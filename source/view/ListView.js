@@ -14,21 +14,22 @@ define([
      *
      * @param   {jQueryAcceptable} $_View  - Container DOM of ListView
      * @param   {object}           [scope] - Data object as a scope
+     * @param   {(string|URL)}     [base]
      *
      * @returns {ListView}         Return the last one if a ListView instance
      *                             has been created on this element
      */
 
-    function ListView($_View, scope) {
+    function ListView($_View, scope, base) {
 
-        var _This_ = View.call(this, $_View, scope);
+        var _This_ = View.call(this, $_View, scope, base);
 
-        if (_This_ !== this)  return _This_;
-
-        this.setPrivate({
-            HTML:     this.$_View.html(),
-            parse:    $.now()
-        }).clear();
+        return  (_This_ !== this)  ?
+            _This_  :
+            this.setPrivate({
+                HTML:     this.$_View.html(),
+                parse:    $.now()
+            }).clear();
     }
 
     View.extend(ListView, {

@@ -11,7 +11,8 @@ define([
      * @extends Observer
      *
      * @param   {jQueryAcceptable} $_View  - Container DOM of View
-     * @param   {object}               [scope] - Data object as a scope
+     * @param   {object}           [scope] - Data object as a scope
+     * @param   {(string|URL)}     [base]
      *
      * @returns {View}                 Return the last one if a View instance
      *                                 has been created on this element
@@ -29,10 +30,8 @@ define([
             _This_ :
             this.setPrivate({
                 id:          '',
-                name:        box.name || box.dataset.name,
-                base:        base  ||
-                    $.filePath( box.dataset.href )  ||
-                    ($.filePath() + '/'),
+                name:        box.dataset.name,
+                base:        base  ||  View.baseOf( box ),
                 /**
                  * 视图数据作用域
                  *
@@ -54,6 +53,13 @@ define([
     var Sub_Class = [ ];
 
     return  Observer.extend(View, {
+        baseOf:    function (box) {
+
+            if (box.dataset.href  &&  (box.dataset.href[0] !== '?'))
+                return  $.filePath( box.dataset.href ) + '/';
+
+            return  $.filePath() + '/';
+        },
         getSub:    function (iDOM, base) {
 
             var is_View = iDOM.getAttribute('is');
@@ -213,8 +219,9 @@ define([
          *
          * @callback View~parser
          *
-         * @this     View
-         * @param    {HTMLElement|View} node - A Renderable Object
+         * @this  View
+         * @param {HTMLElement|View} node        A Renderable Object
+         * @param {HTMLElement}      [last_view]
          */
         /**
          * HTML 树扫描器
@@ -230,38 +237,39 @@ define([
          */
         scan:          function (parser) {
 
-            var last_component;
+            var last_view;
 
             var iSearcher = this.$_View.treeWalker(1,  (function (iDOM) {
 
                     var iView;
 
-                    if (
-                        (this.$_View[0] !== iDOM)  ||
-                        !(last_component  &&  $.contains(last_component, iDOM))
-                    ) {
+                    last_view = (last_view  &&  $.contains(last_view, iDOM))  ?
+                        last_view : null;
+
+                    if ((this.$_View[0] !== iDOM)  &&  (! last_view)) {
+
                         if ( iDOM.dataset.href ) {
+
+                            parser.call(this, iDOM);
 
                             iView = View.getSub( iDOM );
 
                             if (this.__child__.indexOf( iView )  <  0)
                                 this.__child__.push( iView );
 
-                            last_component = iView;
+                            last_view = iDOM;  iDOM = iView;
 
                         } else if (
                             iDOM.dataset.name  ||
                             (iView = View.instanceOf(iDOM, false))
                         ) {
+                            parser.call(this, iDOM);
+
                             iView = iView  ||  View.getSub(iDOM, this.__base__);
 
-                            parser.call(
-                                this,
-                                (iView.parse  &&  (! iView.__parse__))  ?
-                                    iView.parse()  :  iView
-                            );
+                            last_view = iDOM;
 
-                            return null;
+                            iDOM = iView.parse ? iView.parse() : iView;
 
                         } else if (
                             (iDOM.parentNode == document.head)  &&
@@ -270,7 +278,7 @@ define([
                             return null;
                     }
 
-                    return  parser.call(this, iDOM);
+                    return  parser.call(this, iDOM, last_view);
 
                 }).bind( this ));
 
