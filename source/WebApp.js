@@ -26,7 +26,7 @@ define([
 
         if (_This_ !== this)  return _This_;
 
-        Observer.call(this, Page_Box).pageRoot = new URL($.filePath() + '/');
+        Observer.call(this, Page_Box).pageRoot = new URL( $.filePath() );
         /**
          * 后端 API 根路径
          *

@@ -68,7 +68,9 @@ define([
          */
         insert:     function (data, index, delay) {
 
-            var Item = (new HTMLView(this.__HTML__, this.__data__)).parse();
+            var Item = (
+                    new HTMLView(this.__HTML__, this.__data__, this.__base__)
+                ).parse();
 
             Item.$_View.find( InnerLink.HTML_Link ).addBack( InnerLink.HTML_Link )
                 .each(function () {

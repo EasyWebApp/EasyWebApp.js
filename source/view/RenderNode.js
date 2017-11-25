@@ -32,7 +32,7 @@ define(['jquery', 'jQueryKit'],  function ($) {
         scope:    8
     };
 
-    RenderNode.Template_Type = $.makeSet(2, 3, 8);
+    RenderNode.Template_Type = $.makeSet('Attr', 'Text', 'Comment');
 
     function Eval(view, scope, expression) {  'use strict';
         try {
@@ -88,27 +88,12 @@ define(['jquery', 'jQueryKit'],  function ($) {
                 }
             );
 
-            if ( this[0] )  switch ( node.nodeType ) {
-                case 8:    {
-                    this.ownerElement.replaceChild(
-                        node = document.createTextNode( node.nodeValue ),
-                        this.ownerNode
-                    );
-                    this.ownerNode = node,  this.name = node.nodeName;
-
-                    break;
-                }
-                case 2:
-                    if (
-                        (! node.nodeValue)  &&  (
-                            ($.propFix[node.nodeName] || node.nodeName)  in
-                            this.ownerElement
-                        )
-                    )
-                        this.ownerElement.removeAttribute( node.nodeName );
-            }
-
-            return this;
+            if (
+                this[0]  &&  (node instanceof Attr)  &&  (! node.value)  &&  (
+                    ($.propFix[node.name] || node.name)  in  this.ownerElement
+                )
+            )
+                this.ownerElement.removeAttribute( node.name );
         },
         eval:        function (context, scope) {
 
@@ -126,40 +111,39 @@ define(['jquery', 'jQueryKit'],  function ($) {
 
             return  (this.raw == text)  ?  refer  :  text;
         },
-        render:      function (iContext, iScope) {
+        render:      function (context, scope) {
 
-            var iValue = this.eval(iContext, iScope),
-                iNode = this.ownerNode,
-                iParent = this.ownerElement;
+            var value = this.eval(context, scope),
+                node = this.ownerNode,
+                parent = this.ownerElement;
 
-            if (iValue === this.value)  return;
+            if (value === this.value)  return;
 
-            this.value = iValue;
+            this.value = value;
 
-            switch ( iNode.nodeType ) {
-                case 3:    {
-                    if (! (iNode.previousSibling || iNode.nextSibling))
-                        return  iParent.innerHTML = iValue;
+            switch ($.Type( node )) {
+                case 'Text':    {
+                    if (node.previousSibling || node.nextSibling)
+                        node.nodeValue = value;
+                    else
+                        parent.innerHTML = value;
 
                     break;
                 }
-                case 2:    if (
-                    (this.name != 'style')  &&  (this.name in iParent)
+                case 'Attr':    if (
+                    (this.name != 'style')  &&  (this.name in parent)
                 ) {
-                    iParent[ this.name ] = (iValue instanceof Function)  ?
-                        iValue.bind( iContext )  :  iValue;
+                    parent[ this.name ] = (value instanceof Function)  ?
+                        value.bind( context )  :  value;
 
-                    return;
+                } else if (value !== '') {
 
-                } else if (! iNode.ownerElement) {
-                    if ( iValue )
-                        iParent.setAttribute(this.name, iValue);
-
-                    return;
+                    if ( node.ownerElement )
+                        node.value = value;
+                    else
+                        parent.setAttribute(this.name, value);
                 }
             }
-
-            iNode.nodeValue = iValue;
         },
         /**
          * 生成文本值

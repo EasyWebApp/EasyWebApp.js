@@ -87,12 +87,12 @@ define([
 
             return iDOM;
         },
-        fixURL:       function (tag, node, base) {
+        fixURL:       function (type, node, base) {
 
             var key, URI;  base = new URL(base, self.location);
 
             if (! $( node ).parents('[slot]')[0])
-                switch ( tag ) {
+                switch ( type ) {
                     case 'a':         ;
                     case 'area':      ;
                     case 'link':      key = 'href';
@@ -120,8 +120,8 @@ define([
                         ) {
                             node.setAttribute(
                                 key,
-                                (new URL(URI, base) + '').replace(
-                                    $.filePath() + '/',  ''
+                                decodeURI(new URL(URI, base)).replace(
+                                    $.filePath(), ''
                                 )
                             );
 

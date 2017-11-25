@@ -24,14 +24,12 @@ define([
                 $.Class.call(this, View, ['render']),  $_View,  true
             );
 
-        var box = this.$_View[0];
-
         return  (_This_ !== this)  ?
             _This_ :
             this.setPrivate({
                 id:          '',
-                name:        box.dataset.name,
-                base:        base  ||  View.baseOf( box ),
+                name:        this.$_View[0].dataset.name,
+                base:        base  ||  View.baseOf( this.$_View[0] ),
                 /**
                  * 视图数据作用域
                  *
@@ -56,9 +54,9 @@ define([
         baseOf:    function (box) {
 
             if (box.dataset.href  &&  (box.dataset.href[0] !== '?'))
-                return  $.filePath( box.dataset.href ) + '/';
+                return  $.filePath( box.dataset.href );
 
-            return  $.filePath() + '/';
+            return $.filePath();
         },
         getSub:    function (iDOM, base) {
 
@@ -239,46 +237,48 @@ define([
 
             var last_view;
 
-            var iSearcher = this.$_View.treeWalker(1,  (function (iDOM) {
+            var iSearcher = this.$_View.treeWalker((function (node) {
 
                     var iView;
 
-                    last_view = (last_view  &&  $.contains(last_view, iDOM))  ?
+                    last_view = (last_view  &&  $.contains(last_view, node))  ?
                         last_view : null;
 
-                    if ((this.$_View[0] !== iDOM)  &&  (! last_view)) {
+                    if (
+                        (this.$_View[0] !== node)  &&
+                        (node.nodeType === 1)  &&  (! last_view)
+                    ) {
+                        if ( node.dataset.href ) {
 
-                        if ( iDOM.dataset.href ) {
+                            parser.call(this, node);
 
-                            parser.call(this, iDOM);
-
-                            iView = View.getSub( iDOM );
+                            iView = View.getSub( node );
 
                             if (this.__child__.indexOf( iView )  <  0)
                                 this.__child__.push( iView );
 
-                            last_view = iDOM;  iDOM = iView;
+                            last_view = node;  node = iView;
 
                         } else if (
-                            iDOM.dataset.name  ||
-                            (iView = View.instanceOf(iDOM, false))
+                            node.dataset.name  ||
+                            (iView = View.instanceOf(node, false))
                         ) {
-                            parser.call(this, iDOM);
+                            parser.call(this, node);
 
-                            iView = iView  ||  View.getSub(iDOM, this.__base__);
+                            iView = iView  ||  View.getSub(node, this.__base__);
 
-                            last_view = iDOM;
+                            last_view = node;
 
-                            iDOM = iView.parse ? iView.parse() : iView;
+                            node = iView.parse ? iView.parse() : iView;
 
                         } else if (
-                            (iDOM.parentNode == document.head)  &&
-                            (iDOM.tagName.toLowerCase() != 'title')
+                            (node.parentNode == document.head)  &&
+                            (node.tagName.toLowerCase() != 'title')
                         )
                             return null;
                     }
 
-                    return  parser.call(this, iDOM, last_view);
+                    return  parser.call(this, node, last_view);
 
                 }).bind( this ));
 

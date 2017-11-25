@@ -75,36 +75,55 @@ define([
                 this.watch( iName[j] ).__map__[iName[j]] =
                     (this.__map__[iName[j]] || 0)  +  Math.pow(2, i);
         },
-        parsePlain:    function (iDOM) {
+        parsePlain:    function (node) {
 
-            Array.from(
-                Array.prototype.concat.apply(
-                    $.makeArray( iDOM.attributes ),  iDOM.childNodes
-                ),
-                function (node) {
-                    if (
-                        node.nodeValue  &&
-                        (node.nodeType in RenderNode.Template_Type)
-                    ) {
-                        node = new RenderNode( node );
+            if (! (node.nodeValue || node.value))  return;
 
-                        if ( node.type )  this.signIn( node );
-                    }
-                },
-                this
-            );
+            var render = new RenderNode( node );
 
-            return this;
+            if (! render.type)  return;
+
+            this.signIn( render );
+
+            if (node.nodeType === 8) {
+
+                render.ownerNode = node =
+                    document.createTextNode( node.nodeValue );
+
+                render.name = node.nodeName;
+            }
+
+            return node;
         },
-        fixElement:    function (tag, node, last_slot) {
+        parseNode:     function (type, node) {
+
+            if ((node instanceof View)  &&  (this.indexOf( node )  <  0))
+                return  this.signIn( node );
+
+            switch ($.Type( node )) {
+                case 'Text':           ;
+                case 'Comment':
+                    return  this.parsePlain( node );
+                case 'HTMLElement':
+                    if (type in HTMLView.rawSelector)
+                        return null;
+                    else
+                        Array.from(
+                            $.makeArray( node.attributes ),
+                            this.parsePlain,
+                            this
+                        );
+            }
+        },
+        fixElement:    function (type, node, last_slot) {
 
             var $_View = this.$_View, base = this.__base__, $_Slot;
 
-            switch ( tag ) {
+            switch ( type ) {
                 case 'style':       return  DOMkit.fixStyle($_View, node);
                 case 'link':        {
 
-                    DOMkit.fixURL(tag, node, base).onload = function () {
+                    DOMkit.fixURL(type, node, base).onload = function () {
 
                         $( this ).replaceWith(
                             DOMkit.fixStyle($_View, this)
@@ -113,7 +132,7 @@ define([
                     return true;
                 }
                 case 'script':
-                    return  DOMkit.fixURL(tag, DOMkit.fixScript( node ), base);
+                    return  DOMkit.fixURL(type, DOMkit.fixScript( node ), base);
                 case 'slot':        {
                     $_Slot = this.$_Slot.filter(
                         ($_Slot = node.getAttribute('name'))  ?
@@ -124,7 +143,10 @@ define([
                             }
                     );
 
-                    if ( $_Slot[0] )  return $_Slot;
+                    if ( $_Slot[0] )
+                        return $.merge(
+                            [ document.createTextNode('') ],  $_Slot
+                        );
                 }
                 case 'template':
                     return  $( node ).contents();
@@ -134,7 +156,7 @@ define([
                         this.$_Slot.has( last_slot )[0]  ||
                         (! $.contains(last_slot, node))
                     )
-                        DOMkit.fixURL(tag, node, base);
+                        DOMkit.fixURL(type, node, base);
             }
         },
         /**
@@ -168,28 +190,23 @@ define([
 
             this.scan(function (node, last_view) {
 
-                var tag = (node.tagName || '').toLowerCase(), newDOM;
+                var type = (node.nodeName || '').toLowerCase(), newDOM;
 
                 last_slot = (last_slot  &&  $.contains(last_slot, node))  ?
                     last_slot : null;
 
-                if ((node instanceof Element)  &&  (node !== this.$_View[0])) {
+                if ((node.nodeType === 1)  &&  (node !== this.$_View[0])) {
 
                     if ( node.hasAttribute('slot') )  last_slot = node;
 
-                    newDOM = this.fixElement(tag, node, last_slot);
+                    newDOM = this.fixElement(type, node, last_slot);
 
                     if ((newDOM === true)  ||  last_view)  return;
 
                     if ( newDOM )  return newDOM;
                 }
 
-                if (node instanceof View) {
-
-                    if (this.indexOf( node )  <  0)  this.signIn( node );
-
-                } else if ( !(tag in HTMLView.rawSelector))
-                    this.parsePlain( node );
+                return  this.parseNode(type, node);
             });
 
             this.$_Slot = this.$_Slot.filter( this.$_View.find('[slot]') );
@@ -267,8 +284,7 @@ define([
                     node.render(_Data_[node.__name__]);
 
                     _Data_[node.__name__] = node.__data__;
-                } else
-                    node.innerHTML = _Data_[ node.getAttribute('name') ];
+                }
             });
 
             return this;
