@@ -115,49 +115,68 @@ define([
                         );
             }
         },
-        fixElement:    function (type, node, last_slot) {
+        fixLink:       function () {
 
-            var $_View = this.$_View, base = this.__base__, $_Slot;
+            if (! this.__base__)  return;
 
-            switch ( type ) {
-                case 'style':       return  DOMkit.fixStyle($_View, node);
-                case 'link':        {
+            var $_Link = this.$_View.find('*');
 
-                    DOMkit.fixURL(type, node, base).onload = function () {
+            if (! this.$_View[0].parentElement)  $_Link = $_Link.addBack();
 
-                        $( this ).replaceWith(
-                            DOMkit.fixStyle($_View, this)
-                        );
-                    };
-                    return true;
-                }
-                case 'script':
-                    return  DOMkit.fixURL(type, DOMkit.fixScript( node ), base);
-                case 'slot':        {
-                    $_Slot = this.$_Slot.filter(
-                        ($_Slot = node.getAttribute('name'))  ?
-                            ('[slot="' + $_Slot + '"]')  :
-                            function () {
-                                return  this.getAttribute &&
-                                    (! this.getAttribute('slot'));
-                            }
-                    );
+            $_Link.filter(
+                'a, area, link, form, img, iframe, audio, video, script, [data-href]'
+            ).not('head > *').each(
+                $.proxy(DOMkit.fixURL, null, this.__base__)
+            );
+        },
+        parseSlot:     function () {
 
-                    if ( $_Slot[0] )
-                        return $.merge(
-                            [ document.createTextNode('') ],  $_Slot
-                        );
-                }
-                case 'template':
-                    return  $( node ).contents();
-                default:
-                    if (
-                        (! last_slot)  ||
-                        this.$_Slot.has( last_slot )[0]  ||
-                        (! $.contains(last_slot, node))
-                    )
-                        DOMkit.fixURL(type, node, base);
-            }
+            var _this_ = this, $_Slot = $();
+
+            this.$_View.find('slot').replaceWith(function () {
+
+                var slot = this.getAttribute('name');
+
+                slot = _this_.$_Slot.filter(
+                    slot  ?
+                        ('[slot="' + slot + '"]')  :
+                        function () {
+                            return  this.getAttribute &&
+                                (! this.getAttribute('slot'));
+                        }
+                );
+
+                return  slot[0]  ?
+                    ($_Slot.add( slot )  &&  slot)  :  $( this ).contents();
+            });
+
+            this.$_Slot = $_Slot;
+        },
+        parseVM:       function () {
+
+            return  this.scan(function (node) {
+
+                var $_View = this.$_View,
+                    type = (node.nodeName || '').toLowerCase();
+
+                if ((node instanceof Node)  &&  (node !== $_View[0]))
+                    switch ( type ) {
+                        case 'style':     return  DOMkit.fixStyle($_View, node);
+                        case 'link':      {
+
+                            node.onload = function () {
+
+                                $( this ).replaceWith(
+                                    DOMkit.fixStyle($_View, this)
+                                );
+                            };
+                            return;
+                        }
+                        case 'script':    return  DOMkit.fixScript( node );
+                    }
+
+                return  this.parseNode(type, node);
+            });
         },
         /**
          * HTML 模板解析
@@ -174,44 +193,35 @@ define([
 
             if (this.__parse__)  return this;
 
-            if (template = (template || '').trim()) {
+        //  Compatible with <template />
 
-                this.$_Slot = this.$_View.contents().remove().attr(
-                    'slot',  function () {
+            this.$_View.children('template').replaceWith(function () {
 
-                        return  arguments[1] || '';
-                    }
-                );
-
-                this.$_View[0].innerHTML = template;
-            }
-
-            var last_slot;
-
-            this.scan(function (node, last_view) {
-
-                var type = (node.nodeName || '').toLowerCase(), newDOM;
-
-                last_slot = (last_slot  &&  $.contains(last_slot, node))  ?
-                    last_slot : null;
-
-                if ((node.nodeType === 1)  &&  (node !== this.$_View[0])) {
-
-                    if ( node.hasAttribute('slot') )  last_slot = node;
-
-                    newDOM = this.fixElement(type, node, last_slot);
-
-                    if ((newDOM === true)  ||  last_view)  return;
-
-                    if ( newDOM )  return newDOM;
-                }
-
-                return  this.parseNode(type, node);
+                return  $( this ).contents();
             });
 
-            this.$_Slot = this.$_Slot.filter( this.$_View.find('[slot]') );
+        //  Literal Relative URL & <slot />
 
-            return this;
+            if (template = (template || '').trim()) {
+
+                if ( this.$_View[0].innerHTML.trim() ) {
+
+                    this.$_Slot = this.$_View.contents().remove();
+
+                    this.$_View[0].innerHTML = template;
+
+                    this.fixLink();
+
+                    this.parseSlot();
+                } else {
+                    this.$_View[0].innerHTML = template;
+
+                    this.fixLink();
+                }
+            } else
+                this.fixLink();
+
+            return this.parseVM();
         },
         nodeOf:        function (data, exclude, forEach) {
 

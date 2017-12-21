@@ -87,53 +87,50 @@ define([
 
             return iDOM;
         },
-        fixURL:       function (type, node, base) {
+        fixURL:       function (base) {
 
             var key, URI;  base = new URL(base, self.location);
 
-            if (! $( node ).parents('[slot]')[0])
-                switch ( type ) {
-                    case 'a':         ;
-                    case 'area':      ;
-                    case 'link':      key = 'href';
-                    case 'form':      key = key || 'action';
-                    case 'img':       ;
-                    case 'iframe':    ;
-                    case 'audio':     ;
-                    case 'video':     ;
-                    case 'script':    key = key || 'src';
-                    default:          {
-                        key = key || 'data-href';
+            switch ( this.tagName.toLowerCase() ) {
+                case 'a':         ;
+                case 'area':      ;
+                case 'link':      key = 'href';
+                case 'form':      key = key || 'action';
+                case 'img':       ;
+                case 'iframe':    ;
+                case 'audio':     ;
+                case 'video':     ;
+                case 'script':    key = key || 'src';
+                default:          {
+                    key = key || 'data-href';
 
-                        if (! (URI = node.getAttribute( key )))  break;
+                    if (! (URI = this.getAttribute( key )))  break;
 
-                        if (
-                            ('target' in node)  &&
-                            (node.target !== '_self')  &&
-                            $.isXDomain( URI )
-                        ) {
-                            node.target = '_blank';
+                    if (
+                        ('target' in this)  &&
+                        (this.target !== '_self')  &&
+                        $.isXDomain( URI )
+                    ) {
+                        this.target = '_blank';
 
-                        } else if (
-                            !(URI[0] in URL_Prefix)  &&
-                            URI.replace(RenderNode.expression, '')
-                        ) {
-                            node.setAttribute(
-                                key,
-                                decodeURI(new URL(URI, base)).replace(
-                                    $.filePath(), ''
-                                )
-                            );
+                    } else if (
+                        !(URI[0] in URL_Prefix)  &&
+                        URI.replace(RenderNode.expression, '')
+                    ) {
+                        this.setAttribute(
+                            key,
+                            decodeURI(new URL(URI, base)).replace(
+                                $.filePath(), ''
+                            )
+                        );
 
-                            if ($( node ).is(
-                                InnerLink.HTML_Link + ', ' + InnerLink.Self_Link
-                            ))
-                                new InnerLink( node );
-                        }
+                        if ($( this ).is(
+                            InnerLink.HTML_Link + ', ' + InnerLink.Self_Link
+                        ))
+                            new InnerLink( this );
                     }
                 }
-
-            return node;
+            }
         }
     };
 });

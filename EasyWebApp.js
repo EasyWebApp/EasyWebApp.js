@@ -835,8 +835,6 @@ var view_View = (function ($, Observer, DataScope, RenderNode) {
 
             if (box.dataset.href  &&  (box.dataset.href[0] !== '?'))
                 return  $.filePath( box.dataset.href );
-
-            return $.filePath();
         },
         getSub:    function (iDOM, base) {
 
@@ -998,8 +996,7 @@ var view_View = (function ($, Observer, DataScope, RenderNode) {
          * @callback View~parser
          *
          * @this  View
-         * @param {HTMLElement|View} node        A Renderable Object
-         * @param {HTMLElement}      [last_view]
+         * @param {HTMLElement|View} node - A Renderable Object
          */
         /**
          * HTML 树扫描器
@@ -1015,19 +1012,14 @@ var view_View = (function ($, Observer, DataScope, RenderNode) {
          */
         scan:          function (parser) {
 
-            var last_view;
+            var Sub_View = [ ];
 
             var iSearcher = this.$_View.treeWalker((function (node) {
 
                     var iView;
 
-                    last_view = (last_view  &&  $.contains(last_view, node))  ?
-                        last_view : null;
+                    if ((this.$_View[0] !== node)  &&  (node.nodeType === 1)) {
 
-                    if (
-                        (this.$_View[0] !== node)  &&
-                        (node.nodeType === 1)  &&  (! last_view)
-                    ) {
                         if ( node.dataset.href ) {
 
                             parser.call(this, node);
@@ -1037,7 +1029,7 @@ var view_View = (function ($, Observer, DataScope, RenderNode) {
                             if (this.__child__.indexOf( iView )  <  0)
                                 this.__child__.push( iView );
 
-                            last_view = node;  node = iView;
+                            return null;
 
                         } else if (
                             node.dataset.name  ||
@@ -1047,9 +1039,9 @@ var view_View = (function ($, Observer, DataScope, RenderNode) {
 
                             iView = iView  ||  View.getSub(node, this.__base__);
 
-                            last_view = node;
+                            Sub_View.push(iView.parse ? iView.parse() : iView);
 
-                            node = iView.parse ? iView.parse() : iView;
+                            return null;
 
                         } else if (
                             (node.parentNode == document.head)  &&
@@ -1058,11 +1050,14 @@ var view_View = (function ($, Observer, DataScope, RenderNode) {
                             return null;
                     }
 
-                    return  parser.call(this, node, last_view);
+                    return  parser.call(this, node);
 
                 }).bind( this ));
 
             while (! iSearcher.next().done)  ;
+
+            for (var i = 0;  Sub_View[i];  i++)
+                parser.call(this, Sub_View[i]);
 
             this.__parse__ = $.now();
 
@@ -1220,53 +1215,50 @@ var view_DOMkit = (function ($, RenderNode, InnerLink) {
 
             return iDOM;
         },
-        fixURL:       function (type, node, base) {
+        fixURL:       function (base) {
 
             var key, URI;  base = new URL(base, self.location);
 
-            if (! $( node ).parents('[slot]')[0])
-                switch ( type ) {
-                    case 'a':         ;
-                    case 'area':      ;
-                    case 'link':      key = 'href';
-                    case 'form':      key = key || 'action';
-                    case 'img':       ;
-                    case 'iframe':    ;
-                    case 'audio':     ;
-                    case 'video':     ;
-                    case 'script':    key = key || 'src';
-                    default:          {
-                        key = key || 'data-href';
+            switch ( this.tagName.toLowerCase() ) {
+                case 'a':         ;
+                case 'area':      ;
+                case 'link':      key = 'href';
+                case 'form':      key = key || 'action';
+                case 'img':       ;
+                case 'iframe':    ;
+                case 'audio':     ;
+                case 'video':     ;
+                case 'script':    key = key || 'src';
+                default:          {
+                    key = key || 'data-href';
 
-                        if (! (URI = node.getAttribute( key )))  break;
+                    if (! (URI = this.getAttribute( key )))  break;
 
-                        if (
-                            ('target' in node)  &&
-                            (node.target !== '_self')  &&
-                            $.isXDomain( URI )
-                        ) {
-                            node.target = '_blank';
+                    if (
+                        ('target' in this)  &&
+                        (this.target !== '_self')  &&
+                        $.isXDomain( URI )
+                    ) {
+                        this.target = '_blank';
 
-                        } else if (
-                            !(URI[0] in URL_Prefix)  &&
-                            URI.replace(RenderNode.expression, '')
-                        ) {
-                            node.setAttribute(
-                                key,
-                                decodeURI(new URL(URI, base)).replace(
-                                    $.filePath(), ''
-                                )
-                            );
+                    } else if (
+                        !(URI[0] in URL_Prefix)  &&
+                        URI.replace(RenderNode.expression, '')
+                    ) {
+                        this.setAttribute(
+                            key,
+                            decodeURI(new URL(URI, base)).replace(
+                                $.filePath(), ''
+                            )
+                        );
 
-                            if ($( node ).is(
-                                InnerLink.HTML_Link + ', ' + InnerLink.Self_Link
-                            ))
-                                new InnerLink( node );
-                        }
+                        if ($( this ).is(
+                            InnerLink.HTML_Link + ', ' + InnerLink.Self_Link
+                        ))
+                            new InnerLink( this );
                     }
                 }
-
-            return node;
+            }
         }
     };
 })(jquery, view_RenderNode, InnerLink);
@@ -1387,49 +1379,68 @@ var view_HTMLView = (function ($, View, DOMkit, RenderNode) {
                         );
             }
         },
-        fixElement:    function (type, node, last_slot) {
+        fixLink:       function () {
 
-            var $_View = this.$_View, base = this.__base__, $_Slot;
+            if (! this.__base__)  return;
 
-            switch ( type ) {
-                case 'style':       return  DOMkit.fixStyle($_View, node);
-                case 'link':        {
+            var $_Link = this.$_View.find('*');
 
-                    DOMkit.fixURL(type, node, base).onload = function () {
+            if (! this.$_View[0].parentElement)  $_Link = $_Link.addBack();
 
-                        $( this ).replaceWith(
-                            DOMkit.fixStyle($_View, this)
-                        );
-                    };
-                    return true;
-                }
-                case 'script':
-                    return  DOMkit.fixURL(type, DOMkit.fixScript( node ), base);
-                case 'slot':        {
-                    $_Slot = this.$_Slot.filter(
-                        ($_Slot = node.getAttribute('name'))  ?
-                            ('[slot="' + $_Slot + '"]')  :
-                            function () {
-                                return  this.getAttribute &&
-                                    (! this.getAttribute('slot'));
-                            }
-                    );
+            $_Link.filter(
+                'a, area, link, form, img, iframe, audio, video, script, [data-href]'
+            ).not('head > *').each(
+                $.proxy(DOMkit.fixURL, null, this.__base__)
+            );
+        },
+        parseSlot:     function () {
 
-                    if ( $_Slot[0] )
-                        return $.merge(
-                            [ document.createTextNode('') ],  $_Slot
-                        );
-                }
-                case 'template':
-                    return  $( node ).contents();
-                default:
-                    if (
-                        (! last_slot)  ||
-                        this.$_Slot.has( last_slot )[0]  ||
-                        (! $.contains(last_slot, node))
-                    )
-                        DOMkit.fixURL(type, node, base);
-            }
+            var _this_ = this, $_Slot = $();
+
+            this.$_View.find('slot').replaceWith(function () {
+
+                var slot = this.getAttribute('name');
+
+                slot = _this_.$_Slot.filter(
+                    slot  ?
+                        ('[slot="' + slot + '"]')  :
+                        function () {
+                            return  this.getAttribute &&
+                                (! this.getAttribute('slot'));
+                        }
+                );
+
+                return  slot[0]  ?
+                    ($_Slot.add( slot )  &&  slot)  :  $( this ).contents();
+            });
+
+            this.$_Slot = $_Slot;
+        },
+        parseVM:       function () {
+
+            return  this.scan(function (node) {
+
+                var $_View = this.$_View,
+                    type = (node.nodeName || '').toLowerCase();
+
+                if ((node instanceof Node)  &&  (node !== $_View[0]))
+                    switch ( type ) {
+                        case 'style':     return  DOMkit.fixStyle($_View, node);
+                        case 'link':      {
+
+                            node.onload = function () {
+
+                                $( this ).replaceWith(
+                                    DOMkit.fixStyle($_View, this)
+                                );
+                            };
+                            return;
+                        }
+                        case 'script':    return  DOMkit.fixScript( node );
+                    }
+
+                return  this.parseNode(type, node);
+            });
         },
         /**
          * HTML 模板解析
@@ -1446,44 +1457,35 @@ var view_HTMLView = (function ($, View, DOMkit, RenderNode) {
 
             if (this.__parse__)  return this;
 
-            if (template = (template || '').trim()) {
+        //  Compatible with <template />
 
-                this.$_Slot = this.$_View.contents().remove().attr(
-                    'slot',  function () {
+            this.$_View.children('template').replaceWith(function () {
 
-                        return  arguments[1] || '';
-                    }
-                );
-
-                this.$_View[0].innerHTML = template;
-            }
-
-            var last_slot;
-
-            this.scan(function (node, last_view) {
-
-                var type = (node.nodeName || '').toLowerCase(), newDOM;
-
-                last_slot = (last_slot  &&  $.contains(last_slot, node))  ?
-                    last_slot : null;
-
-                if ((node.nodeType === 1)  &&  (node !== this.$_View[0])) {
-
-                    if ( node.hasAttribute('slot') )  last_slot = node;
-
-                    newDOM = this.fixElement(type, node, last_slot);
-
-                    if ((newDOM === true)  ||  last_view)  return;
-
-                    if ( newDOM )  return newDOM;
-                }
-
-                return  this.parseNode(type, node);
+                return  $( this ).contents();
             });
 
-            this.$_Slot = this.$_Slot.filter( this.$_View.find('[slot]') );
+        //  Literal Relative URL & <slot />
 
-            return this;
+            if (template = (template || '').trim()) {
+
+                if ( this.$_View[0].innerHTML.trim() ) {
+
+                    this.$_Slot = this.$_View.contents().remove();
+
+                    this.$_View[0].innerHTML = template;
+
+                    this.fixLink();
+
+                    this.parseSlot();
+                } else {
+                    this.$_View[0].innerHTML = template;
+
+                    this.fixLink();
+                }
+            } else
+                this.fixLink();
+
+            return this.parseVM();
         },
         nodeOf:        function (data, exclude, forEach) {
 
@@ -1656,9 +1658,7 @@ var view_ListView = (function ($, View, HTMLView, InnerLink) {
          */
         insert:     function (data, index, delay) {
 
-            var Item = (
-                    new HTMLView(this.__HTML__, this.__data__, this.__base__)
-                ).parse();
+            var Item = (new HTMLView(this.__HTML__, this.__data__)).parse();
 
             Item.$_View.find( InnerLink.HTML_Link ).addBack( InnerLink.HTML_Link )
                 .each(function () {
@@ -2271,7 +2271,7 @@ var WebApp = (function ($, Observer, View, HTMLView, ListView, TreeView, DOMkit,
  *
  * @module    {function} WebApp
  *
- * @version   4.0 (2017-11-25) stable
+ * @version   4.0 (2017-12-22) stable
  *
  * @requires  jquery
  * @see       {@link http://jquery.com/ jQuery}

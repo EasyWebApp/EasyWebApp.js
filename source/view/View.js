@@ -55,8 +55,6 @@ define([
 
             if (box.dataset.href  &&  (box.dataset.href[0] !== '?'))
                 return  $.filePath( box.dataset.href );
-
-            return $.filePath();
         },
         getSub:    function (iDOM, base) {
 
@@ -218,8 +216,7 @@ define([
          * @callback View~parser
          *
          * @this  View
-         * @param {HTMLElement|View} node        A Renderable Object
-         * @param {HTMLElement}      [last_view]
+         * @param {HTMLElement|View} node - A Renderable Object
          */
         /**
          * HTML 树扫描器
@@ -235,19 +232,14 @@ define([
          */
         scan:          function (parser) {
 
-            var last_view;
+            var Sub_View = [ ];
 
             var iSearcher = this.$_View.treeWalker((function (node) {
 
                     var iView;
 
-                    last_view = (last_view  &&  $.contains(last_view, node))  ?
-                        last_view : null;
+                    if ((this.$_View[0] !== node)  &&  (node.nodeType === 1)) {
 
-                    if (
-                        (this.$_View[0] !== node)  &&
-                        (node.nodeType === 1)  &&  (! last_view)
-                    ) {
                         if ( node.dataset.href ) {
 
                             parser.call(this, node);
@@ -257,7 +249,7 @@ define([
                             if (this.__child__.indexOf( iView )  <  0)
                                 this.__child__.push( iView );
 
-                            last_view = node;  node = iView;
+                            return null;
 
                         } else if (
                             node.dataset.name  ||
@@ -267,9 +259,9 @@ define([
 
                             iView = iView  ||  View.getSub(node, this.__base__);
 
-                            last_view = node;
+                            Sub_View.push(iView.parse ? iView.parse() : iView);
 
-                            node = iView.parse ? iView.parse() : iView;
+                            return null;
 
                         } else if (
                             (node.parentNode == document.head)  &&
@@ -278,11 +270,14 @@ define([
                             return null;
                     }
 
-                    return  parser.call(this, node, last_view);
+                    return  parser.call(this, node);
 
                 }).bind( this ));
 
             while (! iSearcher.next().done)  ;
+
+            for (var i = 0;  Sub_View[i];  i++)
+                parser.call(this, Sub_View[i]);
 
             this.__parse__ = $.now();
 
