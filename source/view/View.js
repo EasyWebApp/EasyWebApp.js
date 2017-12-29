@@ -296,8 +296,10 @@ define([
          * @returns  {View}   Current View
          */
         watch:         function (key, get_set) {
-
-            if (! (key in Object.getPrototypeOf( this )))
+            if (
+                !(key  in  Object.getPrototypeOf( this ))  &&
+                !((typeof this.length === 'number')  &&  $.isNumeric( key ))
+            )
                 this.setPublic(key, get_set, {
                     get:    function () {
 

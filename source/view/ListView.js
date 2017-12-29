@@ -178,6 +178,13 @@ define([
             }));
 
             return this;
+        },
+        valueOf:    function () {
+
+            return  $.each(this.__data__.valueOf(),  function () {
+
+                delete  this.__index__;
+            });
         }
     });
 

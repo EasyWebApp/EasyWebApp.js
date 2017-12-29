@@ -5,31 +5,71 @@ define([
     var Invalid_Style = $.makeSet('inherit', 'initial'),
         URL_Prefix = $.makeSet('?', '#');
 
+    function mapStyle(style, filter) {
+
+        var context = this, key_value = { };
+
+        $.each(style,  function () {
+
+            var value = style.getPropertyValue( this ), _value_,
+                priority = style.getPropertyPriority( this );
+
+            if ( filter ) {
+
+                if (null  !=  (_value_ = filter.call(
+                    context,  value,  this + '',  priority,  style
+                )))
+                    value = _value_;
+                else
+                    return;
+            }
+
+            if ( priority )  value += ' !' + priority;
+
+            if (! (value in Invalid_Style))  key_value[ this ] = value;
+        });
+
+        return  key_value;
+    }
+
+    function pathToRoot(base, path) {
+
+        return (
+            !(path[0] in URL_Prefix)  &&  path.replace(RenderNode.expression, '')
+        )  &&
+            decodeURI(
+                new URL(path,  new URL(base, self.location))
+            ).replace(
+                $.filePath(), ''
+            );
+    }
+
+    function fixCSSURL(base, value) {
+
+        return  value.replace(
+            /\s?url\(\s*(?:'|")(\S+)(?:'|")\)/g,
+            function (_, path) {
+
+                return  'url("'  +  (pathToRoot(base, path) || path)  +  '")';
+            }
+        );
+    }
 
     return {
-        cssRule:      function cssRule(sheet) {
+        cssRule:      function cssRule(sheet, mapFilter) {
+
+            mapFilter = (mapFilter instanceof Function)  &&  mapFilter;
 
             var rule = { };
 
             $.each(sheet.cssRules,  function () {
 
                 if ( this.cssRules )
-                    return (
-                        rule[ this.cssText.split( /\s*\{/ )[0] ] = cssRule( this )
-                    );
-
-                var _rule_ = rule[this.selectorText || this.keyText] = { };
-
-                for (var i = 0, value, priority;  this.style[i];  i++) {
-
-                    value = this.style.getPropertyValue( this.style[i] );
-
-                    if (priority = this.style.getPropertyPriority( this.style[i] ))
-                        value += ' !' + priority;
-
-                    if (! (value in Invalid_Style))
-                        _rule_[ this.style[i] ] = value;
-                }
+                    rule[ this.cssText.split( /\s*\{/ )[0] ] =
+                        cssRule(this, mapFilter);
+                else
+                    rule[this.selectorText || this.keyText] =
+                        mapStyle.call(sheet, this.style, mapFilter);
             });
 
             return rule;
@@ -38,7 +78,12 @@ define([
 
             if ( iDOM.classList.contains('iQuery_CSS-Rule') )  return iDOM;
 
-            var rule = this.cssRule( iDOM.sheet );    iDOM = [ ];
+            var rule = this.cssRule(
+                    iDOM.sheet,
+                    iDOM.sheet.href  &&  fixCSSURL.bind(null, iDOM.sheet.href)
+                );
+
+            iDOM = [ ];
 
             $.each(rule,  function (selector) {
 
@@ -89,7 +134,10 @@ define([
         },
         fixURL:       function (base) {
 
-            var key, URI;  base = new URL(base, self.location);
+            var key, URI, $_This = $( this );
+
+            if (this.style.cssText.indexOf('url(') > 0)
+                $_This.css( mapStyle(this.style,  fixCSSURL.bind(null, base)) );
 
             switch ( this.tagName.toLowerCase() ) {
                 case 'a':         ;
@@ -113,24 +161,22 @@ define([
                     ) {
                         this.target = '_blank';
 
-                    } else if (
-                        !(URI[0] in URL_Prefix)  &&
-                        URI.replace(RenderNode.expression, '')
-                    ) {
-                        this.setAttribute(
-                            key,
-                            decodeURI(new URL(URI, base)).replace(
-                                $.filePath(), ''
-                            )
-                        );
+                    } else if (URI = pathToRoot(base, URI)) {
 
-                        if ($( this ).is(
+                        this.setAttribute(key, URI);
+
+                        if ($_This.is(
                             InnerLink.HTML_Link + ', ' + InnerLink.Self_Link
                         ))
                             new InnerLink( this );
                     }
                 }
             }
-        }
+        },
+        URL_DOM:      [
+            'a', 'area', 'link', 'form',
+            'img', 'iframe', 'audio', 'video', 'script',
+            '[style]', '[data-href]'
+        ].join(', ')
     };
 });

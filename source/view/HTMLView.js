@@ -123,9 +123,7 @@ define([
 
             if (! this.$_View[0].parentElement)  $_Link = $_Link.addBack();
 
-            $_Link.filter(
-                'a, area, link, form, img, iframe, audio, video, script, [data-href]'
-            ).not('head > *').each(
+            $_Link.filter( DOMkit.URL_DOM ).not('head > *').each(
                 $.proxy(DOMkit.fixURL, null, this.__base__)
             );
         },
@@ -147,7 +145,7 @@ define([
                 );
 
                 return  slot[0]  ?
-                    ($_Slot.add( slot )  &&  slot)  :  $( this ).contents();
+                    ($.merge($_Slot, slot)  &&  slot)  :  $( this ).contents();
             });
 
             this.$_Slot = $_Slot;

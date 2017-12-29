@@ -24,7 +24,7 @@ define(['jquery', 'jQueryKit'],  function ($) {
 
     RenderNode.expression = /\$\{([\s\S]+?)\}/g;
 
-    RenderNode.reference = /(\w+)(?:\.|\[(?:'|")|\()(\w+)?/g;
+    RenderNode.reference = /(\w+)(\.|\[(?:'|")|\()(\w+)?/g;
 
     RenderNode.Reference_Mask = {
         view:     1,
@@ -48,45 +48,45 @@ define(['jquery', 'jQueryKit'],  function ($) {
         }
     }
 
-    $.extend(RenderNode.prototype, {
-        splice:      Array.prototype.splice,
-        indexOf:     Array.prototype.indexOf,
-        push:        Array.prototype.push,
-        scan:        function () {
+    $.extend(RenderNode.prototype = [ ],  {
+        constructor:    RenderNode,
+        add:            function (key) {
+
+            if (key  &&  (this.indexOf( key )  <  0))
+                this.push( key );
+        },
+        scan:           function () {
 
             var _This_ = this,  node = this.ownerNode;
 
             this.splice(0, Infinity);    this.type = 0;
 
-            node.nodeValue = this.raw.replace(
+            node.nodeValue = (this.raw = this.raw.replace(
                 RenderNode.expression,  function (_, expression) {
 
                     if (/\w+\s*\([\s\S]*?\)/.test( expression ))
                         _This_.type = _This_.type | 2;
 
                     expression.replace(
-                        RenderNode.reference,  function (_, scope, key) {
+                        RenderNode.reference,  function (_, scope, symbol, key) {
 
-                            var global;
+                            var global = self[ scope ];
 
-                            _This_.type = _This_.type | (
-                                RenderNode.Reference_Mask[ scope ]  ||  (
-                                    (global = self[ scope ])  &&  16
-                                )
-                            );
+                            if ( global )
+                                return  _This_.type = _This_.type | 16;
 
-                            if (
-                                (scope !== 'this')  &&
-                                (! global)  &&
-                                (_This_.indexOf( key )  <  0)
-                            )
-                                _This_.push( key );
+                            if (symbol[0] === '(')  return;
+
+                            _This_.type = _This_.type |
+                                RenderNode.Reference_Mask[ scope ];
+
+                            if (scope !== 'this')  _This_.add( key );
                         }
                     );
 
-                    return '';
+                    return  '${' + expression.trim() + '}';
                 }
-            );
+            )).replace(RenderNode.expression, '');
 
             if (
                 this[0]  &&  (node instanceof Attr)  &&  (! node.value)  &&  (
@@ -95,7 +95,7 @@ define(['jquery', 'jQueryKit'],  function ($) {
             )
                 this.ownerElement.removeAttribute( node.name );
         },
-        eval:        function (context, scope) {
+        eval:           function (context, scope) {
 
             var refer,  _This_ = this.ownerElement;
 
@@ -111,7 +111,7 @@ define(['jquery', 'jQueryKit'],  function ($) {
 
             return  (this.raw == text)  ?  refer  :  text;
         },
-        render:      function (context, scope) {
+        render:         function (context, scope) {
 
             var value = this.eval(context, scope),
                 node = this.ownerNode,
@@ -154,7 +154,7 @@ define(['jquery', 'jQueryKit'],  function ($) {
          *
          * @returns  {string} Text Value of this template
          */
-        toString:    function () {
+        toString:       function () {
 
             return  this.value + '';
         }
