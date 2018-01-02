@@ -63,7 +63,10 @@ define([
         splice:           Array.prototype.splice,
         getCID:           function () {
 
-            return  (arguments[0] + '').replace(this.pageRoot, '').split('#')[0];
+            return  (arguments[0] + '')
+                .replace(this.pageRoot, '')
+                .replace($.filePath( document.baseURI ),  '')
+                .split('#')[0];
         },
         /**
          * 明文显示当前 SPA 内页的路由 URI
@@ -167,7 +170,7 @@ define([
                 ](
                     {index: this.length},
                     document.title = link.title,
-                    '#!'  +  self.btoa( this.getCID( link ) )
+                    this.pageRoot  +  '#!'  +  self.btoa( this.getCID( link ) )
                 );
 
                 this.emitRoute( this[ this.length++ ] = link );
@@ -191,7 +194,7 @@ define([
 
             HTML = this._emit('template', link, HTML);
 
-            var view = View.getSub(target, link.href);
+            var view = View.getSub(target, null, link.href);
 
             if ( view.parse )  view.parse( HTML );
 

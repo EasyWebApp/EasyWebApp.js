@@ -1,6 +1,6 @@
 define([
-    'jquery', './View', './HTMLView', '../InnerLink'
-],  function ($, View, HTMLView, InnerLink) {
+    'jquery', './View', '../InnerLink', './HTMLView'
+],  function ($, View, InnerLink) {
 
     /**
      * 迭代视图类（对应 JSON 数组）
@@ -68,7 +68,7 @@ define([
          */
         insert:     function (data, index, delay) {
 
-            var Item = (new HTMLView(this.__HTML__, this.__data__)).parse();
+            var Item = View.getSub(this.__HTML__, this.__data__).parse();
 
             Item.$_View.find( InnerLink.HTML_Link ).addBack( InnerLink.HTML_Link )
                 .each(function () {

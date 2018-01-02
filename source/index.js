@@ -3,14 +3,14 @@
  *
  * @module    {function} WebApp
  *
- * @version   4.0 (2017-12-29) stable
+ * @version   4.0 (2018-01-02) stable
  *
  * @requires  jquery
  * @see       {@link http://jquery.com/ jQuery}
  * @requires  jQueryKit
  * @see       {@link https://techquery.github.io/iQuery.js iQuery}
  *
- * @copyright TechQuery <shiy2008@gmail.com> 2015-2017
+ * @copyright TechQuery <shiy2008@gmail.com> 2015-2018
  */
 
 define(['jquery', './WebApp', './InnerLink'],  function ($, WebApp, InnerLink) {
@@ -146,7 +146,7 @@ define(['jquery', './WebApp', './InnerLink'],  function ($, WebApp, InnerLink) {
                         data:     key
                     },
                     document.title,
-                    '#!' + self.btoa(
+                    this.pageRoot + '#!' + self.btoa(
                         $.extendURL(URL[0], key)  +  (
                             URL[1]  ?  ('&data=' + URL[1])  :  ''
                         )

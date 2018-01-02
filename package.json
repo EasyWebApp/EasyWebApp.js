@@ -7,7 +7,7 @@
     "doc": "docs"
   },
   "engines": {
-    "node": "^5.0.0"
+    "node": "^5.12.0"
   },
   "scripts": {
     "bundle": "cd source  &&  amd-bundle ../EasyWebApp.js -e jquery,jQueryKit",
@@ -39,6 +39,6 @@
     "jsdoc": "^3.5.5",
     "jsdoc-inheritance-diagram": "^1.1.1",
     "reduce-blank": "^0.2.0",
-    "uglify-js": "^3.0.24"
+    "uglify-js": "3.0.28"
   }
 }

@@ -74,13 +74,12 @@ define([
 
             return rule;
         },
-        fixStyle:     function ($_Root, iDOM) {
+        fixStyle:     function ($_Root, iDOM, base) {
 
             if ( iDOM.classList.contains('iQuery_CSS-Rule') )  return iDOM;
 
             var rule = this.cssRule(
-                    iDOM.sheet,
-                    iDOM.sheet.href  &&  fixCSSURL.bind(null, iDOM.sheet.href)
+                    iDOM.sheet,  base && fixCSSURL.bind(null, base)
                 );
 
             iDOM = [ ];
@@ -120,6 +119,27 @@ define([
 
             return iDOM;
         },
+        loadCSS:      function ($_View, linkDOM, base) {
+
+            var path = pathToRoot(base, linkDOM.getAttribute('href')),
+                _this_ = this,
+                $_Style = $('<style disabled />');
+
+            $.get( path ).then(function (CSS) {
+
+                $_Style[0].textContent = CSS;
+
+                $_Style.replaceWith( _this_.fixStyle($_View, $_Style[0], path) );
+
+            },  function () {
+
+                linkDOM.href = path;
+
+                $_Style.replaceWith( linkDOM );
+            });
+
+            return $_Style[0];
+        },
         fixScript:    function (iDOM) {
             var iAttr = { };
 
@@ -141,8 +161,7 @@ define([
 
             switch ( this.tagName.toLowerCase() ) {
                 case 'a':         ;
-                case 'area':      ;
-                case 'link':      key = 'href';
+                case 'area':      key = 'href';
                 case 'form':      key = key || 'action';
                 case 'img':       ;
                 case 'iframe':    ;
@@ -174,8 +193,7 @@ define([
             }
         },
         URL_DOM:      [
-            'a', 'area', 'link', 'form',
-            'img', 'iframe', 'audio', 'video', 'script',
+            'a', 'area', 'form', 'img', 'iframe', 'audio', 'video', 'script',
             '[style]', '[data-href]'
         ].join(', ')
     };
