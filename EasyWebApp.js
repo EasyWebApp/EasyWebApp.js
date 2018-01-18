@@ -381,10 +381,25 @@ var view_RenderNode = (function ($) {
 
     function RenderNode(node) {
 
+        this.DOMType = $.Type( node );
+
+        var name = node.name;
+
+        if (this.DOMType === 'Attr') {
+
+            var propKey = $.propFix[ name ]  ||  (
+                    (name in node.ownerElement)  &&  name
+                );
+
+            if ( propKey )
+                this.name = propKey,  this.DOMType = 'Prop';
+            else
+                this.name = name;
+        }
+
         $.extend(this, {
             ownerNode:       node,
-            name:            node.nodeName,
-            raw:             node.nodeValue,
+            raw:             node.nodeValue || node.value,
             ownerElement:    node.parentNode || node.ownerElement,
             type:            0,
             value:           null
@@ -424,13 +439,33 @@ var view_RenderNode = (function ($) {
             if (key  &&  (this.indexOf( key )  <  0))
                 this.push( key );
         },
+        clear:          function () {
+
+            var node = this.ownerNode,
+                value = this.raw.replace(RenderNode.expression, '');
+
+            switch ( this.DOMType ) {
+                case 'Text':       ;
+                case 'Comment':    return  (node.nodeValue = value);
+                case 'Attr':       ;
+                case 'Prop':
+                    if (
+                        !(node.value = value)  &&
+                        (node.name.slice(0, 5) !== 'data-')
+                    ) {
+                        this.ownerElement.removeAttribute( node.name );
+
+                        this.ownerNode = null;
+                    }
+            }
+        },
         scan:           function () {
 
-            var _This_ = this,  node = this.ownerNode;
+            var _This_ = this;
 
             this.splice(0, Infinity);    this.type = 0;
 
-            node.nodeValue = (this.raw = this.raw.replace(
+            this.raw = this.raw.replace(
                 RenderNode.expression,  function (_, expression) {
 
                     if (/\w+\s*\([\s\S]*?\)/.test( expression ))
@@ -455,14 +490,9 @@ var view_RenderNode = (function ($) {
 
                     return  '${' + expression.trim() + '}';
                 }
-            )).replace(RenderNode.expression, '');
+            );
 
-            if (
-                this[0]  &&  (node instanceof Attr)  &&  (! node.value)  &&  (
-                    ($.propFix[node.name] || node.name)  in  this.ownerElement
-                )
-            )
-                this.ownerElement.removeAttribute( node.name );
+            if ( this[0] )  this.clear();
         },
         eval:           function (context, scope) {
 
@@ -490,7 +520,7 @@ var view_RenderNode = (function ($) {
 
             this.value = value;
 
-            switch ($.Type( node )) {
+            switch ( this.DOMType ) {
                 case 'Text':    {
                     if (node.previousSibling || node.nextSibling)
                         node.nodeValue = value;
@@ -499,19 +529,18 @@ var view_RenderNode = (function ($) {
 
                     break;
                 }
-                case 'Attr':    if (
-                    (this.name != 'style')  &&  (this.name in parent)
-                ) {
+                case 'Prop':    if (this.name !== 'style') {
+
                     parent[ this.name ] = (value instanceof Function)  ?
                         value.bind( context )  :  value;
 
-                } else if (value !== '') {
-
-                    if ( node.ownerElement )
+                    break;
+                }
+                case 'Attr':
+                    if ( node )
                         node.value = value;
                     else
                         parent.setAttribute(this.name, value);
-                }
             }
         },
         /**
@@ -810,12 +839,13 @@ var view_View = (function ($, Observer, DataScope, RenderNode) {
                 $.Class.call(this, View, ['render']),  $_View,  true
             );
 
+        _This_.setPrivate('base',  base || View.baseOf( _This_.$_View[0] ));
+
         return  (_This_ !== this)  ?
             _This_ :
             this.setPrivate({
                 id:          '',
                 name:        this.$_View[0].dataset.name,
-                base:        base  ||  View.baseOf( this.$_View[0] ),
                 /**
                  * 视图数据作用域
                  *
@@ -1076,27 +1106,34 @@ var view_View = (function ($, Observer, DataScope, RenderNode) {
         /**
          * 视图对象 属性监视
          *
-         * @author   TechQuery
+         * @author TechQuery
          *
          * @memberof View.prototype
          *
-         * @param    {string} key       - Property Key
-         * @param    {object} [get_set] - Getter & Setter
+         * @param {string} key       - Property Key
+         * @param {object} [get_set] - Getter & Setter
          *
-         * @returns  {View}   Current View
+         * @returns {View}  Current View
+         *
+         * @throws {ReferenceError}  When Prototype key or Array index
+         *                           is overwritten
          */
         watch:         function (key, get_set) {
             if (
-                !(key  in  Object.getPrototypeOf( this ))  &&
-                !((typeof this.length === 'number')  &&  $.isNumeric( key ))
+                (key  in  Object.getPrototypeOf( this ))  ||
+                ((typeof this.length === 'number')  &&  $.isNumeric( key ))
             )
-                this.setPublic(key, get_set, {
-                    get:    function () {
+                throw ReferenceError(
+                    'Inner Property "' + key + '" can\'t be overwritten.'
+                );
 
-                        return  this.__data__[key];
-                    },
-                    set:    this.render.bind(this, key)
-                });
+            this.setPublic(key, get_set, {
+                get:    function () {
+
+                    return  this.__data__[key];
+                },
+                set:    this.render.bind(this, key)
+            });
 
             return this;
         },
@@ -1112,6 +1149,22 @@ var view_View = (function ($, Observer, DataScope, RenderNode) {
         valueOf:       function () {
 
             return  this.__data__.valueOf();
+        },
+        /**
+         * 清空视图
+         *
+         * @author TechQuery
+         *
+         * @return {View}  Current View
+         */
+        clear:         function () {
+
+            var data = this.valueOf(), _data_ = { };
+
+            for (var key in data)
+                if (! (data[key] instanceof Function))  _data_[key] = '';
+
+            return  this.render(_data_);
         },
         /**
          * 获取子组件
@@ -1281,6 +1334,7 @@ var view_DOMkit = (function ($, RenderNode, InnerLink) {
             return $_Style[0];
         },
         fixScript:    function (iDOM) {
+
             var iAttr = { };
 
             $.each(iDOM.attributes,  function () {
@@ -1288,9 +1342,7 @@ var view_DOMkit = (function ($, RenderNode, InnerLink) {
                 iAttr[ this.nodeName ] = this.nodeValue;
             });
 
-            iDOM = $('<script />', iAttr).prop('text', iDOM.text)[0];
-
-            return iDOM;
+            return  $('<script />', iAttr).prop('text', iDOM.text)[0];
         },
         fixURL:       function (base) {
 
@@ -1317,18 +1369,16 @@ var view_DOMkit = (function ($, RenderNode, InnerLink) {
                         ('target' in this)  &&
                         (this.target !== '_self')  &&
                         $.isXDomain( URI )
-                    ) {
-                        this.target = '_blank';
+                    )
+                        return  this.target = '_blank';
 
-                    } else if (URI = pathToRoot(base, URI)) {
-
+                    if (URI = pathToRoot(base, URI))
                         this.setAttribute(key, URI);
 
-                        if ($_This.is(
-                            InnerLink.HTML_Link + ', ' + InnerLink.Self_Link
-                        ))
-                            new InnerLink( this );
-                    }
+                    if ($_This.is(
+                        InnerLink.HTML_Link + ', ' + InnerLink.Self_Link
+                    ))
+                        new InnerLink( this );
                 }
             }
         },
@@ -1402,18 +1452,24 @@ var view_HTMLView = (function ($, View, DOMkit, RenderNode) {
         }
     }, {
         indexOf:       Array.prototype.indexOf,
-        signIn:        function (iNode) {
+        signIn:        function (node) {
 
-            for (var i = 0;  this[i];  i++)  if (this[i] == iNode)  return;
+            for (var i = 0;  this[i];  i++)  if (this[i] == node)  return;
 
-            this[this.length++] = iNode;
+            this[this.length++] = node;
 
-            var iName = (iNode instanceof RenderNode)  ?
-                    iNode  :  [iNode.__name__];
+            var name = (node instanceof RenderNode)  ?
+                    node  :  [node.__name__];
 
-            for (var j = 0;  iName[j];  j++)
-                this.watch( iName[j] ).__map__[iName[j]] =
-                    (this.__map__[iName[j]] || 0)  +  Math.pow(2, i);
+            for (var j = 0;  name[j];  j++)  try {
+
+                this.watch( name[j] ).__map__[name[j]] =
+                    (this.__map__[name[j]] || 0)  +  Math.pow(2, i);
+
+            } catch (error) {
+
+                console.warn( error );
+            }
         },
         parsePlain:    function (node) {
 
@@ -1430,7 +1486,7 @@ var view_HTMLView = (function ($, View, DOMkit, RenderNode) {
                 render.ownerNode = node =
                     document.createTextNode( node.nodeValue );
 
-                render.name = node.nodeName;
+                render.DOMType = 'Text';
             }
 
             return node;
@@ -1512,43 +1568,45 @@ var view_HTMLView = (function ($, View, DOMkit, RenderNode) {
         },
         parseHTML:     function (template) {
 
-        //  Compatible with <template />
+            var fresh;
+
+            if (template = (template || '').trim()) {
+
+                if ( this.$_View[0].innerHTML.trim() )
+                    this.$_Slot = this.$_View.contents().detach();
+
+                if (fresh  =  (! this.$_View[0].innerHTML.trim()))
+                    this.$_View[0].innerHTML = template;
+            }
 
             this.$_View.children('template').replaceWith(function () {
 
                 return  $( this ).contents();
             });
 
-        //  Literal Relative URL & <slot />
+            if ( fresh ) {
 
-            if (template = (template || '').trim()) {
+                this.fixLink();
 
-                if ( this.$_View[0].innerHTML.trim() )
-                    this.$_Slot = this.$_View.contents().remove();
-
-                this.$_View[0].innerHTML = template;
+                this.parseSlot();
             }
 
-            this.fixLink();
-
-            this.parseSlot();
+            return this;
         },
         /**
          * HTML 模板解析
          *
-         * @author   TechQuery
+         * @author TechQuery
          *
          * @memberof HTMLView.prototype
          *
-         * @param    {string}   [template] - A HTML String of the Component's template
-         *                                   with HTMLSlotElement
-         * @returns  {HTMLView} Current HTMLView
+         * @param {string} [template] - A HTML String of the Component's template
+         *                              with HTMLSlotElement
+         * @return {HTMLView}  Current HTMLView
          */
         parse:         function (template) {
 
-            if (! this.__parse__)  this.parseHTML( template );
-
-            return this.parseVM();
+            return  this.parseHTML( template ).parseVM();
         },
         nodeOf:        function (data, exclude, forEach) {
 
@@ -1632,9 +1690,9 @@ var view_HTMLView = (function ($, View, DOMkit, RenderNode) {
 
     function reRender() {
 
-        var iView = HTMLView.instanceOf( this );
+        var view = HTMLView.instanceOf( this );
 
-        if (iView  &&  $( this ).validate())  iView.render( this );
+        if ( view )  view.render( this );
     }
 
     $('html').on('change', ':field', reRender).on(
@@ -2344,7 +2402,7 @@ var WebApp = (function ($, Observer, View, HTMLView, ListView, TreeView, DOMkit,
  *
  * @module    {function} WebApp
  *
- * @version   4.0 (2018-01-02) stable
+ * @version   4.0 (2018-01-18) stable
  *
  * @requires  jquery
  * @see       {@link http://jquery.com/ jQuery}

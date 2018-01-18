@@ -62,18 +62,24 @@ define([
         }
     }, {
         indexOf:       Array.prototype.indexOf,
-        signIn:        function (iNode) {
+        signIn:        function (node) {
 
-            for (var i = 0;  this[i];  i++)  if (this[i] == iNode)  return;
+            for (var i = 0;  this[i];  i++)  if (this[i] == node)  return;
 
-            this[this.length++] = iNode;
+            this[this.length++] = node;
 
-            var iName = (iNode instanceof RenderNode)  ?
-                    iNode  :  [iNode.__name__];
+            var name = (node instanceof RenderNode)  ?
+                    node  :  [node.__name__];
 
-            for (var j = 0;  iName[j];  j++)
-                this.watch( iName[j] ).__map__[iName[j]] =
-                    (this.__map__[iName[j]] || 0)  +  Math.pow(2, i);
+            for (var j = 0;  name[j];  j++)  try {
+
+                this.watch( name[j] ).__map__[name[j]] =
+                    (this.__map__[name[j]] || 0)  +  Math.pow(2, i);
+
+            } catch (error) {
+
+                console.warn( error );
+            }
         },
         parsePlain:    function (node) {
 
@@ -90,7 +96,7 @@ define([
                 render.ownerNode = node =
                     document.createTextNode( node.nodeValue );
 
-                render.name = node.nodeName;
+                render.DOMType = 'Text';
             }
 
             return node;
@@ -172,43 +178,45 @@ define([
         },
         parseHTML:     function (template) {
 
-        //  Compatible with <template />
+            var fresh;
+
+            if (template = (template || '').trim()) {
+
+                if ( this.$_View[0].innerHTML.trim() )
+                    this.$_Slot = this.$_View.contents().detach();
+
+                if (fresh  =  (! this.$_View[0].innerHTML.trim()))
+                    this.$_View[0].innerHTML = template;
+            }
 
             this.$_View.children('template').replaceWith(function () {
 
                 return  $( this ).contents();
             });
 
-        //  Literal Relative URL & <slot />
+            if ( fresh ) {
 
-            if (template = (template || '').trim()) {
+                this.fixLink();
 
-                if ( this.$_View[0].innerHTML.trim() )
-                    this.$_Slot = this.$_View.contents().remove();
-
-                this.$_View[0].innerHTML = template;
+                this.parseSlot();
             }
 
-            this.fixLink();
-
-            this.parseSlot();
+            return this;
         },
         /**
          * HTML 模板解析
          *
-         * @author   TechQuery
+         * @author TechQuery
          *
          * @memberof HTMLView.prototype
          *
-         * @param    {string}   [template] - A HTML String of the Component's template
-         *                                   with HTMLSlotElement
-         * @returns  {HTMLView} Current HTMLView
+         * @param {string} [template] - A HTML String of the Component's template
+         *                              with HTMLSlotElement
+         * @return {HTMLView}  Current HTMLView
          */
         parse:         function (template) {
 
-            if (! this.__parse__)  this.parseHTML( template );
-
-            return this.parseVM();
+            return  this.parseHTML( template ).parseVM();
         },
         nodeOf:        function (data, exclude, forEach) {
 
@@ -292,9 +300,9 @@ define([
 
     function reRender() {
 
-        var iView = HTMLView.instanceOf( this );
+        var view = HTMLView.instanceOf( this );
 
-        if (iView  &&  $( this ).validate())  iView.render( this );
+        if ( view )  view.render( this );
     }
 
     $('html').on('change', ':field', reRender).on(

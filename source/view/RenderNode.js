@@ -12,10 +12,25 @@ define(['jquery', 'jQueryKit'],  function ($) {
 
     function RenderNode(node) {
 
+        this.DOMType = $.Type( node );
+
+        var name = node.name;
+
+        if (this.DOMType === 'Attr') {
+
+            var propKey = $.propFix[ name ]  ||  (
+                    (name in node.ownerElement)  &&  name
+                );
+
+            if ( propKey )
+                this.name = propKey,  this.DOMType = 'Prop';
+            else
+                this.name = name;
+        }
+
         $.extend(this, {
             ownerNode:       node,
-            name:            node.nodeName,
-            raw:             node.nodeValue,
+            raw:             node.nodeValue || node.value,
             ownerElement:    node.parentNode || node.ownerElement,
             type:            0,
             value:           null
@@ -55,13 +70,33 @@ define(['jquery', 'jQueryKit'],  function ($) {
             if (key  &&  (this.indexOf( key )  <  0))
                 this.push( key );
         },
+        clear:          function () {
+
+            var node = this.ownerNode,
+                value = this.raw.replace(RenderNode.expression, '');
+
+            switch ( this.DOMType ) {
+                case 'Text':       ;
+                case 'Comment':    return  (node.nodeValue = value);
+                case 'Attr':       ;
+                case 'Prop':
+                    if (
+                        !(node.value = value)  &&
+                        (node.name.slice(0, 5) !== 'data-')
+                    ) {
+                        this.ownerElement.removeAttribute( node.name );
+
+                        this.ownerNode = null;
+                    }
+            }
+        },
         scan:           function () {
 
-            var _This_ = this,  node = this.ownerNode;
+            var _This_ = this;
 
             this.splice(0, Infinity);    this.type = 0;
 
-            node.nodeValue = (this.raw = this.raw.replace(
+            this.raw = this.raw.replace(
                 RenderNode.expression,  function (_, expression) {
 
                     if (/\w+\s*\([\s\S]*?\)/.test( expression ))
@@ -86,14 +121,9 @@ define(['jquery', 'jQueryKit'],  function ($) {
 
                     return  '${' + expression.trim() + '}';
                 }
-            )).replace(RenderNode.expression, '');
+            );
 
-            if (
-                this[0]  &&  (node instanceof Attr)  &&  (! node.value)  &&  (
-                    ($.propFix[node.name] || node.name)  in  this.ownerElement
-                )
-            )
-                this.ownerElement.removeAttribute( node.name );
+            if ( this[0] )  this.clear();
         },
         eval:           function (context, scope) {
 
@@ -121,7 +151,7 @@ define(['jquery', 'jQueryKit'],  function ($) {
 
             this.value = value;
 
-            switch ($.Type( node )) {
+            switch ( this.DOMType ) {
                 case 'Text':    {
                     if (node.previousSibling || node.nextSibling)
                         node.nodeValue = value;
@@ -130,19 +160,18 @@ define(['jquery', 'jQueryKit'],  function ($) {
 
                     break;
                 }
-                case 'Attr':    if (
-                    (this.name != 'style')  &&  (this.name in parent)
-                ) {
+                case 'Prop':    if (this.name !== 'style') {
+
                     parent[ this.name ] = (value instanceof Function)  ?
                         value.bind( context )  :  value;
 
-                } else if (value !== '') {
-
-                    if ( node.ownerElement )
+                    break;
+                }
+                case 'Attr':
+                    if ( node )
                         node.value = value;
                     else
                         parent.setAttribute(this.name, value);
-                }
             }
         },
         /**

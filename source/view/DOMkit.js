@@ -141,6 +141,7 @@ define([
             return $_Style[0];
         },
         fixScript:    function (iDOM) {
+
             var iAttr = { };
 
             $.each(iDOM.attributes,  function () {
@@ -148,9 +149,7 @@ define([
                 iAttr[ this.nodeName ] = this.nodeValue;
             });
 
-            iDOM = $('<script />', iAttr).prop('text', iDOM.text)[0];
-
-            return iDOM;
+            return  $('<script />', iAttr).prop('text', iDOM.text)[0];
         },
         fixURL:       function (base) {
 
@@ -177,18 +176,16 @@ define([
                         ('target' in this)  &&
                         (this.target !== '_self')  &&
                         $.isXDomain( URI )
-                    ) {
-                        this.target = '_blank';
+                    )
+                        return  this.target = '_blank';
 
-                    } else if (URI = pathToRoot(base, URI)) {
-
+                    if (URI = pathToRoot(base, URI))
                         this.setAttribute(key, URI);
 
-                        if ($_This.is(
-                            InnerLink.HTML_Link + ', ' + InnerLink.Self_Link
-                        ))
-                            new InnerLink( this );
-                    }
+                    if ($_This.is(
+                        InnerLink.HTML_Link + ', ' + InnerLink.Self_Link
+                    ))
+                        new InnerLink( this );
                 }
             }
         },

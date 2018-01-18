@@ -24,12 +24,13 @@ define([
                 $.Class.call(this, View, ['render']),  $_View,  true
             );
 
+        _This_.setPrivate('base',  base || View.baseOf( _This_.$_View[0] ));
+
         return  (_This_ !== this)  ?
             _This_ :
             this.setPrivate({
                 id:          '',
                 name:        this.$_View[0].dataset.name,
-                base:        base  ||  View.baseOf( this.$_View[0] ),
                 /**
                  * 视图数据作用域
                  *
@@ -290,27 +291,34 @@ define([
         /**
          * 视图对象 属性监视
          *
-         * @author   TechQuery
+         * @author TechQuery
          *
          * @memberof View.prototype
          *
-         * @param    {string} key       - Property Key
-         * @param    {object} [get_set] - Getter & Setter
+         * @param {string} key       - Property Key
+         * @param {object} [get_set] - Getter & Setter
          *
-         * @returns  {View}   Current View
+         * @returns {View}  Current View
+         *
+         * @throws {ReferenceError}  When Prototype key or Array index
+         *                           is overwritten
          */
         watch:         function (key, get_set) {
             if (
-                !(key  in  Object.getPrototypeOf( this ))  &&
-                !((typeof this.length === 'number')  &&  $.isNumeric( key ))
+                (key  in  Object.getPrototypeOf( this ))  ||
+                ((typeof this.length === 'number')  &&  $.isNumeric( key ))
             )
-                this.setPublic(key, get_set, {
-                    get:    function () {
+                throw ReferenceError(
+                    'Inner Property "' + key + '" can\'t be overwritten.'
+                );
 
-                        return  this.__data__[key];
-                    },
-                    set:    this.render.bind(this, key)
-                });
+            this.setPublic(key, get_set, {
+                get:    function () {
+
+                    return  this.__data__[key];
+                },
+                set:    this.render.bind(this, key)
+            });
 
             return this;
         },
@@ -326,6 +334,22 @@ define([
         valueOf:       function () {
 
             return  this.__data__.valueOf();
+        },
+        /**
+         * 清空视图
+         *
+         * @author TechQuery
+         *
+         * @return {View}  Current View
+         */
+        clear:         function () {
+
+            var data = this.valueOf(), _data_ = { };
+
+            for (var key in data)
+                if (! (data[key] instanceof Function))  _data_[key] = '';
+
+            return  this.render(_data_);
         },
         /**
          * 获取子组件
