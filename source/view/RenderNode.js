@@ -12,34 +12,22 @@ define(['jquery', 'jQueryKit'],  function ($) {
 
     function RenderNode(node) {
 
-        this.DOMType = $.Type( node );
-
-        var name = node.name;
-
-        if (this.DOMType === 'Attr') {
-
-            var propKey = $.propFix[ name ]  ||  (
-                    (name in node.ownerElement)  &&  name
-                );
-
-            if ( propKey )
-                this.name = propKey,  this.DOMType = 'Prop';
-            else
-                this.name = name;
-        }
-
         $.extend(this, {
             ownerNode:       node,
             raw:             node.nodeValue || node.value,
             ownerElement:    node.parentNode || node.ownerElement,
             type:            0,
             value:           null
-        }).scan();
+        }).update();
+
+        this.scan();
     }
 
     RenderNode.expression = /\$\{([\s\S]+?)\}/g;
 
     RenderNode.reference = /(\w+)(\.|\[(?:'|")|\()(\w+)?/g;
+
+    RenderNode.rawName = /^(data\-|on)\w+/;
 
     RenderNode.Reference_Mask = {
         view:     1,
@@ -65,6 +53,27 @@ define(['jquery', 'jQueryKit'],  function ($) {
 
     $.extend(RenderNode.prototype = [ ],  {
         constructor:    RenderNode,
+        update:         function () {
+
+            var node = this.ownerNode;
+
+            if (! node)  return;
+
+            var name = node.name;
+
+            this.DOMType = $.Type( node );
+
+            if (this.DOMType !== 'Attr')  return;
+
+            var propKey = $.propFix[ name ]  ||  (
+                    (name in node.ownerElement)  &&  name
+                );
+
+            if ( propKey )
+                this.name = propKey,  this.DOMType = 'Prop';
+            else
+                this.name = name;
+        },
         add:            function (key) {
 
             if (key  &&  (this.indexOf( key )  <  0))
@@ -80,10 +89,10 @@ define(['jquery', 'jQueryKit'],  function ($) {
                 case 'Comment':    return  (node.nodeValue = value);
                 case 'Attr':       ;
                 case 'Prop':
-                    if (
-                        !(node.value = value)  &&
-                        (node.name.slice(0, 5) !== 'data-')
-                    ) {
+                    if (! (
+                        (node.value = value)  ||
+                        node.name.match( RenderNode.rawName )
+                    )) {
                         this.ownerElement.removeAttribute( node.name );
 
                         this.ownerNode = null;
@@ -126,6 +135,8 @@ define(['jquery', 'jQueryKit'],  function ($) {
             if ( this[0] )  this.clear();
         },
         eval:           function (context, scope) {
+
+            if (this.value === null)  this.update();
 
             var refer,  _This_ = this.ownerElement;
 

@@ -69,7 +69,7 @@ path/to/template.html?key1=value1&keyN=valueN&data=/path/to/json
 
 ```HTML
 <a target="_blank" href="path/to/outer.html">
-    新窗口打开外部页面
+    新窗口打开外部页面（跨域超链接 默认在新网页中打开）
 </a>
 <a href="path/to/static.html">
     纯静态 SPA 页
@@ -306,6 +306,7 @@ https://boot-web.tk/
 | data     | InnerLink | JS、HTML | 数据加载      | 之后     | JSON 对象                                |
 | ready    | View      | JS、HTML | 组件渲染      | 之后     | 视图对象                                  |
 | route    | WebApp    | JS       | 路由切换      | 之后     | 当前页**匹配的超链接**元素集合（jQuery 对象） |
+| prefetch | WebApp    | JS       | 组件渲染      | 之后     | 当前组件**引用的超链接** URL 数组           |
 | attach   | View      | JS       | 组件挂载      | 之后     |                                         |
 | detach   | View      | JS       | 组件卸载      | 之后     |                                         |
 | update   | View      | JS、HTML | 自定义属性更新 | 之后     | 更新的键值对                              |
@@ -315,7 +316,7 @@ https://boot-web.tk/
 
  - 多条件观察者 `Observer($_Box)`
 
-   - 查找实例：`.instanceOf(iDOM, Check_Parent)` 
+   - 查找实例：`.instanceOf(iDOM, Check_Parent)`
 
    - 注册回调：`.prototype.on(iEvent, iCallback)`
      - 回调函数 `this` 指向注册时的对象
@@ -332,15 +333,3 @@ https://boot-web.tk/
  - 实现类：`View`、`InnerLink`、`WebApp`
 
 上述 `iEvent` 参数可仅为一个事件名字符串，也可用一个对象描述更多的条件（对象属性值可为字符串、正则表达式、DOM 对象等）。
-
-
-
-## 【沉浸式体验】
-
-EWA 充分利用现有技术，实现 [Google PWA 规范](https://developers.google.cn/web/progressive-web-apps/)一般的 App 体验，并且一切都是自动完成的 ——
-
- 1. **跨域超链接** 自动在新网页中打开，不会全局刷新当前页，防止丢失应用状态
-
- 2. 组件模板 **预加载**：基于 `<link rel="prefetch" />`，支持 IE 11+ 及所有非 Safari/Webkit 浏览器
-
- 3. HTTP API **数据缓存**：基于 `Window.localStorage`，GET 请求失败也可正常显示页面
