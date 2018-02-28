@@ -1,0 +1,26 @@
+<!DocType HTML>
+<html><head>
+    <meta charset="utf-8">
+
+    <script src="https://cdn.bootcss.com/require.js/2.3.5/require.min.js"></script>
+    <script>
+        require.config({
+            baseUrl:    '../source',
+            paths:      {
+                jquery:       'https://cdn.bootcss.com/jquery/3.3.1/jquery.min',
+                jQueryKit:    '../docs/javascript/jQueryKit'
+            }
+        });
+    </script>
+</head><body>
+    <section id="HTML-View">
+
+        <h1 onclick=${view.changeTitle}>
+            ${view.name}
+        </h1>
+
+        <div hidden="${! view.important}">
+            Hello, ${view.nickname} !
+        </div>
+    </section>
+</body></html>

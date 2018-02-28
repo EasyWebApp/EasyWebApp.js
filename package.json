@@ -7,7 +7,7 @@
     "doc": "docs"
   },
   "engines": {
-    "node": "^5.12.0"
+    "node": "^7.6.0"
   },
   "scripts": {
     "bundle": "cd source  &&  amd-bundle ../EasyWebApp.js -e jquery,jQueryKit",
@@ -15,7 +15,7 @@
     "document": "jsdoc ./source/ -c ./build/document.json",
     "clean": "reduce-blank ./docs/API/",
     "build": "npm run bundle  &&  npm run compress  &&  npm run document  &&  npm run clean",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "mocha --recursive --no-timeouts -c --inline-diffs --exit --file test/common.js"
   },
   "repository": {
     "type": "git",
@@ -35,10 +35,14 @@
   "license": "GPL-2.0",
   "devDependencies": {
     "amd-bundle": "^0.4.2",
+    "chromy": "^0.5.10",
     "docdash": "^0.4.0",
+    "html-pages": "^2.0.9",
     "jsdoc": "^3.5.5",
-    "jsdoc-inheritance-diagram": "^1.1.1",
+    "jsdoc-inheritance-diagram": "^1.2.1",
+    "mocha": "^5.0.1",
     "reduce-blank": "^0.2.0",
+    "should": "^13.2.1",
     "uglify-js": "3.0.28"
   }
 }
