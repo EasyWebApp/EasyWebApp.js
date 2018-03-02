@@ -4,9 +4,9 @@
 
 ## 核心架构
 
-![EWA v4 Class Map](docs/Struct.png)
+![EWA v4 Class Map](docs/images/Struct.png)
 
-![EWA v4 Data Scope](docs/DataScope.png)
+![EWA v4 Data Scope](docs/images/DataScope.png)
 
 
 

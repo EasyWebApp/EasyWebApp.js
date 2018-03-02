@@ -45,11 +45,11 @@ MVVM 引擎只需扫描 DOM 树，即可 **自动加载 HTML、JSON** 来构建 
 
 ### 内置视图对象
 
-<a target="_blank" href="docs/API/TreeView.html">【API 文档】</a>
+[【API 文档】](View.html)
 
 以上视图的构造函数 均可从 `$.fn.iWebApp` 命名空间访问到，并可无需 `WebApp()` 实例初始化即可单独使用。
 
-<a target="_blank" href="docs/API/external-_jQuery.fn_.html">【jQuery 快捷方法】</a>
+[【jQuery 快捷方法】](external-_jQuery.fn_.html#.view)
 
  - 构建视图：`$('selector of view').view(Class_Name, iScope)`
  - 查找视图：`$(':view', Root_DOM).view()`

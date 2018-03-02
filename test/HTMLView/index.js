@@ -1,4 +1,14 @@
+'use strict';
+
+const base = require('../../build/test-base');
+
+const browser = base.browser;
+
+
+
 describe('HTMLView',  function () {
+
+    before( base.loadHTML(module, base.loadJS) );
 
     describe('HTMLView.prototype.parse()',  function () {
 

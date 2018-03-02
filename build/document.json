@@ -3,7 +3,7 @@
         "recurse":        true,
         "readme":         "ReadMe.md",
         "template":       "node_modules/docdash",
-        "destination":    "docs/API/",
+        "destination":    "docs/",
         "verbose":        true
     },
     "templates":    {

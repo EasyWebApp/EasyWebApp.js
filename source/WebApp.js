@@ -198,6 +198,8 @@ define([
 
             if ( view.parse )  view.parse( HTML );
 
+            view.$_View.addClass('parsed');
+
             if (! $('script:not(head > *)', target)[0])
                 link.emit('load');
 
@@ -205,9 +207,13 @@ define([
         },
         loadChild:        function (view) {
 
+            view.$_View.addClass('rendered');
+
             return Promise.all($.map(
                 view.childOf(':visible'),  this.load.bind( this )
             )).then(function () {
+
+                view.$_View.addClass('loaded');
 
                 return view;
             });
@@ -262,6 +268,8 @@ define([
                 link = new InnerLink(
                     (link instanceof Observer)  ?  link.$_View[0]  :  link
                 );
+
+            link.$_View.removeClass('parsed rendered loaded');
 
             var _This_ = this;
 

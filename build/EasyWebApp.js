@@ -2185,6 +2185,8 @@ var WebApp = (function ($, Observer, View, HTMLView, ListView, TreeView, DOMkit,
 
             if ( view.parse )  view.parse( HTML );
 
+            view.$_View.addClass('parsed');
+
             if (! $('script:not(head > *)', target)[0])
                 link.emit('load');
 
@@ -2192,9 +2194,13 @@ var WebApp = (function ($, Observer, View, HTMLView, ListView, TreeView, DOMkit,
         },
         loadChild:        function (view) {
 
+            view.$_View.addClass('rendered');
+
             return Promise.all($.map(
                 view.childOf(':visible'),  this.load.bind( this )
             )).then(function () {
+
+                view.$_View.addClass('loaded');
 
                 return view;
             });
@@ -2249,6 +2255,8 @@ var WebApp = (function ($, Observer, View, HTMLView, ListView, TreeView, DOMkit,
                 link = new InnerLink(
                     (link instanceof Observer)  ?  link.$_View[0]  :  link
                 );
+
+            link.$_View.removeClass('parsed rendered loaded');
 
             var _This_ = this;
 

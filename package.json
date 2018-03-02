@@ -2,7 +2,7 @@
   "name": "easywebapp-js",
   "version": "4.0.0",
   "description": "SPA Engine based on jQuery API",
-  "main": "EasyWebApp.js",
+  "main": "build/EasyWebApp.js",
   "directories": {
     "doc": "docs"
   },
@@ -10,12 +10,14 @@
     "node": "^7.6.0"
   },
   "scripts": {
-    "bundle": "cd source  &&  amd-bundle ../EasyWebApp.js -e jquery,jQueryKit",
-    "compress": "uglifyjs EasyWebApp.js -o build/EasyWebApp.min.js --config-file build/compress.json",
+    "bundle": "cd source  &&  amd-bundle ../build/EasyWebApp.js -e jquery,jQueryKit",
+    "compress": "uglifyjs build/EasyWebApp.js -o build/EasyWebApp.min.js --config-file build/compress.json",
     "document": "jsdoc ./source/ -c ./build/document.json",
-    "clean": "reduce-blank ./docs/API/",
+    "clean": "reduce-blank ./docs/",
     "build": "npm run bundle  &&  npm run compress  &&  npm run document  &&  npm run clean",
-    "test": "mocha --recursive --no-timeouts -c --inline-diffs --exit --file test/common.js"
+    "test": "mocha --recursive --no-timeouts -c --inline-diffs --exit",
+    "debug": "set NODE_DEBUG=1  &&  npm test",
+    "help": "html-pages docs/ -o"
   },
   "repository": {
     "type": "git",
