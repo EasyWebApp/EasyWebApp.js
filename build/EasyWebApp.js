@@ -770,14 +770,13 @@ var base_DataScope = (function ($) {
     /**
      * 数据作用域
      *
-     * @author  TechQuery
+     * @author TechQuery
      *
-     * @class   DataScope
-     * @extends Array
+     * @class DataScope
      *
-     * @param   {object|object[]|DataScope} parent - Parent Scope
+     * @param {object|object[]|DataScope} parent - Parent Scope
      *
-     * @returns {DataScope}                 New Scope inherit from its Parent Scope
+     * @return {DataScope} New Scope inherit from its Parent Scope
      */
 
     function DataScope(parent) {
@@ -785,9 +784,8 @@ var base_DataScope = (function ($) {
         return  (parent instanceof DataScope)  ?  Object.create( parent )  :  this;
     }
 
-    $.extend(DataScope.prototype = [ ],  {
-        constructor:    DataScope,
-        commit:         function (data, filter) {
+    $.extend(DataScope.prototype, {
+        commit:     function (data, filter) {
 
             data = data.valueOf();
 
@@ -803,7 +801,7 @@ var base_DataScope = (function ($) {
 
             return diff;
         },
-        valueOf:        function () {
+        valueOf:    function () {
 
             if ( this.hasOwnProperty('length') )
                 return  Array.from(this,  function (data) {
@@ -818,6 +816,22 @@ var base_DataScope = (function ($) {
                     data[ key ] = this[ key ].valueOf();
 
             return data;
+        },
+        insert:     function (data, index) {
+
+            index = Math.min(
+                index || 0,
+                this.length = this.hasOwnProperty('length') ? this.length : 0
+            );
+
+            for (var i = this.length;  i > index;  i--)
+                this[i] = this[i - 1];
+
+            this[ index ] = data;
+
+            if (this.hasOwnProperty( this.length ))  this.length++;
+
+            return index;
         }
     });
 
@@ -1722,7 +1736,7 @@ var view_HTMLView = (function ($, View, DOMkit, RenderNode) {
 })(jquery, view_View, view_DOMkit, view_RenderNode);
 
 
-var view_ListView = (function ($, View, InnerLink) {
+var view_ListView = (function ($, View, InnerLink, HTMLView) {
 
     /**
      * 迭代视图类（对应 JSON 数组）
@@ -1776,37 +1790,63 @@ var view_ListView = (function ($, View, InnerLink) {
             return this;
         },
         /**
-         * 插入一项
+         * 刷新列表
          *
-         * @author   TechQuery
+         * @author TechQuery
          *
          * @memberof ListView.prototype
          *
-         * @param    {object}   data      - Data of one Item
-         * @param    {number}   [index=0] - Index of Insert Point
-         * @param    {boolean}  [delay]   - Create one HTMLView, and not insert
+         * @param {number} [from=0] - Index of the start point to refresh
          *
-         * @returns  {HTMLView} Newly created Item
+         * @return {ListView} Current ListView
+         */
+        update:     function (from) {
+
+            for (from = from || 0;  this[from];  from++)
+                this[from].render( this[from].valueOf() );
+
+            return this;
+        },
+        /**
+         * 插入一项
+         *
+         * @author TechQuery
+         *
+         * @memberof ListView.prototype
+         *
+         * @param {object}  data      - Data of one Item
+         * @param {number}  [index=0] - Index of Insert Point
+         * @param {boolean} [delay]   - Create one HTMLView, and not insert
+         *
+         * @return {HTMLView} Newly created Item
          */
         insert:     function (data, index, delay) {
 
-            var Item = View.getSub(this.__HTML__, this.__data__).parse();
+            var item = View.getSub(this.__HTML__, this.__data__).parse();
 
-            Item.$_View.find( InnerLink.HTML_Link ).addBack( InnerLink.HTML_Link )
+            item.$_View.find( InnerLink.HTML_Link ).addBack( InnerLink.HTML_Link )
                 .each(function () {
 
                     new InnerLink( this );
                 });
 
-            data.__index__ = index = index || 0;
+            item.watch('__index__', {
+                get:    Array.prototype.indexOf.bind(this, item),
+                set:    $.noop
+            });
 
-            this.splice(index,  0,  Item.render( data ));
+            index = this.__data__.insert(item.__data__,  index);
 
-            this.__data__.splice(index,  0,  Item.__data__);
+            this.splice(index,  0,  item.render( data ));
 
-            if (! delay)  Item.$_View.insertTo(this.$_View, index);
+            if (! delay) {
 
-            return Item;
+                item.$_View.insertTo(this.$_View, index);
+
+                this.update(index + 1);
+            }
+
+            return item;
         },
         /**
          * 渲染视图
@@ -1824,29 +1864,33 @@ var view_ListView = (function ($, View, InnerLink) {
 
             if (! (index != null))  this.clear();
 
+            if (! $.likeArray( list ))  return this;
+
             index = index || 0;
 
-            if ($.likeArray( list ))
-                $(Array.from(list,  function (data, i) {
+            $(Array.from(list,  function (data, i) {
 
-                    return  this.insert(data, index + i, true).$_View[0];
+                return  this.insert(data, index + i, true).$_View[0];
 
-                },  this)).insertTo(this.$_View, index);
+            },  this)).insertTo(this.$_View, index);
 
-            return this;
+            return  this.update(index + list.length);
         },
         /**
          * 根据 HTML 节点查询索引
          *
-         * @author   TechQuery
+         * @author TechQuery
          *
          * @memberof ListView.prototype
          *
-         * @param    {jQueryAcceptable} $_Item - An HTMLElement in one of the List
-         *
-         * @returns  {number}           Index of $_Item
+         * @param {jQueryAcceptable|HTMLView} $_Item - An HTMLElement or HTMLView
+         *                                             in one item of the List
+         * @return {number} Index of $_Item
          */
         indexOf:    function ($_Item) {
+
+            if ($_Item instanceof HTMLView)
+                return  Array.prototype.indexOf.call(this, $_Item);
 
             $_Item = ($_Item instanceof $)  ?  $_Item  :  $( $_Item );
 
@@ -1858,61 +1902,55 @@ var view_ListView = (function ($, View, InnerLink) {
         /**
          * 删除一项
          *
-         * @author   TechQuery
+         * @author TechQuery
          *
          * @memberof ListView.prototype
          *
-         * @param    {number}   index - Index of Remove Point
-         *
-         * @returns  {HTMLView} Newly removed Item
+         * @param {jQueryAcceptable|HTMLView|number} item - Object or index of
+         *                                                  the Item to be removed
+         * @return {HTMLView} Newly removed Item
          */
-        remove:     function (index) {
+        remove:     function (item) {
 
-            var Item = this.splice(
-                    $.isNumeric( index )  ?  index  :  this.indexOf( index ),  1
-                )[0];
+            var index = $.isNumeric( item )  ?  item  :  this.indexOf( item );
 
-            Item.$_View.remove();
+            item = this.splice(index, 1)[0];
 
-            return Item;
+            item.$_View.remove();
+
+            this.update( index );
+
+            return item;
         },
         /**
          * 列表排序
          *
-         * @author   TechQuery
+         * @author TechQuery
          *
          * @memberof ListView.prototype
          *
-         * @param    {function} callback - Same as the callback of
-         *                                 Array.prototype.sort()
-         *
-         * @returns  {ListView} Current ListView
+         * @param {function} callback - Same as the callback of
+         *                              `Array.prototype.sort()`
+         * @return {ListView} Current ListView
          */
         sort:       function (callback) {
 
-            Array.prototype.sort.call(this, callback);
+            var list = Array.from( this ).sort( callback ), _this_ = this;
 
-            this.$_View.append($.map(this,  function (Item) {
+            this.$_View.append(list.map(function (item, index) {
 
-                Item.__index__ = arguments[1];
+                if (_this_[index] !== item)  item.render( item.valueOf() );
 
-                return Item.$_View[0];
+                return item.$_View[0];
             }));
 
             return this;
-        },
-        valueOf:    function () {
-
-            return  $.each(this.__data__.valueOf(),  function () {
-
-                delete  this.__index__;
-            });
         }
     });
 
     return ListView;
 
-})(jquery, view_View, InnerLink);
+})(jquery, view_View, InnerLink, view_HTMLView);
 
 
 var view_TreeView = (function ($, ListView) {
@@ -2447,7 +2485,7 @@ var WebApp = (function ($, Observer, View, HTMLView, ListView, TreeView, DOMkit,
  *
  * @module    {function} WebApp
  *
- * @version   4.0 (2018-01-24) stable
+ * @version   4.0 (2018-03-22) stable
  *
  * @requires  jquery
  * @see       {@link http://jquery.com/ jQuery}

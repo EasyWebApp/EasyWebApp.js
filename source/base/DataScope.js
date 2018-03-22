@@ -3,14 +3,13 @@ define(['jquery'],  function ($) {
     /**
      * 数据作用域
      *
-     * @author  TechQuery
+     * @author TechQuery
      *
-     * @class   DataScope
-     * @extends Array
+     * @class DataScope
      *
-     * @param   {object|object[]|DataScope} parent - Parent Scope
+     * @param {object|object[]|DataScope} parent - Parent Scope
      *
-     * @returns {DataScope}                 New Scope inherit from its Parent Scope
+     * @return {DataScope} New Scope inherit from its Parent Scope
      */
 
     function DataScope(parent) {
@@ -18,9 +17,8 @@ define(['jquery'],  function ($) {
         return  (parent instanceof DataScope)  ?  Object.create( parent )  :  this;
     }
 
-    $.extend(DataScope.prototype = [ ],  {
-        constructor:    DataScope,
-        commit:         function (data, filter) {
+    $.extend(DataScope.prototype, {
+        commit:     function (data, filter) {
 
             data = data.valueOf();
 
@@ -36,7 +34,7 @@ define(['jquery'],  function ($) {
 
             return diff;
         },
-        valueOf:        function () {
+        valueOf:    function () {
 
             if ( this.hasOwnProperty('length') )
                 return  Array.from(this,  function (data) {
@@ -51,6 +49,22 @@ define(['jquery'],  function ($) {
                     data[ key ] = this[ key ].valueOf();
 
             return data;
+        },
+        insert:     function (data, index) {
+
+            index = Math.min(
+                index || 0,
+                this.length = this.hasOwnProperty('length') ? this.length : 0
+            );
+
+            for (var i = this.length;  i > index;  i--)
+                this[i] = this[i - 1];
+
+            this[ index ] = data;
+
+            if (this.hasOwnProperty( this.length ))  this.length++;
+
+            return index;
         }
     });
 
