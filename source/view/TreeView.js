@@ -22,6 +22,9 @@ define(['jquery', './ListView'],  function ($, ListView) {
 
         this.setPrivate('self',  $_View[0].cloneNode( true ));
 
+        if (! this.__self__.getAttribute('is'))
+            this.__self__.setAttribute('is',  this.toString().slice(8, -1));
+
         this.__self__.removeAttribute('id');
 
         $_View.children().append(this.__self__ = this.__self__.outerHTML);

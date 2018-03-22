@@ -340,7 +340,9 @@ define([
          *
          * @author TechQuery
          *
-         * @return {View}  Current View
+         * @memberof View.prototype
+         *
+         * @return {View} Current View
          */
         clear:         function () {
 

@@ -12,7 +12,7 @@
         });
     </script>
 </head><body>
-    <section id="HTML-View">
+    <section class="HTMLView">
 
         <h1 onclick=${view.changeTitle}>
             ${view.name}
@@ -22,4 +22,19 @@
             Hello, ${view.nickname} !
         </div>
     </section>
+
+    <table>
+        <thead><tr>
+            <td>NO.Library</td>
+        </tr></thead>
+        <tbody class="ListView">
+            <tr>
+                <td>${view.__index__ + 1}.${view.name}</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <ol class="TreeView" data-name="list">
+        <li>${view.name}</li>
+    </ol>
 </body></html>

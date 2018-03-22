@@ -51,6 +51,8 @@ define([
 
             this.splice(0, Infinity);
 
+            this.splice.call(this.__data__,  0,  Infinity);
+
             return this;
         },
         /**
@@ -66,7 +68,11 @@ define([
          */
         update:     function (from) {
 
-            for (from = from || 0;  this[from];  from++)
+            from = from || 0;
+
+            if (from < 0)  from += this.length + 1;
+
+            for ( ;  this[from];  from++)
                 this[from].render( this[from].valueOf() );
 
             return this;
@@ -95,7 +101,9 @@ define([
                 });
 
             item.watch('__index__', {
-                get:    Array.prototype.indexOf.bind(this, item),
+                get:    Array.prototype.indexOf.bind(
+                    this.__data__,  item.__data__
+                ),
                 set:    $.noop
             });
 
@@ -182,6 +190,8 @@ define([
 
             item.$_View.remove();
 
+            this.splice.call(this.__data__,  index,  1);
+
             this.update( index );
 
             return item;
@@ -203,7 +213,12 @@ define([
 
             this.$_View.append(list.map(function (item, index) {
 
-                if (_this_[index] !== item)  item.render( item.valueOf() );
+                if (_this_[index] !== item) {
+
+                    _this_[index] = item;
+
+                    item.render(_this_.__data__[index] = item.__data__);
+                }
 
                 return item.$_View[0];
             }));
