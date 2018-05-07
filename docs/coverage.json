@@ -1,17 +1,19 @@
 {
-  "coverage": "40%",
-  "expectCount": 25,
+  "coverage": "37.03%",
+  "expectCount": 27,
   "actualCount": 10,
   "files": {
     "source/ObjectView.js": {
-      "expectCount": 9,
+      "expectCount": 11,
       "actualCount": 4,
       "undocumentLines": [
         5,
         8,
         10,
-        17,
-        88
+        14,
+        19,
+        38,
+        96
       ]
     },
     "source/Template.js": {

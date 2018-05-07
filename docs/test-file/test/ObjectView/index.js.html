@@ -47,7 +47,7 @@ import { JSDOM } from &apos;jsdom&apos;;
 
 import ObjectView from &apos;../../source/ObjectView&apos;;
 
-var view;
+var HTML;
 
 
 /**
@@ -55,37 +55,92 @@ var view;
  */
 describe(&apos;ObjectView()&apos;,  () =&gt; {
 
-    before(async () =&gt; {
+    before(()  =&gt;  HTML = readFileSync( resolve(module.id, &apos;../index.html&apos;) ));
 
-        view = JSDOM.fragment(
-            readFileSync( resolve(module.id, &apos;../index.html&apos;) )
-        ).children[0];
+    describe(&apos;Single view&apos;,  () =&gt; {
 
-        view.remove();
-    });
+        var view, element;
 
-    /**
-     * @test {ObjectView#constructor}
-     */
-    it(&apos;Scan DOM&apos;,  () =&gt; {
+        before(() =&gt; {
 
-        view = new ObjectView( view );
+            element = JSDOM.fragment( HTML ).querySelector(&apos;fieldset&apos;);
 
-        view.length.should.be.equal( 3 );
-    });
-
-    /**
-     * @test {ObjectView#render}
-     */
-    it(&apos;Render data&apos;,  () =&gt; {
-
-        view.render({
-            name:    &apos;Test&apos;,
-            title:   &apos;Test field&apos;,
-            enable:  true
+            element.remove();
         });
 
-        view.element.outerHTML.should.be.equal(`
+        /**
+         * @test {ObjectView#constructor}
+         */
+        it(&apos;Scan DOM&apos;,  () =&gt; {
+
+            view = new ObjectView( element );
+
+            view.length.should.be.equal( 3 );
+        });
+
+        /**
+         * @test {ObjectView#render}
+         */
+        it(&apos;Render data&apos;,  () =&gt; {
+
+            view.render({
+                name:    &apos;Test&apos;,
+                title:   &apos;Test field&apos;,
+                enable:  true
+            });
+
+            view.element.outerHTML.should.be.equal(`
+    &lt;fieldset&gt;
+        &lt;legend title=&quot;Test field&quot;&gt;
+            Test
+            &lt;input type=&quot;checkbox&quot;&gt;
+        &lt;/legend&gt;
+    &lt;/fieldset&gt;`.trim()
+            );
+
+            view.element.querySelector(&apos;input&apos;).checked.should.be.true();
+        });
+    });
+
+    describe(&apos;Nested view&apos;,  () =&gt; {
+
+        var view, element;
+
+        before(() =&gt; {
+
+            element = JSDOM.fragment( HTML ).children[0];
+
+            element.remove();
+        });
+
+        /**
+         * @test {ObjectView#scan}
+         */
+        it(&apos;Scan DOM&apos;,  () =&gt; {
+
+            view = new ObjectView( element );
+
+            view.length.should.be.equal( 4 );
+
+            view[view.length - 1].should.be.instanceof( ObjectView );
+        });
+
+        /**
+         * @test {ObjectView#render}
+         */
+        it(&apos;Render data&apos;,  () =&gt; {
+
+            view.render({
+                name:    &apos;Test&apos;,
+                title:   &apos;Test field&apos;,
+                enable:  true,
+                tips:    {
+                    title:    &apos;Test tips&apos;,
+                    content:  &apos;Test content&apos;
+                }
+            });
+
+            view.element.outerHTML.should.be.equal(`
 &lt;form&gt;
     &lt;fieldset&gt;
         &lt;legend title=&quot;Test field&quot;&gt;
@@ -93,10 +148,13 @@ describe(&apos;ObjectView()&apos;,  () =&gt; {
             &lt;input type=&quot;checkbox&quot;&gt;
         &lt;/legend&gt;
     &lt;/fieldset&gt;
+    &lt;dl data-object=&quot;tips&quot;&gt;
+        &lt;dt&gt;Test tips&lt;/dt&gt;
+        &lt;dd&gt;Test content&lt;/dd&gt;
+    &lt;/dl&gt;
 &lt;/form&gt;`.trim()
-        );
-
-        view.element.querySelector(&apos;input&apos;).checked.should.be.true();
+            );
+        });
     });
 });
 </code></pre>

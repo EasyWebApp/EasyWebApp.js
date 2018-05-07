@@ -11,6 +11,8 @@ export default  class ObjectView extends Array {
 
         view_element.set(super(), element);
 
+        this.name = element.dataset.object;
+
         this.scan();
     }
 
@@ -32,7 +34,9 @@ export default  class ObjectView extends Array {
      */
     register(element, template) {
 
-        if ( template[0] )
+        if (element instanceof ObjectView)
+            this[ this.length ] = element;
+        else if ( template[0] )
             template_element.set(this[ this.length ] = template,  element);
     }
 
@@ -71,7 +75,11 @@ export default  class ObjectView extends Array {
 
             switch ( node.nodeType ) {
                 case 1:
-                    this.parseTag( node );  break;
+                    if ( node.dataset.object )
+                        this.register(new ObjectView( node ));
+                    else
+                        this.parseTag( node );
+                    break;
                 case 3:
                     this.register(
                         node,
@@ -88,7 +96,10 @@ export default  class ObjectView extends Array {
     render(data) {
 
         for (let template of this)
-            template.evaluate(template_element.get( template ),  data);
+            if (template instanceof Template)
+                template.evaluate(template_element.get( template ),  data);
+            else
+                template.render( data[ template.name ] );
 
         return this;
     }

@@ -24,15 +24,39 @@ window.esdocSearchIndex = [
     "test"
   ],
   [
+    "",
+    "test-file/test/ObjectView/index.js.html#lineNumber64",
+    "ObjectView() Nested view",
+    "test"
+  ],
+  [
     "objectview#render source/objectview.js~objectview#render,objectview#render",
-    "test-file/test/ObjectView/index.js.html#lineNumber39",
-    "ObjectView() Render data",
+    "test-file/test/ObjectView/index.js.html#lineNumber90",
+    "ObjectView() Nested view Render data",
+    "test"
+  ],
+  [
+    "objectview#scan source/objectview.js~objectview#scan,objectview#scan",
+    "test-file/test/ObjectView/index.js.html#lineNumber78",
+    "ObjectView() Nested view Scan DOM",
+    "test"
+  ],
+  [
+    "",
+    "test-file/test/ObjectView/index.js.html#lineNumber19",
+    "ObjectView() Single view",
+    "test"
+  ],
+  [
+    "objectview#render source/objectview.js~objectview#render,objectview#render",
+    "test-file/test/ObjectView/index.js.html#lineNumber43",
+    "ObjectView() Single view Render data",
     "test"
   ],
   [
     "objectview#constructor source/objectview.js~objectview#constructor,objectview#constructor",
-    "test-file/test/ObjectView/index.js.html#lineNumber29",
-    "ObjectView() Scan DOM",
+    "test-file/test/ObjectView/index.js.html#lineNumber33",
+    "ObjectView() Single view Scan DOM",
     "test"
   ],
   [
@@ -360,6 +384,12 @@ window.esdocSearchIndex = [
     "file"
   ],
   [
+    "source/objectview.js~objectview#[.length]",
+    "class/source/ObjectView.js~ObjectView.html#instance-member-[.length]",
+    "source/ObjectView.js~ObjectView#[.length]",
+    "member"
+  ],
+  [
     "source/objectview.js~objectview#constructor",
     "class/source/ObjectView.js~ObjectView.html#instance-constructor-constructor",
     "source/ObjectView.js~ObjectView#constructor",
@@ -369,6 +399,12 @@ window.esdocSearchIndex = [
     "source/objectview.js~objectview#element",
     "class/source/ObjectView.js~ObjectView.html#instance-get-element",
     "source/ObjectView.js~ObjectView#element",
+    "member"
+  ],
+  [
+    "source/objectview.js~objectview#name",
+    "class/source/ObjectView.js~ObjectView.html#instance-member-name",
+    "source/ObjectView.js~ObjectView#name",
     "member"
   ],
   [
