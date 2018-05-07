@@ -1,0 +1,14 @@
+{
+  "coverage": "50%",
+  "expectCount": 2,
+  "actualCount": 1,
+  "files": {
+    "source/utility.js": {
+      "expectCount": 2,
+      "actualCount": 1,
+      "undocumentLines": [
+        1
+      ]
+    }
+  }
+}
