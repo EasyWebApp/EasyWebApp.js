@@ -1,5 +1,11 @@
 window.esdocSearchIndex = [
   [
+    "easywebapp/source/objectview.js~objectview",
+    "class/source/ObjectView.js~ObjectView.html",
+    "<span>ObjectView</span> <span class=\"search-result-import-path\">easywebapp/source/ObjectView.js</span>",
+    "class"
+  ],
+  [
     "easywebapp/source/template.js~template",
     "class/source/Template.js~Template.html",
     "<span>Template</span> <span class=\"search-result-import-path\">easywebapp/source/Template.js</span>",
@@ -10,6 +16,24 @@ window.esdocSearchIndex = [
     "function/index.html#static-function-mapTree",
     "<span>mapTree</span> <span class=\"search-result-import-path\">easywebapp/source/utility.js</span>",
     "function"
+  ],
+  [
+    "objectview source/objectview.js~objectview,objectview",
+    "test-file/test/ObjectView/index.js.html#lineNumber15",
+    "ObjectView()",
+    "test"
+  ],
+  [
+    "objectview#render source/objectview.js~objectview#render,objectview#render",
+    "test-file/test/ObjectView/index.js.html#lineNumber39",
+    "ObjectView() Render data",
+    "test"
+  ],
+  [
+    "objectview#constructor source/objectview.js~objectview#constructor,objectview#constructor",
+    "test-file/test/ObjectView/index.js.html#lineNumber29",
+    "ObjectView() Scan DOM",
+    "test"
   ],
   [
     "template source/template.js~template,template",
@@ -330,6 +354,54 @@ window.esdocSearchIndex = [
     "external"
   ],
   [
+    "source/objectview.js",
+    "file/source/ObjectView.js.html",
+    "source/ObjectView.js",
+    "file"
+  ],
+  [
+    "source/objectview.js~objectview#constructor",
+    "class/source/ObjectView.js~ObjectView.html#instance-constructor-constructor",
+    "source/ObjectView.js~ObjectView#constructor",
+    "method"
+  ],
+  [
+    "source/objectview.js~objectview#element",
+    "class/source/ObjectView.js~ObjectView.html#instance-get-element",
+    "source/ObjectView.js~ObjectView#element",
+    "member"
+  ],
+  [
+    "source/objectview.js~objectview#parsetag",
+    "class/source/ObjectView.js~ObjectView.html#instance-method-parseTag",
+    "source/ObjectView.js~ObjectView#parseTag",
+    "method"
+  ],
+  [
+    "source/objectview.js~objectview#register",
+    "class/source/ObjectView.js~ObjectView.html#instance-method-register",
+    "source/ObjectView.js~ObjectView#register",
+    "method"
+  ],
+  [
+    "source/objectview.js~objectview#render",
+    "class/source/ObjectView.js~ObjectView.html#instance-method-render",
+    "source/ObjectView.js~ObjectView#render",
+    "method"
+  ],
+  [
+    "source/objectview.js~objectview#scan",
+    "class/source/ObjectView.js~ObjectView.html#instance-method-scan",
+    "source/ObjectView.js~ObjectView#scan",
+    "method"
+  ],
+  [
+    "source/objectview.js~objectview.templateof",
+    "class/source/ObjectView.js~ObjectView.html#static-method-templateOf",
+    "source/ObjectView.js~ObjectView.templateOf",
+    "method"
+  ],
+  [
     "source/template.js",
     "file/source/Template.js.html",
     "source/Template.js",
@@ -430,6 +502,12 @@ window.esdocSearchIndex = [
     "typedef/index.html#static-typedef-MapTreeFilter",
     "source/utility.js~MapTreeFilter",
     "typedef"
+  ],
+  [
+    "test/objectview/index.js",
+    "test-file/test/ObjectView/index.js.html",
+    "test/ObjectView/index.js",
+    "testFile"
   ],
   [
     "test/template.js",

@@ -32,6 +32,9 @@ export default  class Template extends Array {
 
     static get Reference() {  return /(\w+)(?:\.(\w+)|\[(?:'([^']+)|"([^"]+)))/g;  }
 
+    /**
+     * @private
+     */
     compile(expression) {
 
         return this.expression.push(
@@ -39,6 +42,9 @@ export default  class Template extends Array {
         );
     }
 
+    /**
+     * @private
+     */
     parse() {
 
         const addReference = (match, context, key1, key2, key3)  =>  {

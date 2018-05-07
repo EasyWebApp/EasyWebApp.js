@@ -29,7 +29,8 @@
 <nav class="navigation" data-ice="nav"><div>
   <ul>
     
-  <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/source/Template.js~Template.html">Template</a></span></span></li>
+  <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/source/ObjectView.js~ObjectView.html">ObjectView</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/source/Template.js~Template.html">Template</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-mapTree">mapTree</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-ChangedCallback">ChangedCallback</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-MapTreeFilter">MapTreeFilter</a></span></span></li>
@@ -72,6 +73,9 @@ export default  class Template extends Array {
 
     static get Reference() {  return /(\w+)(?:\.(\w+)|\[(?:&apos;([^&apos;]+)|&quot;([^&quot;]+)))/g;  }
 
+    /**
+     * @private
+     */
     compile(expression) {
 
         return this.expression.push(
@@ -79,6 +83,9 @@ export default  class Template extends Array {
         );
     }
 
+    /**
+     * @private
+     */
     parse() {
 
         const addReference = (match, context, key1, key2, key3)  =&gt;  {
