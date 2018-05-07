@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <base data-ice="baseUrl" href="../../">
-  <title data-ice="title">test/Template.js | easywebapp</title>
+  <title data-ice="title">source/View.js | easywebapp</title>
   <link type="text/css" rel="stylesheet" href="css/style.css">
   <link type="text/css" rel="stylesheet" href="css/prettify-tomorrow.css">
   <script src="script/prettify/prettify.js"></script>
@@ -40,79 +40,43 @@
 </div>
 </nav>
 
-<div class="content" data-ice="content"><h1 data-ice="title">test/Template.js</h1>
-<pre class="source-code line-number raw-source-code"><code class="prettyprint linenums" data-ice="content">import Template from &apos;../source/Template&apos;;
+<div class="content" data-ice="content"><h1 data-ice="title">source/View.js</h1>
+<pre class="source-code line-number raw-source-code"><code class="prettyprint linenums" data-ice="content">const view_element = new WeakMap();
 
 
 /**
- * @test {Template}
+ * Abstract View
  */
-describe(&apos;Template&apos;,  () =&gt; {
+export default  class View extends Array {
+    /**
+     * @param {Element} element
+     */
+    constructor(element) {
+
+        view_element.set(super(), element);
+
+        if (this.constructor === View)
+            throw TypeError(&apos;&quot;View&quot; is an abstract class&apos;);
+    }
 
     /**
-     * @test {Template#constructor}
+     * @return {Element}
      */
-    it(&apos;Parsing&apos;,  () =&gt; {
+    get element() {
 
-        const template = new Template(
-            &apos;[ ${(new Date()).getFullYear()} ]  Hello, ${this.name} !&apos;
-        );
-
-        template[0].should.be.equal(&apos;name&apos;);
-
-        template.toString().should.be.equal(
-            `[ ${(new Date()).getFullYear()} ]  Hello,  !`
-        );
-    });
+        return  view_element.get( this );
+    }
 
     /**
-     * @test {Template#evaluate}
+     * Render this view
+     *
+     * @return {View}
      */
-    it(&apos;Evaluation&apos;,  () =&gt; {
+    render() {
 
-        const template = new Template(
-            &apos;[ ${this.time} ]  Hello, ${scope.creator}\&apos;s ${view.name} !&apos;,
-            [&apos;view&apos;, &apos;scope&apos;]
-        );
-
-        template.length.should.be.equal( 3 );
-
-        template.evaluate(
-            {time: &apos;2015-07-23&apos;},  {name: &apos;EasyWebApp.js&apos;},  {creator: &apos;TechQuery&apos;}
-        ).should.be.equal(
-            &apos;[ 2015-07-23 ]  Hello, TechQuery\&apos;s EasyWebApp.js !&apos;
-        );
-    });
-
-    /**
-     * @test {Template#onChange}
-     */
-    it(&apos;Changed callback&apos;,  () =&gt; {
-
-        const empty = `[ ${(new Date()).getFullYear()} ]  Hello,  !`;
-
-        const template = new Template(
-            &apos;[ ${(new Date()).getFullYear()} ]  Hello, ${this.name} !&apos;,
-            (newValue, oldValue, ...bindData)  =&gt;  {
-
-                if (oldValue === null)
-                    newValue.should.be.equal( empty );
-                else {
-                    oldValue.should.be.equal( empty );
-
-                    newValue.should.be.equal(
-                        `[ ${(new Date()).getFullYear()} ]  Hello, EWA !`
-                    );
-                }
-
-                bindData.should.be.eql([1, 2, 3]);
-            },
-            [1, 2, 3]
-        );
-
-        template.evaluate({name: &apos;EWA&apos;});
-    });
-});
+        throw TypeError(&apos;View.prototype.render() must be overwriten&apos;);
+    }
+}
 </code></pre>
 
 </div>

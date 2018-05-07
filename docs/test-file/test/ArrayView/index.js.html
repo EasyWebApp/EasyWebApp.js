@@ -2,8 +2,8 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <base data-ice="baseUrl" href="../../">
-  <title data-ice="title">test/Template.js | easywebapp</title>
+  <base data-ice="baseUrl" href="../../../">
+  <title data-ice="title">test/ArrayView/index.js | easywebapp</title>
   <link type="text/css" rel="stylesheet" href="css/style.css">
   <link type="text/css" rel="stylesheet" href="css/prettify-tomorrow.css">
   <script src="script/prettify/prettify.js"></script>
@@ -40,77 +40,118 @@
 </div>
 </nav>
 
-<div class="content" data-ice="content"><h1 data-ice="title">test/Template.js</h1>
-<pre class="source-code line-number raw-source-code"><code class="prettyprint linenums" data-ice="content">import Template from &apos;../source/Template&apos;;
+<div class="content" data-ice="content"><h1 data-ice="title">test/ArrayView/index.js</h1>
+<pre class="source-code line-number raw-source-code"><code class="prettyprint linenums" data-ice="content">import { resolve } from &apos;path&apos;;
+
+import { readFileSync } from &apos;fs&apos;;
+
+import { JSDOM } from &apos;jsdom&apos;;
+
+import ArrayView from &apos;../../source/ArrayView&apos;;
+
+import ObjectView from &apos;../../source/ObjectView&apos;;
+
+var HTML;
 
 
 /**
- * @test {Template}
+ * @test {ArrayView}
  */
-describe(&apos;Template&apos;,  () =&gt; {
+describe(&apos;ArrayView()&apos;,  () =&gt; {
 
-    /**
-     * @test {Template#constructor}
-     */
-    it(&apos;Parsing&apos;,  () =&gt; {
+    before(()  =&gt;  HTML = readFileSync( resolve(module.id, &apos;../index.html&apos;) ));
 
-        const template = new Template(
-            &apos;[ ${(new Date()).getFullYear()} ]  Hello, ${this.name} !&apos;
-        );
+    describe(&apos;Single view&apos;,  () =&gt; {
 
-        template[0].should.be.equal(&apos;name&apos;);
+        var view, element;
 
-        template.toString().should.be.equal(
-            `[ ${(new Date()).getFullYear()} ]  Hello,  !`
-        );
+        before(() =&gt; {
+
+            element = JSDOM.fragment( HTML ).querySelector(&apos;ol&apos;);
+
+            element.remove();
+        });
+
+        /**
+         * @test {ArrayView#constructor}
+         */
+        it(&apos;Scan DOM&apos;,  () =&gt; {
+
+            view = new ArrayView( element );
+
+            view.element.textContent.should.be.equal(&apos;&apos;);
+        });
+
+        /**
+         * @test {ArrayView#render}
+         */
+        it(&apos;Render data&apos;,  () =&gt; {
+
+            view.render([
+                {name: &apos;ObjectView&apos;},
+                {name: &apos;ArrayView&apos;},
+                {name: &apos;TreeView&apos;}
+            ]);
+
+            Array.from(
+                view.element.children,  item =&gt; item.textContent
+            ).should.be.eql([
+                &apos;ObjectView&apos;, &apos;ArrayView&apos;, &apos;TreeView&apos;
+            ]);
+        });
     });
 
-    /**
-     * @test {Template#evaluate}
-     */
-    it(&apos;Evaluation&apos;,  () =&gt; {
+    describe(&apos;Nested view&apos;,  () =&gt; {
 
-        const template = new Template(
-            &apos;[ ${this.time} ]  Hello, ${scope.creator}\&apos;s ${view.name} !&apos;,
-            [&apos;view&apos;, &apos;scope&apos;]
-        );
+        var view, element;
 
-        template.length.should.be.equal( 3 );
+        before(() =&gt; {
 
-        template.evaluate(
-            {time: &apos;2015-07-23&apos;},  {name: &apos;EasyWebApp.js&apos;},  {creator: &apos;TechQuery&apos;}
-        ).should.be.equal(
-            &apos;[ 2015-07-23 ]  Hello, TechQuery\&apos;s EasyWebApp.js !&apos;
-        );
-    });
+            element = JSDOM.fragment( HTML ).children[0];
 
-    /**
-     * @test {Template#onChange}
-     */
-    it(&apos;Changed callback&apos;,  () =&gt; {
+            element.remove();
+        });
 
-        const empty = `[ ${(new Date()).getFullYear()} ]  Hello,  !`;
+        /**
+         * @test {ObjectView#scan}
+         */
+        it(&apos;Scan DOM&apos;,  () =&gt; {
 
-        const template = new Template(
-            &apos;[ ${(new Date()).getFullYear()} ]  Hello, ${this.name} !&apos;,
-            (newValue, oldValue, ...bindData)  =&gt;  {
+            view = new ObjectView( element );
 
-                if (oldValue === null)
-                    newValue.should.be.equal( empty );
-                else {
-                    oldValue.should.be.equal( empty );
+            view.length.should.be.equal( 2 );
 
-                    newValue.should.be.equal(
-                        `[ ${(new Date()).getFullYear()} ]  Hello, EWA !`
-                    );
-                }
+            view[1].should.be.instanceof( ArrayView );
+        });
 
-                bindData.should.be.eql([1, 2, 3]);
-            },
-            [1, 2, 3]
-        );
+        /**
+         * @test {ObjectView#render}
+         */
+        it(&apos;Render data&apos;,  () =&gt; {
 
-        template.evaluate({name: &apos;EWA&apos;});
+            const list = [
+                {name: &apos;Gecko&apos;},
+                {name: &apos;Trident&apos;},
+                {name: &apos;WebKit&apos;},
+                {name: &apos;Blink&apos;},
+                {name: &apos;EdgeHTML&apos;}
+            ];
+
+            view.render({
+                title:  &apos;Kinds of Web browser core&apos;,
+                list:   list
+            });
+
+            view.element.outerHTML.should.be.equal(`
+&lt;main&gt;
+    &lt;h1&gt;Kinds of Web browser core&lt;/h1&gt;
+
+    &lt;ol data-array=&quot;list&quot;&gt;${
+    list.map(item =&gt; `&lt;li&gt;${item.name}&lt;/li&gt;`).join(&apos;&apos;)
+}&lt;/ol&gt;
+&lt;/main&gt;`.trim()
+            );
+        });
     });
 });
 </code></pre>

@@ -1,24 +1,24 @@
+import View from './View';
+
 import { mapTree } from './utility';
 
 import Template from './Template';
 
-const view_element = new WeakMap(), template_element = new WeakMap();
+import ArrayView from './ArrayView';
+
+const template_element = new WeakMap();
 
 
-export default  class ObjectView extends Array {
+/**
+ * View for Object model
+ */
+export default  class ObjectView extends View {
 
     constructor(element) {
 
-        view_element.set(super(), element);
-
-        this.name = element.dataset.object;
+        super( element ).name = element.dataset.object;
 
         this.scan();
-    }
-
-    get element() {
-
-        return  view_element.get( this );
     }
 
     /**
@@ -34,7 +34,7 @@ export default  class ObjectView extends Array {
      */
     register(element, template) {
 
-        if (element instanceof ObjectView)
+        if (element instanceof View)
             this[ this.length ] = element;
         else if ( template[0] )
             template_element.set(this[ this.length ] = template,  element);
@@ -77,6 +77,8 @@ export default  class ObjectView extends Array {
                 case 1:
                     if ( node.dataset.object )
                         this.register(new ObjectView( node ));
+                    else if ( node.dataset.array )
+                        this.register(new ArrayView( node ));
                     else
                         this.parseTag( node );
                     break;
@@ -93,12 +95,17 @@ export default  class ObjectView extends Array {
         });
     }
 
+    /**
+     * @param {Object} data
+     *
+     * @return {ObjectView}
+     */
     render(data) {
 
         for (let template of this)
             if (template instanceof Template)
                 template.evaluate(template_element.get( template ),  data);
-            else
+            else if (template instanceof View)
                 template.render( data[ template.name ] );
 
         return this;

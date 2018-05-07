@@ -1,5 +1,11 @@
 window.esdocSearchIndex = [
   [
+    "easywebapp/source/arrayview.js~arrayview",
+    "class/source/ArrayView.js~ArrayView.html",
+    "<span>ArrayView</span> <span class=\"search-result-import-path\">easywebapp/source/ArrayView.js</span>",
+    "class"
+  ],
+  [
     "easywebapp/source/objectview.js~objectview",
     "class/source/ObjectView.js~ObjectView.html",
     "<span>ObjectView</span> <span class=\"search-result-import-path\">easywebapp/source/ObjectView.js</span>",
@@ -12,10 +18,58 @@ window.esdocSearchIndex = [
     "class"
   ],
   [
+    "easywebapp/source/view.js~view",
+    "class/source/View.js~View.html",
+    "<span>View</span> <span class=\"search-result-import-path\">easywebapp/source/View.js</span>",
+    "class"
+  ],
+  [
     "easywebapp/source/utility.js~maptree",
     "function/index.html#static-function-mapTree",
     "<span>mapTree</span> <span class=\"search-result-import-path\">easywebapp/source/utility.js</span>",
     "function"
+  ],
+  [
+    "arrayview source/arrayview.js~arrayview,arrayview",
+    "test-file/test/ArrayView/index.js.html#lineNumber17",
+    "ArrayView()",
+    "test"
+  ],
+  [
+    "",
+    "test-file/test/ArrayView/index.js.html#lineNumber61",
+    "ArrayView() Nested view",
+    "test"
+  ],
+  [
+    "objectview#render source/objectview.js~objectview#render,objectview#render",
+    "test-file/test/ArrayView/index.js.html#lineNumber87",
+    "ArrayView() Nested view Render data",
+    "test"
+  ],
+  [
+    "objectview#scan source/objectview.js~objectview#scan,objectview#scan",
+    "test-file/test/ArrayView/index.js.html#lineNumber75",
+    "ArrayView() Nested view Scan DOM",
+    "test"
+  ],
+  [
+    "",
+    "test-file/test/ArrayView/index.js.html#lineNumber21",
+    "ArrayView() Single view",
+    "test"
+  ],
+  [
+    "arrayview#render source/arrayview.js~arrayview#render,arrayview#render",
+    "test-file/test/ArrayView/index.js.html#lineNumber45",
+    "ArrayView() Single view Render data",
+    "test"
+  ],
+  [
+    "arrayview#constructor source/arrayview.js~arrayview#constructor,arrayview#constructor",
+    "test-file/test/ArrayView/index.js.html#lineNumber35",
+    "ArrayView() Single view Scan DOM",
+    "test"
   ],
   [
     "objectview source/objectview.js~objectview,objectview",
@@ -378,6 +432,78 @@ window.esdocSearchIndex = [
     "external"
   ],
   [
+    "source/.external-webapi.js~audiocontext",
+    "https://developer.mozilla.org/en/docs/Web/API/AudioContext",
+    "source/.external-webapi.js~AudioContext",
+    "external"
+  ],
+  [
+    "source/.external-webapi.js~canvasrenderingcontext2d",
+    "https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D",
+    "source/.external-webapi.js~CanvasRenderingContext2D",
+    "external"
+  ],
+  [
+    "source/.external-webapi.js~documentfragment",
+    "https://developer.mozilla.org/en-US/docs/Web/API/DocumentFragment",
+    "source/.external-webapi.js~DocumentFragment",
+    "external"
+  ],
+  [
+    "source/.external-webapi.js~element",
+    "https://developer.mozilla.org/en-US/docs/Web/API/Element",
+    "source/.external-webapi.js~Element",
+    "external"
+  ],
+  [
+    "source/.external-webapi.js~event",
+    "https://developer.mozilla.org/en-US/docs/Web/API/Event",
+    "source/.external-webapi.js~Event",
+    "external"
+  ],
+  [
+    "source/.external-webapi.js~node",
+    "https://developer.mozilla.org/en-US/docs/Web/API/Node",
+    "source/.external-webapi.js~Node",
+    "external"
+  ],
+  [
+    "source/.external-webapi.js~nodelist",
+    "https://developer.mozilla.org/en-US/docs/Web/API/NodeList",
+    "source/.external-webapi.js~NodeList",
+    "external"
+  ],
+  [
+    "source/.external-webapi.js~xmlhttprequest",
+    "https://developer.mozilla.org/en/docs/Web/API/XMLHttpRequest",
+    "source/.external-webapi.js~XMLHttpRequest",
+    "external"
+  ],
+  [
+    "source/arrayview.js",
+    "file/source/ArrayView.js.html",
+    "source/ArrayView.js",
+    "file"
+  ],
+  [
+    "source/arrayview.js~arrayview#constructor",
+    "class/source/ArrayView.js~ArrayView.html#instance-constructor-constructor",
+    "source/ArrayView.js~ArrayView#constructor",
+    "method"
+  ],
+  [
+    "source/arrayview.js~arrayview#render",
+    "class/source/ArrayView.js~ArrayView.html#instance-method-render",
+    "source/ArrayView.js~ArrayView#render",
+    "method"
+  ],
+  [
+    "source/arrayview.js~arrayview#template",
+    "class/source/ArrayView.js~ArrayView.html#instance-member-template",
+    "source/ArrayView.js~ArrayView#template",
+    "member"
+  ],
+  [
     "source/objectview.js",
     "file/source/ObjectView.js.html",
     "source/ObjectView.js",
@@ -394,18 +520,6 @@ window.esdocSearchIndex = [
     "class/source/ObjectView.js~ObjectView.html#instance-constructor-constructor",
     "source/ObjectView.js~ObjectView#constructor",
     "method"
-  ],
-  [
-    "source/objectview.js~objectview#element",
-    "class/source/ObjectView.js~ObjectView.html#instance-get-element",
-    "source/ObjectView.js~ObjectView#element",
-    "member"
-  ],
-  [
-    "source/objectview.js~objectview#name",
-    "class/source/ObjectView.js~ObjectView.html#instance-member-name",
-    "source/ObjectView.js~ObjectView#name",
-    "member"
   ],
   [
     "source/objectview.js~objectview#parsetag",
@@ -528,6 +642,30 @@ window.esdocSearchIndex = [
     "member"
   ],
   [
+    "source/view.js",
+    "file/source/View.js.html",
+    "source/View.js",
+    "file"
+  ],
+  [
+    "source/view.js~view#constructor",
+    "class/source/View.js~View.html#instance-constructor-constructor",
+    "source/View.js~View#constructor",
+    "method"
+  ],
+  [
+    "source/view.js~view#element",
+    "class/source/View.js~View.html#instance-get-element",
+    "source/View.js~View#element",
+    "member"
+  ],
+  [
+    "source/view.js~view#render",
+    "class/source/View.js~View.html#instance-method-render",
+    "source/View.js~View#render",
+    "method"
+  ],
+  [
     "source/utility.js",
     "file/source/utility.js.html",
     "source/utility.js",
@@ -538,6 +676,12 @@ window.esdocSearchIndex = [
     "typedef/index.html#static-typedef-MapTreeFilter",
     "source/utility.js~MapTreeFilter",
     "typedef"
+  ],
+  [
+    "test/arrayview/index.js",
+    "test-file/test/ArrayView/index.js.html",
+    "test/ArrayView/index.js",
+    "testFile"
   ],
   [
     "test/objectview/index.js",

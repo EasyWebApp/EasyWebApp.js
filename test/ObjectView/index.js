@@ -81,7 +81,7 @@ describe('ObjectView()',  () => {
 
             view.length.should.be.equal( 4 );
 
-            view[view.length - 1].should.be.instanceof( ObjectView );
+            view[3].should.be.instanceof( ObjectView );
         });
 
         /**
