@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <base data-ice="baseUrl" href="../../">
+  <title data-ice="title">source/Template.js | easywebapp</title>
+  <link type="text/css" rel="stylesheet" href="css/style.css">
+  <link type="text/css" rel="stylesheet" href="css/prettify-tomorrow.css">
+  <script src="script/prettify/prettify.js"></script>
+  <script src="script/manual.js"></script>
+<meta name="description" content="Light-weight Web application engine based on Web components API &amp; ECMAScript 6+"><meta property="twitter:card" content="summary"><meta property="twitter:title" content="easywebapp"><meta property="twitter:description" content="Light-weight Web application engine based on Web components API &amp; ECMAScript 6+"></head>
+<body class="layout-container" data-ice="rootContainer">
+
+<header>
+  <a href="./">Home</a>
+  
+  <a href="identifiers.html">Reference</a>
+  <a href="source.html">Source</a>
+  <a href="test.html" data-ice="testLink">Test</a>
+  <div class="search-box">
+  <span>
+    <img src="./image/search.png">
+    <span class="search-input-edge"></span><input class="search-input"><span class="search-input-edge"></span>
+  </span>
+    <ul class="search-result"></ul>
+  </div>
+<a style="position:relative; top:3px;" href="https://github.com/EasyWebApp/EasyWebApp"><img width="20px" src="./image/github.png"></a></header>
+
+<nav class="navigation" data-ice="nav"><div>
+  <ul>
+    
+  <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/source/Template.js~Template.html">Template</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-mapTree">mapTree</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-ChangedCallback">ChangedCallback</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-MapTreeFilter">MapTreeFilter</a></span></span></li>
+</ul>
+</div>
+</nav>
+
+<div class="content" data-ice="content"><h1 data-ice="title">source/Template.js</h1>
+<pre class="source-code line-number raw-source-code"><code class="prettyprint linenums" data-ice="content">/**
+ * String template
+ */
+export default  class Template extends Array {
+    /**
+     * @param {string}          raw
+     * @param {stirng[]}        [varName]  - Name list of the Local variable
+     * @param {ChangedCallback} [onChange] - Call with New &amp; Old value
+     * @param {Array}           [bindData] - The parameter bound to `onChange`
+     */
+    constructor(raw, varName, onChange, bindData) {
+
+        super();
+
+        this.raw = raw,  this.value = null;
+
+        if (varName instanceof Function)
+            bindData = onChange, onChange = varName, varName = null;
+
+        this.varName = varName || [ ],  this.expression = [ ];
+
+        this.context = new Set( this.varName.concat(&apos;this&apos;) );
+
+        this.onChange = (onChange instanceof Function)  ?  onChange  :  null;
+
+        this.data = bindData || [ ];
+
+        this.parse().clear();
+    }
+
+    static get Expression() {  return /\$\{([\s\S]+?)\}/g;  }
+
+    static get Reference() {  return /(\w+)(?:\.(\w+)|\[(?:&apos;([^&apos;]+)|&quot;([^&quot;]+)))/g;  }
+
+    compile(expression) {
+
+        return this.expression.push(
+            new Function(... this.varName,  &apos;return &apos; + expression.trim())
+        );
+    }
+
+    parse() {
+
+        const addReference = (match, context, key1, key2, key3)  =&gt;  {
+
+            if (this.context.has( context ))  this.push(key1 || key2 || key3);
+        };
+
+        this.raw = this.raw.replace(
+            Template.Expression,  (_, expression) =&gt; {
+
+                expression.replace(Template.Reference, addReference);
+
+                return  &apos;${&apos; + (this.compile( expression ) - 1) + &apos;}&apos;;
+            }
+        );
+
+        return this;
+    }
+
+    /**
+     * Evaluate expression
+     *
+     * @param {?object} context     - Value of `this` in the expression
+     * @param {...*}    [parameter] - One or more value of the Local variable
+     *
+     * @return {string}
+     */
+    evaluate(context, ...parameter) {
+
+        const value = this.raw.replace(
+            /\$\{(\d+)\}/g,
+            (_, index)  =&gt;  this.expression[ index ].apply(context, parameter)
+        );
+
+        if (value !== this.value) {
+            /**
+             * Call back only on Value changed
+             *
+             * @typedef {function} ChangedCallback
+             *
+             * @param {*}    newValue
+             * @param {*}    oldValue
+             * @param {...*} bindData
+             */
+            if ( this.onChange )
+                this.onChange(... [value, this.value].concat( this.data ));
+
+            this.value = value;
+        }
+
+        return value;
+    }
+
+    clear() {
+
+        const data = { };
+
+        for (let key of this)  data[ key ] = &apos;&apos;;
+
+        return  this.evaluate(... Array.from(this.context,  () =&gt; data));
+    }
+
+    toString() {
+
+        return  this.value + &apos;&apos;;
+    }
+}
+</code></pre>
+
+</div>
+
+<footer class="footer">
+  Generated by <a href="https://esdoc.org">ESDoc<span data-ice="esdocVersion">(1.1.0)</span><img src="./image/esdoc-logo-mini-black.png"></a>
+</footer>
+
+<script src="script/search_index.js"></script>
+<script src="script/search.js"></script>
+<script src="script/pretty-print.js"></script>
+<script src="script/inherited-summary.js"></script>
+<script src="script/test-summary.js"></script>
+<script src="script/inner-link.js"></script>
+<script src="script/patch-for-local.js"></script>
+</body>
+</html>

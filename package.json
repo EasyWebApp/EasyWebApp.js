@@ -9,7 +9,7 @@
     "compile": "babel source -d build/Release",
     "build": "npm run compile  &&  esdoc",
     "help": "web-server docs/ -o",
-    "test": "mocha -r should --recursive --no-timeouts -c --inline-diffs --exit",
+    "test": "mocha -r babel-register -r should --recursive --no-timeouts -c --inline-diffs --exit",
     "debug": "npm test -- --inspect-brk"
   },
   "repository": {
@@ -33,6 +33,7 @@
     "babel-plugin-transform-es2015-modules-commonjs": "^6.26.2",
     "babel-preset-es2016": "^6.24.1",
     "babel-preset-es2017": "^6.24.1",
+    "babel-register": "^6.26.0",
     "esdoc": "^1.1.0",
     "esdoc-standard-plugin": "^1.0.0",
     "eslint": "^4.19.1",
@@ -47,7 +48,19 @@
     "destination": "./docs",
     "plugins": [
       {
-        "name": "esdoc-standard-plugin"
+        "name": "esdoc-standard-plugin",
+        "option": {
+          "test": {
+            "source": "./test",
+            "interfaces": [
+              "describe",
+              "it"
+            ],
+            "includes": [
+              "\\.js$"
+            ]
+          }
+        }
       }
     ]
   },

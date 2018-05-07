@@ -1,9 +1,51 @@
 window.esdocSearchIndex = [
   [
+    "easywebapp/source/template.js~template",
+    "class/source/Template.js~Template.html",
+    "<span>Template</span> <span class=\"search-result-import-path\">easywebapp/source/Template.js</span>",
+    "class"
+  ],
+  [
     "easywebapp/source/utility.js~maptree",
     "function/index.html#static-function-mapTree",
     "<span>mapTree</span> <span class=\"search-result-import-path\">easywebapp/source/utility.js</span>",
     "function"
+  ],
+  [
+    "template source/template.js~template,template",
+    "test-file/test/Template.js.html#lineNumber7",
+    "Template",
+    "test"
+  ],
+  [
+    "template#onchange source/template.js~template#onchange,template#onchange",
+    "test-file/test/Template.js.html#lineNumber47",
+    "Template Changed callback",
+    "test"
+  ],
+  [
+    "template#evaluate source/template.js~template#evaluate,template#evaluate",
+    "test-file/test/Template.js.html#lineNumber28",
+    "Template Evaluation",
+    "test"
+  ],
+  [
+    "template#constructor source/template.js~template#constructor,template#constructor",
+    "test-file/test/Template.js.html#lineNumber12",
+    "Template Parsing",
+    "test"
+  ],
+  [
+    "",
+    "test-file/test/utility.js.html#lineNumber4",
+    "Utility",
+    "test"
+  ],
+  [
+    "maptree source/utility.js~maptree,maptree",
+    "test-file/test/utility.js.html#lineNumber7",
+    "Utility mapTree()",
+    "test"
   ],
   [
     "source/.external-ecmascript.js~array",
@@ -288,6 +330,96 @@ window.esdocSearchIndex = [
     "external"
   ],
   [
+    "source/template.js",
+    "file/source/Template.js.html",
+    "source/Template.js",
+    "file"
+  ],
+  [
+    "source/template.js~template#clear",
+    "class/source/Template.js~Template.html#instance-method-clear",
+    "source/Template.js~Template#clear",
+    "method"
+  ],
+  [
+    "source/template.js~template#compile",
+    "class/source/Template.js~Template.html#instance-method-compile",
+    "source/Template.js~Template#compile",
+    "method"
+  ],
+  [
+    "source/template.js~template#constructor",
+    "class/source/Template.js~Template.html#instance-constructor-constructor",
+    "source/Template.js~Template#constructor",
+    "method"
+  ],
+  [
+    "source/template.js~template#context",
+    "class/source/Template.js~Template.html#instance-member-context",
+    "source/Template.js~Template#context",
+    "member"
+  ],
+  [
+    "source/template.js~template#data",
+    "class/source/Template.js~Template.html#instance-member-data",
+    "source/Template.js~Template#data",
+    "member"
+  ],
+  [
+    "source/template.js~template#evaluate",
+    "class/source/Template.js~Template.html#instance-method-evaluate",
+    "source/Template.js~Template#evaluate",
+    "method"
+  ],
+  [
+    "source/template.js~template#onchange",
+    "class/source/Template.js~Template.html#instance-member-onChange",
+    "source/Template.js~Template#onChange",
+    "member"
+  ],
+  [
+    "source/template.js~template#parse",
+    "class/source/Template.js~Template.html#instance-method-parse",
+    "source/Template.js~Template#parse",
+    "method"
+  ],
+  [
+    "source/template.js~template#raw",
+    "class/source/Template.js~Template.html#instance-member-raw",
+    "source/Template.js~Template#raw",
+    "member"
+  ],
+  [
+    "source/template.js~template#tostring",
+    "class/source/Template.js~Template.html#instance-method-toString",
+    "source/Template.js~Template#toString",
+    "method"
+  ],
+  [
+    "source/template.js~template#value",
+    "class/source/Template.js~Template.html#instance-member-value",
+    "source/Template.js~Template#value",
+    "member"
+  ],
+  [
+    "source/template.js~template.changedcallback",
+    "typedef/index.html#static-typedef-ChangedCallback",
+    "source/Template.js~Template.ChangedCallback",
+    "typedef"
+  ],
+  [
+    "source/template.js~template.expression",
+    "class/source/Template.js~Template.html#static-get-Expression",
+    "source/Template.js~Template.Expression",
+    "member"
+  ],
+  [
+    "source/template.js~template.reference",
+    "class/source/Template.js~Template.html#static-get-Reference",
+    "source/Template.js~Template.Reference",
+    "member"
+  ],
+  [
     "source/utility.js",
     "file/source/utility.js.html",
     "source/utility.js",
@@ -298,5 +430,17 @@ window.esdocSearchIndex = [
     "typedef/index.html#static-typedef-MapTreeFilter",
     "source/utility.js~MapTreeFilter",
     "typedef"
+  ],
+  [
+    "test/template.js",
+    "test-file/test/Template.js.html",
+    "test/Template.js",
+    "testFile"
+  ],
+  [
+    "test/utility.js",
+    "test-file/test/utility.js.html",
+    "test/utility.js",
+    "testFile"
   ]
 ]

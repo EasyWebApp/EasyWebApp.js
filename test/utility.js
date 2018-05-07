@@ -1,13 +1,12 @@
-'use strict';
-
-const Utility = require('../build/Release/utility');
+import { mapTree } from '../source/utility';
 
 
 describe('Utility',  () => {
 
+    /** @test {mapTree} */
     it('mapTree()',  () => {
 
-        Utility.mapTree({
+        mapTree({
             id:        0,
             children:  [
                 {
