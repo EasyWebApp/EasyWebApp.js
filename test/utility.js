@@ -1,10 +1,49 @@
-import { mapTree } from '../source/utility';
+import { extend, mapTree } from '../source/utility';
 
 
 describe('Utility',  () => {
+    /**
+     * @test {extend}
+     */
+    describe('Mixin objects',  () => {
 
-    /** @test {mapTree} */
-    it('mapTree()',  () => {
+        it('Ordinary objects',  () => {
+
+            extend(
+                { },  null,  {example: 1, get test() { }}
+            ).should.have.properties(
+                'example', 'test'
+            );
+        });
+
+        it('Function or Class',  () => {
+
+            function Test() { }
+
+            class Example {
+                constructor(test) {  test;  }
+
+                static test() { }
+
+                test() { }
+            }
+
+            extend(Test, Example).should.have.properties({
+                name:    'Test',
+                length:  0,
+                test:    Example.test
+            });
+
+            Test.prototype.should.not.be.equal( Example );
+
+            Test.prototype.should.have.property('test', Example.prototype.test);
+        });
+    });
+
+    /**
+     *  @test {mapTree}
+     */
+    it('Filter object tree',  () => {
 
         mapTree({
             id:        0,

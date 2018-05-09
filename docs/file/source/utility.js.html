@@ -30,10 +30,16 @@
   <ul>
     
   <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/source/ArrayView.js~ArrayView.html">ArrayView</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/source/Component.js~Component.html">Component</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/source/ObjectView.js~ObjectView.html">ObjectView</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/source/Template.js~Template.html">Template</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/source/View.js~View.html">View</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-component">component</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-get">get</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-set">set</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-extend">extend</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-function">F</span><span data-ice="name"><span><a href="function/index.html#static-function-mapTree">mapTree</a></span></span></li>
+<li data-ice="doc"><span data-ice="kind" class="kind-variable">V</span><span data-ice="name"><span><a href="variable/index.html#static-variable-_private_">_private_</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-ChangedCallback">ChangedCallback</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-typedef">T</span><span data-ice="name"><span><a href="typedef/index.html#static-typedef-MapTreeFilter">MapTreeFilter</a></span></span></li>
 </ul>
@@ -41,7 +47,42 @@
 </nav>
 
 <div class="content" data-ice="content"><h1 data-ice="title">source/utility.js</h1>
-<pre class="source-code line-number raw-source-code"><code class="prettyprint linenums" data-ice="content">var depth = 0;
+<pre class="source-code line-number raw-source-code"><code class="prettyprint linenums" data-ice="content">/**
+ * Merge own properties of two or more objects together into the first object
+ * by their descriptor
+ *
+ * @param {Object}    target - An object that will receive the new properties
+ *                             if `source` are passed in
+ * @param {...Object} source - Additional objects containing properties to merge in
+ *
+ * @return {Object} The `target` parameter
+ */
+export function extend(target, ...source) {
+
+    for (let object of source)  if (object instanceof Object) {
+
+        let descriptor = Object.getOwnPropertyDescriptors( object );
+
+        if (target instanceof Function) {
+
+            delete descriptor.name;
+            delete descriptor.length;
+            delete descriptor.prototype;
+
+            Object.defineProperties(
+                target.prototype,
+                Object.getOwnPropertyDescriptors( object.prototype )
+            );
+        }
+
+        Object.defineProperties(target, descriptor);
+    }
+
+    return target;
+}
+
+
+var depth = 0;
 
 /**
  * Traverse Object-tree &amp; return Node array through the filter

@@ -6,6 +6,12 @@ window.esdocSearchIndex = [
     "class"
   ],
   [
+    "easywebapp/source/component.js~component",
+    "class/source/Component.js~Component.html",
+    "<span>Component</span> <span class=\"search-result-import-path\">easywebapp/source/Component.js</span>",
+    "class"
+  ],
+  [
     "easywebapp/source/objectview.js~objectview",
     "class/source/ObjectView.js~ObjectView.html",
     "<span>ObjectView</span> <span class=\"search-result-import-path\">easywebapp/source/ObjectView.js</span>",
@@ -24,9 +30,39 @@ window.esdocSearchIndex = [
     "class"
   ],
   [
+    "easywebapp/source/component.js~_private_",
+    "variable/index.html#static-variable-_private_",
+    "<span>_private_</span> <span class=\"search-result-import-path\">easywebapp/source/Component.js</span>",
+    "variable"
+  ],
+  [
+    "easywebapp/source/index.js~component",
+    "function/index.html#static-function-component",
+    "<span>component</span> <span class=\"search-result-import-path\">easywebapp/source/index.js</span>",
+    "function"
+  ],
+  [
+    "easywebapp/source/utility.js~extend",
+    "function/index.html#static-function-extend",
+    "<span>extend</span> <span class=\"search-result-import-path\">easywebapp/source/utility.js</span>",
+    "function"
+  ],
+  [
+    "easywebapp/source/index.js~get",
+    "function/index.html#static-function-get",
+    "<span>get</span> <span class=\"search-result-import-path\">easywebapp/source/index.js</span>",
+    "function"
+  ],
+  [
     "easywebapp/source/utility.js~maptree",
     "function/index.html#static-function-mapTree",
     "<span>mapTree</span> <span class=\"search-result-import-path\">easywebapp/source/utility.js</span>",
+    "function"
+  ],
+  [
+    "easywebapp/source/index.js~set",
+    "function/index.html#static-function-set",
+    "<span>set</span> <span class=\"search-result-import-path\">easywebapp/source/index.js</span>",
     "function"
   ],
   [
@@ -145,8 +181,26 @@ window.esdocSearchIndex = [
   ],
   [
     "maptree source/utility.js~maptree,maptree",
-    "test-file/test/utility.js.html#lineNumber7",
-    "Utility mapTree()",
+    "test-file/test/utility.js.html#lineNumber46",
+    "Utility Filter object tree",
+    "test"
+  ],
+  [
+    "extend source/utility.js~extend,extend",
+    "test-file/test/utility.js.html#lineNumber8",
+    "Utility Mixin objects",
+    "test"
+  ],
+  [
+    "",
+    "test-file/test/utility.js.html#lineNumber19",
+    "Utility Mixin objects Function or Class",
+    "test"
+  ],
+  [
+    "",
+    "test-file/test/utility.js.html#lineNumber10",
+    "Utility Mixin objects Ordinary objects",
     "test"
   ],
   [
@@ -504,6 +558,60 @@ window.esdocSearchIndex = [
     "member"
   ],
   [
+    "source/component.js",
+    "file/source/Component.js.html",
+    "source/Component.js",
+    "file"
+  ],
+  [
+    "source/component.js~component#$",
+    "class/source/Component.js~Component.html#instance-method-$",
+    "source/Component.js~Component#$",
+    "method"
+  ],
+  [
+    "source/component.js~component#[name]",
+    "class/source/Component.js~Component.html#instance-member-[name]",
+    "source/Component.js~Component#[name]",
+    "member"
+  ],
+  [
+    "source/component.js~component#attributechangedcallback",
+    "class/source/Component.js~Component.html#instance-method-attributeChangedCallback",
+    "source/Component.js~Component#attributeChangedCallback",
+    "method"
+  ],
+  [
+    "source/component.js~component.findtemplate",
+    "class/source/Component.js~Component.html#static-method-findTemplate",
+    "source/Component.js~Component.findTemplate",
+    "method"
+  ],
+  [
+    "source/component.js~component.indexof",
+    "class/source/Component.js~Component.html#static-method-indexOf",
+    "source/Component.js~Component.indexOf",
+    "method"
+  ],
+  [
+    "source/component.js~component.setaccessor",
+    "class/source/Component.js~Component.html#static-method-setAccessor",
+    "source/Component.js~Component.setAccessor",
+    "method"
+  ],
+  [
+    "source/component.js~component.tagname",
+    "class/source/Component.js~Component.html#static-get-tagName",
+    "source/Component.js~Component.tagName",
+    "member"
+  ],
+  [
+    "source/component.js~component.targetof",
+    "class/source/Component.js~Component.html#static-method-targetOf",
+    "source/Component.js~Component.targetOf",
+    "method"
+  ],
+  [
     "source/objectview.js",
     "file/source/ObjectView.js.html",
     "source/ObjectView.js",
@@ -664,6 +772,12 @@ window.esdocSearchIndex = [
     "class/source/View.js~View.html#instance-method-render",
     "source/View.js~View#render",
     "method"
+  ],
+  [
+    "source/index.js",
+    "file/source/index.js.html",
+    "source/index.js",
+    "file"
   ],
   [
     "source/utility.js",

@@ -1,3 +1,38 @@
+/**
+ * Merge own properties of two or more objects together into the first object
+ * by their descriptor
+ *
+ * @param {Object}    target - An object that will receive the new properties
+ *                             if `source` are passed in
+ * @param {...Object} source - Additional objects containing properties to merge in
+ *
+ * @return {Object} The `target` parameter
+ */
+export function extend(target, ...source) {
+
+    for (let object of source)  if (object instanceof Object) {
+
+        let descriptor = Object.getOwnPropertyDescriptors( object );
+
+        if (target instanceof Function) {
+
+            delete descriptor.name;
+            delete descriptor.length;
+            delete descriptor.prototype;
+
+            Object.defineProperties(
+                target.prototype,
+                Object.getOwnPropertyDescriptors( object.prototype )
+            );
+        }
+
+        Object.defineProperties(target, descriptor);
+    }
+
+    return target;
+}
+
+
 var depth = 0;
 
 /**

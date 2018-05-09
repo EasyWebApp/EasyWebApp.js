@@ -1,7 +1,7 @@
 {
-  "coverage": "52.94%",
-  "expectCount": 34,
-  "actualCount": 18,
+  "coverage": "60.41%",
+  "expectCount": 48,
+  "actualCount": 29,
   "files": {
     "source/ArrayView.js": {
       "expectCount": 4,
@@ -10,6 +10,20 @@
         11,
         15
       ]
+    },
+    "source/Component.js": {
+      "expectCount": 10,
+      "actualCount": 7,
+      "undocumentLines": [
+        1,
+        65,
+        68
+      ]
+    },
+    "source/index.js": {
+      "expectCount": 3,
+      "actualCount": 3,
+      "undocumentLines": []
     },
     "source/ObjectView.js": {
       "expectCount": 9,
@@ -36,10 +50,10 @@
       ]
     },
     "source/utility.js": {
-      "expectCount": 2,
-      "actualCount": 1,
+      "expectCount": 3,
+      "actualCount": 2,
       "undocumentLines": [
-        1
+        36
       ]
     },
     "source/View.js": {

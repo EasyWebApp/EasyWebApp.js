@@ -17,6 +17,7 @@
         "linebreak-style": ["error", "unix"],
         "quotes": ["error", "single"],
         "semi": ["error", "always"],
+        "no-cond-assign": "off",
         "no-console": ["error", {
             "allow": ["info", "warn", "error", "time", "timeEnd"]
         }]

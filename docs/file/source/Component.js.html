@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <base data-ice="baseUrl" href="../../">
-  <title data-ice="title">test/utility.js | easywebapp</title>
+  <title data-ice="title">source/Component.js | easywebapp</title>
   <link type="text/css" rel="stylesheet" href="css/style.css">
   <link type="text/css" rel="stylesheet" href="css/prettify-tomorrow.css">
   <script src="script/prettify/prettify.js"></script>
@@ -13,7 +13,7 @@
 
 <header>
   <a href="./">Home</a>
-  
+
   <a href="identifiers.html">Reference</a>
   <a href="source.html">Source</a>
   <a href="test.html" data-ice="testLink">Test</a>
@@ -28,7 +28,7 @@
 
 <nav class="navigation" data-ice="nav"><div>
   <ul>
-    
+
   <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/source/ArrayView.js~ArrayView.html">ArrayView</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/source/Component.js~Component.html">Component</a></span></span></li>
 <li data-ice="doc"><span data-ice="kind" class="kind-class">C</span><span data-ice="name"><span><a href="class/source/ObjectView.js~ObjectView.html">ObjectView</a></span></span></li>
@@ -46,78 +46,152 @@
 </div>
 </nav>
 
-<div class="content" data-ice="content"><h1 data-ice="title">test/utility.js</h1>
-<pre class="source-code line-number raw-source-code"><code class="prettyprint linenums" data-ice="content">import { extend, mapTree } from &apos;../source/utility&apos;;
+<div class="content" data-ice="content"><h1 data-ice="title">source/Component.js</h1>
+<pre class="source-code line-number raw-source-code"><code class="prettyprint linenums" data-ice="content">export const _private_ = new WeakMap();
 
 
-describe(&apos;Utility&apos;,  () =&gt; {
+/**
+ * Utility methods of Web Component
+ */
+export default  class Component {
     /**
-     * @test {extend}
+     * @type {string} - `tagName` of a Custom Element
      */
-    describe(&apos;Mixin objects&apos;,  () =&gt; {
+    static get tagName() {
 
-        it(&apos;Ordinary objects&apos;,  () =&gt; {
+        return this.name.replace(
+            /[A-Z]/g,  char =&gt; &apos;-&apos; + char.toLowerCase()
+        ).slice( 1 );
+    }
 
-            extend(
-                { },  null,  {example: 1, get test() { }}
-            ).should.have.properties(
-                &apos;example&apos;, &apos;test&apos;
-            );
-        });
+    /**
+     * Define a set of Getter or Setter for DOM properties,
+     * and store their values into private object.
+     *
+     * @param {Object} map - `1` for Getter, `2` for Setter &amp; sum for both
+     *                       in each key&apos;s value
+     * @return {string[]} Keys of `map`
+     *
+     * @example
+     *
+     *    EWA.component(class MyInput extends HTMLElement {
+     *
+     *        constructor() {  super();  }
+     *
+     *        static get observedAttributes() {
+     *
+     *            return this.setAccessor({
+     *                value:  1,
+     *                step:   3
+     *            });
+     *        }
+     *    });
+     */
+    static setAccessor(map) {
 
-        it(&apos;Function or Class&apos;,  () =&gt; {
+        for (let key in map) {
 
-            function Test() { }
+            let config = {enumerable: true};
 
-            class Example {
-                constructor(test) {  test;  }
+            if (map[ key ]  &amp;  1)
+                config.get = function () {
 
-                static test() { }
+                    return  _private_.get( this )[ key ];
+                };
 
-                test() { }
+            if (map[ key ]  &amp;  2)
+                config.set = function (value) {
+
+                    _private_.get( this )[ key ] = value;
+                };
+
+            Object.defineProperty(this.prototype, key, config);
+        }
+
+        return  Object.keys( map );
+    }
+
+    attributeChangedCallback(name, oldValue, newValue) {
+
+        switch ( newValue ) {
+            case &apos;&apos;:      this[ name ] = true;      break;
+            case null:    this[ name ] = false;     break;
+            default:      try {
+                this[ name ] = JSON.parse( newValue );
+
+            } catch (error) {
+
+                this[ name ] = newValue;
+            }
+        }
+    }
+
+    /**
+     * @param {Element} element
+     *
+     * @return {number} The index of `element` in its siblings
+     */
+    static indexOf(element) {
+
+        var index = 0;
+
+        while (element = element.previousElementSibling)  index++;
+
+        return index;
+    }
+
+    /**
+     * @param {Event} event
+     *
+     * @return {Element} The target of `event` object (**Shadow DOM** is in account)
+     */
+    static targetOf(event) {
+
+        const target = event.composedPath ? event.composedPath() : event.path;
+
+        return  (target || &apos;&apos;)[0]  ||  event.target;
+    }
+
+    /**
+     * @protected
+     */
+    static findTemplate() {
+
+        var script = document.currentScript, template, style = [ ];
+
+        var element = script, stop;
+
+        while ((! stop)  &amp;&amp;  (element = element.previousElementSibling))
+            switch ( element.tagName.toLowerCase() ) {
+                case &apos;template&apos;:
+                    template = element;  break;
+                case &apos;style&apos;:
+                    style.unshift( element );  break;
+                case &apos;link&apos;:
+                    if (element.rel === &apos;stylesheet&apos;) {
+
+                        element.setAttribute(&apos;href&apos;, element.href);
+
+                        style.unshift( element );
+                    }
+                    break;
+                case &apos;script&apos;:
+                    stop = true;
             }
 
-            extend(Test, Example).should.have.properties({
-                name:    &apos;Test&apos;,
-                length:  0,
-                test:    Example.test
-            });
-
-            Test.prototype.should.not.be.equal( Example );
-
-            Test.prototype.should.have.property(&apos;test&apos;, Example.prototype.test);
-        });
-    });
+        return  {template, style, script};
+    }
 
     /**
-     *  @test {mapTree}
+     * @param {string} selector
+     *
+     * @return {Element[]} Element set which matches `selector` in this Shadow DOM
      */
-    it(&apos;Filter object tree&apos;,  () =&gt; {
+    $(selector) {
 
-        mapTree({
-            id:        0,
-            children:  [
-                {
-                    id:        1,
-                    children:  [
-                        {
-                            id:        3,
-                            children:  []
-                        }
-                    ]
-                },
-                {
-                    id:        2,
-                    children:  []
-                }
-            ]
-        },  &apos;children&apos;,  function (child, index, depth) {
-
-            if (depth &lt; 2)  return child.id;
-
-        }).should.be.eql([1, 2]);
-    });
-});
+        return  [... this.shadowRoot.querySelectorAll( selector )];
+    }
+}
 </code></pre>
 
 </div>
