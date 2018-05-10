@@ -13,16 +13,32 @@ const template_element = new WeakMap();
  * View for Object model
  */
 export default  class ObjectView extends View {
+    /**
+     * @param {string|Element|DocumentFragment} template
+     */
+    constructor(template) {
 
-    constructor(element) {
+        super(template,  'object',  { }).scan();
+    }
 
-        super( element ).name = element.dataset.object;
+    valueOf() {
 
-        this.scan();
+        const data = Object.assign({ },  this.data);
+
+        for (let template of this)
+            if (template instanceof View)
+                data[ template.name ] = template.valueOf();
+
+        return data;
     }
 
     /**
      * @private
+     *
+     * @param {Node|Attr} node
+     * @param {function}  renderer
+     *
+     * @return {Template}
      */
     static templateOf(node, renderer) {
 
@@ -31,6 +47,9 @@ export default  class ObjectView extends View {
 
     /**
      * @private
+     *
+     * @param {Element|View} element
+     * @param {Template}     [template]
      */
     register(element, template) {
 
@@ -42,6 +61,8 @@ export default  class ObjectView extends View {
 
     /**
      * @private
+     *
+     * @param {Element} element
      */
     parseTag(element) {
 
@@ -67,9 +88,11 @@ export default  class ObjectView extends View {
      */
     scan() {
 
-        var root = this.element;
+        var root = this.content;
 
-        root = root.parentNode  ?  root  :  {childNodes: [ root ]};
+        root = root.parentNode ? root : {
+            childNodes:    (root instanceof Array)  ?  root  :  [ root ]
+        };
 
         mapTree(root,  'childNodes',  (node) => {
 
@@ -102,11 +125,26 @@ export default  class ObjectView extends View {
      */
     render(data) {
 
-        for (let template of this)
+        const _data_ = Object.assign(this.data, data);
+
+        for (let template of this) {
+
+            let name = template.name;
+
             if (template instanceof Template)
-                template.evaluate(template_element.get( template ),  data);
-            else if (template instanceof View)
-                template.render( data[ template.name ] );
+                template.evaluate(template_element.get( template ),  _data_);
+            else if (
+                (template instanceof View)  &&  data[ name ]
+            )
+                _data_[name] = template.render( data[ name ] ).data;
+        }
+
+        return this;
+    }
+
+    clear() {
+
+        for (let template of this)  template.clear();
 
         return this;
     }

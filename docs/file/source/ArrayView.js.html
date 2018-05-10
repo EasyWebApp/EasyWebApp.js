@@ -56,15 +56,26 @@ import ObjectView from &apos;./ObjectView&apos;;
  * View for Array model
  */
 export default  class ArrayView extends View {
-
+    /**
+     * @param {Element} element
+     */
     constructor(element) {
 
-        super( element ).name = element.dataset.array;
+        super(element,  &apos;array&apos;,  [ ]).template = element.firstElementChild;
 
-        this.template = element.firstElementChild;
-
-        element.innerHTML = &apos;&apos;;
+        this.clear();
     }
+
+    clear() {
+
+        this.length = 0;
+
+        this.content.innerHTML = &apos;&apos;;
+
+        return this;
+    }
+
+    valueOf() {  return  Array.from(this,  view =&gt; view.valueOf());  }
 
     /**
      * @param {Iterable} list
@@ -73,17 +84,25 @@ export default  class ArrayView extends View {
      */
     render(list) {
 
-        list = Array.from(
-            list,
-            item  =&gt;
-                (new ObjectView( this.template.cloneNode(true) )).render( item )
-        );
+        const data = this.data;
 
-        this.push(... list);
+        this.content.append(... Array.from(list,  item =&gt; {
 
-        this.element.append(... list.map(view =&gt; view.element));
+            const view = this[ this.length ] = new ObjectView(
+                this.template.cloneNode( true )
+            );
+
+            data[ data.length ] = view.data;
+
+            return  view.render( item ).content;
+        }));
 
         return this;
+    }
+
+    push(... item) {
+
+        return  this.render( item ).length;
     }
 }
 </code></pre>

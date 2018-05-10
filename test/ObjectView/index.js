@@ -4,9 +4,13 @@ import { readFileSync } from 'fs';
 
 import { JSDOM } from 'jsdom';
 
+import View from '../../source/View';
+
 import ObjectView from '../../source/ObjectView';
 
-var HTML;
+var page = new JSDOM(), HTML;
+
+global.window = page.window;  global.document = window.document;
 
 
 /**
@@ -14,7 +18,9 @@ var HTML;
  */
 describe('ObjectView()',  () => {
 
-    before(()  =>  HTML = readFileSync( resolve(module.id, '../index.html') ));
+    before(()  =>  HTML = readFileSync(
+        resolve(module.id, '../index.html'),  {encoding: 'utf-8'}
+    ));
 
     describe('Single view',  () => {
 
@@ -48,7 +54,7 @@ describe('ObjectView()',  () => {
                 enable:  true
             });
 
-            view.element.outerHTML.should.be.equal(`
+            view.content.outerHTML.should.be.equal(`
     <fieldset>
         <legend title="Test field">
             Test
@@ -57,31 +63,44 @@ describe('ObjectView()',  () => {
     </fieldset>`.trim()
             );
 
-            view.element.querySelector('input').checked.should.be.true();
+            view.content.querySelector('input').checked.should.be.true();
+        });
+
+        /**
+         * @test {ObjectView#valueOf}
+         */
+        it('Get data',  () => {
+
+            view.valueOf().should.be.eql( view.data );
+
+            view.valueOf().should.not.be.equal( view.data );
         });
     });
 
     describe('Nested view',  () => {
 
-        var view, element;
-
-        before(() => {
-
-            element = JSDOM.fragment( HTML ).children[0];
-
-            element.remove();
-        });
+        var view;
 
         /**
+         * @test {View.parseDOM}
          * @test {ObjectView#scan}
          */
         it('Scan DOM',  () => {
 
-            view = new ObjectView( element );
+            view = new ObjectView( HTML );
 
             view.length.should.be.equal( 4 );
 
             view[3].should.be.instanceof( ObjectView );
+        });
+
+        /**
+         * @test {View#bindWith}
+         * @test {View.instanceOf}
+         */
+        it('Associate DOM',  () => {
+
+            View.instanceOf( view.content[0] ).should.be.equal( view );
         });
 
         /**
@@ -99,7 +118,7 @@ describe('ObjectView()',  () => {
                 }
             });
 
-            view.element.outerHTML.should.be.equal(`
+            view.toString().trim().should.be.equal(`
 <form>
     <fieldset>
         <legend title="Test field">
@@ -113,6 +132,18 @@ describe('ObjectView()',  () => {
     </dl>
 </form>`.trim()
             );
+        });
+
+        /**
+         * @test {ObjectView#valueOf}
+         */
+        it('Get data',  () => {
+
+            view.valueOf().should.be.eql( view.data );
+
+            view.valueOf().should.not.be.equal( view.data );
+
+            view.data.tips.should.be.equal( view[3].data );
         });
     });
 });

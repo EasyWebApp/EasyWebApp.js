@@ -53,9 +53,13 @@ import { readFileSync } from &apos;fs&apos;;
 
 import { JSDOM } from &apos;jsdom&apos;;
 
+import View from &apos;../../source/View&apos;;
+
 import ObjectView from &apos;../../source/ObjectView&apos;;
 
-var HTML;
+var page = new JSDOM(), HTML;
+
+global.window = page.window;  global.document = window.document;
 
 
 /**
@@ -63,7 +67,9 @@ var HTML;
  */
 describe(&apos;ObjectView()&apos;,  () =&gt; {
 
-    before(()  =&gt;  HTML = readFileSync( resolve(module.id, &apos;../index.html&apos;) ));
+    before(()  =&gt;  HTML = readFileSync(
+        resolve(module.id, &apos;../index.html&apos;),  {encoding: &apos;utf-8&apos;}
+    ));
 
     describe(&apos;Single view&apos;,  () =&gt; {
 
@@ -97,7 +103,7 @@ describe(&apos;ObjectView()&apos;,  () =&gt; {
                 enable:  true
             });
 
-            view.element.outerHTML.should.be.equal(`
+            view.content.outerHTML.should.be.equal(`
     &lt;fieldset&gt;
         &lt;legend title=&quot;Test field&quot;&gt;
             Test
@@ -106,31 +112,44 @@ describe(&apos;ObjectView()&apos;,  () =&gt; {
     &lt;/fieldset&gt;`.trim()
             );
 
-            view.element.querySelector(&apos;input&apos;).checked.should.be.true();
+            view.content.querySelector(&apos;input&apos;).checked.should.be.true();
+        });
+
+        /**
+         * @test {ObjectView#valueOf}
+         */
+        it(&apos;Get data&apos;,  () =&gt; {
+
+            view.valueOf().should.be.eql( view.data );
+
+            view.valueOf().should.not.be.equal( view.data );
         });
     });
 
     describe(&apos;Nested view&apos;,  () =&gt; {
 
-        var view, element;
-
-        before(() =&gt; {
-
-            element = JSDOM.fragment( HTML ).children[0];
-
-            element.remove();
-        });
+        var view;
 
         /**
+         * @test {View.parseDOM}
          * @test {ObjectView#scan}
          */
         it(&apos;Scan DOM&apos;,  () =&gt; {
 
-            view = new ObjectView( element );
+            view = new ObjectView( HTML );
 
             view.length.should.be.equal( 4 );
 
             view[3].should.be.instanceof( ObjectView );
+        });
+
+        /**
+         * @test {View#bindWith}
+         * @test {View.instanceOf}
+         */
+        it(&apos;Associate DOM&apos;,  () =&gt; {
+
+            View.instanceOf( view.content[0] ).should.be.equal( view );
         });
 
         /**
@@ -148,7 +167,7 @@ describe(&apos;ObjectView()&apos;,  () =&gt; {
                 }
             });
 
-            view.element.outerHTML.should.be.equal(`
+            view.toString().trim().should.be.equal(`
 &lt;form&gt;
     &lt;fieldset&gt;
         &lt;legend title=&quot;Test field&quot;&gt;
@@ -162,6 +181,18 @@ describe(&apos;ObjectView()&apos;,  () =&gt; {
     &lt;/dl&gt;
 &lt;/form&gt;`.trim()
             );
+        });
+
+        /**
+         * @test {ObjectView#valueOf}
+         */
+        it(&apos;Get data&apos;,  () =&gt; {
+
+            view.valueOf().should.be.eql( view.data );
+
+            view.valueOf().should.not.be.equal( view.data );
+
+            view.data.tips.should.be.equal( view[3].data );
         });
     });
 });

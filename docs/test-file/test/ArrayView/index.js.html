@@ -85,7 +85,7 @@ describe(&apos;ArrayView()&apos;,  () =&gt; {
 
             view = new ArrayView( element );
 
-            view.element.textContent.should.be.equal(&apos;&apos;);
+            view.content.textContent.should.be.equal(&apos;&apos;);
         });
 
         /**
@@ -100,10 +100,22 @@ describe(&apos;ArrayView()&apos;,  () =&gt; {
             ]);
 
             Array.from(
-                view.element.children,  item =&gt; item.textContent
+                view.content.children,  item =&gt; item.textContent
             ).should.be.eql([
                 &apos;ObjectView&apos;, &apos;ArrayView&apos;, &apos;TreeView&apos;
             ]);
+        });
+
+        /**
+         * @test {ArrayView#valueOf}
+         */
+        it(&apos;Get data&apos;,  () =&gt; {
+
+            view.valueOf().should.be.eql( view.data );
+
+            view.valueOf().should.not.be.equal( view.data );
+
+            view.data[0].should.be.equal( view[0].data );
         });
     });
 
@@ -148,7 +160,7 @@ describe(&apos;ArrayView()&apos;,  () =&gt; {
                 list:   list
             });
 
-            view.element.outerHTML.should.be.equal(`
+            view.content.outerHTML.should.be.equal(`
 &lt;main&gt;
     &lt;h1&gt;Kinds of Web browser core&lt;/h1&gt;
 

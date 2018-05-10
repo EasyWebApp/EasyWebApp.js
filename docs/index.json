@@ -663,7 +663,7 @@
     "__docId__": 57,
     "kind": "file",
     "name": "source/ArrayView.js",
-    "content": "import View from './View';\r\n\r\nimport ObjectView from './ObjectView';\r\n\r\n\r\n/**\r\n * View for Array model\r\n */\r\nexport default  class ArrayView extends View {\r\n\r\n    constructor(element) {\r\n\r\n        super( element ).name = element.dataset.array;\r\n\r\n        this.template = element.firstElementChild;\r\n\r\n        element.innerHTML = '';\r\n    }\r\n\r\n    /**\r\n     * @param {Iterable} list\r\n     *\r\n     * @return {ArrayView}\r\n     */\r\n    render(list) {\r\n\r\n        list = Array.from(\r\n            list,\r\n            item  =>\r\n                (new ObjectView( this.template.cloneNode(true) )).render( item )\r\n        );\r\n\r\n        this.push(... list);\r\n\r\n        this.element.append(... list.map(view => view.element));\r\n\r\n        return this;\r\n    }\r\n}\r\n",
+    "content": "import View from './View';\n\nimport ObjectView from './ObjectView';\n\n\n/**\n * View for Array model\n */\nexport default  class ArrayView extends View {\n    /**\n     * @param {Element} element\n     */\n    constructor(element) {\n\n        super(element,  'array',  [ ]).template = element.firstElementChild;\n\n        this.clear();\n    }\n\n    clear() {\n\n        this.length = 0;\n\n        this.content.innerHTML = '';\n\n        return this;\n    }\n\n    valueOf() {  return  Array.from(this,  view => view.valueOf());  }\n\n    /**\n     * @param {Iterable} list\n     *\n     * @return {ArrayView}\n     */\n    render(list) {\n\n        const data = this.data;\n\n        this.content.append(... Array.from(list,  item => {\n\n            const view = this[ this.length ] = new ObjectView(\n                this.template.cloneNode( true )\n            );\n\n            data[ data.length ] = view.data;\n\n            return  view.render( item ).content;\n        }));\n\n        return this;\n    }\n\n    push(... item) {\n\n        return  this.render( item ).length;\n    }\n}\n",
     "static": true,
     "longname": "D:/TechQuery/EasyWebApp.js/source/ArrayView.js",
     "access": "public",
@@ -698,22 +698,36 @@
     "static": false,
     "longname": "source/ArrayView.js~ArrayView#constructor",
     "access": "public",
-    "description": null,
-    "lineNumber": 11,
-    "undocument": true
+    "description": "",
+    "lineNumber": 13,
+    "params": [
+      {
+        "nullable": null,
+        "types": [
+          "Element"
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "element",
+        "description": ""
+      }
+    ]
   },
   {
     "__docId__": 60,
-    "kind": "member",
-    "name": "template",
+    "kind": "method",
+    "name": "clear",
     "memberof": "source/ArrayView.js~ArrayView",
+    "generator": false,
+    "async": false,
     "static": false,
-    "longname": "source/ArrayView.js~ArrayView#template",
+    "longname": "source/ArrayView.js~ArrayView#clear",
     "access": "public",
     "description": null,
-    "lineNumber": 15,
+    "lineNumber": 20,
     "undocument": true,
-    "type": {
+    "params": [],
+    "return": {
       "types": [
         "*"
       ]
@@ -721,6 +735,43 @@
   },
   {
     "__docId__": 61,
+    "kind": "member",
+    "name": "length",
+    "memberof": "source/ArrayView.js~ArrayView",
+    "static": false,
+    "longname": "source/ArrayView.js~ArrayView#length",
+    "access": "public",
+    "description": null,
+    "lineNumber": 22,
+    "undocument": true,
+    "type": {
+      "types": [
+        "number"
+      ]
+    }
+  },
+  {
+    "__docId__": 62,
+    "kind": "method",
+    "name": "valueOf",
+    "memberof": "source/ArrayView.js~ArrayView",
+    "generator": false,
+    "async": false,
+    "static": false,
+    "longname": "source/ArrayView.js~ArrayView#valueOf",
+    "access": "public",
+    "description": null,
+    "lineNumber": 29,
+    "undocument": true,
+    "params": [],
+    "return": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 63,
     "kind": "method",
     "name": "render",
     "memberof": "source/ArrayView.js~ArrayView",
@@ -730,7 +781,7 @@
     "longname": "source/ArrayView.js~ArrayView#render",
     "access": "public",
     "description": "",
-    "lineNumber": 25,
+    "lineNumber": 36,
     "params": [
       {
         "nullable": null,
@@ -753,10 +804,38 @@
     }
   },
   {
-    "__docId__": 62,
+    "__docId__": 64,
+    "kind": "method",
+    "name": "push",
+    "memberof": "source/ArrayView.js~ArrayView",
+    "generator": false,
+    "async": false,
+    "static": false,
+    "longname": "source/ArrayView.js~ArrayView#push",
+    "access": "public",
+    "description": null,
+    "lineNumber": 54,
+    "undocument": true,
+    "params": [
+      {
+        "name": "item",
+        "types": [
+          "...*"
+        ],
+        "spread": true
+      }
+    ],
+    "return": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 65,
     "kind": "file",
     "name": "source/Component.js",
-    "content": "export const _private_ = new WeakMap();\n\n\n/**\n * Utility methods of Web Component\n */\nexport default  class Component {\n    /**\n     * @type {string} - `tagName` of a Custom Element\n     */\n    static get tagName() {\n\n        return this.name.replace(\n            /[A-Z]/g,  char => '-' + char.toLowerCase()\n        ).slice( 1 );\n    }\n\n    /**\n     * Define a set of Getter or Setter for DOM properties,\n     * and store their values into private object.\n     *\n     * @param {Object} map - `1` for Getter, `2` for Setter & sum for both\n     *                       in each key's value\n     * @return {string[]} Keys of `map`\n     *\n     * @example\n     *\n     *    EWA.component(class MyInput extends HTMLElement {\n     *\n     *        constructor() {  super();  }\n     *\n     *        static get observedAttributes() {\n     *\n     *            return this.setAccessor({\n     *                value:  1,\n     *                step:   3\n     *            });\n     *        }\n     *    });\n     */\n    static setAccessor(map) {\n\n        for (let key in map) {\n\n            let config = {enumerable: true};\n\n            if (map[ key ]  &  1)\n                config.get = function () {\n\n                    return  _private_.get( this )[ key ];\n                };\n\n            if (map[ key ]  &  2)\n                config.set = function (value) {\n\n                    _private_.get( this )[ key ] = value;\n                };\n\n            Object.defineProperty(this.prototype, key, config);\n        }\n\n        return  Object.keys( map );\n    }\n\n    attributeChangedCallback(name, oldValue, newValue) {\n\n        switch ( newValue ) {\n            case '':      this[ name ] = true;      break;\n            case null:    this[ name ] = false;     break;\n            default:      try {\n                this[ name ] = JSON.parse( newValue );\n\n            } catch (error) {\n\n                this[ name ] = newValue;\n            }\n        }\n    }\n\n    /**\n     * @param {Element} element\n     *\n     * @return {number} The index of `element` in its siblings\n     */\n    static indexOf(element) {\n\n        var index = 0;\n\n        while (element = element.previousElementSibling)  index++;\n\n        return index;\n    }\n\n    /**\n     * @param {Event} event\n     *\n     * @return {Element} The target of `event` object (**Shadow DOM** is in account)\n     */\n    static targetOf(event) {\n\n        const target = event.composedPath ? event.composedPath() : event.path;\n\n        return  (target || '')[0]  ||  event.target;\n    }\n\n    /**\n     * @protected\n     */\n    static findTemplate() {\n\n        var script = document.currentScript, template, style = [ ];\n\n        var element = script, stop;\n\n        while ((! stop)  &&  (element = element.previousElementSibling))\n            switch ( element.tagName.toLowerCase() ) {\n                case 'template':\n                    template = element;  break;\n                case 'style':\n                    style.unshift( element );  break;\n                case 'link':\n                    if (element.rel === 'stylesheet') {\n\n                        element.setAttribute('href', element.href);\n\n                        style.unshift( element );\n                    }\n                    break;\n                case 'script':\n                    stop = true;\n            }\n\n        return  {template, style, script};\n    }\n\n    /**\n     * @param {string} selector\n     *\n     * @return {Element[]} Element set which matches `selector` in this Shadow DOM\n     */\n    $(selector) {\n\n        return  [... this.shadowRoot.querySelectorAll( selector )];\n    }\n}\n",
+    "content": "export const _private_ = new WeakMap();\r\n\r\n\r\n/**\r\n * Utility methods of Web Component\r\n */\r\nexport default  class Component {\r\n    /**\r\n     * @type {string} - `tagName` of a Custom Element\r\n     */\r\n    static get tagName() {\r\n\r\n        return this.name.replace(\r\n            /[A-Z]/g,  char => '-' + char.toLowerCase()\r\n        ).slice( 1 );\r\n    }\r\n\r\n    /**\r\n     * Define a set of Getter or Setter for DOM properties,\r\n     * and store their values into private object.\r\n     *\r\n     * @param {Object} map - `1` for Getter, `2` for Setter & sum for both\r\n     *                       in each key's value\r\n     * @return {string[]} Keys of `map`\r\n     *\r\n     * @example\r\n     *\r\n     *    EWA.component(class MyInput extends HTMLElement {\r\n     *\r\n     *        constructor() {  super();  }\r\n     *\r\n     *        static get observedAttributes() {\r\n     *\r\n     *            return this.setAccessor({\r\n     *                value:  1,\r\n     *                step:   3\r\n     *            });\r\n     *        }\r\n     *    });\r\n     */\r\n    static setAccessor(map) {\r\n\r\n        for (let key in map) {\r\n\r\n            let config = {enumerable: true};\r\n\r\n            if (map[ key ]  &  1)\r\n                config.get = function () {\r\n\r\n                    return  _private_.get( this )[ key ];\r\n                };\r\n\r\n            if (map[ key ]  &  2)\r\n                config.set = function (value) {\r\n\r\n                    _private_.get( this )[ key ] = value;\r\n                };\r\n\r\n            Object.defineProperty(this.prototype, key, config);\r\n        }\r\n\r\n        return  Object.keys( map );\r\n    }\r\n\r\n    attributeChangedCallback(name, oldValue, newValue) {\r\n\r\n        switch ( newValue ) {\r\n            case '':      this[ name ] = true;      break;\r\n            case null:    this[ name ] = false;     break;\r\n            default:      try {\r\n                this[ name ] = JSON.parse( newValue );\r\n\r\n            } catch (error) {\r\n\r\n                this[ name ] = newValue;\r\n            }\r\n        }\r\n    }\r\n\r\n    /**\r\n     * @param {Element} element\r\n     *\r\n     * @return {number} The index of `element` in its siblings\r\n     */\r\n    static indexOf(element) {\r\n\r\n        var index = 0;\r\n\r\n        while (element = element.previousElementSibling)  index++;\r\n\r\n        return index;\r\n    }\r\n\r\n    /**\r\n     * @param {Event} event\r\n     *\r\n     * @return {Element} The target of `event` object (**Shadow DOM** is in account)\r\n     */\r\n    static targetOf(event) {\r\n\r\n        const target = event.composedPath ? event.composedPath() : event.path;\r\n\r\n        return  (target || '')[0]  ||  event.target;\r\n    }\r\n\r\n    /**\r\n     * @protected\r\n     */\r\n    static findTemplate() {\r\n\r\n        var script = document.currentScript, template, style = [ ];\r\n\r\n        var element = script, stop;\r\n\r\n        while ((! stop)  &&  (element = element.previousElementSibling))\r\n            switch ( element.tagName.toLowerCase() ) {\r\n                case 'template':\r\n                    template = element;  break;\r\n                case 'style':\r\n                    style.unshift( element );  break;\r\n                case 'link':\r\n                    if (element.rel === 'stylesheet') {\r\n\r\n                        element.setAttribute('href', element.href);\r\n\r\n                        style.unshift( element );\r\n                    }\r\n                    break;\r\n                case 'script':\r\n                    stop = true;\r\n            }\r\n\r\n        return  {template, style, script};\r\n    }\r\n\r\n    /**\r\n     * @param {string} selector\r\n     *\r\n     * @return {Element[]} Element set which matches `selector` in this Shadow DOM\r\n     */\r\n    $(selector) {\r\n\r\n        return  [... this.shadowRoot.querySelectorAll( selector )];\r\n    }\r\n}\r\n",
     "static": true,
     "longname": "D:/TechQuery/EasyWebApp.js/source/Component.js",
     "access": "public",
@@ -764,7 +843,7 @@
     "lineNumber": 1
   },
   {
-    "__docId__": 63,
+    "__docId__": 66,
     "kind": "variable",
     "name": "_private_",
     "memberof": "source/Component.js",
@@ -784,7 +863,7 @@
     }
   },
   {
-    "__docId__": 64,
+    "__docId__": 67,
     "kind": "class",
     "name": "Component",
     "memberof": "source/Component.js",
@@ -799,7 +878,7 @@
     "interface": false
   },
   {
-    "__docId__": 65,
+    "__docId__": 68,
     "kind": "get",
     "name": "tagName",
     "memberof": "source/Component.js~Component",
@@ -820,7 +899,7 @@
     }
   },
   {
-    "__docId__": 66,
+    "__docId__": 69,
     "kind": "method",
     "name": "setAccessor",
     "memberof": "source/Component.js~Component",
@@ -856,7 +935,7 @@
     }
   },
   {
-    "__docId__": 67,
+    "__docId__": 70,
     "kind": "method",
     "name": "attributeChangedCallback",
     "memberof": "source/Component.js~Component",
@@ -891,7 +970,7 @@
     "return": null
   },
   {
-    "__docId__": 68,
+    "__docId__": 71,
     "kind": "member",
     "name": "[name]",
     "memberof": "source/Component.js~Component",
@@ -908,7 +987,7 @@
     }
   },
   {
-    "__docId__": 72,
+    "__docId__": 75,
     "kind": "method",
     "name": "indexOf",
     "memberof": "source/Component.js~Component",
@@ -941,7 +1020,7 @@
     }
   },
   {
-    "__docId__": 73,
+    "__docId__": 76,
     "kind": "method",
     "name": "targetOf",
     "memberof": "source/Component.js~Component",
@@ -974,7 +1053,7 @@
     }
   },
   {
-    "__docId__": 74,
+    "__docId__": 77,
     "kind": "method",
     "name": "findTemplate",
     "memberof": "source/Component.js~Component",
@@ -993,7 +1072,7 @@
     }
   },
   {
-    "__docId__": 75,
+    "__docId__": 78,
     "kind": "method",
     "name": "$",
     "memberof": "source/Component.js~Component",
@@ -1026,10 +1105,10 @@
     }
   },
   {
-    "__docId__": 76,
+    "__docId__": 79,
     "kind": "file",
     "name": "source/index.js",
-    "content": "import Component, {_private_} from './Component';\n\nimport { extend } from './utility';\n\n\n/**\n * Register a component\n *\n * @param {function} subClass\n *\n * @return {function} A proxy class of `subClass`\n */\nexport function component(subClass) {\n\n    var {template, style} = Component.findTemplate();\n\n    template = template.content;\n\n    if ( style[0] )  template.prepend(... style);\n\n\n    subClass = new Proxy(\n        extend(subClass, Component),  {\n            construct(target, argument, newTarget) {\n\n                const _this_ = Reflect.construct(target, argument, newTarget);\n\n                _private_.set(_this_,  { });\n\n                _this_.attachShadow({\n                    mode:              'open',\n                    delegatesFocus:    true\n                }).appendChild(\n                    template.cloneNode( true )\n                );\n\n                return _this_;\n            }\n        }\n    );\n\n    customElements.define(subClass.tagName, subClass);\n\n    return subClass;\n}\n\n\n/**\n * Set private data of an HTMLElement\n *\n * @param {Element} element\n * @param {string}  key\n * @param {*}       value\n *\n * @return {*} The `value` parameter\n */\nexport function set(element, key, value) {\n\n    return _private_.get( element )[ key ] = value;\n}\n\n\n/**\n * Get private data of an HTMLElement\n *\n * @param {Element} element\n * @param {string}  key\n *\n * @return {*}\n */\nexport function get(element, key) {\n\n    return _private_.get( element )[ key ];\n}\n",
+    "content": "import Component, {_private_} from './Component';\r\n\r\nimport { extend } from './utility';\r\n\r\n\r\n/**\r\n * Register a component\r\n *\r\n * @param {function} subClass\r\n *\r\n * @return {function} A proxy class of `subClass`\r\n */\r\nexport function component(subClass) {\r\n\r\n    var {template, style} = Component.findTemplate();\r\n\r\n    template = template.content;\r\n\r\n    if ( style[0] )  template.prepend(... style);\r\n\r\n\r\n    subClass = new Proxy(\r\n        extend(subClass, Component),  {\r\n            construct(target, argument, newTarget) {\r\n\r\n                const _this_ = Reflect.construct(target, argument, newTarget);\r\n\r\n                _private_.set(_this_,  { });\r\n\r\n                _this_.attachShadow({\r\n                    mode:              'open',\r\n                    delegatesFocus:    true\r\n                }).appendChild(\r\n                    template.cloneNode( true )\r\n                );\r\n\r\n                return _this_;\r\n            }\r\n        }\r\n    );\r\n\r\n    customElements.define(subClass.tagName, subClass);\r\n\r\n    return subClass;\r\n}\r\n\r\n\r\n/**\r\n * Set private data of an HTMLElement\r\n *\r\n * @param {Element} element\r\n * @param {string}  key\r\n * @param {*}       value\r\n *\r\n * @return {*} The `value` parameter\r\n */\r\nexport function set(element, key, value) {\r\n\r\n    return _private_.get( element )[ key ] = value;\r\n}\r\n\r\n\r\n/**\r\n * Get private data of an HTMLElement\r\n *\r\n * @param {Element} element\r\n * @param {string}  key\r\n *\r\n * @return {*}\r\n */\r\nexport function get(element, key) {\r\n\r\n    return _private_.get( element )[ key ];\r\n}\r\n",
     "static": true,
     "longname": "D:/TechQuery/EasyWebApp.js/source/index.js",
     "access": "public",
@@ -1037,7 +1116,7 @@
     "lineNumber": 1
   },
   {
-    "__docId__": 77,
+    "__docId__": 80,
     "kind": "function",
     "name": "component",
     "memberof": "source/index.js",
@@ -1073,7 +1152,7 @@
     }
   },
   {
-    "__docId__": 78,
+    "__docId__": 81,
     "kind": "function",
     "name": "set",
     "memberof": "source/index.js",
@@ -1129,7 +1208,7 @@
     }
   },
   {
-    "__docId__": 79,
+    "__docId__": 82,
     "kind": "function",
     "name": "get",
     "memberof": "source/index.js",
@@ -1175,10 +1254,10 @@
     }
   },
   {
-    "__docId__": 80,
+    "__docId__": 83,
     "kind": "file",
     "name": "source/ObjectView.js",
-    "content": "import View from './View';\r\n\r\nimport { mapTree } from './utility';\r\n\r\nimport Template from './Template';\r\n\r\nimport ArrayView from './ArrayView';\r\n\r\nconst template_element = new WeakMap();\r\n\r\n\r\n/**\r\n * View for Object model\r\n */\r\nexport default  class ObjectView extends View {\r\n\r\n    constructor(element) {\r\n\r\n        super( element ).name = element.dataset.object;\r\n\r\n        this.scan();\r\n    }\r\n\r\n    /**\r\n     * @private\r\n     */\r\n    static templateOf(node, renderer) {\r\n\r\n        return  new Template(node.value || node.nodeValue,  ['view'],  renderer);\r\n    }\r\n\r\n    /**\r\n     * @private\r\n     */\r\n    register(element, template) {\r\n\r\n        if (element instanceof View)\r\n            this[ this.length ] = element;\r\n        else if ( template[0] )\r\n            template_element.set(this[ this.length ] = template,  element);\r\n    }\r\n\r\n    /**\r\n     * @private\r\n     */\r\n    parseTag(element) {\r\n\r\n        for (let attr of element.attributes) {\r\n\r\n            let name = attr.name;\r\n\r\n            let template = ObjectView.templateOf(\r\n                attr,\r\n                (name in element)  ?\r\n                    (value  =>  element[ name ] = value)  :\r\n                    (value  =>  element.setAttribute(name, value))\r\n            );\r\n\r\n            if (template == '')  element.removeAttribute( name );\r\n\r\n            this.register(element, template);\r\n        }\r\n    }\r\n\r\n    /**\r\n     * @private\r\n     */\r\n    scan() {\r\n\r\n        var root = this.element;\r\n\r\n        root = root.parentNode  ?  root  :  {childNodes: [ root ]};\r\n\r\n        mapTree(root,  'childNodes',  (node) => {\r\n\r\n            switch ( node.nodeType ) {\r\n                case 1:\r\n                    if ( node.dataset.object )\r\n                        this.register(new ObjectView( node ));\r\n                    else if ( node.dataset.array )\r\n                        this.register(new ArrayView( node ));\r\n                    else\r\n                        this.parseTag( node );\r\n                    break;\r\n                case 3:\r\n                    this.register(\r\n                        node,\r\n                        ObjectView.templateOf(\r\n                            node,  value => node.nodeValue = value\r\n                        )\r\n                    );\r\n            }\r\n\r\n            return node;\r\n        });\r\n    }\r\n\r\n    /**\r\n     * @param {Object} data\r\n     *\r\n     * @return {ObjectView}\r\n     */\r\n    render(data) {\r\n\r\n        for (let template of this)\r\n            if (template instanceof Template)\r\n                template.evaluate(template_element.get( template ),  data);\r\n            else if (template instanceof View)\r\n                template.render( data[ template.name ] );\r\n\r\n        return this;\r\n    }\r\n}\r\n",
+    "content": "import View from './View';\n\nimport { mapTree } from './utility';\n\nimport Template from './Template';\n\nimport ArrayView from './ArrayView';\n\nconst template_element = new WeakMap();\n\n\n/**\n * View for Object model\n */\nexport default  class ObjectView extends View {\n    /**\n     * @param {string|Element|DocumentFragment} template\n     */\n    constructor(template) {\n\n        super(template,  'object',  { }).scan();\n    }\n\n    valueOf() {\n\n        const data = Object.assign({ },  this.data);\n\n        for (let template of this)\n            if (template instanceof View)\n                data[ template.name ] = template.valueOf();\n\n        return data;\n    }\n\n    /**\n     * @private\n     *\n     * @param {Node|Attr} node\n     * @param {function}  renderer\n     *\n     * @return {Template}\n     */\n    static templateOf(node, renderer) {\n\n        return  new Template(node.value || node.nodeValue,  ['view'],  renderer);\n    }\n\n    /**\n     * @private\n     *\n     * @param {Element|View} element\n     * @param {Template}     [template]\n     */\n    register(element, template) {\n\n        if (element instanceof View)\n            this[ this.length ] = element;\n        else if ( template[0] )\n            template_element.set(this[ this.length ] = template,  element);\n    }\n\n    /**\n     * @private\n     *\n     * @param {Element} element\n     */\n    parseTag(element) {\n\n        for (let attr of element.attributes) {\n\n            let name = attr.name;\n\n            let template = ObjectView.templateOf(\n                attr,\n                (name in element)  ?\n                    (value  =>  element[ name ] = value)  :\n                    (value  =>  element.setAttribute(name, value))\n            );\n\n            if (template == '')  element.removeAttribute( name );\n\n            this.register(element, template);\n        }\n    }\n\n    /**\n     * @private\n     */\n    scan() {\n\n        var root = this.content;\n\n        root = root.parentNode ? root : {\n            childNodes:    (root instanceof Array)  ?  root  :  [ root ]\n        };\n\n        mapTree(root,  'childNodes',  (node) => {\n\n            switch ( node.nodeType ) {\n                case 1:\n                    if ( node.dataset.object )\n                        this.register(new ObjectView( node ));\n                    else if ( node.dataset.array )\n                        this.register(new ArrayView( node ));\n                    else\n                        this.parseTag( node );\n                    break;\n                case 3:\n                    this.register(\n                        node,\n                        ObjectView.templateOf(\n                            node,  value => node.nodeValue = value\n                        )\n                    );\n            }\n\n            return node;\n        });\n    }\n\n    /**\n     * @param {Object} data\n     *\n     * @return {ObjectView}\n     */\n    render(data) {\n\n        const _data_ = Object.assign(this.data, data);\n\n        for (let template of this) {\n\n            let name = template.name;\n\n            if (template instanceof Template)\n                template.evaluate(template_element.get( template ),  _data_);\n            else if (\n                (template instanceof View)  &&  data[ name ]\n            )\n                _data_[name] = template.render( data[ name ] ).data;\n        }\n\n        return this;\n    }\n\n    clear() {\n\n        for (let template of this)  template.clear();\n\n        return this;\n    }\n}\n",
     "static": true,
     "longname": "D:/TechQuery/EasyWebApp.js/source/ObjectView.js",
     "access": "public",
@@ -1186,7 +1265,7 @@
     "lineNumber": 1
   },
   {
-    "__docId__": 81,
+    "__docId__": 84,
     "kind": "variable",
     "name": "template_element",
     "memberof": "source/ObjectView.js",
@@ -1207,7 +1286,7 @@
     "ignore": true
   },
   {
-    "__docId__": 82,
+    "__docId__": 85,
     "kind": "class",
     "name": "ObjectView",
     "memberof": "source/ObjectView.js",
@@ -1225,7 +1304,7 @@
     ]
   },
   {
-    "__docId__": 83,
+    "__docId__": 86,
     "kind": "constructor",
     "name": "constructor",
     "memberof": "source/ObjectView.js~ObjectView",
@@ -1234,12 +1313,45 @@
     "static": false,
     "longname": "source/ObjectView.js~ObjectView#constructor",
     "access": "public",
-    "description": null,
-    "lineNumber": 17,
-    "undocument": true
+    "description": "",
+    "lineNumber": 19,
+    "params": [
+      {
+        "nullable": null,
+        "types": [
+          "string",
+          "Element",
+          "DocumentFragment"
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "template",
+        "description": ""
+      }
+    ]
   },
   {
-    "__docId__": 84,
+    "__docId__": 87,
+    "kind": "method",
+    "name": "valueOf",
+    "memberof": "source/ObjectView.js~ObjectView",
+    "generator": false,
+    "async": false,
+    "static": false,
+    "longname": "source/ObjectView.js~ObjectView#valueOf",
+    "access": "public",
+    "description": null,
+    "lineNumber": 24,
+    "undocument": true,
+    "params": [],
+    "return": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 88,
     "kind": "method",
     "name": "templateOf",
     "memberof": "source/ObjectView.js~ObjectView",
@@ -1249,29 +1361,41 @@
     "longname": "source/ObjectView.js~ObjectView.templateOf",
     "access": "private",
     "description": "",
-    "lineNumber": 27,
+    "lineNumber": 43,
     "params": [
       {
-        "name": "node",
+        "nullable": null,
         "types": [
-          "*"
-        ]
+          "Node",
+          "Attr"
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "node",
+        "description": ""
       },
       {
-        "name": "renderer",
+        "nullable": null,
         "types": [
-          "*"
-        ]
+          "function"
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "renderer",
+        "description": ""
       }
     ],
     "return": {
+      "nullable": null,
       "types": [
-        "*"
-      ]
+        "Template"
+      ],
+      "spread": false,
+      "description": ""
     }
   },
   {
-    "__docId__": 85,
+    "__docId__": 89,
     "kind": "method",
     "name": "register",
     "memberof": "source/ObjectView.js~ObjectView",
@@ -1281,25 +1405,34 @@
     "longname": "source/ObjectView.js~ObjectView#register",
     "access": "private",
     "description": "",
-    "lineNumber": 35,
+    "lineNumber": 54,
     "params": [
       {
-        "name": "element",
+        "nullable": null,
         "types": [
-          "*"
-        ]
+          "Element",
+          "View"
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "element",
+        "description": ""
       },
       {
-        "name": "template",
+        "nullable": null,
         "types": [
-          "*"
-        ]
+          "Template"
+        ],
+        "spread": false,
+        "optional": true,
+        "name": "template",
+        "description": ""
       }
     ],
     "return": null
   },
   {
-    "__docId__": 86,
+    "__docId__": 90,
     "kind": "member",
     "name": "[.length]",
     "memberof": "source/ObjectView.js~ObjectView",
@@ -1307,7 +1440,7 @@
     "longname": "source/ObjectView.js~ObjectView#[.length]",
     "access": "public",
     "description": null,
-    "lineNumber": 38,
+    "lineNumber": 57,
     "undocument": true,
     "type": {
       "types": [
@@ -1316,7 +1449,7 @@
     }
   },
   {
-    "__docId__": 87,
+    "__docId__": 91,
     "kind": "method",
     "name": "parseTag",
     "memberof": "source/ObjectView.js~ObjectView",
@@ -1326,19 +1459,23 @@
     "longname": "source/ObjectView.js~ObjectView#parseTag",
     "access": "private",
     "description": "",
-    "lineNumber": 46,
+    "lineNumber": 67,
     "params": [
       {
-        "name": "element",
+        "nullable": null,
         "types": [
-          "*"
-        ]
+          "Element"
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "element",
+        "description": ""
       }
     ],
     "return": null
   },
   {
-    "__docId__": 88,
+    "__docId__": 92,
     "kind": "method",
     "name": "scan",
     "memberof": "source/ObjectView.js~ObjectView",
@@ -1348,12 +1485,12 @@
     "longname": "source/ObjectView.js~ObjectView#scan",
     "access": "private",
     "description": "",
-    "lineNumber": 68,
+    "lineNumber": 89,
     "params": [],
     "return": null
   },
   {
-    "__docId__": 89,
+    "__docId__": 93,
     "kind": "method",
     "name": "render",
     "memberof": "source/ObjectView.js~ObjectView",
@@ -1363,7 +1500,7 @@
     "longname": "source/ObjectView.js~ObjectView#render",
     "access": "public",
     "description": "",
-    "lineNumber": 103,
+    "lineNumber": 126,
     "params": [
       {
         "nullable": null,
@@ -1386,10 +1523,30 @@
     }
   },
   {
-    "__docId__": 90,
+    "__docId__": 94,
+    "kind": "method",
+    "name": "clear",
+    "memberof": "source/ObjectView.js~ObjectView",
+    "generator": false,
+    "async": false,
+    "static": false,
+    "longname": "source/ObjectView.js~ObjectView#clear",
+    "access": "public",
+    "description": null,
+    "lineNumber": 145,
+    "undocument": true,
+    "params": [],
+    "return": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 95,
     "kind": "file",
     "name": "source/Template.js",
-    "content": "/**\n * String template\n */\nexport default  class Template extends Array {\n    /**\n     * @param {string}          raw\n     * @param {stirng[]}        [varName]  - Name list of the Local variable\n     * @param {ChangedCallback} [onChange] - Call with New & Old value\n     * @param {Array}           [bindData] - The parameter bound to `onChange`\n     */\n    constructor(raw, varName, onChange, bindData) {\n\n        super();\n\n        this.raw = raw,  this.value = null;\n\n        if (varName instanceof Function)\n            bindData = onChange, onChange = varName, varName = null;\n\n        this.varName = varName || [ ],  this.expression = [ ];\n\n        this.context = new Set( this.varName.concat('this') );\n\n        this.onChange = (onChange instanceof Function)  ?  onChange  :  null;\n\n        this.data = bindData || [ ];\n\n        this.parse().clear();\n    }\n\n    static get Expression() {  return /\\$\\{([\\s\\S]+?)\\}/g;  }\n\n    static get Reference() {  return /(\\w+)(?:\\.(\\w+)|\\[(?:'([^']+)|\"([^\"]+)))/g;  }\n\n    /**\n     * @private\n     */\n    compile(expression) {\n\n        return this.expression.push(\n            new Function(... this.varName,  'return ' + expression.trim())\n        );\n    }\n\n    /**\n     * @private\n     */\n    parse() {\n\n        const addReference = (match, context, key1, key2, key3)  =>  {\n\n            if (this.context.has( context ))  this.push(key1 || key2 || key3);\n        };\n\n        this.raw = this.raw.replace(\n            Template.Expression,  (_, expression) => {\n\n                expression.replace(Template.Reference, addReference);\n\n                return  '${' + (this.compile( expression ) - 1) + '}';\n            }\n        );\n\n        return this;\n    }\n\n    /**\n     * Evaluate expression\n     *\n     * @param {?object} context     - Value of `this` in the expression\n     * @param {...*}    [parameter] - One or more value of the Local variable\n     *\n     * @return {string}\n     */\n    evaluate(context, ...parameter) {\n\n        const value = this.raw.replace(\n            /\\$\\{(\\d+)\\}/g,\n            (_, index)  =>  this.expression[ index ].apply(context, parameter)\n        );\n\n        if (value !== this.value) {\n            /**\n             * Call back only on Value changed\n             *\n             * @typedef {function} ChangedCallback\n             *\n             * @param {*}    newValue\n             * @param {*}    oldValue\n             * @param {...*} bindData\n             */\n            if ( this.onChange )\n                this.onChange(... [value, this.value].concat( this.data ));\n\n            this.value = value;\n        }\n\n        return value;\n    }\n\n    clear() {\n\n        const data = { };\n\n        for (let key of this)  data[ key ] = '';\n\n        return  this.evaluate(... Array.from(this.context,  () => data));\n    }\n\n    toString() {\n\n        return  this.value + '';\n    }\n}\n",
+    "content": "/**\r\n * String template\r\n */\r\nexport default  class Template extends Array {\r\n    /**\r\n     * @param {string}          raw\r\n     * @param {stirng[]}        [varName]  - Name list of the Local variable\r\n     * @param {ChangedCallback} [onChange] - Call with New & Old value\r\n     * @param {Array}           [bindData] - The parameter bound to `onChange`\r\n     */\r\n    constructor(raw, varName, onChange, bindData) {\r\n\r\n        super();\r\n\r\n        this.raw = raw,  this.value = null;\r\n\r\n        if (varName instanceof Function)\r\n            bindData = onChange, onChange = varName, varName = null;\r\n\r\n        this.varName = varName || [ ],  this.expression = [ ];\r\n\r\n        this.context = new Set( this.varName.concat('this') );\r\n\r\n        this.onChange = (onChange instanceof Function)  ?  onChange  :  null;\r\n\r\n        this.data = bindData || [ ];\r\n\r\n        this.parse().clear();\r\n    }\r\n\r\n    static get Expression() {  return /\\$\\{([\\s\\S]+?)\\}/g;  }\r\n\r\n    static get Reference() {  return /(\\w+)(?:\\.(\\w+)|\\[(?:'([^']+)|\"([^\"]+)))/g;  }\r\n\r\n    /**\r\n     * @private\r\n     */\r\n    compile(expression) {\r\n\r\n        return this.expression.push(\r\n            new Function(... this.varName,  'return ' + expression.trim())\r\n        );\r\n    }\r\n\r\n    /**\r\n     * @private\r\n     */\r\n    parse() {\r\n\r\n        const addReference = (match, context, key1, key2, key3)  =>  {\r\n\r\n            if (this.context.has( context ))  this.push(key1 || key2 || key3);\r\n        };\r\n\r\n        this.raw = this.raw.replace(\r\n            Template.Expression,  (_, expression) => {\r\n\r\n                expression.replace(Template.Reference, addReference);\r\n\r\n                return  '${' + (this.compile( expression ) - 1) + '}';\r\n            }\r\n        );\r\n\r\n        return this;\r\n    }\r\n\r\n    /**\r\n     * Evaluate expression\r\n     *\r\n     * @param {?object} context     - Value of `this` in the expression\r\n     * @param {...*}    [parameter] - One or more value of the Local variable\r\n     *\r\n     * @return {string}\r\n     */\r\n    evaluate(context, ...parameter) {\r\n\r\n        const value = this.raw.replace(\r\n            /\\$\\{(\\d+)\\}/g,\r\n            (_, index)  =>  this.expression[ index ].apply(context, parameter)\r\n        );\r\n\r\n        if (value !== this.value) {\r\n            /**\r\n             * Call back only on Value changed\r\n             *\r\n             * @typedef {function} ChangedCallback\r\n             *\r\n             * @param {*}    newValue\r\n             * @param {*}    oldValue\r\n             * @param {...*} bindData\r\n             */\r\n            if ( this.onChange )\r\n                this.onChange(... [value, this.value].concat( this.data ));\r\n\r\n            this.value = value;\r\n        }\r\n\r\n        return value;\r\n    }\r\n\r\n    clear() {\r\n\r\n        const data = { };\r\n\r\n        for (let key of this)  data[ key ] = '';\r\n\r\n        return  this.evaluate(... Array.from(this.context,  () => data));\r\n    }\r\n\r\n    toString() {\r\n\r\n        return  this.value + '';\r\n    }\r\n}\r\n",
     "static": true,
     "longname": "D:/TechQuery/EasyWebApp.js/source/Template.js",
     "access": "public",
@@ -1397,7 +1554,7 @@
     "lineNumber": 1
   },
   {
-    "__docId__": 91,
+    "__docId__": 96,
     "kind": "class",
     "name": "Template",
     "memberof": "source/Template.js",
@@ -1415,7 +1572,7 @@
     ]
   },
   {
-    "__docId__": 92,
+    "__docId__": 97,
     "kind": "constructor",
     "name": "constructor",
     "memberof": "source/Template.js~Template",
@@ -1470,7 +1627,7 @@
     ]
   },
   {
-    "__docId__": 93,
+    "__docId__": 98,
     "kind": "member",
     "name": "context",
     "memberof": "source/Template.js~Template",
@@ -1487,7 +1644,7 @@
     }
   },
   {
-    "__docId__": 94,
+    "__docId__": 99,
     "kind": "member",
     "name": "onChange",
     "memberof": "source/Template.js~Template",
@@ -1504,7 +1661,7 @@
     }
   },
   {
-    "__docId__": 95,
+    "__docId__": 100,
     "kind": "member",
     "name": "data",
     "memberof": "source/Template.js~Template",
@@ -1521,7 +1678,7 @@
     }
   },
   {
-    "__docId__": 96,
+    "__docId__": 101,
     "kind": "get",
     "name": "Expression",
     "memberof": "source/Template.js~Template",
@@ -1540,7 +1697,7 @@
     }
   },
   {
-    "__docId__": 97,
+    "__docId__": 102,
     "kind": "get",
     "name": "Reference",
     "memberof": "source/Template.js~Template",
@@ -1559,7 +1716,7 @@
     }
   },
   {
-    "__docId__": 98,
+    "__docId__": 103,
     "kind": "method",
     "name": "compile",
     "memberof": "source/Template.js~Template",
@@ -1585,7 +1742,7 @@
     }
   },
   {
-    "__docId__": 99,
+    "__docId__": 104,
     "kind": "method",
     "name": "parse",
     "memberof": "source/Template.js~Template",
@@ -1604,7 +1761,7 @@
     }
   },
   {
-    "__docId__": 100,
+    "__docId__": 105,
     "kind": "member",
     "name": "raw",
     "memberof": "source/Template.js~Template",
@@ -1621,7 +1778,7 @@
     }
   },
   {
-    "__docId__": 101,
+    "__docId__": 106,
     "kind": "method",
     "name": "evaluate",
     "memberof": "source/Template.js~Template",
@@ -1664,7 +1821,7 @@
     }
   },
   {
-    "__docId__": 102,
+    "__docId__": 107,
     "kind": "typedef",
     "name": "ChangedCallback",
     "memberof": "source/Template.js~Template",
@@ -1714,7 +1871,7 @@
     }
   },
   {
-    "__docId__": 103,
+    "__docId__": 108,
     "kind": "member",
     "name": "value",
     "memberof": "source/Template.js~Template",
@@ -1731,7 +1888,7 @@
     }
   },
   {
-    "__docId__": 104,
+    "__docId__": 109,
     "kind": "method",
     "name": "clear",
     "memberof": "source/Template.js~Template",
@@ -1751,7 +1908,7 @@
     }
   },
   {
-    "__docId__": 105,
+    "__docId__": 110,
     "kind": "method",
     "name": "toString",
     "memberof": "source/Template.js~Template",
@@ -1771,7 +1928,7 @@
     }
   },
   {
-    "__docId__": 106,
+    "__docId__": 111,
     "kind": "file",
     "name": "source/utility.js",
     "content": "/**\n * Merge own properties of two or more objects together into the first object\n * by their descriptor\n *\n * @param {Object}    target - An object that will receive the new properties\n *                             if `source` are passed in\n * @param {...Object} source - Additional objects containing properties to merge in\n *\n * @return {Object} The `target` parameter\n */\nexport function extend(target, ...source) {\n\n    for (let object of source)  if (object instanceof Object) {\n\n        let descriptor = Object.getOwnPropertyDescriptors( object );\n\n        if (target instanceof Function) {\n\n            delete descriptor.name;\n            delete descriptor.length;\n            delete descriptor.prototype;\n\n            Object.defineProperties(\n                target.prototype,\n                Object.getOwnPropertyDescriptors( object.prototype )\n            );\n        }\n\n        Object.defineProperties(target, descriptor);\n    }\n\n    return target;\n}\n\n\nvar depth = 0;\n\n/**\n * Traverse Object-tree & return Node array through the filter\n *\n * @param {object}        node     - Object tree\n * @param {string}        fork_key - Key of children list\n * @param {MapTreeFilter} filter   - Map filter\n *\n * @return {Array}  Result list of Map filter\n */\nexport function mapTree(node, fork_key, filter) {\n\n    var children = node[fork_key], list = [ ];    depth++ ;\n\n    for (var i = 0, value;  i < children.length;  i++) {\n        /**\n         * @typedef {function} MapTreeFilter\n         *\n         * @param {object} child\n         * @param {number} index\n         * @param {number} depth\n         *\n         * @return {?object}  `Null` or `Undefined` to **Skip the Sub-Tree**,\n         *                    and Any other Type to Add into the Result Array.\n         */\n        try {\n            value = filter.call(node, children[i], i, depth);\n\n        } catch (error) {\n\n            depth = 0;    throw error;\n        }\n\n        if (! (value != null))  continue;\n\n        list.push( value );\n\n        if ((children[i] != null)  &&  (children[i][fork_key] || '')[0])\n            list.push.apply(\n                list,  mapTree(children[i], fork_key, filter)\n            );\n    }\n\n    depth-- ;\n\n    return list;\n}\n",
@@ -1782,7 +1939,7 @@
     "lineNumber": 1
   },
   {
-    "__docId__": 107,
+    "__docId__": 112,
     "kind": "function",
     "name": "extend",
     "memberof": "source/utility.js",
@@ -1828,7 +1985,7 @@
     }
   },
   {
-    "__docId__": 108,
+    "__docId__": 113,
     "kind": "variable",
     "name": "depth",
     "memberof": "source/utility.js",
@@ -1849,7 +2006,7 @@
     "ignore": true
   },
   {
-    "__docId__": 109,
+    "__docId__": 114,
     "kind": "function",
     "name": "mapTree",
     "memberof": "source/utility.js",
@@ -1905,7 +2062,7 @@
     }
   },
   {
-    "__docId__": 110,
+    "__docId__": 115,
     "kind": "typedef",
     "name": "MapTreeFilter",
     "memberof": "source/utility.js",
@@ -1963,10 +2120,10 @@
     }
   },
   {
-    "__docId__": 111,
+    "__docId__": 116,
     "kind": "file",
     "name": "source/View.js",
-    "content": "const view_element = new WeakMap();\r\n\r\n\r\n/**\r\n * Abstract View\r\n */\r\nexport default  class View extends Array {\r\n    /**\r\n     * @param {Element} element\r\n     */\r\n    constructor(element) {\r\n\r\n        view_element.set(super(), element);\r\n\r\n        if (this.constructor === View)\r\n            throw TypeError('\"View\" is an abstract class');\r\n    }\r\n\r\n    /**\r\n     * @return {Element}\r\n     */\r\n    get element() {\r\n\r\n        return  view_element.get( this );\r\n    }\r\n\r\n    /**\r\n     * Render this view\r\n     *\r\n     * @return {View}\r\n     */\r\n    render() {\r\n\r\n        throw TypeError('View.prototype.render() must be overwriten');\r\n    }\r\n}\r\n",
+    "content": "const view_DOM = new WeakMap(), DOM_view = new WeakMap(), view_data = new WeakMap();\n\n\n/**\n * Abstract View\n */\nexport default  class View extends Array {\n    /**\n     * @param {string|Element|DocumentFragment} template\n     * @param {string}                          nameKey  - Key (littleCamelCase) of HTML `data-*`\n     *                                                     to get name of bound data\n     * @param {Object}                          scope    - Empty Model for this view\n     */\n    constructor(template, nameKey, scope) {\n\n        if (super().constructor === View)\n            throw TypeError('\"View\" is an abstract class');\n\n        switch ( template.nodeType ) {\n            case 1:\n                this.name = template.dataset[ nameKey ];  break;\n            case 11:\n                if (! template.parentNode)\n                    template = Array.from( template.childNodes );\n                break;\n            default:\n                template = View.parseDOM( template );\n        }\n\n        view_data.set(this.bindWith( template ),  scope);\n    }\n\n    /**\n     * @param {Node} node - Node from other `Document`\n     *\n     * @return {Node} Cloned & imported Node (with its child nodes)\n     */\n    static import(node) {  return  document.importNode(node, true);  }\n\n    /**\n     * @param {string} markup - Code of an markup fragment\n     *\n     * @return {Element[]}\n     */\n    static parseDOM(markup) {\n\n        markup = (new window.DOMParser()).parseFromString(markup, 'text/html');\n\n        return  Array.from(markup.head.childNodes, View.import).concat(\n            Array.from(markup.body.childNodes, View.import)\n        );\n    }\n\n    /**\n     * @protected\n     *\n     * @param {Element|Element[]|DocumentFragment} template\n     *\n     * @return {View}\n     */\n    bindWith(template) {\n\n        view_DOM.set(this, template);\n\n        if (template instanceof Array) {\n\n            for (let node of template)\n                if (node.nodeType === 1)  DOM_view.set(node, this);\n        } else\n            DOM_view.set(template, this);\n\n        return this;\n    }\n\n    /**\n     * @param {Element|DocumentFragment} node\n     *\n     * @return {View} View instance bound with `node`\n     */\n    static instanceOf(node) {  return  DOM_view.get( node );  }\n\n    /**\n     * @return {Element|Element[]|DocumentFragment}\n     */\n    get content() {  return  view_DOM.get( this );  }\n\n    /**\n     * @return {string} Full markup code of this view\n     */\n    toString() {\n\n        const content = this.content;\n\n        return  (content.nodeType === 1)  ?\n            content.outerHTML  :\n            Array.from(content.childNodes || content,  node => {\n\n                switch ( node.nodeType ) {\n                    case 1:    return node.outerHTML;\n                    case 3:    return node.nodeValue;\n                }\n            }).join('');\n    }\n\n    /**\n     * @protected\n     *\n     * @type {Object}\n     */\n    get data() {  return  view_data.get( this );  }\n\n    /**\n     * Get original data of this view\n     *\n     * @return {Object}\n     */\n    valueOf() {\n\n        throw TypeError('View.prototype.valueOf() must be overwriten');\n    }\n\n    /**\n     * Render this view\n     *\n     * @return {View}\n     */\n    render() {\n\n        throw TypeError('View.prototype.render() must be overwriten');\n    }\n\n    /**\n     * Reset this view to empty data\n     *\n     * @return {View}\n     */\n    clear() {\n\n        throw TypeError('View.prototype.clear() must be overwriten');\n    }\n}\n",
     "static": true,
     "longname": "D:/TechQuery/EasyWebApp.js/source/View.js",
     "access": "public",
@@ -1974,12 +2131,12 @@
     "lineNumber": 1
   },
   {
-    "__docId__": 112,
+    "__docId__": 117,
     "kind": "variable",
-    "name": "view_element",
+    "name": "view_DOM",
     "memberof": "source/View.js",
     "static": true,
-    "longname": "source/View.js~view_element",
+    "longname": "source/View.js~view_DOM",
     "access": "public",
     "export": false,
     "importPath": "easywebapp/source/View.js",
@@ -1995,7 +2152,7 @@
     "ignore": true
   },
   {
-    "__docId__": 113,
+    "__docId__": 118,
     "kind": "class",
     "name": "View",
     "memberof": "source/View.js",
@@ -2013,7 +2170,7 @@
     ]
   },
   {
-    "__docId__": 114,
+    "__docId__": 119,
     "kind": "constructor",
     "name": "constructor",
     "memberof": "source/View.js~View",
@@ -2023,36 +2180,212 @@
     "longname": "source/View.js~View#constructor",
     "access": "public",
     "description": "",
-    "lineNumber": 11,
+    "lineNumber": 14,
     "params": [
       {
         "nullable": null,
         "types": [
-          "Element"
+          "string",
+          "Element",
+          "DocumentFragment"
         ],
         "spread": false,
         "optional": false,
-        "name": "element",
+        "name": "template",
         "description": ""
+      },
+      {
+        "nullable": null,
+        "types": [
+          "string"
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "nameKey",
+        "description": "Key (littleCamelCase) of HTML `data-*`\n                                                    to get name of bound data"
+      },
+      {
+        "nullable": null,
+        "types": [
+          "Object"
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "scope",
+        "description": "Empty Model for this view"
       }
     ]
   },
   {
-    "__docId__": 115,
-    "kind": "get",
-    "name": "element",
+    "__docId__": 120,
+    "kind": "member",
+    "name": "name",
+    "memberof": "source/View.js~View",
+    "static": false,
+    "longname": "source/View.js~View#name",
+    "access": "public",
+    "description": null,
+    "lineNumber": 21,
+    "undocument": true,
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 121,
+    "kind": "method",
+    "name": "import",
+    "memberof": "source/View.js~View",
+    "generator": false,
+    "async": false,
+    "static": true,
+    "longname": "source/View.js~View.import",
+    "access": "public",
+    "description": "",
+    "lineNumber": 38,
+    "params": [
+      {
+        "nullable": null,
+        "types": [
+          "Node"
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "node",
+        "description": "Node from other `Document`"
+      }
+    ],
+    "return": {
+      "nullable": null,
+      "types": [
+        "Node"
+      ],
+      "spread": false,
+      "description": "Cloned & imported Node (with its child nodes)"
+    }
+  },
+  {
+    "__docId__": 122,
+    "kind": "method",
+    "name": "parseDOM",
+    "memberof": "source/View.js~View",
+    "generator": false,
+    "async": false,
+    "static": true,
+    "longname": "source/View.js~View.parseDOM",
+    "access": "public",
+    "description": "",
+    "lineNumber": 45,
+    "params": [
+      {
+        "nullable": null,
+        "types": [
+          "string"
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "markup",
+        "description": "Code of an markup fragment"
+      }
+    ],
+    "return": {
+      "nullable": null,
+      "types": [
+        "Element[]"
+      ],
+      "spread": false,
+      "description": ""
+    }
+  },
+  {
+    "__docId__": 123,
+    "kind": "method",
+    "name": "bindWith",
     "memberof": "source/View.js~View",
     "generator": false,
     "async": false,
     "static": false,
-    "longname": "source/View.js~View#element",
-    "access": "public",
+    "longname": "source/View.js~View#bindWith",
+    "access": "protected",
     "description": "",
-    "lineNumber": 22,
+    "lineNumber": 61,
+    "params": [
+      {
+        "nullable": null,
+        "types": [
+          "Element",
+          "Element[]",
+          "DocumentFragment"
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "template",
+        "description": ""
+      }
+    ],
     "return": {
       "nullable": null,
       "types": [
-        "Element"
+        "View"
+      ],
+      "spread": false,
+      "description": ""
+    }
+  },
+  {
+    "__docId__": 124,
+    "kind": "method",
+    "name": "instanceOf",
+    "memberof": "source/View.js~View",
+    "generator": false,
+    "async": false,
+    "static": true,
+    "longname": "source/View.js~View.instanceOf",
+    "access": "public",
+    "description": "",
+    "lineNumber": 80,
+    "params": [
+      {
+        "nullable": null,
+        "types": [
+          "Element",
+          "DocumentFragment"
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "node",
+        "description": ""
+      }
+    ],
+    "return": {
+      "nullable": null,
+      "types": [
+        "View"
+      ],
+      "spread": false,
+      "description": "View instance bound with `node`"
+    }
+  },
+  {
+    "__docId__": 125,
+    "kind": "get",
+    "name": "content",
+    "memberof": "source/View.js~View",
+    "generator": false,
+    "async": false,
+    "static": false,
+    "longname": "source/View.js~View#content",
+    "access": "public",
+    "description": "",
+    "lineNumber": 85,
+    "return": {
+      "nullable": null,
+      "types": [
+        "Element",
+        "Element[]",
+        "DocumentFragment"
       ],
       "spread": false,
       "description": ""
@@ -2064,7 +2397,72 @@
     }
   },
   {
-    "__docId__": 116,
+    "__docId__": 126,
+    "kind": "method",
+    "name": "toString",
+    "memberof": "source/View.js~View",
+    "generator": false,
+    "async": false,
+    "static": false,
+    "longname": "source/View.js~View#toString",
+    "access": "public",
+    "description": "",
+    "lineNumber": 90,
+    "return": {
+      "nullable": null,
+      "types": [
+        "string"
+      ],
+      "spread": false,
+      "description": "Full markup code of this view"
+    },
+    "params": []
+  },
+  {
+    "__docId__": 127,
+    "kind": "get",
+    "name": "data",
+    "memberof": "source/View.js~View",
+    "generator": false,
+    "async": false,
+    "static": false,
+    "longname": "source/View.js~View#data",
+    "access": "protected",
+    "description": "",
+    "lineNumber": 110,
+    "type": {
+      "nullable": null,
+      "types": [
+        "Object"
+      ],
+      "spread": false,
+      "description": null
+    }
+  },
+  {
+    "__docId__": 128,
+    "kind": "method",
+    "name": "valueOf",
+    "memberof": "source/View.js~View",
+    "generator": false,
+    "async": false,
+    "static": false,
+    "longname": "source/View.js~View#valueOf",
+    "access": "public",
+    "description": "Get original data of this view",
+    "lineNumber": 117,
+    "return": {
+      "nullable": null,
+      "types": [
+        "Object"
+      ],
+      "spread": false,
+      "description": ""
+    },
+    "params": []
+  },
+  {
+    "__docId__": 129,
     "kind": "method",
     "name": "render",
     "memberof": "source/View.js~View",
@@ -2074,7 +2472,29 @@
     "longname": "source/View.js~View#render",
     "access": "public",
     "description": "Render this view",
-    "lineNumber": 32,
+    "lineNumber": 127,
+    "return": {
+      "nullable": null,
+      "types": [
+        "View"
+      ],
+      "spread": false,
+      "description": ""
+    },
+    "params": []
+  },
+  {
+    "__docId__": 130,
+    "kind": "method",
+    "name": "clear",
+    "memberof": "source/View.js~View",
+    "generator": false,
+    "async": false,
+    "static": false,
+    "longname": "source/View.js~View#clear",
+    "access": "public",
+    "description": "Reset this view to empty data",
+    "lineNumber": 137,
     "return": {
       "nullable": null,
       "types": [
@@ -2087,7 +2507,7 @@
   },
   {
     "kind": "index",
-    "content": "# EasyWebApp V5\n\nLight-weight **Web application engine** based on [Web components API](https://www.webcomponents.org/) & ECMAScript 6+\n",
+    "content": "# EasyWebApp V5\r\n\r\nLight-weight **Web application engine** based on [Web components API](https://www.webcomponents.org/) & ECMAScript 6+\r\n",
     "longname": "D:\\TechQuery\\EasyWebApp.js\\README.md",
     "name": "./README.md",
     "static": true,
@@ -2095,17 +2515,17 @@
   },
   {
     "kind": "packageJSON",
-    "content": "{\n  \"name\": \"easywebapp\",\n  \"version\": \"5.0.0\",\n  \"description\": \"Light-weight Web application engine based on Web components API & ECMAScript 6+\",\n  \"browser\": \"build/EWA.js\",\n  \"directories\": {\n    \"lib\": \"source\",\n    \"doc\": \"docs\"\n  },\n  \"scripts\": {\n    \"lint\": \"eslint ./source/ ./test/\",\n    \"precommit\": \"npm run lint\",\n    \"compile\": \"set NODE_ENV=production&&  babel source -d build/Release\",\n    \"bundle\": \"amd-bundle build/Release build/EWA.js\",\n    \"build\": \"npm run compile  &&  npm run bundle  &&  esdoc\",\n    \"help\": \"web-server docs/ -o\",\n    \"test\": \"mocha -r babel-register -r should --recursive --no-timeouts -c --inline-diffs --exit\",\n    \"debug\": \"npm test -- --inspect-brk\"\n  },\n  \"repository\": {\n    \"type\": \"git\",\n    \"url\": \"git+https://github.com/EasyWebApp/EasyWebApp.git\"\n  },\n  \"keywords\": [\n    \"WebApp\",\n    \"Web-component\",\n    \"SPA\",\n    \"ECMAScript\"\n  ],\n  \"author\": \"shiy007@qq.com\",\n  \"license\": \"LGPL-3.0\",\n  \"bugs\": {\n    \"url\": \"https://github.com/EasyWebApp/EasyWebApp/issues\"\n  },\n  \"homepage\": \"https://github.com/EasyWebApp/EasyWebApp#readme\",\n  \"devDependencies\": {\n    \"amd-bundle\": \"^0.5.0\",\n    \"babel-cli\": \"^6.26.0\",\n    \"babel-plugin-transform-es2015-modules-commonjs\": \"^6.26.2\",\n    \"babel-preset-es2015\": \"^6.24.1\",\n    \"babel-preset-es2016\": \"^6.24.1\",\n    \"babel-preset-es2017\": \"^6.24.1\",\n    \"babel-register\": \"^6.26.0\",\n    \"esdoc\": \"^1.1.0\",\n    \"esdoc-external-webapi-plugin\": \"^1.0.0\",\n    \"esdoc-standard-plugin\": \"^1.0.0\",\n    \"eslint\": \"^4.19.1\",\n    \"husky\": \"^0.14.3\",\n    \"jsdom\": \"^11.10.0\",\n    \"koapache\": \"^0.2.1\",\n    \"mocha\": \"^5.1.1\",\n    \"should\": \"^13.2.1\"\n  },\n  \"babel\": {\n    \"presets\": [\n      \"es2016\",\n      \"es2017\"\n    ],\n    \"plugins\": [\n      \"transform-es2015-modules-commonjs\"\n    ],\n    \"env\": {\n      \"production\": {\n        \"presets\": [\n          \"es2015\"\n        ]\n      }\n    }\n  }\n}\n",
+    "content": "{\r\n  \"name\": \"easywebapp\",\r\n  \"version\": \"5.0.0-alpha\",\r\n  \"description\": \"Light-weight Web application engine based on Web components API & ECMAScript 6+\",\r\n  \"browser\": \"build/EWA.js\",\r\n  \"directories\": {\r\n    \"lib\": \"source\",\r\n    \"doc\": \"docs\"\r\n  },\r\n  \"scripts\": {\r\n    \"lint\": \"eslint ./source/ ./test/\",\r\n    \"precommit\": \"npm run lint\",\r\n    \"compile\": \"set NODE_ENV=production&&  babel source -d build/Release\",\r\n    \"bundle\": \"amd-bundle build/Release build/EWA.js\",\r\n    \"build\": \"npm run compile  &&  npm run bundle  &&  esdoc\",\r\n    \"help\": \"web-server docs/ -o\",\r\n    \"test\": \"mocha -r babel-register -r should --recursive --no-timeouts -c --inline-diffs --exit\",\r\n    \"debug\": \"npm test -- --inspect-brk\"\r\n  },\r\n  \"repository\": {\r\n    \"type\": \"git\",\r\n    \"url\": \"git+https://github.com/EasyWebApp/EasyWebApp.git\"\r\n  },\r\n  \"keywords\": [\r\n    \"WebApp\",\r\n    \"Web-component\",\r\n    \"SPA\",\r\n    \"ECMAScript\"\r\n  ],\r\n  \"author\": \"shiy007@qq.com\",\r\n  \"license\": \"LGPL-3.0\",\r\n  \"bugs\": {\r\n    \"url\": \"https://github.com/EasyWebApp/EasyWebApp/issues\"\r\n  },\r\n  \"homepage\": \"https://github.com/EasyWebApp/EasyWebApp#readme\",\r\n  \"devDependencies\": {\r\n    \"amd-bundle\": \"^0.5.0\",\r\n    \"babel-cli\": \"^6.26.0\",\r\n    \"babel-plugin-transform-es2015-modules-commonjs\": \"^6.26.2\",\r\n    \"babel-preset-es2015\": \"^6.24.1\",\r\n    \"babel-preset-es2016\": \"^6.24.1\",\r\n    \"babel-preset-es2017\": \"^6.24.1\",\r\n    \"babel-register\": \"^6.26.0\",\r\n    \"esdoc\": \"^1.1.0\",\r\n    \"esdoc-external-webapi-plugin\": \"^1.0.0\",\r\n    \"esdoc-standard-plugin\": \"^1.0.0\",\r\n    \"eslint\": \"^4.19.1\",\r\n    \"husky\": \"^0.14.3\",\r\n    \"jsdom\": \"^11.10.0\",\r\n    \"koapache\": \"^0.2.1\",\r\n    \"mocha\": \"^5.1.1\",\r\n    \"should\": \"^13.2.1\"\r\n  },\r\n  \"babel\": {\r\n    \"presets\": [\r\n      \"es2016\",\r\n      \"es2017\"\r\n    ],\r\n    \"plugins\": [\r\n      \"transform-es2015-modules-commonjs\"\r\n    ],\r\n    \"env\": {\r\n      \"production\": {\r\n        \"presets\": [\r\n          \"es2015\"\r\n        ]\r\n      }\r\n    }\r\n  }\r\n}\r\n",
     "longname": "D:\\TechQuery\\EasyWebApp.js\\package.json",
     "name": "package.json",
     "static": true,
     "access": "public"
   },
   {
-    "__docId__": 117,
+    "__docId__": 131,
     "kind": "testFile",
     "name": "test/ArrayView/index.js",
-    "content": "import { resolve } from 'path';\n\nimport { readFileSync } from 'fs';\n\nimport { JSDOM } from 'jsdom';\n\nimport ArrayView from '../../source/ArrayView';\n\nimport ObjectView from '../../source/ObjectView';\n\nvar HTML;\n\n\n/**\n * @test {ArrayView}\n */\ndescribe('ArrayView()',  () => {\n\n    before(()  =>  HTML = readFileSync( resolve(module.id, '../index.html') ));\n\n    describe('Single view',  () => {\n\n        var view, element;\n\n        before(() => {\n\n            element = JSDOM.fragment( HTML ).querySelector('ol');\n\n            element.remove();\n        });\n\n        /**\n         * @test {ArrayView#constructor}\n         */\n        it('Scan DOM',  () => {\n\n            view = new ArrayView( element );\n\n            view.element.textContent.should.be.equal('');\n        });\n\n        /**\n         * @test {ArrayView#render}\n         */\n        it('Render data',  () => {\n\n            view.render([\n                {name: 'ObjectView'},\n                {name: 'ArrayView'},\n                {name: 'TreeView'}\n            ]);\n\n            Array.from(\n                view.element.children,  item => item.textContent\n            ).should.be.eql([\n                'ObjectView', 'ArrayView', 'TreeView'\n            ]);\n        });\n    });\n\n    describe('Nested view',  () => {\n\n        var view, element;\n\n        before(() => {\n\n            element = JSDOM.fragment( HTML ).children[0];\n\n            element.remove();\n        });\n\n        /**\n         * @test {ObjectView#scan}\n         */\n        it('Scan DOM',  () => {\n\n            view = new ObjectView( element );\n\n            view.length.should.be.equal( 2 );\n\n            view[1].should.be.instanceof( ArrayView );\n        });\n\n        /**\n         * @test {ObjectView#render}\n         */\n        it('Render data',  () => {\n\n            const list = [\n                {name: 'Gecko'},\n                {name: 'Trident'},\n                {name: 'WebKit'},\n                {name: 'Blink'},\n                {name: 'EdgeHTML'}\n            ];\n\n            view.render({\n                title:  'Kinds of Web browser core',\n                list:   list\n            });\n\n            view.element.outerHTML.should.be.equal(`\n<main>\n    <h1>Kinds of Web browser core</h1>\n\n    <ol data-array=\"list\">${\n    list.map(item => `<li>${item.name}</li>`).join('')\n}</ol>\n</main>`.trim()\n            );\n        });\n    });\n});\n",
+    "content": "import { resolve } from 'path';\n\nimport { readFileSync } from 'fs';\n\nimport { JSDOM } from 'jsdom';\n\nimport ArrayView from '../../source/ArrayView';\n\nimport ObjectView from '../../source/ObjectView';\n\nvar HTML;\n\n\n/**\n * @test {ArrayView}\n */\ndescribe('ArrayView()',  () => {\n\n    before(()  =>  HTML = readFileSync( resolve(module.id, '../index.html') ));\n\n    describe('Single view',  () => {\n\n        var view, element;\n\n        before(() => {\n\n            element = JSDOM.fragment( HTML ).querySelector('ol');\n\n            element.remove();\n        });\n\n        /**\n         * @test {ArrayView#constructor}\n         */\n        it('Scan DOM',  () => {\n\n            view = new ArrayView( element );\n\n            view.content.textContent.should.be.equal('');\n        });\n\n        /**\n         * @test {ArrayView#render}\n         */\n        it('Render data',  () => {\n\n            view.render([\n                {name: 'ObjectView'},\n                {name: 'ArrayView'},\n                {name: 'TreeView'}\n            ]);\n\n            Array.from(\n                view.content.children,  item => item.textContent\n            ).should.be.eql([\n                'ObjectView', 'ArrayView', 'TreeView'\n            ]);\n        });\n\n        /**\n         * @test {ArrayView#valueOf}\n         */\n        it('Get data',  () => {\n\n            view.valueOf().should.be.eql( view.data );\n\n            view.valueOf().should.not.be.equal( view.data );\n\n            view.data[0].should.be.equal( view[0].data );\n        });\n    });\n\n    describe('Nested view',  () => {\n\n        var view, element;\n\n        before(() => {\n\n            element = JSDOM.fragment( HTML ).children[0];\n\n            element.remove();\n        });\n\n        /**\n         * @test {ObjectView#scan}\n         */\n        it('Scan DOM',  () => {\n\n            view = new ObjectView( element );\n\n            view.length.should.be.equal( 2 );\n\n            view[1].should.be.instanceof( ArrayView );\n        });\n\n        /**\n         * @test {ObjectView#render}\n         */\n        it('Render data',  () => {\n\n            const list = [\n                {name: 'Gecko'},\n                {name: 'Trident'},\n                {name: 'WebKit'},\n                {name: 'Blink'},\n                {name: 'EdgeHTML'}\n            ];\n\n            view.render({\n                title:  'Kinds of Web browser core',\n                list:   list\n            });\n\n            view.content.outerHTML.should.be.equal(`\n<main>\n    <h1>Kinds of Web browser core</h1>\n\n    <ol data-array=\"list\">${\n    list.map(item => `<li>${item.name}</li>`).join('')\n}</ol>\n</main>`.trim()\n            );\n        });\n    });\n});\n",
     "static": true,
     "longname": "D:/TechQuery/EasyWebApp.js/test/ArrayView/index.js",
     "access": null,
@@ -2113,7 +2533,7 @@
     "lineNumber": 1
   },
   {
-    "__docId__": 118,
+    "__docId__": 132,
     "kind": "test",
     "name": "describe0",
     "testId": 0,
@@ -2129,7 +2549,7 @@
     ]
   },
   {
-    "__docId__": 119,
+    "__docId__": 133,
     "kind": "test",
     "name": "describe1",
     "testId": 1,
@@ -2142,7 +2562,7 @@
     "lineNumber": 21
   },
   {
-    "__docId__": 120,
+    "__docId__": 134,
     "kind": "test",
     "name": "it2",
     "testId": 2,
@@ -2158,7 +2578,7 @@
     ]
   },
   {
-    "__docId__": 121,
+    "__docId__": 135,
     "kind": "test",
     "name": "it3",
     "testId": 3,
@@ -2174,55 +2594,71 @@
     ]
   },
   {
-    "__docId__": 122,
+    "__docId__": 136,
     "kind": "test",
-    "name": "describe4",
+    "name": "it4",
     "testId": 4,
+    "memberof": "test/ArrayView/index.js~describe0.describe1",
+    "testDepth": 2,
+    "static": true,
+    "longname": "test/ArrayView/index.js~describe0.describe1.it4",
+    "access": null,
+    "description": "Get data",
+    "lineNumber": 63,
+    "testTargets": [
+      "ArrayView#valueOf"
+    ]
+  },
+  {
+    "__docId__": 137,
+    "kind": "test",
+    "name": "describe5",
+    "testId": 5,
     "memberof": "test/ArrayView/index.js~describe0",
     "testDepth": 1,
     "static": true,
-    "longname": "test/ArrayView/index.js~describe0.describe4",
+    "longname": "test/ArrayView/index.js~describe0.describe5",
     "access": null,
     "description": "Nested view",
-    "lineNumber": 61
+    "lineNumber": 73
   },
   {
-    "__docId__": 123,
+    "__docId__": 138,
     "kind": "test",
-    "name": "it5",
-    "testId": 5,
-    "memberof": "test/ArrayView/index.js~describe0.describe4",
+    "name": "it6",
+    "testId": 6,
+    "memberof": "test/ArrayView/index.js~describe0.describe5",
     "testDepth": 2,
     "static": true,
-    "longname": "test/ArrayView/index.js~describe0.describe4.it5",
+    "longname": "test/ArrayView/index.js~describe0.describe5.it6",
     "access": null,
     "description": "Scan DOM",
-    "lineNumber": 75,
+    "lineNumber": 87,
     "testTargets": [
       "ObjectView#scan"
     ]
   },
   {
-    "__docId__": 124,
+    "__docId__": 139,
     "kind": "test",
-    "name": "it6",
-    "testId": 6,
-    "memberof": "test/ArrayView/index.js~describe0.describe4",
+    "name": "it7",
+    "testId": 7,
+    "memberof": "test/ArrayView/index.js~describe0.describe5",
     "testDepth": 2,
     "static": true,
-    "longname": "test/ArrayView/index.js~describe0.describe4.it6",
+    "longname": "test/ArrayView/index.js~describe0.describe5.it7",
     "access": null,
     "description": "Render data",
-    "lineNumber": 87,
+    "lineNumber": 99,
     "testTargets": [
       "ObjectView#render"
     ]
   },
   {
-    "__docId__": 125,
+    "__docId__": 140,
     "kind": "testFile",
     "name": "test/ObjectView/index.js",
-    "content": "import { resolve } from 'path';\r\n\r\nimport { readFileSync } from 'fs';\r\n\r\nimport { JSDOM } from 'jsdom';\r\n\r\nimport ObjectView from '../../source/ObjectView';\r\n\r\nvar HTML;\r\n\r\n\r\n/**\r\n * @test {ObjectView}\r\n */\r\ndescribe('ObjectView()',  () => {\r\n\r\n    before(()  =>  HTML = readFileSync( resolve(module.id, '../index.html') ));\r\n\r\n    describe('Single view',  () => {\r\n\r\n        var view, element;\r\n\r\n        before(() => {\r\n\r\n            element = JSDOM.fragment( HTML ).querySelector('fieldset');\r\n\r\n            element.remove();\r\n        });\r\n\r\n        /**\r\n         * @test {ObjectView#constructor}\r\n         */\r\n        it('Scan DOM',  () => {\r\n\r\n            view = new ObjectView( element );\r\n\r\n            view.length.should.be.equal( 3 );\r\n        });\r\n\r\n        /**\r\n         * @test {ObjectView#render}\r\n         */\r\n        it('Render data',  () => {\r\n\r\n            view.render({\r\n                name:    'Test',\r\n                title:   'Test field',\r\n                enable:  true\r\n            });\r\n\r\n            view.element.outerHTML.should.be.equal(`\r\n    <fieldset>\r\n        <legend title=\"Test field\">\r\n            Test\r\n            <input type=\"checkbox\">\r\n        </legend>\r\n    </fieldset>`.trim()\r\n            );\r\n\r\n            view.element.querySelector('input').checked.should.be.true();\r\n        });\r\n    });\r\n\r\n    describe('Nested view',  () => {\r\n\r\n        var view, element;\r\n\r\n        before(() => {\r\n\r\n            element = JSDOM.fragment( HTML ).children[0];\r\n\r\n            element.remove();\r\n        });\r\n\r\n        /**\r\n         * @test {ObjectView#scan}\r\n         */\r\n        it('Scan DOM',  () => {\r\n\r\n            view = new ObjectView( element );\r\n\r\n            view.length.should.be.equal( 4 );\r\n\r\n            view[3].should.be.instanceof( ObjectView );\r\n        });\r\n\r\n        /**\r\n         * @test {ObjectView#render}\r\n         */\r\n        it('Render data',  () => {\r\n\r\n            view.render({\r\n                name:    'Test',\r\n                title:   'Test field',\r\n                enable:  true,\r\n                tips:    {\r\n                    title:    'Test tips',\r\n                    content:  'Test content'\r\n                }\r\n            });\r\n\r\n            view.element.outerHTML.should.be.equal(`\r\n<form>\r\n    <fieldset>\r\n        <legend title=\"Test field\">\r\n            Test\r\n            <input type=\"checkbox\">\r\n        </legend>\r\n    </fieldset>\r\n    <dl data-object=\"tips\">\r\n        <dt>Test tips</dt>\r\n        <dd>Test content</dd>\r\n    </dl>\r\n</form>`.trim()\r\n            );\r\n        });\r\n    });\r\n});\r\n",
+    "content": "import { resolve } from 'path';\n\nimport { readFileSync } from 'fs';\n\nimport { JSDOM } from 'jsdom';\n\nimport View from '../../source/View';\n\nimport ObjectView from '../../source/ObjectView';\n\nvar page = new JSDOM(), HTML;\n\nglobal.window = page.window;  global.document = window.document;\n\n\n/**\n * @test {ObjectView}\n */\ndescribe('ObjectView()',  () => {\n\n    before(()  =>  HTML = readFileSync(\n        resolve(module.id, '../index.html'),  {encoding: 'utf-8'}\n    ));\n\n    describe('Single view',  () => {\n\n        var view, element;\n\n        before(() => {\n\n            element = JSDOM.fragment( HTML ).querySelector('fieldset');\n\n            element.remove();\n        });\n\n        /**\n         * @test {ObjectView#constructor}\n         */\n        it('Scan DOM',  () => {\n\n            view = new ObjectView( element );\n\n            view.length.should.be.equal( 3 );\n        });\n\n        /**\n         * @test {ObjectView#render}\n         */\n        it('Render data',  () => {\n\n            view.render({\n                name:    'Test',\n                title:   'Test field',\n                enable:  true\n            });\n\n            view.content.outerHTML.should.be.equal(`\n    <fieldset>\n        <legend title=\"Test field\">\n            Test\n            <input type=\"checkbox\">\n        </legend>\n    </fieldset>`.trim()\n            );\n\n            view.content.querySelector('input').checked.should.be.true();\n        });\n\n        /**\n         * @test {ObjectView#valueOf}\n         */\n        it('Get data',  () => {\n\n            view.valueOf().should.be.eql( view.data );\n\n            view.valueOf().should.not.be.equal( view.data );\n        });\n    });\n\n    describe('Nested view',  () => {\n\n        var view;\n\n        /**\n         * @test {View.parseDOM}\n         * @test {ObjectView#scan}\n         */\n        it('Scan DOM',  () => {\n\n            view = new ObjectView( HTML );\n\n            view.length.should.be.equal( 4 );\n\n            view[3].should.be.instanceof( ObjectView );\n        });\n\n        /**\n         * @test {View#bindWith}\n         * @test {View.instanceOf}\n         */\n        it('Associate DOM',  () => {\n\n            View.instanceOf( view.content[0] ).should.be.equal( view );\n        });\n\n        /**\n         * @test {ObjectView#render}\n         */\n        it('Render data',  () => {\n\n            view.render({\n                name:    'Test',\n                title:   'Test field',\n                enable:  true,\n                tips:    {\n                    title:    'Test tips',\n                    content:  'Test content'\n                }\n            });\n\n            view.toString().trim().should.be.equal(`\n<form>\n    <fieldset>\n        <legend title=\"Test field\">\n            Test\n            <input type=\"checkbox\">\n        </legend>\n    </fieldset>\n    <dl data-object=\"tips\">\n        <dt>Test tips</dt>\n        <dd>Test content</dd>\n    </dl>\n</form>`.trim()\n            );\n        });\n\n        /**\n         * @test {ObjectView#valueOf}\n         */\n        it('Get data',  () => {\n\n            view.valueOf().should.be.eql( view.data );\n\n            view.valueOf().should.not.be.equal( view.data );\n\n            view.data.tips.should.be.equal( view[3].data );\n        });\n    });\n});\n",
     "static": true,
     "longname": "D:/TechQuery/EasyWebApp.js/test/ObjectView/index.js",
     "access": null,
@@ -2230,113 +2666,163 @@
     "lineNumber": 1
   },
   {
-    "__docId__": 126,
+    "__docId__": 141,
     "kind": "test",
-    "name": "describe7",
-    "testId": 7,
+    "name": "describe8",
+    "testId": 8,
     "memberof": "test/ObjectView/index.js",
     "testDepth": 0,
     "static": true,
-    "longname": "test/ObjectView/index.js~describe7",
+    "longname": "test/ObjectView/index.js~describe8",
     "access": null,
     "description": "ObjectView()",
-    "lineNumber": 15,
+    "lineNumber": 19,
     "testTargets": [
       "ObjectView"
     ]
   },
   {
-    "__docId__": 127,
+    "__docId__": 142,
     "kind": "test",
-    "name": "describe8",
-    "testId": 8,
-    "memberof": "test/ObjectView/index.js~describe7",
+    "name": "describe9",
+    "testId": 9,
+    "memberof": "test/ObjectView/index.js~describe8",
     "testDepth": 1,
     "static": true,
-    "longname": "test/ObjectView/index.js~describe7.describe8",
+    "longname": "test/ObjectView/index.js~describe8.describe9",
     "access": null,
     "description": "Single view",
-    "lineNumber": 19
+    "lineNumber": 25
   },
   {
-    "__docId__": 128,
+    "__docId__": 143,
     "kind": "test",
-    "name": "it9",
-    "testId": 9,
-    "memberof": "test/ObjectView/index.js~describe7.describe8",
+    "name": "it10",
+    "testId": 10,
+    "memberof": "test/ObjectView/index.js~describe8.describe9",
     "testDepth": 2,
     "static": true,
-    "longname": "test/ObjectView/index.js~describe7.describe8.it9",
+    "longname": "test/ObjectView/index.js~describe8.describe9.it10",
     "access": null,
     "description": "Scan DOM",
-    "lineNumber": 33,
+    "lineNumber": 39,
     "testTargets": [
       "ObjectView#constructor"
     ]
   },
   {
-    "__docId__": 129,
+    "__docId__": 144,
     "kind": "test",
-    "name": "it10",
-    "testId": 10,
-    "memberof": "test/ObjectView/index.js~describe7.describe8",
+    "name": "it11",
+    "testId": 11,
+    "memberof": "test/ObjectView/index.js~describe8.describe9",
     "testDepth": 2,
     "static": true,
-    "longname": "test/ObjectView/index.js~describe7.describe8.it10",
+    "longname": "test/ObjectView/index.js~describe8.describe9.it11",
     "access": null,
     "description": "Render data",
-    "lineNumber": 43,
+    "lineNumber": 49,
     "testTargets": [
       "ObjectView#render"
     ]
   },
   {
-    "__docId__": 130,
-    "kind": "test",
-    "name": "describe11",
-    "testId": 11,
-    "memberof": "test/ObjectView/index.js~describe7",
-    "testDepth": 1,
-    "static": true,
-    "longname": "test/ObjectView/index.js~describe7.describe11",
-    "access": null,
-    "description": "Nested view",
-    "lineNumber": 64
-  },
-  {
-    "__docId__": 131,
+    "__docId__": 145,
     "kind": "test",
     "name": "it12",
     "testId": 12,
-    "memberof": "test/ObjectView/index.js~describe7.describe11",
+    "memberof": "test/ObjectView/index.js~describe8.describe9",
     "testDepth": 2,
     "static": true,
-    "longname": "test/ObjectView/index.js~describe7.describe11.it12",
+    "longname": "test/ObjectView/index.js~describe8.describe9.it12",
+    "access": null,
+    "description": "Get data",
+    "lineNumber": 72,
+    "testTargets": [
+      "ObjectView#valueOf"
+    ]
+  },
+  {
+    "__docId__": 146,
+    "kind": "test",
+    "name": "describe13",
+    "testId": 13,
+    "memberof": "test/ObjectView/index.js~describe8",
+    "testDepth": 1,
+    "static": true,
+    "longname": "test/ObjectView/index.js~describe8.describe13",
+    "access": null,
+    "description": "Nested view",
+    "lineNumber": 80
+  },
+  {
+    "__docId__": 147,
+    "kind": "test",
+    "name": "it14",
+    "testId": 14,
+    "memberof": "test/ObjectView/index.js~describe8.describe13",
+    "testDepth": 2,
+    "static": true,
+    "longname": "test/ObjectView/index.js~describe8.describe13.it14",
     "access": null,
     "description": "Scan DOM",
-    "lineNumber": 78,
+    "lineNumber": 88,
     "testTargets": [
+      "View.parseDOM",
       "ObjectView#scan"
     ]
   },
   {
-    "__docId__": 132,
+    "__docId__": 148,
     "kind": "test",
-    "name": "it13",
-    "testId": 13,
-    "memberof": "test/ObjectView/index.js~describe7.describe11",
+    "name": "it15",
+    "testId": 15,
+    "memberof": "test/ObjectView/index.js~describe8.describe13",
     "testDepth": 2,
     "static": true,
-    "longname": "test/ObjectView/index.js~describe7.describe11.it13",
+    "longname": "test/ObjectView/index.js~describe8.describe13.it15",
+    "access": null,
+    "description": "Associate DOM",
+    "lineNumber": 101,
+    "testTargets": [
+      "View#bindWith",
+      "View.instanceOf"
+    ]
+  },
+  {
+    "__docId__": 149,
+    "kind": "test",
+    "name": "it16",
+    "testId": 16,
+    "memberof": "test/ObjectView/index.js~describe8.describe13",
+    "testDepth": 2,
+    "static": true,
+    "longname": "test/ObjectView/index.js~describe8.describe13.it16",
     "access": null,
     "description": "Render data",
-    "lineNumber": 90,
+    "lineNumber": 109,
     "testTargets": [
       "ObjectView#render"
     ]
   },
   {
-    "__docId__": 133,
+    "__docId__": 150,
+    "kind": "test",
+    "name": "it17",
+    "testId": 17,
+    "memberof": "test/ObjectView/index.js~describe8.describe13",
+    "testDepth": 2,
+    "static": true,
+    "longname": "test/ObjectView/index.js~describe8.describe13.it17",
+    "access": null,
+    "description": "Get data",
+    "lineNumber": 140,
+    "testTargets": [
+      "ObjectView#valueOf"
+    ]
+  },
+  {
+    "__docId__": 151,
     "kind": "testFile",
     "name": "test/Template.js",
     "content": "import Template from '../source/Template';\n\n\n/**\n * @test {Template}\n */\ndescribe('Template',  () => {\n\n    /**\n     * @test {Template#constructor}\n     */\n    it('Parsing',  () => {\n\n        const template = new Template(\n            '[ ${(new Date()).getFullYear()} ]  Hello, ${this.name} !'\n        );\n\n        template[0].should.be.equal('name');\n\n        template.toString().should.be.equal(\n            `[ ${(new Date()).getFullYear()} ]  Hello,  !`\n        );\n    });\n\n    /**\n     * @test {Template#evaluate}\n     */\n    it('Evaluation',  () => {\n\n        const template = new Template(\n            '[ ${this.time} ]  Hello, ${scope.creator}\\'s ${view.name} !',\n            ['view', 'scope']\n        );\n\n        template.length.should.be.equal( 3 );\n\n        template.evaluate(\n            {time: '2015-07-23'},  {name: 'EasyWebApp.js'},  {creator: 'TechQuery'}\n        ).should.be.equal(\n            '[ 2015-07-23 ]  Hello, TechQuery\\'s EasyWebApp.js !'\n        );\n    });\n\n    /**\n     * @test {Template#onChange}\n     */\n    it('Changed callback',  () => {\n\n        const empty = `[ ${(new Date()).getFullYear()} ]  Hello,  !`;\n\n        const template = new Template(\n            '[ ${(new Date()).getFullYear()} ]  Hello, ${this.name} !',\n            (newValue, oldValue, ...bindData)  =>  {\n\n                if (oldValue === null)\n                    newValue.should.be.equal( empty );\n                else {\n                    oldValue.should.be.equal( empty );\n\n                    newValue.should.be.equal(\n                        `[ ${(new Date()).getFullYear()} ]  Hello, EWA !`\n                    );\n                }\n\n                bindData.should.be.eql([1, 2, 3]);\n            },\n            [1, 2, 3]\n        );\n\n        template.evaluate({name: 'EWA'});\n    });\n});\n",
@@ -2347,14 +2833,14 @@
     "lineNumber": 1
   },
   {
-    "__docId__": 134,
+    "__docId__": 152,
     "kind": "test",
-    "name": "describe14",
-    "testId": 14,
+    "name": "describe18",
+    "testId": 18,
     "memberof": "test/Template.js",
     "testDepth": 0,
     "static": true,
-    "longname": "test/Template.js~describe14",
+    "longname": "test/Template.js~describe18",
     "access": null,
     "description": "Template",
     "lineNumber": 7,
@@ -2363,14 +2849,14 @@
     ]
   },
   {
-    "__docId__": 135,
+    "__docId__": 153,
     "kind": "test",
-    "name": "it15",
-    "testId": 15,
-    "memberof": "test/Template.js~describe14",
+    "name": "it19",
+    "testId": 19,
+    "memberof": "test/Template.js~describe18",
     "testDepth": 1,
     "static": true,
-    "longname": "test/Template.js~describe14.it15",
+    "longname": "test/Template.js~describe18.it19",
     "access": null,
     "description": "Parsing",
     "lineNumber": 12,
@@ -2379,14 +2865,14 @@
     ]
   },
   {
-    "__docId__": 136,
+    "__docId__": 154,
     "kind": "test",
-    "name": "it16",
-    "testId": 16,
-    "memberof": "test/Template.js~describe14",
+    "name": "it20",
+    "testId": 20,
+    "memberof": "test/Template.js~describe18",
     "testDepth": 1,
     "static": true,
-    "longname": "test/Template.js~describe14.it16",
+    "longname": "test/Template.js~describe18.it20",
     "access": null,
     "description": "Evaluation",
     "lineNumber": 28,
@@ -2395,14 +2881,14 @@
     ]
   },
   {
-    "__docId__": 137,
+    "__docId__": 155,
     "kind": "test",
-    "name": "it17",
-    "testId": 17,
-    "memberof": "test/Template.js~describe14",
+    "name": "it21",
+    "testId": 21,
+    "memberof": "test/Template.js~describe18",
     "testDepth": 1,
     "static": true,
-    "longname": "test/Template.js~describe14.it17",
+    "longname": "test/Template.js~describe18.it21",
     "access": null,
     "description": "Changed callback",
     "lineNumber": 47,
@@ -2411,7 +2897,7 @@
     ]
   },
   {
-    "__docId__": 138,
+    "__docId__": 156,
     "kind": "testFile",
     "name": "test/utility.js",
     "content": "import { extend, mapTree } from '../source/utility';\n\n\ndescribe('Utility',  () => {\n    /**\n     * @test {extend}\n     */\n    describe('Mixin objects',  () => {\n\n        it('Ordinary objects',  () => {\n\n            extend(\n                { },  null,  {example: 1, get test() { }}\n            ).should.have.properties(\n                'example', 'test'\n            );\n        });\n\n        it('Function or Class',  () => {\n\n            function Test() { }\n\n            class Example {\n                constructor(test) {  test;  }\n\n                static test() { }\n\n                test() { }\n            }\n\n            extend(Test, Example).should.have.properties({\n                name:    'Test',\n                length:  0,\n                test:    Example.test\n            });\n\n            Test.prototype.should.not.be.equal( Example );\n\n            Test.prototype.should.have.property('test', Example.prototype.test);\n        });\n    });\n\n    /**\n     *  @test {mapTree}\n     */\n    it('Filter object tree',  () => {\n\n        mapTree({\n            id:        0,\n            children:  [\n                {\n                    id:        1,\n                    children:  [\n                        {\n                            id:        3,\n                            children:  []\n                        }\n                    ]\n                },\n                {\n                    id:        2,\n                    children:  []\n                }\n            ]\n        },  'children',  function (child, index, depth) {\n\n            if (depth < 2)  return child.id;\n\n        }).should.be.eql([1, 2]);\n    });\n});\n",
@@ -2422,27 +2908,27 @@
     "lineNumber": 1
   },
   {
-    "__docId__": 139,
+    "__docId__": 157,
     "kind": "test",
-    "name": "describe18",
-    "testId": 18,
+    "name": "describe22",
+    "testId": 22,
     "memberof": "test/utility.js",
     "testDepth": 0,
     "static": true,
-    "longname": "test/utility.js~describe18",
+    "longname": "test/utility.js~describe22",
     "access": null,
     "description": "Utility",
     "lineNumber": 4
   },
   {
-    "__docId__": 140,
+    "__docId__": 158,
     "kind": "test",
-    "name": "describe19",
-    "testId": 19,
-    "memberof": "test/utility.js~describe18",
+    "name": "describe23",
+    "testId": 23,
+    "memberof": "test/utility.js~describe22",
     "testDepth": 1,
     "static": true,
-    "longname": "test/utility.js~describe18.describe19",
+    "longname": "test/utility.js~describe22.describe23",
     "access": null,
     "description": "Mixin objects",
     "lineNumber": 8,
@@ -2451,40 +2937,40 @@
     ]
   },
   {
-    "__docId__": 141,
+    "__docId__": 159,
     "kind": "test",
-    "name": "it20",
-    "testId": 20,
-    "memberof": "test/utility.js~describe18.describe19",
+    "name": "it24",
+    "testId": 24,
+    "memberof": "test/utility.js~describe22.describe23",
     "testDepth": 2,
     "static": true,
-    "longname": "test/utility.js~describe18.describe19.it20",
+    "longname": "test/utility.js~describe22.describe23.it24",
     "access": null,
     "description": "Ordinary objects",
     "lineNumber": 10
   },
   {
-    "__docId__": 142,
+    "__docId__": 160,
     "kind": "test",
-    "name": "it21",
-    "testId": 21,
-    "memberof": "test/utility.js~describe18.describe19",
+    "name": "it25",
+    "testId": 25,
+    "memberof": "test/utility.js~describe22.describe23",
     "testDepth": 2,
     "static": true,
-    "longname": "test/utility.js~describe18.describe19.it21",
+    "longname": "test/utility.js~describe22.describe23.it25",
     "access": null,
     "description": "Function or Class",
     "lineNumber": 19
   },
   {
-    "__docId__": 143,
+    "__docId__": 161,
     "kind": "test",
-    "name": "it22",
-    "testId": 22,
-    "memberof": "test/utility.js~describe18",
+    "name": "it26",
+    "testId": 26,
+    "memberof": "test/utility.js~describe22",
     "testDepth": 1,
     "static": true,
-    "longname": "test/utility.js~describe18.it22",
+    "longname": "test/utility.js~describe22.it26",
     "access": null,
     "description": "Filter object tree",
     "lineNumber": 46,

@@ -36,7 +36,7 @@ describe('ArrayView()',  () => {
 
             view = new ArrayView( element );
 
-            view.element.textContent.should.be.equal('');
+            view.content.textContent.should.be.equal('');
         });
 
         /**
@@ -51,10 +51,22 @@ describe('ArrayView()',  () => {
             ]);
 
             Array.from(
-                view.element.children,  item => item.textContent
+                view.content.children,  item => item.textContent
             ).should.be.eql([
                 'ObjectView', 'ArrayView', 'TreeView'
             ]);
+        });
+
+        /**
+         * @test {ArrayView#valueOf}
+         */
+        it('Get data',  () => {
+
+            view.valueOf().should.be.eql( view.data );
+
+            view.valueOf().should.not.be.equal( view.data );
+
+            view.data[0].should.be.equal( view[0].data );
         });
     });
 
@@ -99,7 +111,7 @@ describe('ArrayView()',  () => {
                 list:   list
             });
 
-            view.element.outerHTML.should.be.equal(`
+            view.content.outerHTML.should.be.equal(`
 <main>
     <h1>Kinds of Web browser core</h1>
 

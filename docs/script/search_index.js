@@ -73,19 +73,19 @@ window.esdocSearchIndex = [
   ],
   [
     "",
-    "test-file/test/ArrayView/index.js.html#lineNumber61",
+    "test-file/test/ArrayView/index.js.html#lineNumber73",
     "ArrayView() Nested view",
     "test"
   ],
   [
     "objectview#render source/objectview.js~objectview#render,objectview#render",
-    "test-file/test/ArrayView/index.js.html#lineNumber87",
+    "test-file/test/ArrayView/index.js.html#lineNumber99",
     "ArrayView() Nested view Render data",
     "test"
   ],
   [
     "objectview#scan source/objectview.js~objectview#scan,objectview#scan",
-    "test-file/test/ArrayView/index.js.html#lineNumber75",
+    "test-file/test/ArrayView/index.js.html#lineNumber87",
     "ArrayView() Nested view Scan DOM",
     "test"
   ],
@@ -93,6 +93,12 @@ window.esdocSearchIndex = [
     "",
     "test-file/test/ArrayView/index.js.html#lineNumber21",
     "ArrayView() Single view",
+    "test"
+  ],
+  [
+    "arrayview#valueof source/arrayview.js~arrayview#valueof,arrayview#valueof",
+    "test-file/test/ArrayView/index.js.html#lineNumber63",
+    "ArrayView() Single view Get data",
     "test"
   ],
   [
@@ -109,43 +115,61 @@ window.esdocSearchIndex = [
   ],
   [
     "objectview source/objectview.js~objectview,objectview",
-    "test-file/test/ObjectView/index.js.html#lineNumber15",
+    "test-file/test/ObjectView/index.js.html#lineNumber19",
     "ObjectView()",
     "test"
   ],
   [
     "",
-    "test-file/test/ObjectView/index.js.html#lineNumber64",
+    "test-file/test/ObjectView/index.js.html#lineNumber80",
     "ObjectView() Nested view",
     "test"
   ],
   [
+    "view#bindwith view.instanceof source/view.js~view#bindwith,view#bindwith source/view.js~view.instanceof,view.instanceof",
+    "test-file/test/ObjectView/index.js.html#lineNumber101",
+    "ObjectView() Nested view Associate DOM",
+    "test"
+  ],
+  [
+    "objectview#valueof source/objectview.js~objectview#valueof,objectview#valueof",
+    "test-file/test/ObjectView/index.js.html#lineNumber140",
+    "ObjectView() Nested view Get data",
+    "test"
+  ],
+  [
     "objectview#render source/objectview.js~objectview#render,objectview#render",
-    "test-file/test/ObjectView/index.js.html#lineNumber90",
+    "test-file/test/ObjectView/index.js.html#lineNumber109",
     "ObjectView() Nested view Render data",
     "test"
   ],
   [
-    "objectview#scan source/objectview.js~objectview#scan,objectview#scan",
-    "test-file/test/ObjectView/index.js.html#lineNumber78",
+    "view.parsedom objectview#scan source/view.js~view.parsedom,view.parsedom source/objectview.js~objectview#scan,objectview#scan",
+    "test-file/test/ObjectView/index.js.html#lineNumber88",
     "ObjectView() Nested view Scan DOM",
     "test"
   ],
   [
     "",
-    "test-file/test/ObjectView/index.js.html#lineNumber19",
+    "test-file/test/ObjectView/index.js.html#lineNumber25",
     "ObjectView() Single view",
     "test"
   ],
   [
+    "objectview#valueof source/objectview.js~objectview#valueof,objectview#valueof",
+    "test-file/test/ObjectView/index.js.html#lineNumber72",
+    "ObjectView() Single view Get data",
+    "test"
+  ],
+  [
     "objectview#render source/objectview.js~objectview#render,objectview#render",
-    "test-file/test/ObjectView/index.js.html#lineNumber43",
+    "test-file/test/ObjectView/index.js.html#lineNumber49",
     "ObjectView() Single view Render data",
     "test"
   ],
   [
     "objectview#constructor source/objectview.js~objectview#constructor,objectview#constructor",
-    "test-file/test/ObjectView/index.js.html#lineNumber33",
+    "test-file/test/ObjectView/index.js.html#lineNumber39",
     "ObjectView() Single view Scan DOM",
     "test"
   ],
@@ -540,9 +564,27 @@ window.esdocSearchIndex = [
     "file"
   ],
   [
+    "source/arrayview.js~arrayview#clear",
+    "class/source/ArrayView.js~ArrayView.html#instance-method-clear",
+    "source/ArrayView.js~ArrayView#clear",
+    "method"
+  ],
+  [
     "source/arrayview.js~arrayview#constructor",
     "class/source/ArrayView.js~ArrayView.html#instance-constructor-constructor",
     "source/ArrayView.js~ArrayView#constructor",
+    "method"
+  ],
+  [
+    "source/arrayview.js~arrayview#length",
+    "class/source/ArrayView.js~ArrayView.html#instance-member-length",
+    "source/ArrayView.js~ArrayView#length",
+    "member"
+  ],
+  [
+    "source/arrayview.js~arrayview#push",
+    "class/source/ArrayView.js~ArrayView.html#instance-method-push",
+    "source/ArrayView.js~ArrayView#push",
     "method"
   ],
   [
@@ -552,10 +594,10 @@ window.esdocSearchIndex = [
     "method"
   ],
   [
-    "source/arrayview.js~arrayview#template",
-    "class/source/ArrayView.js~ArrayView.html#instance-member-template",
-    "source/ArrayView.js~ArrayView#template",
-    "member"
+    "source/arrayview.js~arrayview#valueof",
+    "class/source/ArrayView.js~ArrayView.html#instance-method-valueOf",
+    "source/ArrayView.js~ArrayView#valueOf",
+    "method"
   ],
   [
     "source/component.js",
@@ -624,6 +666,12 @@ window.esdocSearchIndex = [
     "member"
   ],
   [
+    "source/objectview.js~objectview#clear",
+    "class/source/ObjectView.js~ObjectView.html#instance-method-clear",
+    "source/ObjectView.js~ObjectView#clear",
+    "method"
+  ],
+  [
     "source/objectview.js~objectview#constructor",
     "class/source/ObjectView.js~ObjectView.html#instance-constructor-constructor",
     "source/ObjectView.js~ObjectView#constructor",
@@ -651,6 +699,12 @@ window.esdocSearchIndex = [
     "source/objectview.js~objectview#scan",
     "class/source/ObjectView.js~ObjectView.html#instance-method-scan",
     "source/ObjectView.js~ObjectView#scan",
+    "method"
+  ],
+  [
+    "source/objectview.js~objectview#valueof",
+    "class/source/ObjectView.js~ObjectView.html#instance-method-valueOf",
+    "source/ObjectView.js~ObjectView#valueOf",
     "method"
   ],
   [
@@ -756,21 +810,75 @@ window.esdocSearchIndex = [
     "file"
   ],
   [
+    "source/view.js~view#bindwith",
+    "class/source/View.js~View.html#instance-method-bindWith",
+    "source/View.js~View#bindWith",
+    "method"
+  ],
+  [
+    "source/view.js~view#clear",
+    "class/source/View.js~View.html#instance-method-clear",
+    "source/View.js~View#clear",
+    "method"
+  ],
+  [
     "source/view.js~view#constructor",
     "class/source/View.js~View.html#instance-constructor-constructor",
     "source/View.js~View#constructor",
     "method"
   ],
   [
-    "source/view.js~view#element",
-    "class/source/View.js~View.html#instance-get-element",
-    "source/View.js~View#element",
+    "source/view.js~view#content",
+    "class/source/View.js~View.html#instance-get-content",
+    "source/View.js~View#content",
+    "member"
+  ],
+  [
+    "source/view.js~view#data",
+    "class/source/View.js~View.html#instance-get-data",
+    "source/View.js~View#data",
+    "member"
+  ],
+  [
+    "source/view.js~view#name",
+    "class/source/View.js~View.html#instance-member-name",
+    "source/View.js~View#name",
     "member"
   ],
   [
     "source/view.js~view#render",
     "class/source/View.js~View.html#instance-method-render",
     "source/View.js~View#render",
+    "method"
+  ],
+  [
+    "source/view.js~view#tostring",
+    "class/source/View.js~View.html#instance-method-toString",
+    "source/View.js~View#toString",
+    "method"
+  ],
+  [
+    "source/view.js~view#valueof",
+    "class/source/View.js~View.html#instance-method-valueOf",
+    "source/View.js~View#valueOf",
+    "method"
+  ],
+  [
+    "source/view.js~view.import",
+    "class/source/View.js~View.html#static-method-import",
+    "source/View.js~View.import",
+    "method"
+  ],
+  [
+    "source/view.js~view.instanceof",
+    "class/source/View.js~View.html#static-method-instanceOf",
+    "source/View.js~View.instanceOf",
+    "method"
+  ],
+  [
+    "source/view.js~view.parsedom",
+    "class/source/View.js~View.html#static-method-parseDOM",
+    "source/View.js~View.parseDOM",
     "method"
   ],
   [
