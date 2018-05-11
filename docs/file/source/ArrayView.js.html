@@ -3,12 +3,12 @@
 <head>
   <meta charset="utf-8">
   <base data-ice="baseUrl" href="../../">
-  <title data-ice="title">source/ArrayView.js | easywebapp</title>
+  <title data-ice="title">source/ArrayView.js | web-cell</title>
   <link type="text/css" rel="stylesheet" href="css/style.css">
   <link type="text/css" rel="stylesheet" href="css/prettify-tomorrow.css">
   <script src="script/prettify/prettify.js"></script>
   <script src="script/manual.js"></script>
-<meta name="description" content="Light-weight Web application engine based on Web components API &amp; ECMAScript 6+"><meta property="twitter:card" content="summary"><meta property="twitter:title" content="easywebapp"><meta property="twitter:description" content="Light-weight Web application engine based on Web components API &amp; ECMAScript 6+"></head>
+<meta name="description" content="Light-weight Web Components engine based on ECMAScript 6+"><meta property="twitter:card" content="summary"><meta property="twitter:title" content="web-cell"><meta property="twitter:description" content="Light-weight Web Components engine based on ECMAScript 6+"></head>
 <body class="layout-container" data-ice="rootContainer">
 
 <header>
@@ -24,7 +24,7 @@
   </span>
     <ul class="search-result"></ul>
   </div>
-<a style="position:relative; top:3px;" href="https://github.com/EasyWebApp/EasyWebApp"><img width="20px" src="./image/github.png"></a></header>
+<a style="position:relative; top:3px;" href="https://github.com/EasyWebApp/WebCell"><img width="20px" src="./image/github.png"></a></header>
 
 <nav class="navigation" data-ice="nav"><div>
   <ul>
@@ -61,9 +61,10 @@ export default  class ArrayView extends View {
      */
     constructor(element) {
 
-        super(element,  &apos;array&apos;,  [ ]).template = element.firstElementChild;
+        if (! super(element,  &apos;array&apos;,  [ ]).booted) {
 
-        this.clear();
+            this.template = element.innerHTML.trim();  this.clear();
+        }
     }
 
     clear() {
@@ -86,16 +87,16 @@ export default  class ArrayView extends View {
 
         const data = this.data;
 
-        this.content.append(... Array.from(list,  item =&gt; {
+        this.content.append(... [ ].concat(
+            ... Array.from(list,  item =&gt; {
 
-            const view = this[ this.length ] = new ObjectView(
-                this.template.cloneNode( true )
-            );
+                const view = this[ this.length ] = new ObjectView( this.template );
 
-            data[ data.length ] = view.data;
+                data[ data.length ] = view.data;
 
-            return  view.render( item ).content;
-        }));
+                return  view.render( item ).content;
+            })
+        ));
 
         return this;
     }

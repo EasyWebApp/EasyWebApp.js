@@ -3,12 +3,12 @@
 <head>
   <meta charset="utf-8">
   <base data-ice="baseUrl" href="../../../">
-  <title data-ice="title">test/ArrayView/index.js | easywebapp</title>
+  <title data-ice="title">test/ArrayView/index.js | web-cell</title>
   <link type="text/css" rel="stylesheet" href="css/style.css">
   <link type="text/css" rel="stylesheet" href="css/prettify-tomorrow.css">
   <script src="script/prettify/prettify.js"></script>
   <script src="script/manual.js"></script>
-<meta name="description" content="Light-weight Web application engine based on Web components API &amp; ECMAScript 6+"><meta property="twitter:card" content="summary"><meta property="twitter:title" content="easywebapp"><meta property="twitter:description" content="Light-weight Web application engine based on Web components API &amp; ECMAScript 6+"></head>
+<meta name="description" content="Light-weight Web Components engine based on ECMAScript 6+"><meta property="twitter:card" content="summary"><meta property="twitter:title" content="web-cell"><meta property="twitter:description" content="Light-weight Web Components engine based on ECMAScript 6+"></head>
 <body class="layout-container" data-ice="rootContainer">
 
 <header>
@@ -24,7 +24,7 @@
   </span>
     <ul class="search-result"></ul>
   </div>
-<a style="position:relative; top:3px;" href="https://github.com/EasyWebApp/EasyWebApp"><img width="20px" src="./image/github.png"></a></header>
+<a style="position:relative; top:3px;" href="https://github.com/EasyWebApp/WebCell"><img width="20px" src="./image/github.png"></a></header>
 
 <nav class="navigation" data-ice="nav"><div>
   <ul>
@@ -57,7 +57,12 @@ import ArrayView from &apos;../../source/ArrayView&apos;;
 
 import ObjectView from &apos;../../source/ObjectView&apos;;
 
-var HTML;
+const fragment = JSDOM.fragment(
+        readFileSync( resolve(module.id, &apos;../index.html&apos;) )
+    ),
+    data = require(&apos;./index.json&apos;);
+
+var single, multiple;
 
 
 /**
@@ -65,27 +70,18 @@ var HTML;
  */
 describe(&apos;ArrayView()&apos;,  () =&gt; {
 
-    before(()  =&gt;  HTML = readFileSync( resolve(module.id, &apos;../index.html&apos;) ));
+    describe(&apos;Single top element of item template&apos;,  () =&gt; {
 
-    describe(&apos;Single view&apos;,  () =&gt; {
-
-        var view, element;
-
-        before(() =&gt; {
-
-            element = JSDOM.fragment( HTML ).querySelector(&apos;ol&apos;);
-
-            element.remove();
-        });
+        var element = fragment.querySelector(&apos;ol&apos;);
 
         /**
          * @test {ArrayView#constructor}
          */
         it(&apos;Scan DOM&apos;,  () =&gt; {
 
-            view = new ArrayView( element );
+            single = new ArrayView( element );
 
-            view.content.textContent.should.be.equal(&apos;&apos;);
+            single.content.textContent.should.be.equal(&apos;&apos;);
         });
 
         /**
@@ -93,14 +89,10 @@ describe(&apos;ArrayView()&apos;,  () =&gt; {
          */
         it(&apos;Render data&apos;,  () =&gt; {
 
-            view.render([
-                {name: &apos;ObjectView&apos;},
-                {name: &apos;ArrayView&apos;},
-                {name: &apos;TreeView&apos;}
-            ]);
+            single.render( data.view );
 
             Array.from(
-                view.content.children,  item =&gt; item.textContent
+                single.content.children,  item =&gt; item.textContent
             ).should.be.eql([
                 &apos;ObjectView&apos;, &apos;ArrayView&apos;, &apos;TreeView&apos;
             ]);
@@ -111,62 +103,54 @@ describe(&apos;ArrayView()&apos;,  () =&gt; {
          */
         it(&apos;Get data&apos;,  () =&gt; {
 
-            view.valueOf().should.be.eql( view.data );
+            single.valueOf().should.be.eql( single.data );
 
-            view.valueOf().should.not.be.equal( view.data );
+            single.valueOf().should.not.be.equal( single.data );
 
-            view.data[0].should.be.equal( view[0].data );
+            single.data[0].should.be.equal( single[0].data );
         });
     });
 
-    describe(&apos;Nested view&apos;,  () =&gt; {
-
-        var view, element;
-
-        before(() =&gt; {
-
-            element = JSDOM.fragment( HTML ).children[0];
-
-            element.remove();
-        });
-
+    describe(&apos;Multiple top element of item template&apos;,  () =&gt; {
         /**
          * @test {ObjectView#scan}
+         * @test {View#bindWith}
          */
-        it(&apos;Scan DOM&apos;,  () =&gt; {
+        it(&apos;Scan DOM with booted View&apos;,  () =&gt; {
 
-            view = new ObjectView( element );
+            multiple = new ObjectView( fragment );
 
-            view.length.should.be.equal( 2 );
+            multiple.length.should.be.equal( 3 );
 
-            view[1].should.be.instanceof( ArrayView );
+            multiple[1].should.be.equal( single );
+
+            multiple[2].should.be.instanceof( ArrayView );
         });
 
         /**
          * @test {ObjectView#render}
          */
-        it(&apos;Render data&apos;,  () =&gt; {
+        it(&apos;Render part of data&apos;,  () =&gt; {
 
-            const list = [
-                {name: &apos;Gecko&apos;},
-                {name: &apos;Trident&apos;},
-                {name: &apos;WebKit&apos;},
-                {name: &apos;Blink&apos;},
-                {name: &apos;EdgeHTML&apos;}
-            ];
+            const _data_ = Object.assign({ },  data);
 
-            view.render({
-                title:  &apos;Kinds of Web browser core&apos;,
-                list:   list
-            });
+            delete _data_.view;
 
-            view.content.outerHTML.should.be.equal(`
+            multiple.render(_data_);
+
+            multiple.toString().should.be.equal(`
 &lt;main&gt;
-    &lt;h1&gt;Kinds of Web browser core&lt;/h1&gt;
+    &lt;h1&gt;${data.title}&lt;/h1&gt;
 
-    &lt;ol data-array=&quot;list&quot;&gt;${
-    list.map(item =&gt; `&lt;li&gt;${item.name}&lt;/li&gt;`).join(&apos;&apos;)
+    &lt;ol data-array=&quot;view&quot;&gt;${
+    data.view.map(item =&gt; `&lt;li&gt;${item.name}&lt;/li&gt;`).join(&apos;&apos;)
 }&lt;/ol&gt;
+
+    &lt;dl data-array=&quot;browser&quot;&gt;${
+    data.browser.map(
+        item =&gt; `&lt;dt&gt;${item.brand}&lt;/dt&gt;&lt;dd&gt;${item.core}&lt;/dd&gt;`
+    ).join(&apos;&apos;)
+}&lt;/dl&gt;
 &lt;/main&gt;`.trim()
             );
         });

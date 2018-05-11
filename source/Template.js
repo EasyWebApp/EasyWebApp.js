@@ -34,16 +34,22 @@ export default  class Template extends Array {
 
     /**
      * @private
+     *
+     * @param {string} expression
+     *
+     * @return {number} Index of this Evaluation function
      */
     compile(expression) {
 
         return this.expression.push(
             new Function(... this.varName,  'return ' + expression.trim())
-        );
+        ) - 1;
     }
 
     /**
      * @private
+     *
+     * @return {Template}
      */
     parse() {
 
@@ -57,7 +63,7 @@ export default  class Template extends Array {
 
                 expression.replace(Template.Reference, addReference);
 
-                return  '${' + (this.compile( expression ) - 1) + '}';
+                return  '${' + this.compile( expression ) + '}';
             }
         );
 

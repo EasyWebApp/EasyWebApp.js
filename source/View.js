@@ -27,7 +27,16 @@ export default  class View extends Array {
                 template = View.parseDOM( template );
         }
 
-        view_data.set(this.bindWith( template ),  scope);
+        var _this_ = this.bindWith( template );
+
+        if (_this_ !== this) {
+
+            _this_.booted = true;
+
+            return _this_;
+        }
+
+        view_data.set(this, scope);
     }
 
     /**
@@ -56,20 +65,32 @@ export default  class View extends Array {
      *
      * @param {Element|Element[]|DocumentFragment} template
      *
-     * @return {View}
+     * @return {View} This view or the view bound before
      */
     bindWith(template) {
 
-        view_DOM.set(this, template);
+        var _this_;
 
-        if (template instanceof Array) {
+        if (template instanceof Array)
+            template = template.filter(node => {
 
-            for (let node of template)
-                if (node.nodeType === 1)  DOM_view.set(node, this);
-        } else
+                switch ( node.nodeType ) {
+                    case 1:
+                        if (! (_this_ = DOM_view.get( node )))
+                            DOM_view.set(node, this);
+                        break;
+                    case 3:
+                        if (! node.nodeValue.trim())  return;
+                }
+
+                return true;
+            });
+        else if (! (_this_ = DOM_view.get( template )))
             DOM_view.set(template, this);
 
-        return this;
+        view_DOM.set(this, template);
+
+        return  _this_ || this;
     }
 
     /**

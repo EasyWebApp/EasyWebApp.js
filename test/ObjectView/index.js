@@ -54,7 +54,7 @@ describe('ObjectView()',  () => {
                 enable:  true
             });
 
-            view.content.outerHTML.should.be.equal(`
+            view.toString().should.be.equal(`
     <fieldset>
         <legend title="Test field">
             Test

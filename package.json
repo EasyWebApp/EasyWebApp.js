@@ -1,26 +1,7 @@
 {
-  "name": "easywebapp",
-  "version": "5.0.0-alpha",
-  "description": "Light-weight Web application engine based on Web components API & ECMAScript 6+",
-  "browser": "build/EWA.js",
-  "directories": {
-    "lib": "source",
-    "doc": "docs"
-  },
-  "scripts": {
-    "lint": "eslint ./source/ ./test/",
-    "precommit": "npm run lint",
-    "compile": "set NODE_ENV=production&&  babel source -d build/Release",
-    "bundle": "amd-bundle build/Release build/EWA.js",
-    "build": "npm run compile  &&  npm run bundle  &&  esdoc",
-    "help": "web-server docs/ -o",
-    "test": "mocha -r babel-register -r should --recursive --no-timeouts -c --inline-diffs --exit",
-    "debug": "npm test -- --inspect-brk"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/EasyWebApp/EasyWebApp.git"
-  },
+  "name": "web-cell",
+  "version": "0.7.0",
+  "description": "Light-weight Web Components engine based on ECMAScript 6+",
   "keywords": [
     "WebApp",
     "Web-component",
@@ -29,10 +10,32 @@
   ],
   "author": "shiy007@qq.com",
   "license": "LGPL-3.0",
-  "bugs": {
-    "url": "https://github.com/EasyWebApp/EasyWebApp/issues"
+  "browser": "build/WebCell.js",
+  "directories": {
+    "lib": "source",
+    "doc": "docs"
   },
-  "homepage": "https://github.com/EasyWebApp/EasyWebApp#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/EasyWebApp/WebCell.git"
+  },
+  "bugs": {
+    "url": "https://github.com/EasyWebApp/WebCell/issues"
+  },
+  "homepage": "https://github.com/EasyWebApp/WebCell#readme",
+  "engines": {
+    "node": "^6.5.0"
+  },
+  "scripts": {
+    "lint": "eslint ./source/ ./test/",
+    "precommit": "npm run lint",
+    "compile": "set NODE_ENV=production&&  babel source -d build/Release",
+    "bundle": "amd-bundle build/Release build/WebCell.js",
+    "build": "npm run compile  &&  npm run bundle  &&  esdoc",
+    "help": "web-server docs/ -o",
+    "test": "mocha -r babel-register -r should --recursive --no-timeouts -c --inline-diffs --exit",
+    "debug": "npm test -- --inspect-brk"
+  },
   "devDependencies": {
     "amd-bundle": "^0.5.0",
     "babel-cli": "^6.26.0",

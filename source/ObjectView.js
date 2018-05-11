@@ -18,7 +18,7 @@ export default  class ObjectView extends View {
      */
     constructor(template) {
 
-        super(template,  'object',  { }).scan();
+        if (! super(template,  'object',  { }).booted)  this.scan();
     }
 
     valueOf() {

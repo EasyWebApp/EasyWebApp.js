@@ -8,7 +8,12 @@ import ArrayView from '../../source/ArrayView';
 
 import ObjectView from '../../source/ObjectView';
 
-var HTML;
+const fragment = JSDOM.fragment(
+        readFileSync( resolve(module.id, '../index.html') )
+    ),
+    data = require('./index.json');
+
+var single, multiple;
 
 
 /**
@@ -16,27 +21,18 @@ var HTML;
  */
 describe('ArrayView()',  () => {
 
-    before(()  =>  HTML = readFileSync( resolve(module.id, '../index.html') ));
+    describe('Single top element of item template',  () => {
 
-    describe('Single view',  () => {
-
-        var view, element;
-
-        before(() => {
-
-            element = JSDOM.fragment( HTML ).querySelector('ol');
-
-            element.remove();
-        });
+        var element = fragment.querySelector('ol');
 
         /**
          * @test {ArrayView#constructor}
          */
         it('Scan DOM',  () => {
 
-            view = new ArrayView( element );
+            single = new ArrayView( element );
 
-            view.content.textContent.should.be.equal('');
+            single.content.textContent.should.be.equal('');
         });
 
         /**
@@ -44,14 +40,10 @@ describe('ArrayView()',  () => {
          */
         it('Render data',  () => {
 
-            view.render([
-                {name: 'ObjectView'},
-                {name: 'ArrayView'},
-                {name: 'TreeView'}
-            ]);
+            single.render( data.view );
 
             Array.from(
-                view.content.children,  item => item.textContent
+                single.content.children,  item => item.textContent
             ).should.be.eql([
                 'ObjectView', 'ArrayView', 'TreeView'
             ]);
@@ -62,62 +54,54 @@ describe('ArrayView()',  () => {
          */
         it('Get data',  () => {
 
-            view.valueOf().should.be.eql( view.data );
+            single.valueOf().should.be.eql( single.data );
 
-            view.valueOf().should.not.be.equal( view.data );
+            single.valueOf().should.not.be.equal( single.data );
 
-            view.data[0].should.be.equal( view[0].data );
+            single.data[0].should.be.equal( single[0].data );
         });
     });
 
-    describe('Nested view',  () => {
-
-        var view, element;
-
-        before(() => {
-
-            element = JSDOM.fragment( HTML ).children[0];
-
-            element.remove();
-        });
-
+    describe('Multiple top element of item template',  () => {
         /**
          * @test {ObjectView#scan}
+         * @test {View#bindWith}
          */
-        it('Scan DOM',  () => {
+        it('Scan DOM with booted View',  () => {
 
-            view = new ObjectView( element );
+            multiple = new ObjectView( fragment );
 
-            view.length.should.be.equal( 2 );
+            multiple.length.should.be.equal( 3 );
 
-            view[1].should.be.instanceof( ArrayView );
+            multiple[1].should.be.equal( single );
+
+            multiple[2].should.be.instanceof( ArrayView );
         });
 
         /**
          * @test {ObjectView#render}
          */
-        it('Render data',  () => {
+        it('Render part of data',  () => {
 
-            const list = [
-                {name: 'Gecko'},
-                {name: 'Trident'},
-                {name: 'WebKit'},
-                {name: 'Blink'},
-                {name: 'EdgeHTML'}
-            ];
+            const _data_ = Object.assign({ },  data);
 
-            view.render({
-                title:  'Kinds of Web browser core',
-                list:   list
-            });
+            delete _data_.view;
 
-            view.content.outerHTML.should.be.equal(`
+            multiple.render(_data_);
+
+            multiple.toString().should.be.equal(`
 <main>
-    <h1>Kinds of Web browser core</h1>
+    <h1>${data.title}</h1>
 
-    <ol data-array="list">${
-    list.map(item => `<li>${item.name}</li>`).join('')
+    <ol data-array="view">${
+    data.view.map(item => `<li>${item.name}</li>`).join('')
 }</ol>
+
+    <dl data-array="browser">${
+    data.browser.map(
+        item => `<dt>${item.brand}</dt><dd>${item.core}</dd>`
+    ).join('')
+}</dl>
 </main>`.trim()
             );
         });

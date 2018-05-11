@@ -16,6 +16,25 @@ export default  class Component {
     }
 
     /**
+     * @protected
+     *
+     * @param {DocumentFragment} template - `HTMLTemplateElement.prototype.content`
+     *
+     * @return {HTMLElement} This custom element
+     */
+    boot(template) {
+
+        this.attachShadow({
+            mode:              'open',
+            delegatesFocus:    true
+        }).appendChild(
+            template.cloneNode( true )
+        );
+
+        return this;
+    }
+
+    /**
      * Define a set of Getter or Setter for DOM properties,
      * and store their values into private object.
      *
@@ -25,7 +44,7 @@ export default  class Component {
      *
      * @example
      *
-     *    EWA.component(class MyInput extends HTMLElement {
+     *    WebCell.component(class MyInput extends HTMLElement {
      *
      *        constructor() {  super();  }
      *
@@ -105,6 +124,11 @@ export default  class Component {
 
     /**
      * @protected
+     *
+     * @return   {Object}
+     * @property {HTMLTemplateElement}                      template
+     * @property {Array<HTMLStyleElement, HTMLLinkElement>} style
+     * @property {HTMLScriptElement}                        script
      */
     static findTemplate() {
 

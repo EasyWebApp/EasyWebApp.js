@@ -1,25 +1,26 @@
 {
-  "coverage": "62.9%",
-  "expectCount": 62,
-  "actualCount": 39,
+  "coverage": "62.5%",
+  "expectCount": 64,
+  "actualCount": 40,
   "files": {
     "source/ArrayView.js": {
-      "expectCount": 7,
+      "expectCount": 8,
       "actualCount": 3,
       "undocumentLines": [
-        20,
-        22,
-        29,
-        54
+        17,
+        21,
+        23,
+        30,
+        55
       ]
     },
     "source/Component.js": {
-      "expectCount": 10,
-      "actualCount": 7,
+      "expectCount": 11,
+      "actualCount": 8,
       "undocumentLines": [
         1,
-        65,
-        68
+        84,
+        87
       ]
     },
     "source/index.js": {
@@ -46,10 +47,10 @@
         26,
         31,
         33,
-        55,
-        95,
+        61,
         101,
-        110
+        107,
+        116
       ]
     },
     "source/utility.js": {

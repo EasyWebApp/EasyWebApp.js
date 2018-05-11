@@ -27,14 +27,7 @@ export function component(subClass) {
 
                 _private_.set(_this_,  { });
 
-                _this_.attachShadow({
-                    mode:              'open',
-                    delegatesFocus:    true
-                }).appendChild(
-                    template.cloneNode( true )
-                );
-
-                return _this_;
+                return  _this_.boot( template );
             }
         }
     );

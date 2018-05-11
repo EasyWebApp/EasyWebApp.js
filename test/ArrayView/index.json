@@ -1,0 +1,30 @@
+{
+    "title":    "Web front-end",
+    "view":     [
+        {"name": "ObjectView"},
+        {"name": "ArrayView"},
+        {"name": "TreeView"}
+    ],
+    "browser":  [
+        {
+            "brand":  "Firefox",
+            "core":   "Gecko"
+        },
+        {
+            "brand":  "Internet Explorer",
+            "core":   "Trident"
+        },
+        {
+            "brand":  "Safari",
+            "core":   "WebKit"
+        },
+        {
+            "brand":  "Chrome",
+            "core":   "Blink"
+        },
+        {
+            "brand":  "Edge",
+            "core":   "EdgeHTML"
+        }
+    ]
+}

@@ -3,12 +3,12 @@
 <head>
   <meta charset="utf-8">
   <base data-ice="baseUrl" href="../../">
-  <title data-ice="title">Template | easywebapp</title>
+  <title data-ice="title">Template | web-cell</title>
   <link type="text/css" rel="stylesheet" href="css/style.css">
   <link type="text/css" rel="stylesheet" href="css/prettify-tomorrow.css">
   <script src="script/prettify/prettify.js"></script>
   <script src="script/manual.js"></script>
-<meta name="description" content="Light-weight Web application engine based on Web components API &amp; ECMAScript 6+"><meta property="twitter:card" content="summary"><meta property="twitter:title" content="easywebapp"><meta property="twitter:description" content="Light-weight Web application engine based on Web components API &amp; ECMAScript 6+"></head>
+<meta name="description" content="Light-weight Web Components engine based on ECMAScript 6+"><meta property="twitter:card" content="summary"><meta property="twitter:title" content="web-cell"><meta property="twitter:description" content="Light-weight Web Components engine based on ECMAScript 6+"></head>
 <body class="layout-container" data-ice="rootContainer">
 
 <header>
@@ -24,7 +24,7 @@
   </span>
     <ul class="search-result"></ul>
   </div>
-<a style="position:relative; top:3px;" href="https://github.com/EasyWebApp/EasyWebApp"><img width="20px" src="./image/github.png"></a></header>
+<a style="position:relative; top:3px;" href="https://github.com/EasyWebApp/WebCell"><img width="20px" src="./image/github.png"></a></header>
 
 <nav class="navigation" data-ice="nav"><div>
   <ul>
@@ -47,7 +47,7 @@
 </nav>
 
 <div class="content" data-ice="content"><div class="header-notice">
-  <div data-ice="importPath" class="import-path"><pre class="prettyprint"><code data-ice="importPathCode">import Template from &apos;<span><a href="file/source/Template.js.html#lineNumber4">easywebapp/source/Template.js</a></span>&apos;</code></pre></div>
+  <div data-ice="importPath" class="import-path"><pre class="prettyprint"><code data-ice="importPathCode">import Template from &apos;<span><a href="file/source/Template.js.html#lineNumber4">web-cell/source/Template.js</a></span>&apos;</code></pre></div>
   <span data-ice="access">public</span>
   <span data-ice="kind">class</span>
   
@@ -447,7 +447,7 @@
           
           
           
-          <span class="code" data-ice="name"><span><a href="class/source/Template.js~Template.html#instance-method-compile">compile</a></span></span><span class="code" data-ice="signature">(expression: <span>*</span>): <span>*</span></span>
+          <span class="code" data-ice="name"><span><a href="class/source/Template.js~Template.html#instance-method-compile">compile</a></span></span><span class="code" data-ice="signature">(expression: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></span>): <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a></span></span>
         </p>
       </div>
       <div>
@@ -475,7 +475,7 @@
           
           
           
-          <span class="code" data-ice="name"><span><a href="class/source/Template.js~Template.html#instance-method-parse">parse</a></span></span><span class="code" data-ice="signature">(): <span>*</span></span>
+          <span class="code" data-ice="name"><span><a href="class/source/Template.js~Template.html#instance-method-parse">parse</a></span></span><span class="code" data-ice="signature">(): <span><a href="class/source/Template.js~Template.html">Template</a></span></span>
         </p>
       </div>
       <div>
@@ -823,7 +823,7 @@
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/source/Template.js.html#lineNumber55">source</a></span></span>
+      <span data-ice="source"><span><a href="file/source/Template.js.html#lineNumber61">source</a></span></span>
     </span>
   </h3>
 
@@ -866,7 +866,7 @@
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/source/Template.js.html#lineNumber95">source</a></span></span>
+      <span data-ice="source"><span><a href="file/source/Template.js.html#lineNumber101">source</a></span></span>
     </span>
   </h3>
 
@@ -912,7 +912,7 @@
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/source/Template.js.html#lineNumber101">source</a></span></span>
+      <span data-ice="source"><span><a href="file/source/Template.js.html#lineNumber107">source</a></span></span>
     </span>
   </h3>
 
@@ -967,7 +967,7 @@
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/source/Template.js.html#lineNumber75">source</a></span></span>
+      <span data-ice="source"><span><a href="file/source/Template.js.html#lineNumber81">source</a></span></span>
     </span>
   </h3>
 
@@ -1053,7 +1053,7 @@
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/source/Template.js.html#lineNumber110">source</a></span></span>
+      <span data-ice="source"><span><a href="file/source/Template.js.html#lineNumber116">source</a></span></span>
     </span>
   </h3>
 
@@ -1106,11 +1106,11 @@
     
     
     
-    <span class="code" data-ice="name">compile</span><span class="code" data-ice="signature">(expression: <span>*</span>): <span>*</span></span>
+    <span class="code" data-ice="name">compile</span><span class="code" data-ice="signature">(expression: <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></span>): <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a></span></span>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/source/Template.js.html#lineNumber38">source</a></span></span>
+      <span data-ice="source"><span><a href="file/source/Template.js.html#lineNumber42">source</a></span></span>
     </span>
   </h3>
 
@@ -1131,7 +1131,7 @@
     
     <tr data-ice="property" data-depth="0">
       <td data-ice="name" class="code" data-depth="0">expression</td>
-      <td data-ice="type" class="code"><span>*</span></td>
+      <td data-ice="type" class="code"><span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String">string</a></span></td>
       <td data-ice="appendix"></td>
       <td data-ice="description"></td>
     </tr>
@@ -1145,8 +1145,9 @@
     <table>
       <tbody>
         <tr>
-          <td class="return-type code" data-ice="returnType"><span>*</span></td>
-          
+          <td class="return-type code" data-ice="returnType"><span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number">number</a></span></td>
+          <td class="return-desc" data-ice="returnDescription"><p>Index of this Evaluation function</p>
+</td>
         </tr>
       </tbody>
     </table>
@@ -1177,11 +1178,11 @@
     
     
     
-    <span class="code" data-ice="name">parse</span><span class="code" data-ice="signature">(): <span>*</span></span>
+    <span class="code" data-ice="name">parse</span><span class="code" data-ice="signature">(): <span><a href="class/source/Template.js~Template.html">Template</a></span></span>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/source/Template.js.html#lineNumber48">source</a></span></span>
+      <span data-ice="source"><span><a href="file/source/Template.js.html#lineNumber54">source</a></span></span>
     </span>
   </h3>
 
@@ -1200,7 +1201,7 @@
     <table>
       <tbody>
         <tr>
-          <td class="return-type code" data-ice="returnType"><span>*</span></td>
+          <td class="return-type code" data-ice="returnType"><span><a href="class/source/Template.js~Template.html">Template</a></span></td>
           
         </tr>
       </tbody>

@@ -12,9 +12,10 @@ export default  class ArrayView extends View {
      */
     constructor(element) {
 
-        super(element,  'array',  [ ]).template = element.firstElementChild;
+        if (! super(element,  'array',  [ ]).booted) {
 
-        this.clear();
+            this.template = element.innerHTML.trim();  this.clear();
+        }
     }
 
     clear() {
@@ -37,16 +38,16 @@ export default  class ArrayView extends View {
 
         const data = this.data;
 
-        this.content.append(... Array.from(list,  item => {
+        this.content.append(... [ ].concat(
+            ... Array.from(list,  item => {
 
-            const view = this[ this.length ] = new ObjectView(
-                this.template.cloneNode( true )
-            );
+                const view = this[ this.length ] = new ObjectView( this.template );
 
-            data[ data.length ] = view.data;
+                data[ data.length ] = view.data;
 
-            return  view.render( item ).content;
-        }));
+                return  view.render( item ).content;
+            })
+        ));
 
         return this;
     }

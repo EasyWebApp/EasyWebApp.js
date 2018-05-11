@@ -3,12 +3,12 @@
 <head>
   <meta charset="utf-8">
   <base data-ice="baseUrl" href="../../">
-  <title data-ice="title">Component | easywebapp</title>
+  <title data-ice="title">Component | web-cell</title>
   <link type="text/css" rel="stylesheet" href="css/style.css">
   <link type="text/css" rel="stylesheet" href="css/prettify-tomorrow.css">
   <script src="script/prettify/prettify.js"></script>
   <script src="script/manual.js"></script>
-<meta name="description" content="Light-weight Web application engine based on Web components API &amp; ECMAScript 6+"><meta property="twitter:card" content="summary"><meta property="twitter:title" content="easywebapp"><meta property="twitter:description" content="Light-weight Web application engine based on Web components API &amp; ECMAScript 6+"></head>
+<meta name="description" content="Light-weight Web Components engine based on ECMAScript 6+"><meta property="twitter:card" content="summary"><meta property="twitter:title" content="web-cell"><meta property="twitter:description" content="Light-weight Web Components engine based on ECMAScript 6+"></head>
 <body class="layout-container" data-ice="rootContainer">
 
 <header>
@@ -24,7 +24,7 @@
   </span>
     <ul class="search-result"></ul>
   </div>
-<a style="position:relative; top:3px;" href="https://github.com/EasyWebApp/EasyWebApp"><img width="20px" src="./image/github.png"></a></header>
+<a style="position:relative; top:3px;" href="https://github.com/EasyWebApp/WebCell"><img width="20px" src="./image/github.png"></a></header>
 
 <nav class="navigation" data-ice="nav"><div>
   <ul>
@@ -47,7 +47,7 @@
 </nav>
 
 <div class="content" data-ice="content"><div class="header-notice">
-  <div data-ice="importPath" class="import-path"><pre class="prettyprint"><code data-ice="importPathCode">import Component from &apos;<span><a href="file/source/Component.js.html#lineNumber7">easywebapp/source/Component.js</a></span>&apos;</code></pre></div>
+  <div data-ice="importPath" class="import-path"><pre class="prettyprint"><code data-ice="importPathCode">import Component from &apos;<span><a href="file/source/Component.js.html#lineNumber7">web-cell/source/Component.js</a></span>&apos;</code></pre></div>
   <span data-ice="access">public</span>
   <span data-ice="kind">class</span>
   
@@ -231,7 +231,7 @@ and store their values into private object.</p>
           
           
           
-          <span class="code" data-ice="name"><span><a href="class/source/Component.js~Component.html#static-method-findTemplate">findTemplate</a></span></span><span class="code" data-ice="signature">(): {&quot;template&quot;: <span>*</span>, &quot;style&quot;: <span>*</span>, &quot;script&quot;: <span>*</span>}</span>
+          <span class="code" data-ice="name"><span><a href="class/source/Component.js~Component.html#static-method-findTemplate">findTemplate</a></span></span><span class="code" data-ice="signature">(): <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a></span></span>
         </p>
       </div>
       <div>
@@ -346,6 +346,40 @@ and store their values into private object.</p>
   </tr>
 </tbody>
 </table>
+<table class="summary" data-ice="summary">
+  <thead><tr><td data-ice="title" colspan="3">Protected Methods</td></tr></thead>
+  <tbody>
+  
+  <tr data-ice="target">
+    <td>
+      <span class="access" data-ice="access">protected</span>
+      
+      
+      
+      <span class="override" data-ice="override"></span>
+    </td>
+    <td>
+      <div>
+        <p>
+          
+          
+          
+          <span class="code" data-ice="name"><span><a href="class/source/Component.js~Component.html#instance-method-boot">boot</a></span></span><span class="code" data-ice="signature">(template: <span><a href="https://developer.mozilla.org/en-US/docs/Web/API/DocumentFragment">DocumentFragment</a></span>): <span>HTMLElement</span></span>
+        </p>
+      </div>
+      <div>
+        
+        
+        
+      </div>
+    </td>
+    <td>
+      
+      
+    </td>
+  </tr>
+</tbody>
+</table>
 </div>
 
 
@@ -410,7 +444,7 @@ and store their values into private object.</p>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/source/Component.js.html#lineNumber85">source</a></span></span>
+      <span data-ice="source"><span><a href="file/source/Component.js.html#lineNumber104">source</a></span></span>
     </span>
   </h3>
 
@@ -482,7 +516,7 @@ and store their values into private object.</p>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/source/Component.js.html#lineNumber41">source</a></span></span>
+      <span data-ice="source"><span><a href="file/source/Component.js.html#lineNumber60">source</a></span></span>
     </span>
   </h3>
 
@@ -545,7 +579,7 @@ and store their values into private object.</p>
   <div class="example-doc" data-ice="exampleDoc">
       
       <pre class="prettyprint source-code"><code data-ice="exampleCode">
-   EWA.component(class MyInput extends HTMLElement {
+   WebCell.component(class MyInput extends HTMLElement {
 
        constructor() {  super();  }
 
@@ -577,7 +611,7 @@ and store their values into private object.</p>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/source/Component.js.html#lineNumber99">source</a></span></span>
+      <span data-ice="source"><span><a href="file/source/Component.js.html#lineNumber118">source</a></span></span>
     </span>
   </h3>
 
@@ -647,11 +681,11 @@ and store their values into private object.</p>
     
     
     
-    <span class="code" data-ice="name">findTemplate</span><span class="code" data-ice="signature">(): {&quot;template&quot;: <span>*</span>, &quot;style&quot;: <span>*</span>, &quot;script&quot;: <span>*</span>}</span>
+    <span class="code" data-ice="name">findTemplate</span><span class="code" data-ice="signature">(): <span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a></span></span>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/source/Component.js.html#lineNumber109">source</a></span></span>
+      <span data-ice="source"><span><a href="file/source/Component.js.html#lineNumber133">source</a></span></span>
     </span>
   </h3>
 
@@ -670,12 +704,40 @@ and store their values into private object.</p>
     <table>
       <tbody>
         <tr>
-          <td class="return-type code" data-ice="returnType">{&quot;template&quot;: <span>*</span>, &quot;style&quot;: <span>*</span>, &quot;script&quot;: <span>*</span>}</td>
+          <td class="return-type code" data-ice="returnType"><span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object">Object</a></span></td>
           
         </tr>
       </tbody>
     </table>
-    <div data-ice="returnProperties">
+    <div data-ice="returnProperties"><div data-ice="properties">
+  <h4 data-ice="title">Return Properties:</h4>
+  <table class="params">
+    <thead>
+    <tr><td>Name</td><td>Type</td><td>Attribute</td><td>Description</td></tr>
+    </thead>
+    <tbody>
+    
+    <tr data-ice="property" data-depth="0">
+      <td data-ice="name" class="code" data-depth="0">template</td>
+      <td data-ice="type" class="code"><span>HTMLTemplateElement</span></td>
+      <td data-ice="appendix"></td>
+      <td data-ice="description"></td>
+    </tr>
+<tr data-ice="property" data-depth="0">
+      <td data-ice="name" class="code" data-depth="0">style</td>
+      <td data-ice="type" class="code"><span><a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array">Array</a></span>&lt;<span>HTMLStyleElement</span>, <span>HTMLLinkElement</span>&gt;</td>
+      <td data-ice="appendix"></td>
+      <td data-ice="description"></td>
+    </tr>
+<tr data-ice="property" data-depth="0">
+      <td data-ice="name" class="code" data-depth="0">script</td>
+      <td data-ice="type" class="code"><span>HTMLScriptElement</span></td>
+      <td data-ice="appendix"></td>
+      <td data-ice="description"></td>
+    </tr>
+</tbody>
+  </table>
+</div>
 </div>
   </div>
 
@@ -710,7 +772,7 @@ and store their values into private object.</p>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/source/Component.js.html#lineNumber68">source</a></span></span>
+      <span data-ice="source"><span><a href="file/source/Component.js.html#lineNumber87">source</a></span></span>
     </span>
   </h3>
 
@@ -756,7 +818,7 @@ and store their values into private object.</p>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/source/Component.js.html#lineNumber141">source</a></span></span>
+      <span data-ice="source"><span><a href="file/source/Component.js.html#lineNumber165">source</a></span></span>
     </span>
   </h3>
 
@@ -828,7 +890,7 @@ and store their values into private object.</p>
     <span class="right-info">
       
       
-      <span data-ice="source"><span><a href="file/source/Component.js.html#lineNumber65">source</a></span></span>
+      <span data-ice="source"><span><a href="file/source/Component.js.html#lineNumber84">source</a></span></span>
     </span>
   </h3>
 
@@ -871,6 +933,81 @@ and store their values into private object.</p>
 </div>
 
   
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+  
+</div>
+<h2 data-ice="title">Protected Methods</h2>
+
+<div class="detail" data-ice="detail">
+  <h3 data-ice="anchor" id="instance-method-boot">
+    <span class="access" data-ice="access">protected</span>
+    
+    
+    
+    
+    
+    <span class="code" data-ice="name">boot</span><span class="code" data-ice="signature">(template: <span><a href="https://developer.mozilla.org/en-US/docs/Web/API/DocumentFragment">DocumentFragment</a></span>): <span>HTMLElement</span></span>
+    <span class="right-info">
+      
+      
+      <span data-ice="source"><span><a href="file/source/Component.js.html#lineNumber25">source</a></span></span>
+    </span>
+  </h3>
+
+  
+  
+  
+  
+
+  
+
+  <div data-ice="properties"><div data-ice="properties">
+  <h4 data-ice="title">Params:</h4>
+  <table class="params">
+    <thead>
+    <tr><td>Name</td><td>Type</td><td>Attribute</td><td>Description</td></tr>
+    </thead>
+    <tbody>
+    
+    <tr data-ice="property" data-depth="0">
+      <td data-ice="name" class="code" data-depth="0">template</td>
+      <td data-ice="type" class="code"><span><a href="https://developer.mozilla.org/en-US/docs/Web/API/DocumentFragment">DocumentFragment</a></span></td>
+      <td data-ice="appendix"></td>
+      <td data-ice="description"><p><code>HTMLTemplateElement.prototype.content</code></p>
+</td>
+    </tr>
+</tbody>
+  </table>
+</div>
+</div>
+
+  <div class="return-params" data-ice="returnParams">
+    <h4>Return:</h4>
+    <table>
+      <tbody>
+        <tr>
+          <td class="return-type code" data-ice="returnType"><span>HTMLElement</span></td>
+          <td class="return-desc" data-ice="returnDescription"><p>This custom element</p>
+</td>
+        </tr>
+      </tbody>
+    </table>
+    <div data-ice="returnProperties">
+</div>
+  </div>
 
   
 

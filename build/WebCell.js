@@ -4,11 +4,11 @@
 (function (factory) {
 
     if ((typeof define === 'function')  &&  define.amd)
-        define('EWA', factory);
+        define('WebCell', factory);
     else if (typeof module === 'object')
         module.exports = factory();
     else
-        this.EWA = factory();
+        this.WebCell = factory();
 
 })(function () {
 
@@ -37,6 +37,51 @@ var Component = function () {
     }
 
     _createClass(Component, [{
+        key: 'boot',
+
+
+        /**
+         * @protected
+         *
+         * @param {DocumentFragment} template - `HTMLTemplateElement.prototype.content`
+         *
+         * @return {HTMLElement} This custom element
+         */
+        value: function boot(template) {
+
+            this.attachShadow({
+                mode: 'open',
+                delegatesFocus: true
+            }).appendChild(template.cloneNode(true));
+
+            return this;
+        }
+
+        /**
+         * Define a set of Getter or Setter for DOM properties,
+         * and store their values into private object.
+         *
+         * @param {Object} map - `1` for Getter, `2` for Setter & sum for both
+         *                       in each key's value
+         * @return {string[]} Keys of `map`
+         *
+         * @example
+         *
+         *    WebCell.component(class MyInput extends HTMLElement {
+         *
+         *        constructor() {  super();  }
+         *
+         *        static get observedAttributes() {
+         *
+         *            return this.setAccessor({
+         *                value:  1,
+         *                step:   3
+         *            });
+         *        }
+         *    });
+         */
+
+    }, {
         key: 'attributeChangedCallback',
         value: function attributeChangedCallback(name, oldValue, newValue) {
 
@@ -76,31 +121,6 @@ var Component = function () {
         }
     }], [{
         key: 'setAccessor',
-
-
-        /**
-         * Define a set of Getter or Setter for DOM properties,
-         * and store their values into private object.
-         *
-         * @param {Object} map - `1` for Getter, `2` for Setter & sum for both
-         *                       in each key's value
-         * @return {string[]} Keys of `map`
-         *
-         * @example
-         *
-         *    EWA.component(class MyInput extends HTMLElement {
-         *
-         *        constructor() {  super();  }
-         *
-         *        static get observedAttributes() {
-         *
-         *            return this.setAccessor({
-         *                value:  1,
-         *                step:   3
-         *            });
-         *        }
-         *    });
-         */
         value: function setAccessor(map) {
             var _this = this;
 
@@ -155,6 +175,11 @@ var Component = function () {
 
         /**
          * @protected
+         *
+         * @return   {Object}
+         * @property {HTMLTemplateElement}                      template
+         * @property {Array<HTMLStyleElement, HTMLLinkElement>} style
+         * @property {HTMLScriptElement}                        script
          */
 
     }, {
@@ -366,12 +391,7 @@ function component(subClass) {
 
             _Component._private_.set(_this_, {});
 
-            _this_.attachShadow({
-                mode: 'open',
-                delegatesFocus: true
-            }).appendChild(template.cloneNode(true));
-
-            return _this_;
+            return _this_.boot(template);
         }
     });
 
